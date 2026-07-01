@@ -193,7 +193,29 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'N/A'
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+
+    let date: Date | null = null
+
+    if (timestamp instanceof Date) {
+      date = timestamp
+    } else if (typeof timestamp?.toDate === 'function') {
+      date = timestamp.toDate()
+    } else if (typeof timestamp === 'string') {
+      const parsed = new Date(timestamp)
+      date = Number.isNaN(parsed.getTime()) ? null : parsed
+    } else if (typeof timestamp === 'number') {
+      const parsed = new Date(timestamp)
+      date = Number.isNaN(parsed.getTime()) ? null : parsed
+    } else if (typeof timestamp?.seconds === 'number') {
+      const parsed = new Date(timestamp.seconds * 1000 + Math.floor((timestamp.nanoseconds || 0) / 1_000_000))
+      date = Number.isNaN(parsed.getTime()) ? null : parsed
+    } else if (typeof timestamp?._seconds === 'number') {
+      const parsed = new Date(timestamp._seconds * 1000 + Math.floor((timestamp._nanoseconds || 0) / 1_000_000))
+      date = Number.isNaN(parsed.getTime()) ? null : parsed
+    }
+
+    if (!date || Number.isNaN(date.getTime())) return 'N/A'
+
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'short',
@@ -232,7 +254,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
             Precio Actual de Suscripción
           </CardTitle>
           <CardDescription>
-            Gestiona el precio de suscripción para que los vendedores puedan crear servicios
+            Gestiona el precio de suscripción para que los vendedores puedan acceder al marketplace completo
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -414,7 +436,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
               <p>
-                <strong>Servicios:</strong> Este precio permite a los vendedores crear y gestionar servicios
+                <strong>Marketplace:</strong> Este precio permite a los vendedores crear y gestionar productos y servicios
               </p>
             </div>
           </div>

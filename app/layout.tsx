@@ -4,10 +4,9 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { CartProvider } from "@/contexts/cart-context"
 import { AuthProvider } from "@/contexts/auth-context"
+import { LocationProvider } from "@/contexts/location-context"
 import { CacheProvider } from "@/contexts/cache-context"
-import { Header } from "@/components/layout/header"
-import { Footer } from "@/components/layout/footer"
-import { TabBar } from "@/components/layout/tab-bar"
+import { AppChrome } from "@/components/layout/app-chrome"
 import { NProgressProvider } from "@/components/providers/nprogress-provider"
 import { SafeArea } from "@/components/ui/safe-area"
 
@@ -51,19 +50,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body className={`${inter.className} flex flex-col min-h-screen`}>
+    <html lang="es" className="h-full">
+      <body className={`${inter.className} flex min-h-full flex-col`}>
         <NProgressProvider>
           <CacheProvider>
             <AuthProvider>
-              <CartProvider>
-                <SafeArea>
-                  <Header /> {/* Global Header */}
-                  <main className="flex-1 pb-16 md:pb-16">{children}</main> {/* Adjusted padding for mobile header */}
-                  <Footer /> {/* Global Footer */}
-                  <TabBar /> {/* Mobile Tab Bar */}
-                </SafeArea>
-              </CartProvider>
+              <LocationProvider>
+                <CartProvider>
+                  <SafeArea>
+                    <AppChrome>{children}</AppChrome>
+                  </SafeArea>
+                </CartProvider>
+              </LocationProvider>
             </AuthProvider>
           </CacheProvider>
         </NProgressProvider>

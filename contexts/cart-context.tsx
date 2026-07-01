@@ -123,7 +123,8 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     case "CLEAR_CART":
       return {
         ...state,
-        items: []
+        items: [],
+        appliedCoupon: null
     }
 
     case "APPLY_COUPON":

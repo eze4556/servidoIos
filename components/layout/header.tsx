@@ -37,6 +37,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useAuth } from "@/contexts/auth-context"
+import { useLocation } from "@/contexts/location-context"
 import { CartDrawer } from "@/components/cart-drawer"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { db } from "@/lib/firebase"
@@ -63,6 +64,7 @@ interface SearchProduct {
 
 export function Header() {
   const { currentUser, authLoading, handleLogout, getDashboardLink, getVenderLink } = useAuth()
+  const { userLocation, loadingLocation, refreshLocation } = useLocation()
   const router = useRouter()
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
@@ -79,10 +81,6 @@ export function Header() {
   // Estado para controlar el menú móvil
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // Estados para geolocalización
-  const [userLocation, setUserLocation] = useState<string>("")
-  const [loadingLocation, setLoadingLocation] = useState(true)
-
   useEffect(() => {
     const fetchCategories = async () => {
       setLoadingCategories(true)
@@ -98,106 +96,6 @@ export function Header() {
     }
     fetchCategories()
   }, [])
-
-  // Función para obtener la ubicación del usuario usando la API del navegador
-  const fetchUserLocation = async () => {
-    setLoadingLocation(true)
-    
-    if (!navigator.geolocation) {
-      setUserLocation("Geolocalización no soportada")
-      setLoadingLocation(false)
-      return
-    }
-
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        })
-      })
-
-      const { latitude, longitude } = position.coords
-      
-      // Usar nuestro endpoint de API para geocodificación inversa
-      const response = await fetch(`/api/geocoding?lat=${latitude}&lon=${longitude}`)
-      const data = await response.json()
-      
-      if (data.success) {
-        setUserLocation(data.location)
-        
-        // Guardar la ubicación en el perfil del usuario si está logueado
-        if (currentUser) {
-          await saveUserLocation(data.location, latitude, longitude)
-        }
-      } else {
-        setUserLocation("Ubicación no disponible")
-      }
-    } catch (error) {
-      console.error("Error getting location:", error)
-      setUserLocation("Ubicación no disponible")
-    } finally {
-      setLoadingLocation(false)
-    }
-  }
-
-  // Función para guardar la ubicación en el perfil del usuario
-  const saveUserLocation = async (location: string, lat: number, lon: number) => {
-    if (!currentUser) return
-    
-    try {
-      const { updateDoc, doc } = await import('firebase/firestore')
-      const userDocRef = doc(db, "users", currentUser.firebaseUser.uid)
-      
-      await updateDoc(userDocRef, {
-        location: location,
-        coordinates: {
-          latitude: lat,
-          longitude: lon
-        },
-        lastLocationUpdate: new Date()
-      })
-    } catch (error) {
-      console.error("Error saving user location:", error)
-    }
-  }
-
-  useEffect(() => {
-    // Si el usuario está logueado, intentar cargar su ubicación guardada primero
-    if (currentUser) {
-      loadSavedUserLocation()
-    } else {
-      // Si no está logueado, detectar ubicación actual
-      fetchUserLocation()
-    }
-  }, [currentUser])
-
-  // Función para cargar la ubicación guardada del usuario
-  const loadSavedUserLocation = async () => {
-    if (!currentUser) return
-    
-    try {
-      const { getDoc, doc } = await import('firebase/firestore')
-      const userDocRef = doc(db, "users", currentUser.firebaseUser.uid)
-      const userDocSnap = await getDoc(userDocRef)
-      
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data()
-        if (userData.location) {
-          setUserLocation(userData.location)
-          setLoadingLocation(false)
-          return
-        }
-      }
-      
-      // Si no hay ubicación guardada, detectar la actual
-      fetchUserLocation()
-    } catch (error) {
-      console.error("Error loading saved location:", error)
-      fetchUserLocation()
-    }
-  }
 
   // Nueva función para traer todos los productos una sola vez
   const fetchAllProducts = useCallback(async () => {
@@ -533,7 +431,7 @@ export function Header() {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation()
-                            fetchUserLocation()
+                            refreshLocation()
                           }}
                           className="h-4 w-4 sm:h-5 sm:w-5 p-0 text-purple-200 hover:text-white hover:bg-purple-700"
                         >

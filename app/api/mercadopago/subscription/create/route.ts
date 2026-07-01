@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/firebase'
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
 import type { SubscriptionPricing } from '@/types/subscription'
-import { configureMercadoPago } from '@/lib/mercadopago'
+import { configureMercadoPago, getMercadoPagoSiteUrl } from '@/lib/mercadopago'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { userId, planType } = body
+    const siteUrl = getMercadoPagoSiteUrl(request)
+
+    console.log("request.url =", request.url)
+    console.log("host =", request.headers.get("host"))
+    console.log("x-forwarded-host =", request.headers.get("x-forwarded-host"))
+    console.log("x-forwarded-proto =", request.headers.get("x-forwarded-proto"))
+    console.log("siteUrl =", siteUrl)
 
     if (!userId || !planType) {
       return NextResponse.json(
@@ -28,24 +35,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear la preferencia de suscripción
-    const preferenceData = {
+    const preferenceData: Record<string, any> = {
       items: [
         {
-          title: `Suscripción ${planType.charAt(0).toUpperCase() + planType.slice(1)} - Servicios`,
-          description: 'Acceso completo para crear y ofrecer servicios en la plataforma',
+          title: `Suscripción ${planType.charAt(0).toUpperCase() + planType.slice(1)} - Marketplace`,
+          description: 'Acceso completo para crear y ofrecer productos y servicios en la plataforma',
           quantity: 1,
           unit_price: subscriptionPrice,
           currency_id: 'ARS'
         }
       ],
       back_urls: {
-        success: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/seller?subscription=success`,
-        failure: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/seller?subscription=failure`,
-        pending: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/seller?subscription=pending`
+        success: `${siteUrl}/dashboard/seller?subscription=success`,
+        failure: `${siteUrl}/dashboard/seller?subscription=failure`,
+        pending: `${siteUrl}/dashboard/seller?subscription=pending`
       },
-      auto_return: 'approved',
-      external_reference: `subscription_${userId}_${Date.now()}`,
-      notification_url: `${process.env.BACKEND_URL || 'http://localhost:3001'}/api/webhooks/mercadopago/subscription`,
+      external_reference: `subscription_${userId}_${planType}`,
+      notification_url: `${siteUrl}/api/mercadopago/webhook`,
       expires: true,
       expiration_date_from: new Date().toISOString(),
       expiration_date_to: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 horas
@@ -53,6 +59,10 @@ export async function POST(request: NextRequest) {
         name: 'Usuario',
         email: 'usuario@example.com'
       }
+    }
+
+    if (preferenceData.back_urls.success) {
+      preferenceData.auto_return = 'approved'
     }
 
     // Configurar MercadoPago
@@ -71,7 +81,15 @@ export async function POST(request: NextRequest) {
       })
       
     } catch (mpError) {
-      console.error('Error al crear preferencia en MercadoPago:', mpError)
+      console.error('[MercadoPago] SDK error object:', mpError)
+      try {
+        console.error(
+          '[MercadoPago] SDK error json:',
+          JSON.stringify(mpError, Object.getOwnPropertyNames(mpError as object), 2)
+        )
+      } catch {
+        // Mantener el flujo original si el error no es serializable
+      }
       
       // En caso de error con MercadoPago, devolver error específico
       return NextResponse.json(

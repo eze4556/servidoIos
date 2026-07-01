@@ -104,6 +104,7 @@ interface UserData {
   createdAt: Date
   role?: string
   photoURL?: string
+  subscription_status?: "active" | "inactive" | "cancelled"
   isSubscribed?: boolean
   productUploadLimit?: number
 }
@@ -438,17 +439,21 @@ export default function AdminDashboard() {
   }, [])
 
   useEffect(() => {
-    if (!authLoading && !currentUser) {
+    if (authLoading) {
+      return
+    }
+
+    if (!currentUser) {
       router.push("/login")
       return
     }
+
     if (currentUser?.role !== "admin") {
       router.push(currentUser?.role === "seller" ? "/dashboard/seller" : "/?error=unauthorized_admin")
       return
     }
-    if (currentUser) {
-      fetchAdminData()
-    }
+
+    fetchAdminData()
   }, [currentUser, authLoading, router])
 
   useEffect(() => {
@@ -1902,18 +1907,29 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="grid min-h-screen w-full overflow-x-hidden max-w-full lg:grid-cols-[280px_1fr] bg-gray-100">
+    <div className="relative grid min-h-screen w-full max-w-full overflow-hidden lg:grid-cols-[280px_1fr] bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.14),transparent_40%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)]">
       {/* Sidebar */}
-      <div className="hidden border-r bg-white lg:block">
+      <div className="hidden border-r border-white/10 bg-[linear-gradient(180deg,#111827_0%,#1f1147_55%,#0f172a_100%)] text-white shadow-2xl lg:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-[60px] items-center border-b px-6">
-            <Link href="/" className="flex items-center gap-2 font-semibold text-purple-600" prefetch={false}>
-              <Package2 className="h-6 w-6" />
-              <span>Servido Admin</span>
+          <div className="flex h-[84px] items-center border-b border-white/10 px-6">
+            <Link href="/" className="flex items-center gap-3 font-semibold" prefetch={false}>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10 backdrop-blur">
+                <Package2 className="h-6 w-6 text-purple-200" />
+              </div>
+              <div className="leading-tight">
+                <span className="block text-[10px] uppercase tracking-[0.28em] text-purple-200/70">Servido</span>
+                <span className="text-lg">Control Center</span>
+              </div>
             </Link>
           </div>
+          <div className="px-4 pb-3 pt-4">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.25em] text-purple-200/70">Session</p>
+              <p className="mt-2 text-sm text-white/80">Panel privilegiado para administración crítica</p>
+            </div>
+          </div>
           <div className="flex-1 overflow-auto py-2">
-            <nav className="grid items-start px-4 text-sm font-medium">
+            <nav className="grid items-start gap-2 px-4 text-sm font-medium">
               {[
                 { tab: "overview", label: "Resumen", icon: Home },
                 { tab: "users", label: "Usuarios", icon: Users },
@@ -1929,9 +1945,16 @@ export default function AdminDashboard() {
                 <Button
                   key={item.tab}
                   variant={activeTab === item.tab ? "secondary" : "ghost"}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-purple-600 justify-start"
+                  className={`relative flex items-center justify-start gap-3 rounded-2xl px-4 py-3 transition-all duration-300 ${
+                    activeTab === item.tab
+                      ? "bg-white text-slate-950 shadow-lg shadow-black/20 ring-1 ring-white/20"
+                      : "text-white/75 hover:bg-white/10 hover:text-white"
+                  }`}
                   onClick={() => setActiveTab(item.tab)}
                 >
+                  {activeTab === item.tab && (
+                    <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-fuchsia-400 to-cyan-300 shadow-[0_0_18px_rgba(168,85,247,0.45)]" />
+                  )}
                   <item.icon className="h-4 w-4" />
                   {item.label}
                 </Button>
@@ -1944,7 +1967,7 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <div className="flex flex-col">
         {/* Header for mobile sidebar */}
-        <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-white px-6 lg:hidden">
+        <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b border-white/10 bg-white/90 px-6 backdrop-blur lg:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="lg:hidden">
@@ -1952,11 +1975,16 @@ export default function AdminDashboard() {
                 <span className="sr-only">Abrir menú</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="lg:hidden w-72">
-              <div className="flex h-[60px] items-center border-b px-6">
-                <Link href="/" className="flex items-center gap-2 font-semibold text-purple-600" prefetch={false}>
-                  <Package2 className="h-6 w-6" />
-                  <span>Servido Admin</span>
+            <SheetContent side="left" className="lg:hidden w-80 border-white/10 bg-slate-950 text-white">
+              <div className="flex h-[84px] items-center border-b border-white/10 px-6">
+                <Link href="/" className="flex items-center gap-3 font-semibold" prefetch={false}>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                    <Package2 className="h-6 w-6 text-purple-200" />
+                  </div>
+                  <div className="leading-tight">
+                    <span className="block text-[10px] uppercase tracking-[0.28em] text-purple-200/70">Servido</span>
+                    <span className="text-lg">Control Center</span>
+                  </div>
                 </Link>
               </div>
               <nav className="grid gap-2 p-4 text-base font-medium">
@@ -1974,12 +2002,19 @@ export default function AdminDashboard() {
                   <Button
                     key={item.tab}
                     variant={activeTab === item.tab ? "secondary" : "ghost"}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-purple-600 justify-start"
+                    className={`relative flex items-center justify-start gap-3 rounded-2xl px-4 py-3 transition-all duration-300 ${
+                      activeTab === item.tab
+                        ? "bg-white text-slate-950 shadow-lg shadow-black/20"
+                        : "text-white/75 hover:bg-white/10 hover:text-white"
+                    }`}
                     onClick={() => {
                       setActiveTab(item.tab)
                       setIsMobileMenuOpen(false)
                     }}
                   >
+                    {activeTab === item.tab && (
+                      <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-fuchsia-400 to-cyan-300" />
+                    )}
                     <item.icon className="h-5 w-5" />
                     {item.label}
                   </Button>
@@ -2018,7 +2053,7 @@ export default function AdminDashboard() {
             </TabsList>
 
             {/* Overview Tab */}
-            <TabsContent value="overview" className="mt-4">
+            <TabsContent value="overview" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <div className="space-y-6">
                 {/* Métricas principales */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -2196,7 +2231,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Users Tab */}
-            <TabsContent value="users" className="mt-4">
+            <TabsContent value="users" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
                   <CardTitle>Gestión de Usuarios</CardTitle>
@@ -2321,7 +2356,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Categories Tab */}
-            <TabsContent value="categories" className="mt-4">
+            <TabsContent value="categories" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
                   <CardTitle>Gestión de Categorías</CardTitle>
@@ -2560,7 +2595,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Brands Tab */}
-            <TabsContent value="brands" className="mt-4">
+            <TabsContent value="brands" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
                   <CardTitle>Gestión de Marcas</CardTitle>
@@ -2779,7 +2814,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Todos los Productos Tab */}
-            <TabsContent value="allProducts" className="mt-4">
+            <TabsContent value="allProducts" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card className="w-full max-w-full">
                 <CardHeader>
                   <CardTitle>Todos los Productos de la Plataforma</CardTitle>
@@ -2955,7 +2990,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Ventas y Comisiones Tab */}
-            <TabsContent value="sales" className="mt-4">
+            <TabsContent value="sales" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <div className="pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] space-y-4 w-full">
                 {/* Resumen de Ventas */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
@@ -3143,7 +3178,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Banners Tab */}
-            <TabsContent value="banners" className="mt-4">
+            <TabsContent value="banners" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
                   <CardTitle>Gestión de Banners</CardTitle>
@@ -3302,7 +3337,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Alertas Tab */}
-            <TabsContent value="alerts" className="mt-4">
+            <TabsContent value="alerts" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
                   <CardTitle>Gestión de Alertas de Ofertas</CardTitle>
@@ -3434,7 +3469,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Cupones Tab */}
-            <TabsContent value="coupons" className="mt-4">
+            <TabsContent value="coupons" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
                   <CardTitle>Gestión de Cupones</CardTitle>
@@ -3646,13 +3681,13 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Precios de Suscripción Tab */}
-            <TabsContent value="subscriptionPricing" className="mt-4">
+            <TabsContent value="subscriptionPricing" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               {currentUser ? (
                 <SubscriptionPricingManager currentUserId={currentUser.firebaseUser.uid} />
               ) : (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Acceso Restringido</CardTitle>
+                    <CardTitle>Acceso Privilegiado</CardTitle>
                     <CardDescription>
                       Debes estar autenticado para acceder a esta funcionalidad
                     </CardDescription>
@@ -3875,7 +3910,7 @@ export default function AdminDashboard() {
             <p><strong>Email:</strong> {selectedSellerId ? usersMap[selectedSellerId as string]?.email : ''}</p>
             <p><strong>UID:</strong> {selectedSellerId}</p>
             <p><strong>Activo:</strong> {selectedSellerId ? (usersMap[selectedSellerId as string]?.isActive ? 'Sí' : 'No') : ''}</p>
-            <p><strong>Suscrito:</strong> {selectedSellerId ? (usersMap[selectedSellerId as string]?.isSubscribed ? 'Sí' : 'No') : ''}</p>
+            <p><strong>Suscrito:</strong> {selectedSellerId ? ((usersMap[selectedSellerId as string]?.subscription_status === 'active' || usersMap[selectedSellerId as string]?.subscription?.status === 'active' || usersMap[selectedSellerId as string]?.isSubscribed) ? 'Sí' : 'No') : ''}</p>
             {bankData ? (
               <div className="pt-4 border-t space-y-1">
                 <h3 className="font-semibold text-sm">Datos Bancarios</h3>
@@ -3899,3 +3934,5 @@ export default function AdminDashboard() {
     </div>
   )
 }
+
+

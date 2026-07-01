@@ -34,10 +34,9 @@ export function SafeArea({ children, className = '' }: SafeAreaProps) {
 
   return (
     <div 
-      className={`safe-area ${className}`}
+      className={`safe-area flex min-h-full w-full flex-1 flex-col ${className}`}
       style={{
         paddingTop: safeAreaTop,
-        minHeight: '100vh',
         boxSizing: 'border-box'
       }}
     >

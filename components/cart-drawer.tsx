@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetClose, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ShoppingCart, Plus, Minus, Trash2, X, Loader2, ShoppingBag, ArrowLeft, Truck, CreditCard, Shield } from "lucide-react"
@@ -28,6 +28,7 @@ export function CartDrawer() {
     items, 
     removeFromCart, 
     clearCart, 
+    updateQuantity,
     getItemQuantity, 
     getTotalPrice,
     getSubtotal,
@@ -47,6 +48,7 @@ export function CartDrawer() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set())
+  const [isOpen, setIsOpen] = useState(false)
   
   // Estados para el formulario de dirección
   const [showShippingForm, setShowShippingForm] = useState(false)
@@ -310,34 +312,50 @@ export function CartDrawer() {
     setPurchaseData(null)
   }
 
+  const cartItemCount = items.reduce((total, item) => total + item.quantity, 0)
+
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-navbar-foreground hover:bg-purple-700 p-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative text-navbar-foreground hover:bg-purple-700 p-1"
+          aria-label="Abrir carrito"
+        >
           <ShoppingCart className="h-5 w-5" />
           {items.length > 0 && (
             <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-purple-600 text-white text-xs flex items-center justify-center">
-              {items.reduce((total, item) => total + item.quantity, 0)}
+              {cartItemCount}
             </span>
             )}
           </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md lg:max-w-lg xl:max-w-xl p-0">
+      <SheetContent className="w-full sm:max-w-md lg:max-w-lg xl:max-w-xl p-0 bg-slate-50 [&>button]:hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:slide-in-from-right-6 data-[state=closed]:slide-out-to-right-6">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-white sticky top-0 z-20">
-            <div className="flex items-center gap-3">
-              <ShoppingCart className="h-6 w-6 text-purple-600" />
-              <div>
-                <h2 className="font-semibold text-lg">Carrito de compras</h2>
-                <p className="text-sm text-gray-500">
-                  {items.length} {items.length === 1 ? 'producto' : 'productos'}
+          <div className="flex items-center justify-between gap-4 p-4 border-b bg-white/95 backdrop-blur sticky top-0 z-20">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-11 w-11 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <ShoppingCart className="h-5 w-5 text-purple-700" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-semibold text-lg leading-none">Carrito de compras</h2>
+                <p className="text-sm text-gray-500 mt-1 truncate">
+                  {cartItemCount} {cartItemCount === 1 ? "unidad" : "unidades"} · {getVendorCount()} {getVendorCount() === 1 ? "vendedor" : "vendedores"}
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-600">
-              <X className="h-5 w-5" />
-            </Button>
+            <SheetClose asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                aria-label="Cerrar carrito"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </SheetClose>
           </div>
 
           {/* Content */}
@@ -365,7 +383,7 @@ export function CartDrawer() {
               <div className="p-4 space-y-6">
                 {/* Cupón de descuento */}
                 {items.length > 0 && (
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-200 p-4">
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl border border-purple-200 p-4 shadow-sm">
                     <CouponInput
                       onCouponApplied={applyCoupon}
                       onCouponRemoved={removeCoupon}
@@ -386,20 +404,30 @@ export function CartDrawer() {
                     {Object.entries(groupedItems).map(([sellerId, sellerItems]) => (
                       <div key={sellerId} className="space-y-3">
                         {/* Header del vendedor */}
-                        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                          <span className="text-sm font-medium text-gray-700">Vendedor</span>
+                        <div className="flex items-center justify-between gap-3 pb-2 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                            <span className="text-sm font-semibold text-gray-700">Vendedor</span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {sellerItems.length} {sellerItems.length === 1 ? "producto" : "productos"}
+                          </span>
                         </div>
                         
                         {/* Productos del vendedor */}
                         {sellerItems.map((item) => (
-                          <div key={item.id} className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow cart-item">
+                          <div
+                            key={item.id}
+                            className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow cart-item"
+                          >
                             <div className="flex gap-4">
                               {/* Imagen del producto */}
                               <div className="flex-shrink-0">
-                                <div className="w-20 h-20 sm:w-24 sm:h-24 relative rounded-lg overflow-hidden bg-gray-100 cart-item-image">
-                                  <SimpleImage src={getCartItemImage(item.media, item.imageUrl)} alt={item.name} className="w-full h-full object-cover" objectFit="cover"
-                                    className="rounded-lg"
+                                <div className="w-20 h-20 sm:w-24 sm:h-24 relative rounded-2xl overflow-hidden bg-gray-100 cart-item-image">
+                                  <SimpleImage
+                                    src={getCartItemImage(item.media, item.imageUrl)}
+                                    alt={item.name}
+                                    className="w-full h-full object-cover"
                                   />
                                 </div>
                               </div>
@@ -430,7 +458,7 @@ export function CartDrawer() {
                                         })
                                       }
                                     }}
-                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 min-w-[40px] min-h-[40px]"
+                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 min-w-[40px] min-h-[40px] rounded-full"
                                     title="Eliminar del carrito"
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -459,23 +487,52 @@ export function CartDrawer() {
                                 </div>
                                 
                                 {/* Información adicional */}
-                                <div className="flex flex-wrap gap-2 mt-2">
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
                                   {item.condition && (
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge variant="outline" className="text-xs rounded-full">
                                       {item.condition === 'nuevo' ? 'Nuevo' : 'Usado'}
                                     </Badge>
                                   )}
                                   {item.freeShipping ? (
-                                    <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 rounded-full">
                                       <Truck className="h-3 w-3 mr-1" />
                                       Envío gratis
                                     </Badge>
                                   ) : (
-                                    <Badge variant="outline" className="text-xs text-gray-600">
+                                    <Badge variant="outline" className="text-xs text-gray-600 rounded-full">
                                       <Truck className="h-3 w-3 mr-1" />
                                       {item.shippingCost !== undefined ? formatPrice(item.shippingCost) : 'Envío'}
                                     </Badge>
                                   )}
+                                </div>
+
+                                {/* Cantidad */}
+                                <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
+                                  <span className="text-sm font-medium text-slate-700">Cantidad</span>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-8 w-8 rounded-full"
+                                      onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                                      disabled={item.quantity <= 1}
+                                      aria-label={`Disminuir cantidad de ${item.name}`}
+                                    >
+                                      <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <span className="min-w-8 text-center text-sm font-semibold">{item.quantity}</span>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-8 w-8 rounded-full"
+                                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                      aria-label={`Aumentar cantidad de ${item.name}`}
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -483,7 +540,7 @@ export function CartDrawer() {
                         ))}
                         
                         {/* Subtotal del vendedor */}
-                        <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="bg-gray-100 rounded-xl p-3">
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium text-gray-700">Subtotal vendedor:</span>
                             <span className="font-bold text-gray-900">{formatPriceNumber(getVendorSubtotal(sellerId))}</span>
@@ -495,13 +552,13 @@ export function CartDrawer() {
                 ) : (
                   /* Carrito vacío */
                   <div className="text-center py-12">
-                    <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                      <ShoppingBag className="h-12 w-12 text-gray-400" />
+                    <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-purple-100 to-purple-50 rounded-full flex items-center justify-center shadow-inner">
+                      <ShoppingBag className="h-12 w-12 text-purple-400" />
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Tu carrito está vacío</h3>
-                    <p className="text-gray-500 mb-6">Agrega productos para comenzar a comprar</p>
+                    <p className="text-gray-500 mb-6 max-w-sm mx-auto">Agrega productos o servicios para empezar a comprar.</p>
                     <Link href="/products">
-                      <Button className="bg-purple-600 hover:bg-purple-700 cart-button">
+                      <Button className="bg-purple-600 hover:bg-purple-700 cart-button rounded-full px-5">
                         <ShoppingBag className="h-4 w-4 mr-2" />
                         Ver productos
                       </Button>
@@ -514,9 +571,9 @@ export function CartDrawer() {
 
           {/* Footer con resumen y botones */}
           {items.length > 0 && !showShippingForm && (
-            <div className="border-t bg-white p-4 space-y-4">
+            <div className="border-t bg-white p-4 space-y-4 shadow-[0_-8px_30px_rgba(0,0,0,0.04)]">
               {/* Resumen de compra */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+              <div className="bg-slate-50 rounded-2xl p-4 space-y-3 border border-slate-200">
                 <h4 className="font-semibold text-gray-900 flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
                   Resumen de compra
@@ -556,7 +613,7 @@ export function CartDrawer() {
                 <Button
                   onClick={handleBuyAllItems}
                   disabled={loading}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl text-lg cart-button"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-2xl text-lg cart-button shadow-md"
                 >
                   {loading ? (
                     <>
@@ -570,15 +627,29 @@ export function CartDrawer() {
                     </>
                   )}
                 </Button>
-                
-                <Button
-                  variant="outline"
-                  onClick={clearCart}
-                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 py-3 rounded-xl cart-button"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Limpiar carrito
-                </Button>
+
+                <div className="rounded-2xl border border-red-200 bg-red-50/70 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-red-900">Acción peligrosa</p>
+                      <p className="text-xs text-red-700">
+                        Vacía todo el carrito y elimina el cupón aplicado.
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (confirm("¿Querés vaciar todo el carrito?")) {
+                          clearCart()
+                        }
+                      }}
+                      className="shrink-0 border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800 rounded-xl"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Limpiar
+                    </Button>
+                  </div>
+                </div>
               </div>
 
               {/* Información adicional */}

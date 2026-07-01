@@ -41,6 +41,10 @@ interface SellerProfile {
   email?: string
   photoURL?: string
   createdAt?: any
+  subscription_status?: "active" | "inactive" | "cancelled"
+  subscription?: {
+    status?: string
+  }
   isSubscribed?: boolean
   description?: string
   location?: string
@@ -374,7 +378,7 @@ export default function SellerProfilePage() {
                   </Link>
                 </Button>
               )}
-              {seller.isSubscribed && (
+              {(seller.subscription_status === "active" || seller.subscription?.status === "active" || seller.isSubscribed) && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   <Star className="h-3 w-3 mr-1" />
                   Vendedor Verificado

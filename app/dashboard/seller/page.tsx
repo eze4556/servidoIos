@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 import {
@@ -76,7 +76,6 @@ import { hasWhiteBackground, isValidVideoFile, getVideoDuration } from "@/lib/im
 // import { ConnectMercadoPagoButton } from "@/components/ui/connect-mercadopago-button" // ELIMINADO
 import { useToast } from "@/components/ui/use-toast"
 import { ApiService } from "@/lib/services/api"
-import { BankConfigForm } from "@/components/seller/bank-config-form"
 import { PaymentDateButton } from "@/components/ui/payment-date-button"
 import { ShippingAddressButton } from "@/components/ui/shipping-address-button"
 import { PriceFormatToggle } from "@/components/ui/price-format-toggle"
@@ -286,16 +285,106 @@ export default function SellerDashboardPage() {
   const router = useRouter()
   const { toast } = useToast()
   const searchParams = useSearchParams()
+  const hasActiveSubscription = currentUser?.subscriptionStatus === "active"
+  const subscriptionRequiredMessage = "Suscripción requerida para publicar productos y servicios"
+  const subscriptionActiveMessage = "Suscripción activa - Puedes publicar productos y servicios"
+  const subscriptionBlockedMessage = "Debes activar tu suscripción para publicar productos y servicios."
+
+  const subscriptionEndsAt = currentUser?.subscriptionEndsAt ?? null
+  const subscriptionDaysRemaining = currentUser?.subscriptionDaysRemaining ?? null
+  const subscriptionStatusSummary = useMemo(() => {
+    if (hasActiveSubscription) {
+      if (subscriptionEndsAt && format(subscriptionEndsAt, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")) {
+        return "Vence hoy"
+      }
+
+      if (typeof subscriptionDaysRemaining === "number") {
+        if (subscriptionDaysRemaining <= 0) {
+          return "Vence hoy"
+        }
+
+        if (subscriptionDaysRemaining === 1) {
+          return "Te queda 1 día"
+        }
+
+        return `Te quedan ${subscriptionDaysRemaining} días`
+      }
+
+      return "Suscripción activa"
+    }
+
+    if (subscriptionEndsAt) {
+      return "Tu suscripción venció. Renueva para volver a publicar productos y servicios."
+    }
+
+    return "Activa tu suscripción para publicar productos y servicios"
+  }, [hasActiveSubscription, subscriptionEndsAt?.getTime(), subscriptionDaysRemaining])
+  const subscriptionActionLabel = subscriptionEndsAt && !hasActiveSubscription ? "Renovar suscripción" : "Activar Suscripción"
+
+  const mercadoPagoStatus = currentUser?.mercadoPagoStatus ?? "not_connected"
+  const mercadoPagoConnected = mercadoPagoStatus === "connected"
+  const mercadoPagoTokenExpired = mercadoPagoStatus === "token_expired"
+  const mercadoPagoConnectionSummary = useMemo(() => {
+    if (mercadoPagoConnected) {
+      return "Tu cuenta de Mercado Pago está conectada y lista para cobrar."
+    }
+
+    if (mercadoPagoTokenExpired) {
+      return "La conexión de Mercado Pago venció. Reconecta para volver a cobrar."
+    }
+
+    return "Debes conectar tu cuenta de Mercado Pago para cobrar ventas."
+  }, [mercadoPagoConnected, mercadoPagoTokenExpired])
+  const mercadoPagoActionLabel = mercadoPagoConnected ? "Conectado" : mercadoPagoTokenExpired ? "Reconectar Mercado Pago" : "Conectar Mercado Pago"
+  const mercadoPagoStatusLabel = mercadoPagoConnected ? "Conectado" : mercadoPagoTokenExpired ? "Token vencido" : "No conectado"
+  const mercadoPagoBadgeVariant = mercadoPagoConnected ? "default" : mercadoPagoTokenExpired ? "destructive" : "secondary"
+
+  const renderSubscriptionGate = (showActionButton = true) => (
+    <div
+      className={`mb-4 flex items-center justify-between rounded-lg border p-3 ${
+        hasActiveSubscription ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        {hasActiveSubscription ? (
+          <CheckCircle className="h-4 w-4 text-green-600" />
+        ) : (
+          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+        )}
+        <div className="flex flex-col">
+          <span className={`text-sm ${hasActiveSubscription ? "text-green-800" : "text-yellow-800"}`}>
+            {hasActiveSubscription ? subscriptionActiveMessage : subscriptionRequiredMessage}
+          </span>
+          <span className={`text-xs ${hasActiveSubscription ? "text-green-700" : "text-yellow-700"}`}>
+            {subscriptionStatusSummary}
+          </span>
+        </div>
+      </div>
+      {showActionButton && !hasActiveSubscription && (
+        <Button
+          onClick={() => setActiveTab("profile")}
+          variant="outline"
+          size="sm"
+          className="text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+        >
+          Renovar suscripción
+        </Button>
+      )}
+    </div>
+  )
 
   const [activeTab, setActiveTab] = useState("dashboard")
   const [myProducts, setMyProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
+  const [catalogLoadedForUid, setCatalogLoadedForUid] = useState<string | null>(null)
 
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [connectingMercadoPago, setConnectingMercadoPago] = useState(false)
+  const [disconnectingMercadoPago, setDisconnectingMercadoPago] = useState(false)
 
   // Product Form State
   const [isEditing, setIsEditing] = useState(false)
@@ -335,6 +424,7 @@ export default function SellerDashboardPage() {
   const [sellerSales, setSellerSales] = useState<AdminSaleRecord[]>([])
   const [commissionDistribution, setCommissionDistribution] = useState<CommissionDistribution | null>(null)
   const [loadingEarnings, setLoadingEarnings] = useState(false)
+  const [earningsLoadedForUid, setEarningsLoadedForUid] = useState<string | null>(null)
   const [earningsFilter, setEarningsFilter] = useState<'all' | 'pendiente' | 'pagado'>('all')
   const [earningsDateFrom, setEarningsDateFrom] = useState('')
   const [earningsDateTo, setEarningsDateTo] = useState('')
@@ -543,6 +633,8 @@ export default function SellerDashboardPage() {
   // useEffect para manejar parámetros de suscripción en la URL
   useEffect(() => {
     const subscriptionStatus = searchParams.get('subscription')
+    const mercadoPagoStatus = searchParams.get('mercadopago')
+    const mercadoPagoReason = searchParams.get('reason')
     
     if (subscriptionStatus === 'success') {
       setSubscriptionNotification({ show: true, status: 'success' })
@@ -555,6 +647,35 @@ export default function SellerDashboardPage() {
       // Limpiar el parámetro de la URL
       const newUrl = new URL(window.location.href)
       newUrl.searchParams.delete('subscription')
+      window.history.replaceState({}, '', newUrl.toString())
+    }
+
+    if (mercadoPagoStatus === 'connected') {
+      toast({
+        title: "Mercado Pago conectado",
+        description: "Tu cuenta quedó vinculada correctamente.",
+      })
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('mercadopago')
+      newUrl.searchParams.delete('reason')
+      window.history.replaceState({}, '', newUrl.toString())
+    } else if (mercadoPagoStatus === 'error') {
+      toast({
+        title: "No se pudo conectar Mercado Pago",
+        description: mercadoPagoReason || "Revisa la autorización e inténtalo de nuevo.",
+        variant: "destructive",
+      })
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('mercadopago')
+      newUrl.searchParams.delete('reason')
+      window.history.replaceState({}, '', newUrl.toString())
+    } else if (mercadoPagoStatus === 'disconnected') {
+      toast({
+        title: "Mercado Pago desconectado",
+        description: "La cuenta fue desvinculada correctamente.",
+      })
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('mercadopago')
       window.history.replaceState({}, '', newUrl.toString())
     }
   }, [searchParams])
@@ -935,12 +1056,14 @@ export default function SellerDashboardPage() {
     }
   }, [activeTab, currentUser])
 
-  // 2. Refrescar el perfil del usuario al entrar a la pestaña de añadir servicio
+  // 2. Refrescar el perfil del usuario al entrar a las pestañas de añadir producto o servicio
   useEffect(() => {
-    if (activeTab === 'addService' && refreshUserProfile) {
-      refreshUserProfile();
+    if ((activeTab === "addService" || activeTab === "addProduct") && refreshUserProfile) {
+      if (catalogLoadedForUid !== currentUser?.firebaseUser.uid) {
+        refreshUserProfile()
+      }
     }
-  }, [activeTab, refreshUserProfile]);
+  }, [activeTab, refreshUserProfile, catalogLoadedForUid, currentUser?.firebaseUser.uid])
   
   // Función para obtener el precio de suscripción
   const fetchSubscriptionPrice = async () => {
@@ -981,6 +1104,14 @@ export default function SellerDashboardPage() {
     }
   }, [activeTab, currentUser])
 
+  useEffect(() => {
+    const currentUid = currentUser?.firebaseUser.uid
+    if (activeTab === "earnings" && currentUid && earningsLoadedForUid !== currentUid) {
+      fetchSellerEarnings()
+      setEarningsLoadedForUid(currentUid)
+    }
+  }, [activeTab, currentUser?.firebaseUser.uid, earningsLoadedForUid])
+
   const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
@@ -1019,11 +1150,11 @@ export default function SellerDashboardPage() {
       return
     }
 
-    if (currentUser) {
+    if (currentUser?.firebaseUser.uid && catalogLoadedForUid !== currentUser.firebaseUser.uid) {
       fetchSellerData(currentUser.firebaseUser.uid)
       fetchCategoriesAndBrands()
     }
-  }, [currentUser, authLoading, router])
+  }, [currentUser?.firebaseUser.uid, currentUser?.role, authLoading, router, catalogLoadedForUid])
 
   const fetchSellerData = async (sellerUid: string) => {
     setLoadingData(true)
@@ -1069,6 +1200,7 @@ export default function SellerDashboardPage() {
         } as Product
       })
       setMyProducts(products)
+      setCatalogLoadedForUid(sellerUid)
     } catch (err) {
       console.error("Error fetching seller products:", err)
       setError("Error al cargar tus productos.")
@@ -1579,6 +1711,11 @@ export default function SellerDashboardPage() {
   // Modificar handleSubmitProduct para usar validación visual
   const handleSubmitProduct = async (e: FormEvent) => {
     e.preventDefault()
+    if (!hasActiveSubscription) {
+      setError(subscriptionBlockedMessage)
+      return
+    }
+
     setProductFormTouched(true)
     const errors = validateProductForm()
     setProductFormErrors(errors)
@@ -1825,6 +1962,60 @@ export default function SellerDashboardPage() {
     }
   };
 
+  const handleConnectMercadoPago = async () => {
+    if (!currentUser) {
+      toast({ title: "Error", description: "No hay usuario autenticado", variant: "destructive" })
+      return
+    }
+
+    setConnectingMercadoPago(true)
+    try {
+      const response = await ApiService.startMercadoPagoConnection()
+      if (response.error) {
+        throw new Error(response.error)
+      }
+
+      if (!response.data?.authorizationUrl) {
+        throw new Error("No se recibió la URL de autorización de Mercado Pago")
+      }
+
+      window.location.href = response.data.authorizationUrl
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      toast({ title: "Error", description: message, variant: "destructive" })
+    } finally {
+      setConnectingMercadoPago(false)
+    }
+  }
+
+  const handleDisconnectMercadoPago = async () => {
+    if (!currentUser) {
+      toast({ title: "Error", description: "No hay usuario autenticado", variant: "destructive" })
+      return
+    }
+
+    const shouldDisconnect = window.confirm("¿Quieres desconectar tu cuenta de Mercado Pago?")
+    if (!shouldDisconnect) {
+      return
+    }
+
+    setDisconnectingMercadoPago(true)
+    try {
+      const response = await ApiService.disconnectMercadoPagoConnection()
+      if (response.error) {
+        throw new Error(response.error)
+      }
+
+      await refreshUserProfile()
+      toast({ title: "Mercado Pago desconectado", description: "Tu cuenta fue desvinculada correctamente." })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      toast({ title: "Error", description: message, variant: "destructive" })
+    } finally {
+      setDisconnectingMercadoPago(false)
+    }
+  }
+
   // useEffect para mp_disconnected - YA NO ES NECESARIO EN SISTEMA CENTRALIZADO
   // useEffect(() => {
   //   if (typeof window !== "undefined" && localStorage.getItem("mp_disconnected")) {
@@ -1848,6 +2039,11 @@ export default function SellerDashboardPage() {
   // Nuevo handleSubmitService para validación visual
   const handleSubmitService = async (e: FormEvent) => {
     e.preventDefault()
+    if (!hasActiveSubscription) {
+      setError(subscriptionBlockedMessage)
+      return
+    }
+
     setServiceFormTouched(true)
     const errors = validateServiceForm()
     setServiceFormErrors(errors)
@@ -1972,6 +2168,29 @@ export default function SellerDashboardPage() {
     }
     
     return filtered.sort((a, b) => new Date(b.fechaCompra).getTime() - new Date(a.fechaCompra).getTime())
+  }
+
+  const visibleSellerSales = getFilteredSales()
+
+  const formatSaleDate = (value: any) => {
+    if (!value) return "—"
+
+    if (typeof value === "object" && value._seconds) {
+      const date = new Date(value._seconds * 1000)
+      return isNaN(date.getTime()) ? "—" : date.toLocaleDateString()
+    }
+
+    if (typeof value === "number") {
+      const date = new Date(value)
+      return isNaN(date.getTime()) ? "—" : date.toLocaleDateString()
+    }
+
+    if (typeof value === "string") {
+      const date = new Date(value)
+      return isNaN(date.getTime()) ? value : date.toLocaleDateString()
+    }
+
+    return "—"
   }
 
   const downloadInvoice = async (startDate: string, endDate: string) => {
@@ -2194,6 +2413,14 @@ export default function SellerDashboardPage() {
                 <Truck className="h-4 w-4" />
                 Gestión de Envíos
               </Button>
+              <Button
+                variant={activeTab === "earnings" ? "secondary" : "ghost"}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
+                onClick={() => setActiveTab("earnings")}
+              >
+                <DollarSign className="h-4 w-4" />
+                Mis Ventas
+              </Button>
               {/* Chat functionality temporarily disabled */}
               {/* <Button
                 variant={activeTab === "chats" ? "secondary" : "ghost"}
@@ -2227,14 +2454,6 @@ export default function SellerDashboardPage() {
               >
                 <User className="h-4 w-4" />
                 Configuración
-              </Button>
-              <Button
-                variant={activeTab === "bank-config" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => setActiveTab("bank-config")}
-              >
-                <CreditCard className="h-4 w-4" />
-                Datos Bancarios
               </Button>
             </nav>
           </div>
@@ -2327,6 +2546,17 @@ export default function SellerDashboardPage() {
                   <Truck className="mr-2 h-5 w-5" />
                   Gestión de Envíos
                 </Button>
+                <Button
+                  variant={activeTab === "earnings" ? "secondary" : "ghost"}
+                  onClick={() => {
+                    setActiveTab("earnings")
+                    closeMobileMenu()
+                  }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
+                >
+                  <DollarSign className="mr-2 h-5 w-5" />
+                  Mis Ventas
+                </Button>
                 {/* Chat functionality temporarily disabled */}
                 {/* <Button
                   variant={activeTab === "chats" ? "secondary" : "ghost"}
@@ -2372,17 +2602,6 @@ export default function SellerDashboardPage() {
                 >
                   <UserIcon className="mr-2 h-5 w-5" />
                   Configuración
-                </Button>
-                <Button
-                  variant={activeTab === "bank-config" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    setActiveTab("bank-config")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <CreditCard className="mr-2 h-5 w-5" />
-                  Datos Bancarios
                 </Button>
               </nav>
               <div className="mt-auto p-4">
@@ -2432,6 +2651,34 @@ export default function SellerDashboardPage() {
                 <CardDescription>Un vistazo rápido a tu actividad.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {!mercadoPagoConnected && (
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <Alert variant={mercadoPagoTokenExpired ? "destructive" : "default"}>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>
+                        {mercadoPagoTokenExpired ? "Reconecta Mercado Pago" : "Conecta Mercado Pago"}
+                      </AlertTitle>
+                      <AlertDescription className="flex flex-col gap-3">
+                        <span>
+                          {mercadoPagoTokenExpired
+                            ? "Tu token de Mercado Pago venció. Reconecta para volver a cobrar ventas."
+                            : "Debes conectar Mercado Pago para poder cobrar ventas de productos y servicios."}
+                        </span>
+                        <div>
+                          <Button
+                            type="button"
+                            onClick={handleConnectMercadoPago}
+                            disabled={connectingMercadoPago}
+                            size="sm"
+                            className="bg-blue-600 text-white hover:bg-blue-700"
+                          >
+                            {connectingMercadoPago ? "Conectando..." : "Conectar Mercado Pago"}
+                          </Button>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                )}
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium">Productos Publicados</CardTitle>
@@ -2594,13 +2841,7 @@ export default function SellerDashboardPage() {
                 <CardDescription>Completa los detalles para agregar un ítem.</CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Notificación de sistema centralizado */}
-                <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg mb-4 flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm text-blue-800">
-                    Sistema de pagos centralizado - Formulario habilitado
-                  </span>
-                </div>
+                {renderSubscriptionGate()}
                 {/* Resumen de errores */}
                 {productFormTouched && Object.keys(productFormErrors).length > 0 && (
                   <Alert variant="destructive" className="mb-4">
@@ -2614,7 +2855,7 @@ export default function SellerDashboardPage() {
                     </Alert>
                 )}
                 <form onSubmit={handleSubmitProduct} className="space-y-6">
-                  <fieldset>
+                  <fieldset disabled={!hasActiveSubscription} style={{ opacity: hasActiveSubscription ? 1 : 0.5 }}>
                   {/* Media Upload Section */}
                   <div>
                     <Label htmlFor="productMedia" className="text-base">
@@ -2860,7 +3101,7 @@ export default function SellerDashboardPage() {
                     )}
                   </div>
                   <div className="flex gap-2 pt-4">
-                      <Button type="submit" disabled={submittingProduct}>
+                      <Button type="submit" disabled={submittingProduct || !hasActiveSubscription}>
                       {submittingProduct ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -2891,32 +3132,7 @@ export default function SellerDashboardPage() {
               </CardHeader>
               <CardContent>
                 {/* Notificación de suscripción */}
-                {currentUser && !currentUser.isSubscribed && (
-                  <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                      <span className="text-sm text-yellow-800">
-                        Suscripción requerida para crear servicios
-                      </span>
-                    </div>
-                    <Button
-                      onClick={() => setActiveTab("profile")}
-                      variant="outline"
-                      size="sm"
-                      className="text-yellow-700 border-yellow-300 hover:bg-yellow-100"
-                    >
-                      Ir a Configuración
-                    </Button>
-                  </div>
-                )}
-                {currentUser && currentUser.isSubscribed && (
-                  <div className="bg-green-50 border border-green-200 p-3 rounded-lg mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-green-800">
-                      Suscripción activa - Puedes crear servicios
-                    </span>
-                  </div>
-                )}
+                {renderSubscriptionGate()}
                 {/* Resumen de errores */}
                 {serviceFormTouched && Object.keys(serviceFormErrors).length > 0 && (
                   <Alert variant="destructive" className="mb-4">
@@ -2930,7 +3146,7 @@ export default function SellerDashboardPage() {
                     </Alert>
                 )}
                 <form onSubmit={handleSubmitService} className="space-y-6 relative">
-                  <fieldset disabled={!!currentUser && !currentUser.isSubscribed} style={{ opacity: !!currentUser && !currentUser.isSubscribed ? 0.5 : 1 }}>
+                  <fieldset disabled={!hasActiveSubscription} style={{ opacity: hasActiveSubscription ? 1 : 0.5 }}>
                     {/* Media Upload Section */}
                     <div>
                       <Label htmlFor="serviceMedia" className="text-base">Imágenes y Videos del Servicio</Label>
@@ -3193,7 +3409,7 @@ export default function SellerDashboardPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="submit" className="w-full" disabled={submittingProduct || validatingImages || uploadingMedia || (!!currentUser && !currentUser.isSubscribed)}>
+                  <Button type="submit" className="w-full" disabled={submittingProduct || validatingImages || uploadingMedia || !hasActiveSubscription}>
                     {submittingProduct ? "Guardando..." : isEditing ? "Actualizar Servicio" : "Añadir Servicio"}
                   </Button>
                 </fieldset>
@@ -3285,19 +3501,94 @@ export default function SellerDashboardPage() {
                   <Input id="email" value={currentUser?.firebaseUser.email || ""} disabled className="mt-1" />
                 </div>
 
+                <Card className="border-dashed">
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <CardTitle>Mercado Pago</CardTitle>
+                        <CardDescription>Conecta tu cuenta para cobrar ventas de productos y servicios.</CardDescription>
+                      </div>
+                      <Badge variant={mercadoPagoBadgeVariant as "default" | "secondary" | "destructive"}>
+                        {mercadoPagoStatusLabel}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className={`rounded-lg border p-3 ${
+                      mercadoPagoConnected
+                        ? "border-green-200 bg-green-50"
+                        : mercadoPagoTokenExpired
+                          ? "border-red-200 bg-red-50"
+                          : "border-yellow-200 bg-yellow-50"
+                    }`}>
+                      <p className={`text-sm font-medium ${
+                        mercadoPagoConnected
+                          ? "text-green-800"
+                          : mercadoPagoTokenExpired
+                            ? "text-red-800"
+                            : "text-yellow-800"
+                      }`}>
+                        {mercadoPagoConnectionSummary}
+                      </p>
+                      {currentUser?.mercadoPagoAccountId && (
+                        <p className="mt-1 text-xs text-slate-600">
+                          Cuenta vinculada: {currentUser.mercadoPagoAccountId}
+                        </p>
+                      )}
+                    </div>
+
+                    {!mercadoPagoConnected && (
+                      <Alert variant={mercadoPagoTokenExpired ? "destructive" : "default"}>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>
+                          {mercadoPagoTokenExpired ? "Token vencido" : "Conexión requerida"}
+                        </AlertTitle>
+                        <AlertDescription>
+                          {mercadoPagoTokenExpired
+                            ? "Reconecta Mercado Pago para volver a cobrar ventas."
+                            : "Debes conectar Mercado Pago antes de cobrar ventas de productos o servicios."}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    <div className="flex flex-wrap gap-3">
+                      {!mercadoPagoConnected && (
+                        <Button
+                          type="button"
+                          onClick={handleConnectMercadoPago}
+                          disabled={connectingMercadoPago}
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          {connectingMercadoPago ? "Conectando..." : mercadoPagoActionLabel}
+                        </Button>
+                      )}
+                      {mercadoPagoConnected && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleDisconnectMercadoPago}
+                          disabled={disconnectingMercadoPago}
+                        >
+                          {disconnectingMercadoPago ? "Desconectando..." : "Desconectar"}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
                   </TabsContent>
                   
                   <TabsContent value="subscription" className="space-y-6 mt-6">
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">Gestión de Suscripción</h3>
                       
-                      {currentUser?.isSubscribed ? (
+                      {hasActiveSubscription ? (
                         <div className="space-y-4">
                                                      <Alert className="border-green-200 bg-green-50">
                              <CheckCircle className="h-4 w-4 text-green-600" />
                              <AlertTitle className="text-green-800">Suscripción Activa</AlertTitle>
                              <AlertDescription className="text-green-700">
-                               Tu suscripción está activa y puedes crear y ofrecer servicios sin restricciones.
+                               Tu suscripción está activa y puedes crear y vender productos y servicios sin restricciones.
                              </AlertDescription>
                            </Alert>
                            
@@ -3305,7 +3596,7 @@ export default function SellerDashboardPage() {
                              <CardHeader>
                                <CardTitle>Estado de tu Suscripción</CardTitle>
                                <CardDescription>
-                                 Tu suscripción para servicios está activa y funcionando.
+                                 Tu suscripción para el marketplace está activa y funcionando.
                                </CardDescription>
                              </CardHeader>
                              <CardContent className="space-y-3">
@@ -3313,15 +3604,21 @@ export default function SellerDashboardPage() {
                                  <CheckCircle className="h-5 w-5 text-green-600" />
                                  <span className="font-semibold">Suscripción Activa</span>
                                </div>
+                                <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                                  <p className="text-sm font-medium text-green-800">{subscriptionStatusSummary}</p>
+                                  <p className="text-xs text-green-700">
+                                    La misma suscripción habilita productos y servicios.
+                                  </p>
+                                </div>
                                <div className="text-sm text-gray-600">
+                                 <p>• <strong>Productos:</strong> Puedes crear y gestionar productos</p>
                                  <p>• <strong>Servicios:</strong> Puedes crear y gestionar servicios</p>
-                                 <p>• <strong>Pagos:</strong> Recibe pagos por tus servicios</p>
-                                 <p>• <strong>Gestión:</strong> Administra todas tus ofertas</p>
+                                 <p>• <strong>Pagos:</strong> Recibe pagos por tus publicaciones</p>
                                  <p>• <strong>Soporte:</strong> Acceso a soporte prioritario</p>
                                </div>
                                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                                  <p className="text-sm text-green-800">
-                                   <strong>Recordatorio:</strong> Los productos físicos no requieren suscripción.
+                                   <strong>Recordatorio:</strong> Esta suscripción habilita productos y servicios.
                                  </p>
                                </div>
                              </CardContent>
@@ -3333,32 +3630,38 @@ export default function SellerDashboardPage() {
                     <AlertTriangle className="h-4 w-4" />
                              <AlertTitle>Suscripción Requerida</AlertTitle>
                     <AlertDescription>
-                               Para crear y ofrecer servicios en la plataforma, necesitas activar tu suscripción.
+                               Tu suscripción venció. Renueva para volver a publicar productos y servicios.
                     </AlertDescription>
                   </Alert>
                            
                 <Card>
                   <CardHeader>
-                               <CardTitle>Suscripción para Servicios</CardTitle>
+                               <CardTitle>Suscripción para el Marketplace</CardTitle>
                     <CardDescription>
-                                 Activa tu suscripción para poder crear y ofrecer servicios.
+                                 Activa tu suscripción para poder crear y ofrecer productos y servicios.
                     </CardDescription>
                   </CardHeader>
                              <CardContent className="space-y-4">
+                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                  <p className="text-sm font-medium text-blue-800">{subscriptionStatusSummary}</p>
+                                  <p className="text-xs text-blue-700">
+                                    La suscripción habilita el acceso completo al marketplace.
+                                  </p>
+                                </div>
                                <div className="text-sm text-gray-600">
                                  <p className="font-semibold mb-2">¿Para qué necesitas la suscripción?</p>
                                  <ul className="space-y-1">
+                                   <li>• <strong>Crear productos:</strong> Publica tus productos físicos</li>
                                    <li>• <strong>Crear servicios:</strong> Publica tus servicios profesionales</li>
-                                   <li>• <strong>Gestionar ofertas:</strong> Administra tus servicios activos</li>
-                                   <li>• <strong>Recibir pagos:</strong> Cobra por tus servicios de forma segura</li>
+                                   <li>• <strong>Gestionar ofertas:</strong> Administra tus publicaciones activas</li>
                                    <li>• <strong>Acceso completo:</strong> Usa todas las herramientas de vendedor</li>
                                  </ul>
                       </div>
                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                                 <p className="text-sm text-blue-800">
-                                   <strong>Nota:</strong> Los productos físicos no requieren suscripción, solo los servicios.
-                                 </p>
-                               </div>
+                                  <p className="text-sm text-blue-800">
+                                    <strong>Nota:</strong> La suscripción vencida bloquea productos y servicios hasta renovar.
+                                  </p>
+                                </div>
                       {/* Mostrar precio de suscripción */}
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <div className="flex items-center justify-between">
@@ -3386,7 +3689,7 @@ export default function SellerDashboardPage() {
                         disabled={subscribing}
                                  className="w-full bg-purple-700 text-white hover:bg-purple-800"
                       >
-                                 {subscribing ? "Redirigiendo..." : "Activar Suscripción"}
+                                  {subscribing ? "Redirigiendo..." : subscriptionActionLabel}
                       </Button>
                              </CardContent>
                            </Card>
@@ -3427,23 +3730,17 @@ export default function SellerDashboardPage() {
                   </CardContent>
                 </Card>
           )}
-
-          {activeTab === "bank-config" && currentUser && (
-            <BankConfigForm 
-              sellerId={currentUser.firebaseUser.uid}
-              onConfigSaved={() => {
-                toast({
-                  title: "Configuración guardada",
-                  description: "Tus datos bancarios han sido guardados correctamente",
-                })
-              }}
-            />
-          )}
-
           {/* Earnings Tab */}
           {activeTab === "earnings" && (
             <div className="space-y-6">
-              {/* Resumen de Ganancias */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mis Ventas</CardTitle>
+                  <CardDescription>Revisa tus ventas, el estado del cobro y el neto a recibir.</CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Resumen de ventas y pagos */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -3494,7 +3791,7 @@ export default function SellerDashboardPage() {
                 <CardHeader>
                   <CardTitle>Filtros de Historial</CardTitle>
                   <CardDescription>
-                    Filtra tu historial de ventas y pagos
+                    Filtra tu historial de ventas y pagos.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -3540,40 +3837,82 @@ export default function SellerDashboardPage() {
                 </CardContent>
               </Card>
 
-            
-           
-
-              {/* Configuraciones de Pagos y Comisiones */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Configuraciones de Pagos y Comisiones</CardTitle>
+                  <CardTitle>Ventas y Pagos</CardTitle>
                   <CardDescription>
-                    Opciones de retiro y comisiones según el tiempo de espera
+                    Cada venta con su cobro, comisión y fecha de pago.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div>
-                        <h4 className="font-medium text-yellow-800">Retiro a 7 días</h4>
-                        <p className="text-sm text-yellow-600">10,50% de comisión</p>
-                      </div>
+                  {loadingEarnings ? (
+                    <div className="flex justify-center items-center py-10">
+                      <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
                     </div>
-                    
-                    <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div>
-                        <h4 className="font-medium text-blue-800">Retiro a 15 días</h4>
-                        <p className="text-sm text-blue-600">7% de comisión</p>
-                      </div>
+                  ) : visibleSellerSales.length === 0 ? (
+                    <div className="text-center py-10 text-gray-500">
+                      No hay ventas para mostrar con los filtros actuales.
                     </div>
-                    
-                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div>
-                        <h4 className="font-medium text-green-800">Retiro a 35 días</h4>
-                        <p className="text-sm text-green-600">4% de comisión</p>
-                      </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[120px]">Fecha</TableHead>
+                            <TableHead className="min-w-[140px]">Compra</TableHead>
+                            <TableHead className="min-w-[220px]">Productos / Servicios</TableHead>
+                            <TableHead className="min-w-[160px]">Comprador</TableHead>
+                            <TableHead className="min-w-[120px]">Estado Pago</TableHead>
+                            <TableHead className="min-w-[120px]">Bruto</TableHead>
+                            <TableHead className="min-w-[120px]">Comisión</TableHead>
+                            <TableHead className="min-w-[120px]">Neto</TableHead>
+                            <TableHead className="min-w-[120px]">Fecha Pago</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {visibleSellerSales.map((sale) => (
+                            <TableRow key={sale.compraId}>
+                              <TableCell>{formatSaleDate(sale.fechaCompra)}</TableCell>
+                              <TableCell className="font-mono text-xs">{sale.compraId}</TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  {(sale.items || []).map((item, index) => (
+                                    <div key={`${sale.compraId}-${item.productoId}-${index}`} className="text-sm">
+                                      <span className="font-medium">{item.productoNombre}</span>
+                                      <span className="text-gray-500"> x{item.cantidad}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <div className="font-medium">{sale.compradorNombre || "Comprador"}</div>
+                                  <div className="text-xs text-gray-500">{sale.compradorId || "—"}</div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    sale.estadoPago === "pagado"
+                                      ? "default"
+                                      : sale.estadoPago === "pendiente"
+                                        ? "secondary"
+                                        : "destructive"
+                                  }
+                                >
+                                  {sale.estadoPago}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{formatPriceNumber(sale.subtotalVendedor || 0)}</TableCell>
+                              <TableCell>{formatPriceNumber(sale.comisionApp || 0)}</TableCell>
+                              <TableCell>{formatPriceNumber(sale.montoAPagar || 0)}</TableCell>
+                              <TableCell>{formatSaleDate(sale.fechaPago)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -4134,5 +4473,6 @@ export default function SellerDashboardPage() {
     </div>
   )
 }
+
 
 

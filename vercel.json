@@ -5,6 +5,12 @@
   "installCommand": "npm install --legacy-peer-deps",
   "devCommand": "npm run dev",
   "regions": ["gru1"],
+  "crons": [
+    {
+      "path": "/api/subscription/expire",
+      "schedule": "0 * * * *"
+    }
+  ],
   "functions": {
     "app/**/*.tsx": {
       "maxDuration": 30

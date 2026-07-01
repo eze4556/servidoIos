@@ -7,7 +7,7 @@ interface ApiResponse<T = any> {
 }
 
 export class ApiService {
-  private static baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+  private static baseUrl = ""
 
   private static async fetchApi<T>(endpoint: string, options: RequestInit = {}, authRequired = false): Promise<ApiResponse<T>> {
     try {
@@ -21,11 +21,6 @@ export class ApiService {
         ...extraHeaders,
       };
       
-      // Agregar el header de ngrok si aplica
-      if (this.baseUrl?.includes('ngrok')) {
-        headers['ngrok-skip-browser-warning'] = 'true';
-      }
-
       // Si la ruta requiere autenticación, obtener el token de Firebase
       if (authRequired && auth?.currentUser) {
         const token = await auth.currentUser.getIdToken(true);
@@ -105,9 +100,32 @@ export class ApiService {
   static async getConnectionStatus(userId: string): Promise<ApiResponse<{
     connected: boolean
     tokenExpired?: boolean
+    status?: "connected" | "not_connected" | "token_expired"
     userId?: string
+    expiresAt?: string | null
+    connectedAt?: string | null
+    accountId?: string | null
   }>> {
-    return this.fetchApi(`/api/mercadopago/connection-status/${userId}`, {}, true)
+    return this.fetchApi(`/api/mercadopago/connection-status?userId=${encodeURIComponent(userId)}`, {}, true)
+  }
+
+  static async startMercadoPagoConnection(): Promise<ApiResponse<{
+    authorizationUrl: string
+    state: string
+    redirectUri: string
+  }>> {
+    return this.fetchApi('/api/mercadopago/connect/start', {
+      method: 'POST',
+    }, true)
+  }
+
+  static async disconnectMercadoPagoConnection(): Promise<ApiResponse<{
+    connected: boolean
+    userId: string
+  }>> {
+    return this.fetchApi('/api/mercadopago/disconnect', {
+      method: 'POST',
+    }, true)
   }
 
   // Webhook para notificaciones de MercadoPago
@@ -117,7 +135,7 @@ export class ApiService {
       id: string
     }
   }): Promise<ApiResponse<{ received: boolean }>> {
-    return this.fetchApi('/api/mercadopago/webhooks', {
+    return this.fetchApi('/api/mercadopago/webhook', {
       method: 'POST',
       body: JSON.stringify(data),
     }, false) 

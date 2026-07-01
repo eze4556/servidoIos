@@ -4,10 +4,10 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
+import { createUserWithEmailAndPassword, updateProfile, deleteUser, signOut } from "firebase/auth"
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
-import { sendWelcomeEmail, initEmailJS } from "@/lib/email-service"
+import { sendWelcomeEmail } from "@/lib/email-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,9 +36,6 @@ export default function SignupPage() {
     } else {
       setAccountType("buyer")
     }
-    
-    // Inicializar EmailJS
-    initEmailJS()
   }, [searchParams])
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -72,16 +69,17 @@ export default function SignupPage() {
 
     setLoading(true)
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      const normalizedEmail = email.trim().toLowerCase()
+      const userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password)
       const user = userCredential.user
 
-      await updateProfile(user, { displayName: name })
+      await updateProfile(user, { displayName: name.trim() })
 
       const userData: { [key: string]: any } = {
         uid: user.uid,
         email: user.email,
-        phone: phone.trim(), // Campo interno para teléfono
-        name: name,
+        phone: phone.trim(),
+        name: name.trim(),
         role: accountType === "seller" ? "seller" : "user",
         isActive: true,
         createdAt: serverTimestamp(),
@@ -90,23 +88,33 @@ export default function SignupPage() {
       }
 
       if (accountType === "seller") {
+        userData.subscription_status = "inactive"
         userData.isSubscribed = false
         userData.productUploadLimit = 0
       }
 
-      await setDoc(doc(db, "users", user.uid), userData)
+      try {
+        await setDoc(doc(db, "users", user.uid), userData)
+      } catch (firestoreError) {
+        try {
+          await deleteUser(user)
+        } catch (deleteError) {
+          console.error("Error deleting partially created auth user:", deleteError)
+          await signOut(auth).catch(() => {})
+        }
+        throw firestoreError
+      }
 
-      // Enviar email de bienvenida
       await sendWelcomeEmail({
-        user_name: name,
-        user_email: email,
-        account_type: accountType
+        user_name: name.trim(),
+        user_email: normalizedEmail,
+        account_type: accountType,
       })
 
       if (accountType === "seller") {
-        router.push("/dashboard/seller") // Redirect sellers to subscription page
+        router.push("/dashboard/seller")
       } else {
-        router.push("/") // Redirect buyers to homepage
+        router.push("/")
       }
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
@@ -164,7 +172,6 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* Campo de email - visible solo internamente */}
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
@@ -181,7 +188,6 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* Campo de teléfono - visible solo internamente */}
             <div className="space-y-2">
               <Label htmlFor="phone" className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
@@ -222,7 +228,6 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* Checkbox de términos y condiciones */}
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="terms"
@@ -232,8 +237,8 @@ export default function SignupPage() {
               />
               <Label htmlFor="terms" className="text-sm">
                 Acepto los{" "}
-                <Link 
-                  href="/terminos-y-condiciones" 
+                <Link
+                  href="/terminos-y-condiciones"
                   target="_blank"
                   className="text-blue-600 hover:underline font-medium"
                 >
@@ -244,7 +249,7 @@ export default function SignupPage() {
             </div>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
-            
+
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Crear Cuenta"}
             </Button>

@@ -56,6 +56,26 @@ NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=tu_template_id
 
 ### Comandos
 
+## Indices de Firestore
+
+El proyecto incluye `firestore.indexes.json` con los indices compuestos usados por las consultas que combinan `where` y `orderBy`.
+
+Para desplegarlos:
+
+```bash
+firebase login
+firebase use <tu-project-id>
+firebase deploy --only firestore:indexes
+```
+
+Si el repositorio todavia no tiene `firebase.json`, inicializalo una vez con:
+
+```bash
+firebase init firestore
+```
+
+y asegurate de que la configuracion apunte a `firestore.indexes.json`.
+
 ```bash
 # Instalar dependencias
 npm install

@@ -69,7 +69,7 @@ export function SubscriptionNotification({ status, onClose }: SubscriptionNotifi
             <div className="mt-4 pt-4 border-t border-green-200">
               <div className="flex items-center gap-2 text-sm text-green-700">
                 <CheckCircle className="w-4 h-4" />
-                <span>Ya tienes disponible la creacion de los servicios</span>
+                <span>Ya tienes disponible la creación de productos y servicios</span>
               </div>
             </div>
           )}
