@@ -11,10 +11,10 @@ import { sendWelcomeEmail } from "@/lib/email-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Loader2, Mail, Phone } from "lucide-react"
+import { Loader2, Mail, Phone, ShoppingBag, Store, User } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { AuthPageShell, authInputClass, authLabelClass } from "@/components/auth/auth-page-shell"
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
@@ -131,137 +131,173 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Crear una cuenta en Servido</CardTitle>
-          <CardDescription className="text-center">
-            Elige tu tipo de cuenta e ingresa tus datos para registrarte.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignup} className="space-y-6">
-            <div>
-              <Label className="mb-2 block">Tipo de Cuenta</Label>
-              <RadioGroup
-                defaultValue="buyer"
-                value={accountType}
-                onValueChange={(value: "buyer" | "seller") => setAccountType(value)}
-                className="flex space-x-4"
+    <AuthPageShell
+      wide
+      title="Crear cuenta"
+      subtitle="Elegí tu tipo de cuenta y completá tus datos"
+      footer={
+        <p className="text-center text-sm text-gray-600">
+          ¿Ya tenés cuenta?{" "}
+          <Link href="/login" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
+            Iniciá sesión
+          </Link>
+        </p>
+      }
+    >
+      <form onSubmit={handleSignup} className="space-y-5">
+        <div>
+          <Label className={`${authLabelClass} mb-3 block`}>Tipo de cuenta</Label>
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-gray-50 p-1.5 ring-1 ring-gray-200">
+            {[
+              { value: "buyer" as const, label: "Comprar", icon: ShoppingBag },
+              { value: "seller" as const, label: "Vender", icon: Store },
+            ].map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setAccountType(value)}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-sm font-semibold transition-all",
+                  accountType === value
+                    ? "bg-purple-700 text-white shadow-md shadow-purple-200"
+                    : "text-gray-600 hover:bg-white hover:text-purple-800"
+                )}
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="buyer" id="buyer" />
-                  <Label htmlFor="buyer">Quiero Comprar</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="seller" id="seller" />
-                  <Label htmlFor="seller">Quiero Vender</Label>
-                </div>
-              </RadioGroup>
-            </div>
+                <Icon className="h-5 w-5" />
+                Quiero {label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre Completo</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Juan Pérez"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="name" className={authLabelClass}>
+            Nombre completo
+          </Label>
+          <div className="relative">
+            <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              id="name"
+              type="text"
+              placeholder="Juan Pérez"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={`${authInputClass} pl-10`}
+              required
+            />
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Correo Electrónico
-                <span className="text-xs text-gray-500">(solo interno)</span>
-              </Label>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="email" className={authLabelClass}>
+              Correo electrónico
+            </Label>
+            <div className="relative">
+              <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 id="email"
                 type="email"
                 placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className={`${authInputClass} pl-10`}
                 required
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                Número de Teléfono
-                <span className="text-xs text-gray-500">(solo interno)</span>
-              </Label>
+          <div className="space-y-2">
+            <Label htmlFor="phone" className={authLabelClass}>
+              Teléfono
+            </Label>
+            <div className="relative">
+              <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 id="phone"
                 type="tel"
                 placeholder="+54 9 11 1234-5678"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                className={`${authInputClass} pl-10`}
                 required
               />
             </div>
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="password" className={authLabelClass}>
+              Contraseña
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={authInputClass}
+              required
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Repite tu contraseña"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className={authLabelClass}>
+              Confirmar contraseña
+            </Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Repetí tu contraseña"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={authInputClass}
+              required
+            />
+          </div>
+        </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="terms"
-                checked={acceptTerms}
-                onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                required
-              />
-              <Label htmlFor="terms" className="text-sm">
-                Acepto los{" "}
-                <Link
-                  href="/terminos-y-condiciones"
-                  target="_blank"
-                  className="text-blue-600 hover:underline font-medium"
-                >
-                  términos y condiciones
-                </Link>{" "}
-                de Servido
-              </Label>
-            </div>
+        <div className="flex items-start gap-3 rounded-xl bg-purple-50/60 p-4 ring-1 ring-purple-100">
+          <Checkbox
+            id="terms"
+            checked={acceptTerms}
+            onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+            className="mt-0.5"
+            required
+          />
+          <Label htmlFor="terms" className="cursor-pointer text-sm leading-relaxed text-gray-600">
+            Acepto los{" "}
+            <Link
+              href="/terminos-y-condiciones"
+              target="_blank"
+              className="font-semibold text-purple-700 hover:underline"
+            >
+              términos y condiciones
+            </Link>{" "}
+            de Servido
+          </Label>
+        </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && (
+          <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">{error}</div>
+        )}
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Crear Cuenta"}
-            </Button>
-          </form>
-          <p className="mt-6 text-center text-sm">
-            ¿Ya tienes una cuenta?{" "}
-            <Link href="/login" className="font-medium text-blue-600 hover:underline">
-              Inicia sesión aquí
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+        <Button
+          type="submit"
+          className="h-11 w-full rounded-full bg-purple-700 text-base font-semibold shadow-md shadow-purple-200 hover:bg-purple-800"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creando cuenta...
+            </>
+          ) : (
+            "Crear cuenta"
+          )}
+        </Button>
+      </form>
+    </AuthPageShell>
   )
 }

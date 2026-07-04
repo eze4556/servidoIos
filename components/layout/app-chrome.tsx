@@ -9,9 +9,14 @@ import { TabBar } from "@/components/layout/tab-bar"
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isAdminRoute = pathname?.startsWith("/admin")
+  const isAuthRoute = pathname === "/login" || pathname === "/signup"
 
   if (isAdminRoute) {
     return <>{children}</>
+  }
+
+  if (isAuthRoute) {
+    return <main className="flex-1">{children}</main>
   }
 
   return (
