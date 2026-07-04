@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import {
   ArrowUpRight,
   Facebook,
@@ -45,20 +44,11 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           {/* Brand */}
           <div className="space-y-5 lg:col-span-5">
-            <Link href="/" className="group inline-flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15 backdrop-blur-sm transition-colors group-hover:bg-white/15">
-                <Image
-                  src="/images/logo.png"
-                  alt="Servido Logo"
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 object-contain"
-                />
-              </span>
-              <div>
-                <h3 className="text-xl font-bold tracking-tight text-white">Servido</h3>
-                <p className="text-xs font-medium text-purple-200">Marketplace</p>
-              </div>
+            <Link href="/" className="group inline-flex flex-col">
+              <h3 className="text-xl font-bold tracking-tight text-white transition-colors group-hover:text-purple-100">
+                Servido
+              </h3>
+              <p className="text-xs font-medium text-purple-200">Marketplace</p>
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-purple-100/90">
               Tu marketplace confiable para comprar y vender productos y servicios. Conectamos compradores
@@ -119,71 +109,73 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Legal */}
-          <div className="lg:col-span-2">
-            <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
-              <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-              Legal
-            </h4>
-            <ul className="space-y-1">
-              {legalLinks.map(({ href, label }) => (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-purple-100/90 transition-colors hover:bg-white/10 hover:text-white"
-                  >
-                    <FileText className="h-3.5 w-3.5 shrink-0 opacity-60" />
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {/* Legal + about */}
+          <div className="sm:col-span-2 lg:col-span-4">
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-2">
+              <div>
+                <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
+                  Legal
+                </h4>
+                <ul className="space-y-1">
+                  {legalLinks.map(({ href, label }) => (
+                    <li key={href}>
+                      <Link
+                        href={href}
+                        className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-purple-100/90 transition-colors hover:bg-white/10 hover:text-white"
+                      >
+                        <FileText className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
+                  Empresa
+                </h4>
+                <Link
+                  href="/acerca-de-nosotros"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-purple-100/90 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <Users className="h-4 w-4 shrink-0" />
+                  Conocé más sobre Servido
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
           </div>
+        </div>
 
-          {/* Contact */}
-          <div className="lg:col-span-2">
-            <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
-              <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-              Contacto
-            </h4>
-            <a
-              href="mailto:servidoarg@gmail.com"
-              className="group flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10"
-            >
+        {/* Contacto — ancho completo para que el email nunca se corte */}
+        <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-5">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-purple-100">
                 <Mail className="h-4 w-4" />
               </span>
-              <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wide text-purple-300">Email</p>
-                <p className="break-all text-sm font-medium text-white group-hover:underline">
-                  servidoarg@gmail.com
-                </p>
+              <div>
+                <p className="text-sm font-semibold text-white">Contacto</p>
+                <p className="text-xs text-purple-200">Consultas, soporte y postulaciones</p>
               </div>
-            </a>
-            <Link
-              href="/acerca-de-nosotros"
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-purple-200 transition-colors hover:text-white"
+            </div>
+            <a
+              href="mailto:servidoarg@gmail.com"
+              className="flex w-full min-w-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:border-white/25 hover:bg-white/15 sm:text-base"
+              style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
             >
-              <Users className="h-4 w-4" />
-              Conocé más sobre Servido
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
+              servidoarg@gmail.com
+            </a>
           </div>
         </div>
 
         {/* Bottom bar */}
         <div className="mt-10 border-t border-white/10 pt-8">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-center text-sm text-purple-200/80 md:text-left">
-              © {currentYear} Servido. Todos los derechos reservados.
-            </p>
-            <p className="flex items-center gap-1.5 text-sm text-purple-200/80">
-              Desarrollado por
-              <span className="rounded-full bg-white/10 px-3 py-1 font-semibold text-white ring-1 ring-white/10">
-                Atenea Software
-              </span>
-            </p>
-          </div>
+          <p className="text-center text-sm text-purple-200/80">
+            © {currentYear} Servido. Todos los derechos reservados.
+          </p>
         </div>
       </div>
     </footer>

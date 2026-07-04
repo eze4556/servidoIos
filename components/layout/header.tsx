@@ -235,18 +235,13 @@ export function Header() {
             {/* Logo */}
             <Link
               href="/"
-              className="group flex shrink-0 items-center gap-2 rounded-xl transition-opacity hover:opacity-90"
+              className="group flex shrink-0 flex-col transition-opacity hover:opacity-90"
             >
-              <Image
-                src="/images/logo.png"
-                alt="Servido Logo"
-                width={120}
-                height={50}
-                className="h-8 w-auto sm:h-9 lg:h-10"
-                style={{ objectFit: "contain" }}
-              />
-              <span className="hidden text-lg font-bold tracking-tight text-purple-900 xs:block sm:text-xl">
+              <span className="text-lg font-bold tracking-tight text-purple-900 transition-colors group-hover:text-purple-700 sm:text-xl">
                 Servido
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-purple-600/80 sm:text-xs">
+                Marketplace
               </span>
             </Link>
 

@@ -283,12 +283,12 @@ export default function TrabajaConNosotrosPage() {
             </p>
             <a
               href="mailto:servidoarg@gmail.com"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-purple-200 transition-colors hover:text-white"
+              className="mt-5 flex w-full min-w-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-white/15 sm:max-w-md sm:justify-start sm:text-left"
+              style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
             >
               servidoarg@gmail.com
-              <ArrowRight className="h-4 w-4" />
             </a>
-            <div className="mt-6">
+            <div className="mt-6 w-full sm:w-auto">
               <Button
                 asChild
                 size="lg"
