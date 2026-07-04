@@ -44,7 +44,6 @@ import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
 import { formatPrice } from "@/lib/utils"
-import { demoProducts, mergeCatalog } from "@/lib/demo"
 
 interface CategoryItem {
   id: string
@@ -104,7 +103,7 @@ export function Header() {
     try {
       const productsSnapshot = await getDocs(collection(db, "products"));
       const products: SearchProduct[] = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as SearchProduct);
-      setAllProducts(mergeCatalog(products, demoProducts));
+      setAllProducts(products);
     } catch (error) {
       console.error("Error fetching all products for search:", error);
       setAllProducts([]);

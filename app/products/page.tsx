@@ -9,7 +9,6 @@ import { Loader2, Frown, Filter } from "lucide-react"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { getProductThumbnail } from "@/lib/image-utils"
 import { Pagination } from "@/components/ui/pagination"
-import { demoBrands, demoCategories, getDemoPhysicalProducts, mergeCatalog } from "@/lib/demo"
 import { HomeProductCard } from "@/components/home/home-product-card"
 import { ProductsCatalogHero } from "@/components/products/products-catalog-hero"
 import {
@@ -116,7 +115,7 @@ export default function ProductsPage() {
         if (isLoadMore) {
           setProducts((prev) => [...prev, ...fetchedProducts])
         } else {
-          setProducts(mergeCatalog(fetchedProducts, getDemoPhysicalProducts()))
+          setProducts(fetchedProducts)
           setCurrentPage(1)
         }
 
@@ -154,19 +153,13 @@ export default function ProductsPage() {
         const categoriesQuery = query(collection(db, "categories"), orderBy("name"))
         const categorySnapshot = await getDocs(categoriesQuery)
         setCategories(
-          mergeCatalog(
-            categorySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Category),
-            demoCategories
-          )
+          categorySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Category)
         )
 
         const brandsQuery = query(collection(db, "brands"), orderBy("name"))
         const brandSnapshot = await getDocs(brandsQuery)
         setBrands(
-          mergeCatalog(
-            brandSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Brand),
-            demoBrands
-          )
+          brandSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Brand)
         )
 
         await fetchProducts()

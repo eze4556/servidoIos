@@ -4,12 +4,6 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { AlertCircle, LayoutGrid, Sparkles, Star, Tag } from 'lucide-react'
 import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import {
-  demoBrands,
-  demoCategories,
-  getDemoPhysicalProducts,
-  mergeCatalog,
-} from '@/lib/demo'
 import { HomeSectionHeader } from '@/components/home/home-section-header'
 import { HomeSearchHero } from '@/components/home/home-search-hero'
 import { HomeAnimatedPromo } from '@/components/home/home-animated-promo'
@@ -80,7 +74,7 @@ export default function HomePage() {
           id: doc.id,
           ...doc.data()
         })) as Product[]
-        setFeaturedProducts(mergeCatalog(featuredData, getDemoPhysicalProducts().slice(0, 10)))
+        setFeaturedProducts(featuredData)
 
         const newQuery = query(
           collection(db, 'products'),
@@ -92,7 +86,7 @@ export default function HomePage() {
           id: doc.id,
           ...doc.data()
         })) as Product[]
-        setNewProducts(mergeCatalog(newData, getDemoPhysicalProducts()))
+        setNewProducts(newData)
 
         const categoriesQuery = query(collection(db, 'categories'), orderBy('name'))
         const categoriesSnapshot = await getDocs(categoriesQuery)
@@ -100,7 +94,7 @@ export default function HomePage() {
           id: doc.id,
           ...doc.data()
         })) as CategoryItem[]
-        setCategories(mergeCatalog(categoriesData, demoCategories))
+        setCategories(categoriesData)
 
         const brandsQuery = query(collection(db, 'brands'), orderBy('name'))
         const brandsSnapshot = await getDocs(brandsQuery)
@@ -108,7 +102,7 @@ export default function HomePage() {
           id: doc.id,
           ...doc.data()
         })) as BrandItem[]
-        setBrands(mergeCatalog(brandsData, demoBrands))
+        setBrands(brandsData)
 
         const recentlyViewed = localStorage.getItem('recentlyViewedProducts')
         if (recentlyViewed) {

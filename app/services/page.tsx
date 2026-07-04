@@ -14,7 +14,6 @@ import { collection, getDocs, query, orderBy, where } from "firebase/firestore"
 import { formatPrice } from "@/lib/utils"
 import { getProductThumbnail } from "@/lib/image-utils"
 import type { ProductMedia } from "@/types/product"
-import { getDemoServices, mergeCatalog } from "@/lib/demo"
 
 interface Service {
   id: string
@@ -71,8 +70,8 @@ export default function ServicesPage() {
         ...doc.data() 
       })) as Service[]
       
-      setServices(mergeCatalog(servicesData, getDemoServices()))
-      setFilteredServices(mergeCatalog(servicesData, getDemoServices()))
+      setServices(servicesData)
+      setFilteredServices(servicesData)
     } catch (err) {
       console.error("Error fetching services:", err)
       setError("Error al cargar los servicios. Intenta de nuevo más tarde.")

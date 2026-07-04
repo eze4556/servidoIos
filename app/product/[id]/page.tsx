@@ -54,13 +54,6 @@ import { ProductGallery } from "@/components/product/product-gallery"
 import { ProductDetailSection } from "@/components/product/product-detail-section"
 import { HomeProductCard } from "@/components/home/home-product-card"
 import { HomeSectionHeader } from "@/components/home/home-section-header"
-import {
-  getDemoBrand,
-  getDemoCategory,
-  getDemoProduct,
-  getDemoRelatedProducts,
-  getDemoSeller,
-} from "@/lib/demo"
 
 interface ProductMedia {
   type: "image" | "video"
@@ -222,30 +215,6 @@ export default function ProductDetailPage() {
     setLoading(true)
     setError(null)
     setAppliedCoupon(null)
-
-    const demoProduct = getDemoProduct(productId)
-    if (demoProduct) {
-      setProduct(demoProduct as Product)
-      setCategory(getDemoCategory(demoProduct.category) ?? null)
-      setBrand(demoProduct.brand ? getDemoBrand(demoProduct.brand) ?? null : null)
-      const demoSellerData = getDemoSeller(demoProduct.sellerId)
-      setSeller(
-        demoSellerData
-          ? {
-              id: demoSellerData.id,
-              name: demoSellerData.displayName || demoSellerData.name,
-              email: demoSellerData.email,
-            }
-          : null
-      )
-      setRelatedProducts(getDemoRelatedProducts(productId, demoProduct.category) as Product[])
-      setReviews([])
-      setQuestions([])
-      setIsFavorite(false)
-      setFavoriteId(null)
-      setLoading(false)
-      return
-    }
 
     try {
       // Fetch product
