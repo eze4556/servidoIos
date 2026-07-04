@@ -1,41 +1,138 @@
-import React from 'react';
+import Link from "next/link"
+import {
+  Handshake,
+  Heart,
+  Lightbulb,
+  Shield,
+  Store,
+  Target,
+  Users,
+} from "lucide-react"
+import { InfoCtaCard } from "@/components/info/info-cta-card"
+import { InfoPageShell } from "@/components/info/info-page-shell"
+import { InfoSection } from "@/components/info/info-section"
+
+const values = [
+  {
+    icon: Shield,
+    title: "Confianza",
+    description: "Relaciones sólidas basadas en transparencia, seguridad y honestidad en cada transacción.",
+  },
+  {
+    icon: Lightbulb,
+    title: "Innovación",
+    description: "Mejoramos la plataforma constantemente para ofrecer una experiencia cada vez más simple.",
+  },
+  {
+    icon: Users,
+    title: "Comunidad",
+    description: "Conectamos compradores y vendedores en un entorno de apoyo y colaboración.",
+  },
+  {
+    icon: Handshake,
+    title: "Integridad",
+    description: "Operamos con ética y responsabilidad en todo lo que hacemos.",
+  },
+  {
+    icon: Target,
+    title: "Excelencia",
+    description: "Nos esforzamos por brindar un servicio de calidad en cada detalle.",
+  },
+]
+
+const highlights = [
+  { label: "Marketplace", value: "Productos y servicios" },
+  { label: "Comunidad", value: "Compradores y vendedores" },
+  { label: "Seguridad", value: "Compra protegida" },
+]
 
 export default function AcercaDeNosotrosPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Acerca de Nosotros - Servido</h1>
+    <InfoPageShell
+      badge="Quiénes somos"
+      badgeIcon={Users}
+      title="Conectamos personas, productos y servicios"
+      subtitle="Servido es el marketplace argentino donde compradores y vendedores se encuentran en un espacio seguro, moderno y fácil de usar."
+    >
+      <div className="mb-10 grid gap-4 sm:grid-cols-3">
+        {highlights.map((item) => (
+          <div
+            key={item.label}
+            className="rounded-2xl border border-purple-100 bg-white px-5 py-4 text-center shadow-sm"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wider text-purple-600">{item.label}</p>
+            <p className="mt-1 text-sm font-medium text-gray-900">{item.value}</p>
+          </div>
+        ))}
+      </div>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Nuestra Misión</h2>
-        <p className="text-gray-700 leading-relaxed">
-          En Servido, nuestra misión es conectar a personas que buscan productos y servicios con aquellos que los ofrecen, creando una comunidad vibrante y un mercado eficiente. Creemos en facilitar transacciones justas y seguras, empoderando a individuos y pequeñas empresas para prosperar en la economía digital.
-        </p>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <InfoSection title="Nuestra misión">
+          <p>
+            Conectar a personas que buscan productos y servicios con quienes los ofrecen, creando una comunidad
+            vibrante y un mercado eficiente. Facilitamos transacciones justas y seguras, empoderando a individuos y
+            pequeñas empresas para crecer en la economía digital.
+          </p>
+        </InfoSection>
+
+        <InfoSection title="Nuestra visión">
+          <p>
+            Ser la plataforma de referencia para comprar y vender productos y servicios, reconocida por la facilidad
+            de uso, la seguridad y la confianza que generamos. Innovamos para ofrecer la mejor experiencia a nuestra
+            comunidad.
+          </p>
+        </InfoSection>
+      </div>
+
+      <section className="mt-10">
+        <div className="mb-6 flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-100 text-purple-900">
+            <Heart className="h-4 w-4" />
+          </span>
+          <h2 className="text-xl font-semibold text-gray-900">Nuestros valores</h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {values.map(({ icon: Icon, title, description }) => (
+            <div
+              key={title}
+              className="rounded-2xl border border-purple-100/80 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-900">
+                <Icon className="h-5 w-5" />
+              </span>
+              <h3 className="font-semibold text-gray-900">{title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">{description}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Nuestra Visión</h2>
-        <p className="text-gray-700 leading-relaxed">
-          Aspiramos a ser la plataforma líder en el mercado para la compra y venta de todo tipo de productos y servicios, reconocida por nuestra facilidad de uso, seguridad y la confianza que generamos en nuestros usuarios. Buscamos innovar constantemente para ofrecer la mejor experiencia posible a nuestra comunidad.
-        </p>
-      </section>
+      <div className="mt-10 space-y-6">
+        <InfoSection title="Nuestro equipo">
+          <p>
+            Somos un equipo apasionado y dedicado, comprometido con una plataforma que realmente satisfaga las
+            necesidades de nuestros usuarios. Valoramos la diversidad, la creatividad y el trabajo en equipo para
+            alcanzar nuestros objetivos.
+          </p>
+          <p>
+            ¿Querés sumarte?{" "}
+            <Link href="/trabaja-con-nosotros" className="font-medium text-purple-900 underline-offset-2 hover:underline">
+              Conocé las oportunidades para trabajar con nosotros
+            </Link>
+            .
+          </p>
+        </InfoSection>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Nuestros Valores</h2>
-        <ul className="list-disc list-inside ml-4 mt-2">
-          <li><span className="font-semibold">Confianza:</span> Construimos relaciones sólidas basadas en la transparencia y la honestidad.</li>
-          <li><span className="font-semibold">Innovación:</span> Buscamos constantemente nuevas formas de mejorar y adaptarnos.</li>
-          <li><span className="font-semibold">Comunidad:</span> Fomentamos un entorno de apoyo y colaboración entre nuestros usuarios.</li>
-          <li><span className="font-semibold">Integridad:</span> Operamos con ética y responsabilidad en todas nuestras acciones.</li>
-          <li><span className="font-semibold">Excelencia:</span> Nos esforzamos por ofrecer un servicio de la más alta calidad.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Nuestro Equipo</h2>
-        <p className="text-gray-700 leading-relaxed">
-          Somos un equipo apasionado y dedicado, comprometido con la creación de una plataforma que realmente satisfaga las necesidades de nuestros usuarios. Valoramos la diversidad, la creatividad y el trabajo en equipo para alcanzar nuestros objetivos.
-        </p>
-      </section>
-    </div>
-  );
-} 
+        <InfoCtaCard
+          icon={Store}
+          title="¿Listo para empezar?"
+          description="Explorá el catálogo, encontrá lo que necesitás o abrí tu tienda y empezá a vender en Servido."
+          primaryLabel="Ver productos"
+          primaryHref="/products"
+          secondaryLabel="Vender en Servido"
+          secondaryHref="/signup?role=seller"
+        />
+      </div>
+    </InfoPageShell>
+  )
+}
