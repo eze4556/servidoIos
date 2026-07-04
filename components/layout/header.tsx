@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import {
   Search,
   ShoppingCart,
@@ -44,6 +44,7 @@ import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
 import { formatPrice } from "@/lib/utils"
+import { demoProducts, mergeCatalog } from "@/lib/demo"
 
 interface CategoryItem {
   id: string
@@ -66,6 +67,7 @@ export function Header() {
   const { currentUser, authLoading, handleLogout, getDashboardLink, getVenderLink } = useAuth()
   const { userLocation, loadingLocation, refreshLocation } = useLocation()
   const router = useRouter()
+  const pathname = usePathname()
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
   
@@ -102,7 +104,7 @@ export function Header() {
     try {
       const productsSnapshot = await getDocs(collection(db, "products"));
       const products: SearchProduct[] = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as SearchProduct);
-      setAllProducts(products);
+      setAllProducts(mergeCatalog(products, demoProducts));
     } catch (error) {
       console.error("Error fetching all products for search:", error);
       setAllProducts([]);
@@ -171,363 +173,350 @@ export function Header() {
     setIsMobileMenuOpen(false)
   }
 
-  return (
-    <header className="bg-gradient-to-r from-purple-800 to-purple-900 text-white shadow-lg">
-      {/* Navbar Principal */}
-      <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
-        <div className="flex items-center justify-between">
-          {/* Logo - Lado Izquierdo */}
-                           <div className="flex items-center flex-shrink-0">
-                   <Link href="/" className="flex items-center gap-1 sm:gap-2 hover:opacity-80 transition-opacity">
-                     <Image
-                       src="/images/logo.png"
-                       alt="Servido Logo"
-                       width={120}
-                       height={50}
-                       className="h-8 w-auto sm:h-8 lg:h-12"
-                       style={{ objectFit: "contain" }}
-                     />
-                     <span className="text-lg sm:text-xl lg:text-2xl font-bold text-white hidden xs:block">Servido</span>
-                   </Link>
-                 </div>
+  const searchInputClass =
+    "w-full rounded-full border-0 bg-gray-100 py-2.5 pl-11 pr-12 text-sm text-gray-900 shadow-inner ring-1 ring-gray-200/80 placeholder:text-gray-500 transition-all focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-purple-300 lg:text-base"
 
-            {/* Barra de búsqueda responsive (visible en móvil y tablet) */}
-            <div className="flex-1 max-w-xs sm:max-w-md mx-2 lg:hidden relative">
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <Input
-                  type="text"
-                  placeholder="Buscar productos, servicios.."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  className="w-full bg-white/10 text-white placeholder:text-gray-300 border-white/20 rounded-md pr-10 pl-3 sm:pl-4 py-1.5 sm:py-2 text-xs sm:text-sm focus:bg-white/20 focus:border-white/40"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-300 hover:text-white"
-                >
-                  <Search className="h-3 w-3 sm:h-4 sm:w-4" />
-                </button>
-              </form>
-              
-              {/* Resultados de búsqueda móvil */}
-              {showSearchResults && searchTerm.trim() && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto mt-1 rounded-t-none">
-                  {isSearching ? (
-                    <div className="p-3 text-center text-gray-500">
-                      <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
-                      Buscando...
-                    </div>
-                  ) : searchResults.length > 0 ? (
-                    <div className="py-2">
-                      {searchResults.map((product) => (
-                        <Link
-                          key={product.id}
-                          href={`/product/${product.id}`}
-                          className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b last:border-b-0"
-                          onClick={() => setShowSearchResults(false)}
-                        >
-                          <div className="w-10 h-10 relative rounded-md overflow-hidden bg-gray-100">
-                            <Image
-                              src={getSearchResultImage(product.media, product.imageUrl, product.name)}
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm text-gray-900 truncate">{product.name}</h4>
-                            <p className="text-sm text-gray-600">{formatPrice(product.price)}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-3 text-center text-gray-500">
-                      No se encontraron productos
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+  const searchInputCompactClass =
+    "w-full rounded-full border-0 bg-gray-100 py-2 pl-10 pr-4 text-xs text-gray-900 shadow-inner ring-1 ring-gray-200/80 placeholder:text-gray-500 transition-all focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-purple-300 sm:text-sm"
 
-            {/* Sección Central - Categorías y Búsqueda (Oculto en móvil) */}
-            <div className="hidden lg:flex items-center gap-2 xl:gap-3 flex-1 max-w-xl mx-2 xl:mx-4">
-            {/* Botón Categorías */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 px-3 xl:px-4 py-2 rounded-md flex items-center gap-1 xl:gap-2 text-sm xl:text-base"
-                >
-                  <span className="hidden xl:inline">Categorias</span>
-                  <span className="xl:hidden">Cat.</span>
-                  <ChevronDown className="h-3 w-3 xl:h-4 xl:w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                {loadingCategories ? (
-                  <DropdownMenuItem disabled>Cargando categorías...</DropdownMenuItem>
-                ) : categories.length === 0 ? (
-                  <DropdownMenuItem disabled>No hay categorías disponibles.</DropdownMenuItem>
-                ) : (
-                  categories.map((category) => (
-                    <DropdownMenuItem key={category.id} asChild>
-                      <Link href={`/category/${category.id}`}>{category.name}</Link>
-                    </DropdownMenuItem>
-                  ))
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+  const renderSearchResults = (compact = false, onResultClick?: () => void) => {
+    if (!showSearchResults || !searchTerm.trim()) return null
 
-            {/* Barra de Búsqueda */}
-            <div className="search-container relative flex-1 min-w-0">
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <Input
-                  type="text"
-                  placeholder="Buscar productos, servicios.."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  className="w-full bg-white text-gray-900 placeholder-gray-500 border-0 rounded-md pr-10 pl-4 py-2 text-sm xl:text-base"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <Search className="h-4 w-4 xl:h-5 xl:w-5" />
-                </button>
-              </form>
-
-              {/* Resultados de búsqueda */}
-              {showSearchResults && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
-                  {isSearching ? (
-                    <div className="p-4 text-center text-gray-500">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                      Buscando...
-                    </div>
-                  ) : searchResults.length > 0 ? (
-                    <div className="py-2">
-                      {searchResults.map((product) => (
-                        <Link
-                          key={product.id}
-                          href={`/product/${product.id}`}
-                          className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b last:border-b-0"
-                          onClick={() => setShowSearchResults(false)}
-                        >
-                          <div className="w-12 h-12 relative rounded-md overflow-hidden bg-gray-100">
-                            <Image
-                              src={getSearchResultImage(product.media, product.imageUrl, product.name)}
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm text-gray-900 truncate">{product.name}</h4>
-                            <p className="text-sm text-gray-600">{formatPrice(product.price)}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : searchTerm.trim() && (
-                    <div className="p-4 text-center text-gray-500">
-                      No se encontraron productos
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+    return (
+      <div
+        className={`absolute top-[calc(100%+0.5rem)] left-0 right-0 z-50 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-purple-900/10 ${
+          compact ? "max-h-64" : "max-h-96"
+        }`}
+      >
+        {isSearching ? (
+          <div className="flex items-center justify-center gap-2 p-4 text-gray-500">
+            <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+            Buscando...
           </div>
+        ) : searchResults.length > 0 ? (
+          <div className="divide-y divide-gray-50 py-1">
+            {searchResults.map((product) => (
+              <Link
+                key={product.id}
+                href={`/product/${product.id}`}
+                className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-purple-50"
+                onClick={() => {
+                  setShowSearchResults(false)
+                  onResultClick?.()
+                }}
+              >
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-100">
+                  <Image
+                    src={getSearchResultImage(product.media, product.imageUrl, product.name)}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="truncate text-sm font-medium text-gray-900">{product.name}</h4>
+                  <p className="text-sm font-semibold text-purple-700">{formatPrice(product.price)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="p-4 text-center text-sm text-gray-500">No se encontraron productos</div>
+        )}
+      </div>
+    )
+  }
 
-          {/* Lado Derecho - Acciones de Usuario */}
-          <div className="flex items-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4 flex-shrink-0">
+  return (
+    <header className="sticky top-0 z-50">
+      {/* Barra principal */}
+      <div className="border-b border-gray-100/80 bg-white/95 shadow-sm backdrop-blur-md">
+        <div className="container mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Logo */}
+            <Link
+              href="/"
+              className="group flex shrink-0 items-center gap-2 rounded-xl transition-opacity hover:opacity-90"
+            >
+              <Image
+                src="/images/logo.png"
+                alt="Servido Logo"
+                width={120}
+                height={50}
+                className="h-8 w-auto sm:h-9 lg:h-10"
+                style={{ objectFit: "contain" }}
+              />
+              <span className="hidden text-lg font-bold tracking-tight text-purple-900 xs:block sm:text-xl">
+                Servido
+              </span>
+            </Link>
 
-            {/* Información del usuario */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            {/* Búsqueda móvil */}
+            <div className="search-container relative mx-1 flex-1 lg:hidden">
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className={searchInputCompactClass}
+                />
+              </form>
+              {renderSearchResults(true)}
+            </div>
+
+            {/* Centro desktop: categorías + búsqueda */}
+            <div className="hidden min-w-0 flex-1 items-center gap-3 lg:flex">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-11 shrink-0 gap-2 rounded-full border-purple-200 bg-purple-50 px-4 font-semibold text-purple-800 shadow-sm hover:border-purple-300 hover:bg-purple-100 hover:text-purple-900"
+                  >
+                    <Menu className="h-4 w-4" />
+                    Categorías
+                    <ChevronDown className="h-4 w-4 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56 rounded-2xl border-0 p-2 shadow-xl">
+                  {loadingCategories ? (
+                    <DropdownMenuItem disabled>Cargando categorías...</DropdownMenuItem>
+                  ) : categories.length === 0 ? (
+                    <DropdownMenuItem disabled>No hay categorías disponibles.</DropdownMenuItem>
+                  ) : (
+                    categories.map((category) => (
+                      <DropdownMenuItem key={category.id} asChild className="rounded-xl">
+                        <Link href={`/category/${category.id}`}>{category.name}</Link>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="search-container relative min-w-0 flex-1 max-w-2xl">
+                <form onSubmit={handleSearchSubmit} className="relative">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar productos, servicios..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className={searchInputClass}
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-purple-700 text-white transition-colors hover:bg-purple-800"
+                  >
+                    <Search className="h-4 w-4" />
+                  </button>
+                </form>
+                {renderSearchResults()}
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
               {currentUser ? (
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Avatar className="h-6 w-6 sm:h-8 sm:w-8 border-2 border-white/20">
-                    <AvatarImage 
-                      src={currentUser.firebaseUser.photoURL || undefined} 
-                      alt={currentUser.firebaseUser.displayName || 'Usuario'}
+                <div className="hidden items-center gap-2 lg:flex">
+                  <Avatar className="h-9 w-9 border-2 border-purple-100 ring-2 ring-purple-50">
+                    <AvatarImage
+                      src={currentUser.firebaseUser.photoURL || undefined}
+                      alt={currentUser.firebaseUser.displayName || "Usuario"}
                       className="object-cover"
                     />
-                    <AvatarFallback className="bg-purple-600 text-white text-xs font-medium">
-                      {currentUser.firebaseUser.displayName?.charAt(0).toUpperCase() || currentUser.firebaseUser.email?.charAt(0).toUpperCase() || 'U'}
+                    <AvatarFallback className="bg-purple-700 text-sm font-medium text-white">
+                      {currentUser.firebaseUser.displayName?.charAt(0).toUpperCase() ||
+                        currentUser.firebaseUser.email?.charAt(0).toUpperCase() ||
+                        "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden xl:block">
-                    <p className="text-sm font-medium text-white truncate max-w-32">
+                  <div className="hidden max-w-[10rem] xl:block">
+                    <p className="truncate text-sm font-semibold text-gray-900">
                       {currentUser.firebaseUser.displayName || currentUser.firebaseUser.email}
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-purple-200">
-                      <Link href="/dashboard/buyer" className="hover:text-white transition-colors">
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Link href="/dashboard/buyer" className="hover:text-purple-700">
                         Mi Panel
                       </Link>
                       {currentUser.role === "seller" && (
-                        <Link href={`/seller/${currentUser.firebaseUser.uid}`} className="hover:text-white transition-colors">
+                        <Link
+                          href={`/seller/${currentUser.firebaseUser.uid}`}
+                          className="hover:text-purple-700"
+                        >
                           Mi Tienda
                         </Link>
                       )}
-                      <button
-                        onClick={handleLogout}
-                        className="hover:text-white transition-colors"
-                      >
-                        Cerrar Sesión
+                      <button onClick={handleLogout} className="hover:text-purple-700">
+                        Salir
                       </button>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="hidden lg:flex items-center gap-2 text-sm">
-                  <Link href="/login" className="text-white hover:text-purple-200 transition-colors">
-                    Ingresa
+                <div className="hidden items-center gap-2 lg:flex">
+                  <Link
+                    href="/login"
+                    className="rounded-full px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-purple-800"
+                  >
+                    Ingresar
                   </Link>
-                  <Link href="/signup" className="text-white hover:text-purple-200 transition-colors">
+                  <Link
+                    href="/signup"
+                    className="rounded-full bg-purple-700 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-purple-200 transition-all hover:bg-purple-800 hover:shadow-lg"
+                  >
                     Crear cuenta
                   </Link>
                 </div>
               )}
+
+              <CartDrawer />
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="h-10 w-10 rounded-full text-gray-700 hover:bg-purple-50 hover:text-purple-800 lg:hidden"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
             </div>
-
-            {/* Carrito */}
-            <CartDrawer />
-
-            {/* Botón de menú móvil */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden text-white hover:bg-purple-700 p-2"
-            >
-              <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
           </div>
         </div>
       </div>
 
-      {/* Navegación Inferior */}
-      <div className="bg-purple-900 border-t border-purple-700">
-        <div className="container mx-auto px-2 sm:px-4 py-1 sm:py-2">
-          <nav className="flex items-center justify-between text-xs sm:text-sm lg:text-base">
-            {/* Ubicación del usuario - En la izquierda */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-white hover:text-purple-200 transition-colors flex items-center gap-1 sm:gap-2 cursor-pointer bg-purple-800/50 px-2 sm:px-3 lg:px-4 py-1 rounded-md">
-                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-purple-200" />
+      {/* Sub navegación */}
+      <div className="relative hidden overflow-hidden lg:block">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#2d0057] via-purple-900 to-violet-950" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_120%_at_0%_50%,rgba(168,85,247,0.22),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_100%_at_100%_50%,rgba(139,92,246,0.12),transparent_50%)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+        <div className="container relative mx-auto flex items-center justify-between gap-6 px-4 py-2.5">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="group flex max-w-lg items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-left shadow-lg shadow-purple-950/25 backdrop-blur-md transition-all duration-300 hover:border-white/25 hover:bg-white/15 hover:shadow-purple-900/30">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/10 transition-colors group-hover:bg-white/20">
+                    <MapPin className="h-4 w-4 text-purple-100" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-purple-200/90">
+                      Enviar a
+                    </span>
                     {loadingLocation ? (
-                      <div className="flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span className="text-xs sm:text-sm hidden xs:inline">Detectando...</span>
-                        <span className="text-xs xs:hidden">...</span>
-                      </div>
+                      <span className="flex items-center gap-2 text-sm font-medium text-white">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Detectando...
+                      </span>
                     ) : (
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <span className="text-xs sm:text-sm font-medium truncate max-w-20 sm:max-w-32 lg:max-w-none">
-                          {userLocation}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            refreshLocation()
-                          }}
-                          className="h-4 w-4 sm:h-5 sm:w-5 p-0 text-purple-200 hover:text-white hover:bg-purple-700"
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                        </Button>
-                      </div>
+                      <span className="block truncate text-sm font-semibold text-white">
+                        {userLocation}
+                      </span>
                     )}
                   </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-purple-600" />
-                      <span className="font-medium">Tu ubicación</span>
-                    </div>
-                    <p className="text-sm">{userLocation || "Ubicación no disponible"}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span>Haz clic en el ícono para actualizar</span>
-                    </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      refreshLocation()
+                    }}
+                    className="h-8 w-8 shrink-0 rounded-full text-purple-200 hover:bg-white/15 hover:text-white"
+                    aria-label="Actualizar ubicación"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs rounded-xl border-0 shadow-xl">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-purple-600" />
+                    <span className="font-medium">Tu ubicación</span>
                   </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  <p className="text-sm">{userLocation || "Ubicación no disponible"}</p>
+                  <p className="text-xs text-gray-500">Tocá el ícono para actualizar</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-            {/* Enlaces centrales */}
-            <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 xl:gap-8">
-              <Link href="/acerca-de-nosotros" className="text-white hover:text-purple-200 transition-colors flex items-center gap-1">
-                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden lg:inline">Quienes somos?</span>
-                <span className="hidden sm:inline lg:hidden">Nosotros</span>
-                <span className="sm:hidden">Nos.</span>
-              </Link>
-              <Link href="/services" className="text-white hover:text-purple-200 transition-colors flex items-center gap-1">
-                <Package className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Servicios</span>
-                <span className="sm:hidden">Serv.</span>
-              </Link>
-              <Link href="/favorites" className="text-white hover:text-purple-200 transition-colors flex items-center gap-1">
-                <Heart className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden lg:inline">Mis favoritos</span>
-                <span className="hidden sm:inline lg:hidden">Favoritos</span>
-                <span className="sm:hidden">Fav.</span>
-              </Link>
-            </div>
-
-            {/* Espacio vacío para mantener el centrado */}
-            <div className="w-0 lg:w-auto"></div>
+          <nav className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-sm">
+            {[
+              { href: "/acerca-de-nosotros", icon: Users, label: "Quiénes somos" },
+              { href: "/services", icon: Package, label: "Servicios" },
+              { href: "/favorites", icon: Heart, label: "Mis favoritos" },
+            ].map(({ href, icon: Icon, label }) => {
+              const isActive = pathname === href || pathname?.startsWith(`${href}/`)
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`group flex items-center gap-2.5 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300 ${
+                    isActive
+                      ? "bg-white text-purple-900 shadow-md shadow-purple-950/20"
+                      : "text-purple-100 hover:bg-white/12 hover:text-white"
+                  }`}
+                >
+                  <span
+                    className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-purple-100 text-purple-700"
+                        : "bg-white/10 text-purple-100 group-hover:bg-white/15 group-hover:text-white"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  {label}
+                </Link>
+              )
+            })}
           </nav>
         </div>
       </div>
 
-      {/* Menú Móvil */}
+      {/* Menú móvil */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="w-full max-w-sm sm:w-80 bg-white overflow-y-auto">
-          <SheetTitle className="text-left text-lg sm:text-xl">Menú</SheetTitle>
-          <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4 pb-6">
-            {/* Búsqueda móvil */}
+        <SheetContent side="left" className="w-full max-w-sm overflow-y-auto border-r-0 bg-white p-0 sm:w-80">
+          <div className="bg-gradient-to-br from-purple-900 via-purple-800 to-violet-900 px-5 py-6 text-white">
+            <SheetTitle className="text-left text-xl font-bold">Menú</SheetTitle>
+            <p className="mt-1 text-sm text-purple-200">Explorá Servido</p>
+          </div>
+
+          <div className="space-y-5 p-5 pb-8">
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Búsqueda</div>
-              <form onSubmit={handleSearchSubmit} className="relative">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Búsqueda</p>
+              <form onSubmit={handleSearchSubmit} className="search-container relative">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Buscar productos, servicios.."
+                  placeholder="Buscar productos, servicios..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="w-full bg-gray-50 text-gray-900 placeholder-gray-500 border border-gray-200 rounded-md pr-10 pl-4 py-2 text-sm sm:text-base"
+                  className="rounded-full border-0 bg-gray-100 py-2.5 pl-10 pr-4 ring-1 ring-gray-200"
                 />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <Search className="h-4 w-4 sm:h-5 sm:w-5" />
-                </button>
               </form>
-              
-              {/* Resultados de búsqueda móvil */}
               {showSearchResults && searchTerm.trim() && (
-                <div className="bg-white border border-gray-200 rounded-md shadow-lg max-h-64 overflow-y-auto">
+                <div className="overflow-hidden rounded-2xl border border-gray-100 shadow-lg">
                   {isSearching ? (
-                    <div className="p-3 text-center text-gray-500">
-                      <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" />
+                    <div className="flex items-center justify-center gap-2 p-4 text-gray-500">
+                      <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
                       Buscando...
                     </div>
                   ) : searchResults.length > 0 ? (
-                    <div className="py-2">
+                    <div className="max-h-64 divide-y divide-gray-50 overflow-y-auto">
                       {searchResults.map((product) => (
                         <Link
                           key={product.id}
                           href={`/product/${product.id}`}
-                          className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b last:border-b-0"
+                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-purple-50"
                           onClick={() => {
                             setShowSearchResults(false)
                             setIsMobileMenuOpen(false)
                           }}
                         >
-                          <div className="w-10 h-10 relative rounded-md overflow-hidden bg-gray-100">
+                          <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-gray-100">
                             <Image
                               src={getSearchResultImage(product.media, product.imageUrl, product.name)}
                               alt={product.name}
@@ -535,124 +524,157 @@ export function Header() {
                               className="object-cover"
                             />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm text-gray-900 truncate">{product.name}</h4>
-                            <p className="text-sm text-gray-600">{formatPrice(product.price)}</p>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="truncate text-sm font-medium text-gray-900">{product.name}</h4>
+                            <p className="text-sm text-purple-700">{formatPrice(product.price)}</p>
                           </div>
                         </Link>
                       ))}
                     </div>
                   ) : (
-                    <div className="p-3 text-center text-gray-500">
-                      No se encontraron productos
-                    </div>
+                    <div className="p-4 text-center text-sm text-gray-500">No se encontraron productos</div>
                   )}
                 </div>
               )}
             </div>
-            {/* Ubicación móvil */}
+
             <div className="space-y-2">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Ubicación</div>
-              <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
-                <MapPin className="h-4 w-4 text-purple-600 flex-shrink-0" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Ubicación</p>
+              <div className="flex items-center gap-3 rounded-2xl bg-purple-50 px-4 py-3 ring-1 ring-purple-100">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100">
+                  <MapPin className="h-4 w-4 text-purple-700" />
+                </div>
                 <div className="min-w-0 flex-1">
                   {loadingLocation ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span className="text-sm">Detectando ubicación...</span>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Detectando...
                     </div>
                   ) : (
-                    <p className="text-sm font-medium truncate">{userLocation}</p>
+                    <p className="truncate text-sm font-medium text-gray-800">{userLocation}</p>
                   )}
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={refreshLocation}
+                  className="h-8 w-8 shrink-0 rounded-full text-purple-700 hover:bg-purple-100"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
-            {/* Usuario */}
             {currentUser ? (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gray-50 rounded-lg">
-                  <Avatar className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0 border-2 border-gray-200">
-                    <AvatarImage 
-                      src={currentUser.firebaseUser.photoURL || undefined} 
-                      alt={currentUser.firebaseUser.displayName || 'Usuario'}
-                      className="object-cover"
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 rounded-2xl bg-gray-50 p-3 ring-1 ring-gray-100">
+                  <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                    <AvatarImage
+                      src={currentUser.firebaseUser.photoURL || undefined}
+                      alt={currentUser.firebaseUser.displayName || "Usuario"}
                     />
-                    <AvatarFallback className="bg-purple-600 text-white text-xs font-medium">
-                      {currentUser.firebaseUser.displayName?.charAt(0).toUpperCase() || currentUser.firebaseUser.email?.charAt(0).toUpperCase() || 'U'}
+                    <AvatarFallback className="bg-purple-700 text-white">
+                      {currentUser.firebaseUser.displayName?.charAt(0).toUpperCase() ||
+                        currentUser.firebaseUser.email?.charAt(0).toUpperCase() ||
+                        "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-sm truncate">{currentUser.firebaseUser.displayName || 'Usuario'}</p>
-                    <p className="text-xs text-gray-500 truncate">{currentUser.firebaseUser.email}</p>
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {currentUser.firebaseUser.displayName || "Usuario"}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">{currentUser.firebaseUser.email}</p>
                   </div>
                 </div>
-                
                 <div className="space-y-1">
-                  <Link href="/dashboard/buyer" className="flex items-center py-2 px-2 sm:px-3 hover:bg-gray-100 rounded-lg transition-colors" onClick={closeMobileMenu}>
-                    <User className="h-4 w-4 mr-2 sm:mr-3 text-purple-600 flex-shrink-0" /> 
-                    <span className="text-sm">Mi Panel Comprador</span>
+                  <Link
+                    href="/dashboard/buyer"
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-800"
+                    onClick={closeMobileMenu}
+                  >
+                    <User className="h-4 w-4 text-purple-600" />
+                    Mi Panel Comprador
                   </Link>
                   {currentUser.role === "seller" && (
-                    <Link href={`/seller/${currentUser.firebaseUser.uid}`} className="flex items-center py-2 px-2 sm:px-3 hover:bg-gray-100 rounded-lg transition-colors" onClick={closeMobileMenu}>
-                      <Store className="h-4 w-4 mr-2 sm:mr-3 text-purple-600 flex-shrink-0" /> 
-                      <span className="text-sm">Mi Tienda</span>
+                    <Link
+                      href={`/seller/${currentUser.firebaseUser.uid}`}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-800"
+                      onClick={closeMobileMenu}
+                    >
+                      <Store className="h-4 w-4 text-purple-600" />
+                      Mi Tienda
                     </Link>
                   )}
+                  <button
+                    onClick={() => {
+                      handleLogout()
+                      closeMobileMenu()
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <LogOut className="h-4 w-4 text-red-500" />
+                    Cerrar sesión
+                  </button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-1">
-                <Link href="/login" className="flex items-center py-2 px-2 sm:px-3 hover:bg-gray-100 rounded-lg transition-colors" onClick={closeMobileMenu}>
-                  <User className="h-4 w-4 mr-2 sm:mr-3 text-purple-600 flex-shrink-0" />
-                  <span className="text-sm">Ingresar</span>
+              <div className="flex gap-2">
+                <Link
+                  href="/login"
+                  className="flex flex-1 items-center justify-center rounded-full border border-gray-200 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  onClick={closeMobileMenu}
+                >
+                  Ingresar
                 </Link>
-                <Link href="/signup" className="flex items-center py-2 px-2 sm:px-3 hover:bg-gray-100 rounded-lg transition-colors" onClick={closeMobileMenu}>
-                  <User className="h-4 w-4 mr-2 sm:mr-3 text-purple-600 flex-shrink-0" />
-                  <span className="text-sm">Crear cuenta</span>
+                <Link
+                  href="/signup"
+                  className="flex flex-1 items-center justify-center rounded-full bg-purple-700 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-purple-800"
+                  onClick={closeMobileMenu}
+                >
+                  Crear cuenta
                 </Link>
               </div>
             )}
 
-            {/* Categorías */}
-            <div className="pt-3 sm:pt-4">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">Categorías</div>
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Categorías</p>
               {loadingCategories ? (
-                <p className="text-sm text-gray-500 px-1">Cargando categorías...</p>
+                <p className="text-sm text-gray-500">Cargando categorías...</p>
               ) : categories.length === 0 ? (
-                <p className="text-sm text-gray-500 px-1">No hay categorías disponibles.</p>
+                <p className="text-sm text-gray-500">No hay categorías disponibles.</p>
               ) : (
-                <div className="space-y-1">
+                <div className="grid grid-cols-2 gap-2">
                   {categories.map((category) => (
                     <Link
                       key={category.id}
                       href={`/category/${category.id}`}
-                      className="flex items-center py-2 px-2 sm:px-3 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="rounded-xl bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-700 ring-1 ring-gray-100 transition-colors hover:bg-purple-50 hover:text-purple-800"
                       onClick={closeMobileMenu}
                     >
-                      <div className="h-2 w-2 bg-purple-400 rounded-full mr-2 sm:mr-3 flex-shrink-0"></div>
-                      <span className="text-sm truncate">{category.name}</span>
+                      {category.name}
                     </Link>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Enlaces adicionales */}
-            <div className="pt-3 sm:pt-4 border-t">
-              <div className="space-y-1">
-                <Link href="/acerca-de-nosotros" className="flex items-center py-2 px-2 sm:px-3 hover:bg-gray-100 rounded-lg transition-colors" onClick={closeMobileMenu}>
-                  <Users className="h-4 w-4 mr-2 sm:mr-3 text-purple-600 flex-shrink-0" />
-                  <span className="text-sm">Quienes somos?</span>
-                </Link>
-                <Link href="/services" className="flex items-center py-2 px-2 sm:px-3 hover:bg-gray-100 rounded-lg transition-colors" onClick={closeMobileMenu}>
-                  <Package className="h-4 w-4 mr-2 sm:mr-3 text-purple-600 flex-shrink-0" />
-                  <span className="text-sm">Servicios</span>
-                </Link>
-                <Link href="/favorites" className="flex items-center py-2 px-2 sm:px-3 hover:bg-gray-100 rounded-lg transition-colors" onClick={closeMobileMenu}>
-                  <Heart className="h-4 w-4 mr-2 sm:mr-3 text-purple-600 flex-shrink-0" />
-                  <span className="text-sm">Mis favoritos</span>
-                </Link>
+            <div className="border-t border-gray-100 pt-4">
+              <div className="grid grid-cols-1 gap-1">
+                {[
+                  { href: "/acerca-de-nosotros", icon: Users, label: "Quiénes somos" },
+                  { href: "/services", icon: Package, label: "Servicios" },
+                  { href: "/favorites", icon: Heart, label: "Mis favoritos" },
+                ].map(({ href, icon: Icon, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-800"
+                    onClick={closeMobileMenu}
+                  >
+                    <Icon className="h-4 w-4 text-purple-600" />
+                    {label}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>

@@ -12,6 +12,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ArrowLeft, AlertCircle, Loader2 } from "lucide-react"
 import { getProductThumbnail } from "@/lib/image-utils"
 import { formatPrice } from "@/lib/utils"
+import {
+  getDemoCategory,
+  getDemoProductsByCategory,
+  mergeCatalog,
+} from "@/lib/demo"
 
 interface Product {
   id: string
@@ -54,22 +59,35 @@ export default function CategoryProductsPage() {
     try {
       // Fetch category details
       const categoryDoc = await getDoc(doc(db, "categories", categoryId))
-      if (!categoryDoc.exists()) {
+      const demoCategory = getDemoCategory(categoryId)
+
+      if (!categoryDoc.exists() && !demoCategory) {
         setError("Categoría no encontrada.")
         setLoading(false)
         return
       }
-      setCategory({ id: categoryDoc.id, ...categoryDoc.data() } as Category)
 
-      // Fetch products for this category
-      const productsQuery = query(
-        collection(db, "products"),
-        where("category", "==", categoryId),
-        orderBy("createdAt", "desc"),
-        limit(20), // Limit to 20 products for now
-      )
-      const productSnapshot = await getDocs(productsQuery)
-      setProducts(productSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Product))
+      if (categoryDoc.exists()) {
+        setCategory({ id: categoryDoc.id, ...categoryDoc.data() } as Category)
+      } else if (demoCategory) {
+        setCategory(demoCategory)
+      }
+
+      let firestoreProducts: Product[] = []
+      try {
+        const productsQuery = query(
+          collection(db, "products"),
+          where("category", "==", categoryId),
+          orderBy("createdAt", "desc"),
+          limit(20),
+        )
+        const productSnapshot = await getDocs(productsQuery)
+        firestoreProducts = productSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Product)
+      } catch (queryError) {
+        console.error("Error fetching category products from Firestore:", queryError)
+      }
+
+      setProducts(mergeCatalog(firestoreProducts, getDemoProductsByCategory(categoryId)))
     } catch (err) {
       console.error("Error fetching category products:", err)
       setError("Error al cargar los productos de esta categoría.")

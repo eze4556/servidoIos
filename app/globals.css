@@ -115,6 +115,49 @@
   }
 
   /* Product card utilities for uniform sizing */
+  .home-product-card {
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .home-product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px -12px rgba(74, 0, 142, 0.18);
+  }
+
+  .home-fade-in {
+    animation: fade-in-up 0.6s ease-out forwards;
+  }
+
+  .home-section {
+    animation: fade-in-up 0.6s ease-out forwards;
+    opacity: 0;
+  }
+
+  .home-section-delay-1 { animation-delay: 0.1s; }
+  .home-section-delay-2 { animation-delay: 0.2s; }
+  .home-section-delay-3 { animation-delay: 0.3s; }
+
+  .home-carousel-fade::before,
+  .home-carousel-fade::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2rem;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .home-carousel-fade::before {
+    left: 0;
+    background: linear-gradient(to right, rgba(248, 250, 252, 0.95), transparent);
+  }
+
+  .home-carousel-fade::after {
+    right: 0;
+    background: linear-gradient(to left, rgba(248, 250, 252, 0.95), transparent);
+  }
+
   .product-card-fixed {
     height: 320px;
     display: flex;
@@ -248,5 +291,79 @@
 @keyframes spin-slow {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-20px) translateX(8px);
+    opacity: 0.7;
+  }
+}
+
+.home-hero-glow {
+  background: radial-gradient(circle at 30% 50%, rgba(168, 85, 247, 0.35), transparent 55%);
+  animation: hero-glow 6s ease-in-out infinite;
+}
+
+.home-animated-gradient {
+  background: linear-gradient(
+    -45deg,
+    #2e1065,
+    #4a008e,
+    #6b21a8,
+    #7c3aed,
+    #4a008e,
+    #2e1065
+  );
+  background-size: 400% 400%;
+  animation: gradient-shift 12s ease infinite;
+}
+
+.home-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  animation: particle-float ease-in-out infinite;
+}
+
+.home-animated-promo {
+  min-height: 280px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-glow,
+  .home-animated-gradient,
+  .home-particle {
+    animation: none;
   }
 }

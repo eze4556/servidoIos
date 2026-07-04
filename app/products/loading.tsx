@@ -1,53 +1,45 @@
-import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ProductsCatalogHero } from "@/components/products/products-catalog-hero"
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="container mx-auto px-4 py-6">
-        <Skeleton className="h-10 w-80 mx-auto mb-6" />
-        
-        {/* Mobile Filter Button Skeleton */}
-        <div className="lg:hidden mb-4">
-          <Skeleton className="h-12 w-full" />
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
+      <div className="container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <ProductsCatalogHero />
+
+        <div className="mb-4 lg:hidden">
+          <Skeleton className="h-11 w-full rounded-xl" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-          {/* Desktop Filters Sidebar Skeleton */}
-          <div className="hidden lg:block">
-            <Card className="p-6">
-              <Skeleton className="h-6 w-20 mb-4" />
-              <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr]">
+          <aside className="hidden lg:block">
+            <div className="overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100">
+              <Skeleton className="h-14 w-full" />
+              <div className="space-y-5 p-5">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i}>
-                    <Skeleton className="h-4 w-16 mb-2" />
-                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="mb-2 h-3 w-20" />
+                    <Skeleton className="h-10 w-full rounded-xl" />
                   </div>
                 ))}
               </div>
-            </Card>
-          </div>
+            </div>
+          </aside>
 
-          {/* Product Grid Skeleton */}
-          <div className="w-full">
-            <Skeleton className="h-5 w-48 mb-4" />
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-              {Array.from({ length: 20 }).map((_, i) => (
-                <Card key={i} className="overflow-hidden product-card-fixed">
-                  <div className="product-image-container relative">
-                    <Skeleton className="w-full h-full" />
+          <div>
+            <Skeleton className="mb-5 h-8 w-48 rounded-full" />
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100"
+                >
+                  <Skeleton className="aspect-square w-full" />
+                  <div className="space-y-2 p-4">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-5 w-2/3" />
                   </div>
-                  <CardContent className="p-3 flex flex-col flex-grow justify-between h-[120px]">
-                    <div className="flex-grow">
-                      <Skeleton className="h-4 w-full mb-2" />
-                      <Skeleton className="h-4 w-3/4 mb-2" />
-                      <Skeleton className="h-6 w-20 mb-2" />
-                    </div>
-                    <div className="space-y-1 mt-auto">
-                      <Skeleton className="h-3 w-16" />
-                    </div>
-                  </CardContent>
-                </Card>
+                </div>
               ))}
             </div>
           </div>

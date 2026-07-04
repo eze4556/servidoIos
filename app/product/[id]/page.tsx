@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { SimpleImage } from '@/components/ui/simple-image'
 import Link from "next/link"
 import {
   doc,
@@ -22,15 +21,12 @@ import {
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import {
   ArrowLeft,
-  Heart,
-  Share2,
   ShoppingCart,
   Plus,
   Minus,
@@ -38,13 +34,12 @@ import {
   Truck,
   Shield,
   RotateCcw,
-  MapPin,
   Store,
   AlertCircle,
   Loader2,
   MessageSquare,
-  Play,
-  Video,
+  FileText,
+  HelpCircle,
 } from "lucide-react"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
@@ -53,6 +48,19 @@ import { formatPrice, formatPriceNumber } from "@/lib/utils"
 import { ShareButtons } from "@/components/ui/share-buttons"
 import { ApiService } from "@/lib/services/api"
 import { useToast } from "@/hooks/use-toast"
+import { getProductThumbnail } from "@/lib/image-utils"
+import { ProductBreadcrumbs } from "@/components/product/product-breadcrumbs"
+import { ProductGallery } from "@/components/product/product-gallery"
+import { ProductDetailSection } from "@/components/product/product-detail-section"
+import { HomeProductCard } from "@/components/home/home-product-card"
+import { HomeSectionHeader } from "@/components/home/home-section-header"
+import {
+  getDemoBrand,
+  getDemoCategory,
+  getDemoProduct,
+  getDemoRelatedProducts,
+  getDemoSeller,
+} from "@/lib/demo"
 
 interface ProductMedia {
   type: "image" | "video"
@@ -181,40 +189,16 @@ export default function ProductDetailPage() {
 
   // Get product media (with backward compatibility)
   const getProductMedia = (product: Product): ProductMedia[] => {
-    console.log('getProductMedia called with product:', product)
     if (product.media && product.media.length > 0) {
-      console.log('Using product.media:', product.media)
       return product.media
     }
-    // Backward compatibility: convert old imageUrl to media format
     if (product.imageUrl) {
-      console.log('Using product.imageUrl:', product.imageUrl)
-      return [
-        {
-          type: "image",
-          url: product.imageUrl,
-          path: "",
-        },
-      ]
+      return [{ type: "image", url: product.imageUrl, path: "" }]
     }
-    console.log('Using placeholder image')
-    return [
-      {
-        type: "image",
-        url: "/placeholder.svg?height=400&width=400",
-        path: "",
-      },
-    ]
+    return [{ type: "image", url: "/placeholder.svg?height=400&width=400", path: "" }]
   }
 
   const productMedia = product ? getProductMedia(product) : []
-  
-  // Debug logging
-  useEffect(() => {
-    console.log('productMedia updated:', productMedia)
-    console.log('selectedMediaIndex:', selectedMediaIndex)
-    console.log('Current selected media:', productMedia[selectedMediaIndex])
-  }, [productMedia, selectedMediaIndex])
 
   useEffect(() => {
     if (params.id && !authLoading) {
@@ -238,6 +222,30 @@ export default function ProductDetailPage() {
     setLoading(true)
     setError(null)
     setAppliedCoupon(null)
+
+    const demoProduct = getDemoProduct(productId)
+    if (demoProduct) {
+      setProduct(demoProduct as Product)
+      setCategory(getDemoCategory(demoProduct.category) ?? null)
+      setBrand(demoProduct.brand ? getDemoBrand(demoProduct.brand) ?? null : null)
+      const demoSellerData = getDemoSeller(demoProduct.sellerId)
+      setSeller(
+        demoSellerData
+          ? {
+              id: demoSellerData.id,
+              name: demoSellerData.displayName || demoSellerData.name,
+              email: demoSellerData.email,
+            }
+          : null
+      )
+      setRelatedProducts(getDemoRelatedProducts(productId, demoProduct.category) as Product[])
+      setReviews([])
+      setQuestions([])
+      setIsFavorite(false)
+      setFavoriteId(null)
+      setLoading(false)
+      return
+    }
 
     try {
       // Fetch product
@@ -762,23 +770,33 @@ export default function ProductDetailPage() {
 
   if (loading || authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30">
+        <div className="container mx-auto px-4 py-8 md:px-6">
+          <div className="mb-6 h-6 w-64 animate-pulse rounded-lg bg-gray-200" />
+          <div className="grid gap-8 lg:grid-cols-2">
+            <div className="aspect-[4/3] animate-pulse rounded-3xl bg-gray-200" />
+            <div className="space-y-4">
+              <div className="h-8 w-3/4 animate-pulse rounded-lg bg-gray-200" />
+              <div className="h-12 w-1/2 animate-pulse rounded-lg bg-gray-200" />
+              <div className="h-32 animate-pulse rounded-2xl bg-gray-200" />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (error || !product) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error || "Producto no disponible."}</AlertDescription>
-        </Alert>
-        <Button asChild className="mt-4">
-          <Link href="/">Volver al inicio</Link>
-        </Button>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/30 p-4">
+        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg ring-1 ring-gray-100">
+          <AlertCircle className="mx-auto mb-4 h-14 w-14 text-purple-400" />
+          <h1 className="mb-2 text-xl font-bold text-gray-900">Producto no disponible</h1>
+          <p className="mb-6 text-gray-600">{error || "No pudimos cargar este producto."}</p>
+          <Button asChild className="rounded-full bg-purple-700 hover:bg-purple-800">
+            <Link href="/products">Ver catálogo</Link>
+          </Button>
+        </div>
       </div>
     )
   }
@@ -834,289 +852,160 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Local Header for breadcrumbs and back button */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-2 sm:px-4 py-4">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-            <nav className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 overflow-hidden">
-              <Link href="/" className="hover:text-blue-600 whitespace-nowrap">
-                Inicio
-              </Link>
-              <span>/</span>
-              {category && (
-                <>
-                  <Link href={`/category/${category.id}`} className="hover:text-blue-600 truncate">
-                    {category.name}
-                  </Link>
-                  <span>/</span>
-                </>
-              )}
-              <span className="text-gray-900 truncate max-w-[120px] sm:max-w-none">{product.name}</span>
-            </nav>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
+      <div className="container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <div className="mb-2 flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+            className="h-10 w-10 shrink-0 rounded-full hover:bg-purple-50 hover:text-purple-800"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="min-w-0 flex-1">
+            <ProductBreadcrumbs category={category} productName={product.name} />
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Product Media Gallery */}
-          <div className="space-y-4">
-            <div className="aspect-[4/3] relative bg-white rounded-lg overflow-hidden border">
-              {productMedia[selectedMediaIndex]?.type === "video" ? (
-                <video
-                  controls
-                  className="w-full h-full object-cover"
-                  poster={productMedia[selectedMediaIndex]?.thumbnail}
-                >
-                  <source src={productMedia[selectedMediaIndex]?.url} type="video/mp4" />
-                  Tu navegador no soporta videos.
-                </video>
-              ) : (
-                <SimpleImage 
-                  src={productMedia[selectedMediaIndex]?.url || "/placeholder.svg"} 
-                  alt={product.name} 
-                  className="w-full h-full object-contain bg-gray-50 transition-all duration-300" 
-                  onLoad={() => console.log('Main image loaded:', productMedia[selectedMediaIndex]?.url, 'Index:', selectedMediaIndex)}
-                  key={`main-image-${selectedMediaIndex}`}
-                />
-              )}
-              <div className="absolute top-4 right-4 flex gap-2">
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="bg-white/80 hover:bg-white"
-                  onClick={handleToggleFavorite}
-                >
-                  <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
-                </Button>
-                {/* Botón compartir temporalmente deshabilitado */}
-                {/* <Button variant="secondary" size="icon" className="bg-white/80 hover:bg-white">
-                  <Share2 className="h-5 w-5" />
-                </Button> */}
-              </div>
-            </div>
+        <div className="mb-10 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+          <ProductGallery
+            media={productMedia}
+            productName={product.name}
+            selectedIndex={selectedMediaIndex}
+            onSelectIndex={setSelectedMediaIndex}
+            isFavorite={isFavorite}
+            onToggleFavorite={handleToggleFavorite}
+          />
 
-            {/* Media Thumbnails */}
-            <div className="flex gap-2 overflow-x-auto">
-              {productMedia.map((media, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    console.log('Thumbnail clicked:', index, 'Current selectedMediaIndex:', selectedMediaIndex)
-                    console.log('productMedia array:', productMedia)
-                    setSelectedMediaIndex(index)
-                  }}
-                  className={`flex-shrink-0 w-20 h-20 relative rounded-md overflow-hidden border-2 transition-colors ${
-                    selectedMediaIndex === index ? "border-blue-500" : "border-gray-200"
-                  }`}
-                >
-                  {media.type === "video" ? (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center relative">
-                      {media.thumbnail ? (
-                        <SimpleImage
-                          src={media.thumbnail || "/placeholder.svg"}
-                          alt={`Video ${index + 1}`}
-                          className="w-full h-full object-contain bg-gray-50"
-                        />
-                      ) : (
-                        <Video className="h-8 w-8 text-gray-600" />
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                        <Play className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  ) : (
-                    <SimpleImage 
-                      src={media.url || "/placeholder.svg"} 
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-contain bg-gray-50"
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Product Info - keeping existing code */}
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                {brand && <Badge variant="outline">{brand.name}</Badge>}
-                <Badge variant={product.isService ? "default" : "secondary"}>
-                  {product.isService ? "Servicio" : "Producto"}
-                </Badge>
-              </div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 break-words">
-                {product.name}
-              </h1>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${i < averageRating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                    />
-                  ))}
-                  <span className="ml-2 text-sm text-gray-600">
-                    ({averageRating.toFixed(1)}) • {reviews.length} reseñas
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
+          <div className="lg:sticky lg:top-36 lg:self-start">
+            <div className="space-y-5 rounded-2xl bg-white p-5 shadow-lg shadow-purple-900/5 ring-1 ring-gray-100 sm:p-6">
               <div>
-                <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-600 break-all">
-                  {formatPrice(finalPrice)}
-                </span>
-                {appliedCoupon && product && finalPrice < product.price && (
-                  <>
-                    <span className="text-lg sm:text-xl lg:text-2xl text-gray-400 line-through ml-2">
-                      {formatPrice(product.price)}
-                    </span>
-                    <Badge className="bg-green-500 text-white ml-2">
-                      Cupón Aplicado:
-                      {appliedCoupon.discountType === "percentage"
-                        ? `${appliedCoupon.discountValue}% OFF`
-                        : `$${appliedCoupon.discountValue.toFixed(2)} OFF`}
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {brand && (
+                    <Badge className="rounded-full bg-purple-100 text-purple-800 hover:bg-purple-100">
+                      {brand.name}
                     </Badge>
-                  </>
-                )}
-                <span className="text-sm sm:text-base lg:text-lg text-gray-500 ml-1 sm:ml-2">
-                  {product.isService ? "por servicio" : ""}
-                </span>
-              </div>
-
-              {/* Condición y Envío */}
-              <div className="flex flex-col gap-1 text-sm">
-                {product.condition && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-700">Condición:</span>
-                    <span className="px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs font-semibold">
-                      {product.condition === 'nuevo' ? 'Nuevo' : 'Usado'}
-                    </span>
-                  </div>
-                )}
-                {product.freeShipping ? (
-                  <div className="flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-green-600" />
-                    <span className="text-green-700 font-medium">Envío gratis</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-gray-500" />
-                    <span className="text-gray-700">Envío: </span>
-                    <span className="font-medium">{product.shippingCost !== undefined ? formatPrice(product.shippingCost) : '-'}</span>
-                  </div>
-                )}
-              </div>
-
-              {!product.isService && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-600">Stock disponible:</span>
-                  <span className="font-medium">{product.stock ? `${product.stock} unidades` : "Sin stock"}</span>
+                  )}
+                  {product.condition && (
+                    <Badge
+                      className={`rounded-full text-white ${
+                        product.condition === "nuevo" ? "bg-emerald-600" : "bg-amber-600"
+                      }`}
+                    >
+                      {product.condition === "nuevo" ? "Nuevo" : "Usado"}
+                    </Badge>
+                  )}
+                  {product.freeShipping && (
+                    <Badge className="rounded-full bg-green-600 text-white">Envío gratis</Badge>
+                  )}
                 </div>
-              )}
-
-              {currentCartQuantity > 0 && (
-                <div className="text-sm text-blue-600">
-                  Ya tienes {currentCartQuantity} {currentCartQuantity === 1 ? "unidad" : "unidades"} en tu carrito
-                </div>
-              )}
-            </div>
-
-            {/* Quantity and Add to Cart */}
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                <span className="text-sm font-medium">Cantidad:</span>
-                <div className="flex items-center border rounded-md w-fit">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 sm:h-10 sm:w-10"
-                    onClick={() => handleQuantityChange(quantity - 1)}
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                  <span className="w-8 sm:w-12 text-center font-medium text-sm sm:text-base">{quantity}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 sm:h-10 sm:w-10"
-                    onClick={() => handleQuantityChange(quantity + 1)}
-                    disabled={quantity >= maxQuantity}
-                  >
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                </div>
-                {!product.isService && (
-                  <span className="text-xs sm:text-sm text-gray-500">
-                    Máximo: {maxQuantity} {maxQuantity === 1 ? "unidad" : "unidades"}
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{product.name}</h1>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${i < averageRating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {averageRating.toFixed(1)} · {reviews.length} reseñas
                   </span>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="text-3xl font-bold text-purple-700 sm:text-4xl">{formatPrice(finalPrice)}</span>
+                  {appliedCoupon && finalPrice < product.price && (
+                    <>
+                      <span className="text-lg text-gray-400 line-through">{formatPrice(product.price)}</span>
+                      <Badge className="rounded-full bg-emerald-500 text-white">
+                        {appliedCoupon.discountType === "percentage"
+                          ? `${appliedCoupon.discountValue}% OFF`
+                          : `$${appliedCoupon.discountValue} OFF`}
+                      </Badge>
+                    </>
+                  )}
+                </div>
+                {!product.freeShipping && product.shippingCost !== undefined && (
+                  <p className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+                    <Truck className="h-4 w-4 text-purple-600" />
+                    Envío: <span className="font-medium">{formatPrice(product.shippingCost)}</span>
+                  </p>
+                )}
+                {product.stock !== undefined && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Stock: <span className="font-medium text-gray-800">{product.stock} unidades</span>
+                  </p>
+                )}
+                {currentCartQuantity > 0 && (
+                  <p className="mt-2 rounded-lg bg-purple-50 px-3 py-2 text-sm font-medium text-purple-800">
+                    Ya tenés {currentCartQuantity} en el carrito
+                  </p>
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <div className="space-y-4 border-t border-gray-100 pt-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium text-gray-700">Cantidad</span>
+                  <div className="flex items-center rounded-full bg-gray-50 p-1 ring-1 ring-gray-200">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full"
+                      onClick={() => handleQuantityChange(quantity - 1)}
+                      disabled={quantity <= 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-10 text-center font-semibold">{quantity}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full"
+                      onClick={() => handleQuantityChange(quantity + 1)}
+                      disabled={quantity >= maxQuantity}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {maxQuantity > 0 && (
+                    <span className="text-xs text-gray-400">Máx. {maxQuantity}</span>
+                  )}
+                </div>
+
                 <Button
                   onClick={handleAddToCart}
-                  className="flex-1 text-sm sm:text-base"
                   size="lg"
                   disabled={maxQuantity <= 0}
+                  className="h-12 w-full rounded-full bg-purple-700 text-base font-semibold shadow-lg shadow-purple-200 hover:bg-purple-800"
                 >
-                  <ShoppingCart className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  <ShoppingCart className="mr-2 h-5 w-5" />
                   {maxQuantity <= 0 ? "Sin stock" : "Agregar al carrito"}
                 </Button>
-                {/* Botón Comprar ahora temporalmente deshabilitado */}
-                {/* <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="text-sm sm:text-base"
-                  onClick={handleBuyNow}
-                  disabled={maxQuantity <= 0 || buyingNow}
-                >
-                  {buyingNow ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Procesando...
-                    </>
-                  ) : (
-                    "Comprar ahora"
-                  )}
-                </Button> */}
               </div>
-            </div>
 
-            {/* Seller Info and Contact Button */}
-            {seller && (
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-3">
+              {seller && (
+                <div className="rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 p-4 ring-1 ring-purple-100">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <Store className="h-5 w-5 text-gray-600" />
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm">
+                        <Store className="h-5 w-5 text-purple-700" />
                       </div>
                       <div>
-                        <Link href={`/seller/${seller.id}`} className="hover:text-orange-600 transition-colors">
-                          <p className="font-medium">Vendido por {seller.name}</p>
+                        <Link href={`/seller/${seller.id}`} className="font-semibold text-gray-900 hover:text-purple-800">
+                          {seller.name}
                         </Link>
-                        <p className="text-sm text-gray-600">Vendedor verificado</p>
+                        <p className="text-xs text-gray-500">Vendedor verificado</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <Link href={`/seller/${seller.id}`}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs sm:text-sm whitespace-nowrap"
-                        >
-                          <Store className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">Ver Tienda</span>
-                          <span className="sm:hidden">Tienda</span>
+                        <Button variant="outline" size="sm" className="rounded-full border-purple-200">
+                          Ver tienda
                         </Button>
                       </Link>
                       {currentUser?.firebaseUser.uid !== seller.id && (
@@ -1124,86 +1013,75 @@ export default function ProductDetailPage() {
                           onClick={handleContactSeller}
                           variant="outline"
                           size="sm"
-                          className="text-xs sm:text-sm whitespace-nowrap"
+                          className="rounded-full border-purple-200"
                         >
-                          <MessageSquare className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                          <span className="hidden sm:inline">Contactar Vendedor</span>
-                          <span className="sm:hidden">Contactar</span>
+                          <MessageSquare className="mr-1 h-4 w-4" />
+                          Contactar
                         </Button>
                       )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              )}
 
-            {/* Share Buttons */}
-            <Card>
-              <CardContent className="p-4">
+              <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-100">
                 <ShareButtons
                   productName={product.name}
-                  productUrl={window.location.href}
+                  productUrl={typeof window !== "undefined" ? window.location.href : ""}
                   productPrice={finalPrice}
                   productImage={productMedia[0]?.url}
                 />
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Compra Protegida */}
-            <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
-              <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
-              <span>Compra Protegida</span>
+              <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
+                <span className="flex items-center gap-1.5">
+                  <Shield className="h-4 w-4 text-purple-600" />
+                  Compra protegida
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <RotateCcw className="h-4 w-4 text-purple-600" />
+                  Devoluciones
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Rest of the component remains the same - Product Description, Reviews, Questions, Related Products */}
-        {/* Product Description */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-bold mb-4">Descripción del producto</h2>
-            <div className="prose max-w-none">
-              <p className="text-gray-700 leading-relaxed">
-                {product.description || "Este producto no tiene descripción disponible."}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* User Reviews */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Reseñas de Usuarios ({reviews.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
+        <div className="space-y-8">
+          <ProductDetailSection title="Descripción" icon={FileText}>
+            <p className="leading-relaxed text-gray-700">
+              {product.description || "Este producto no tiene descripción disponible."}
+            </p>
+          </ProductDetailSection>
+          <ProductDetailSection title="Reseñas" icon={Star} count={reviews.length}>
             {reviewError && (
-              <Alert variant="destructive" className="mb-4">
+              <Alert variant="destructive" className="mb-4 rounded-xl">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
                 <AlertDescription>{reviewError}</AlertDescription>
               </Alert>
             )}
             {reviewSuccess && (
-              <Alert className="mb-4 bg-green-50 border-green-300 text-green-700 dark:bg-green-900 dark:text-green-300 dark:border-green-700">
-                <AlertCircle className="h-4 w-4 text-green-600" />
+              <Alert className="mb-4 rounded-xl border-emerald-200 bg-emerald-50 text-emerald-800">
+                <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Éxito</AlertTitle>
                 <AlertDescription>{reviewSuccess}</AlertDescription>
               </Alert>
             )}
 
             {currentUser && !hasUserReviewed && (
-              <form onSubmit={handleSubmitReview} className="mb-8 p-4 border rounded-lg bg-gray-50">
-                <h3 className="text-lg font-medium mb-3">Escribe tu reseña</h3>
+              <form onSubmit={handleSubmitReview} className="mb-8 rounded-2xl bg-purple-50/60 p-5 ring-1 ring-purple-100">
+                <h3 className="mb-3 font-semibold text-gray-900">Escribí tu reseña</h3>
                 <div className="mb-4">
-                  <Label htmlFor="rating" className="block text-sm font-medium text-gray-700 mb-1">
+                  <Label htmlFor="rating" className="mb-2 block text-sm font-medium text-gray-700">
                     Calificación
                   </Label>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star
                         key={star}
-                        className={`h-6 w-6 cursor-pointer ${
-                          star <= reviewRating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                        className={`h-7 w-7 cursor-pointer transition-colors ${
+                          star <= reviewRating ? "fill-amber-400 text-amber-400" : "text-gray-300"
                         }`}
                         onClick={() => setReviewRating(star)}
                       />
@@ -1211,62 +1089,65 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
                 <div className="mb-4">
-                  <Label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-1">
+                  <Label htmlFor="comment" className="mb-2 block text-sm font-medium text-gray-700">
                     Comentario
                   </Label>
                   <Textarea
                     id="comment"
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
-                    placeholder="Comparte tu experiencia con el producto..."
+                    placeholder="Compartí tu experiencia con el producto..."
                     rows={4}
+                    className="rounded-xl border-0 bg-white ring-1 ring-gray-200"
                     required
                   />
                 </div>
-                <Button type="submit" disabled={submittingReview}>
+                <Button type="submit" disabled={submittingReview} className="rounded-full bg-purple-700 hover:bg-purple-800">
                   {submittingReview ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
                     </>
                   ) : (
-                    "Enviar Reseña"
+                    "Enviar reseña"
                   )}
                 </Button>
               </form>
             )}
 
             {reviews.length === 0 ? (
-              <p className="text-gray-600">Sé el primero en dejar una reseña para este producto.</p>
+              <p className="text-gray-500">Sé el primero en dejar una reseña.</p>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {reviews.map((review) => (
-                  <div key={review.id} className="border-b pb-4 last:border-b-0 last:pb-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                        />
-                      ))}
-                      <span className="text-sm font-medium ml-2">{review.userName}</span>
-                      <span className="text-xs text-gray-500">
+                  <div key={review.id} className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-100">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${i < review.rating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900">{review.userName}</span>
+                      <span className="text-xs text-gray-400">
                         {review.createdAt?.toDate
                           ? review.createdAt.toDate().toLocaleDateString()
                           : "Fecha desconocida"}
                       </span>
                     </div>
-                    <p className="text-gray-700 leading-relaxed">
+                    <p className="leading-relaxed text-gray-700">
                       {(() => {
                         const censorPhoneNumbers = (text: string): string => {
                           const phonePatterns = [
                             /(\+54\s*9?\s*\d{1,2}\s*\d{4}\s*-?\s*\d{4})/g,
                             /(\d{1,4}\s*-?\s*\d{1,4}\s*-?\s*\d{1,4})/g,
                             /(\d{7,15})/g,
-                            /(\(\d{1,4}\)\s*\d{1,4}\s*-?\s*\d{1,4})/g
+                            /(\(\d{1,4}\)\s*\d{1,4}\s*-?\s*\d{1,4})/g,
                           ]
                           let censoredText = text
-                          phonePatterns.forEach(pattern => {
-                            censoredText = censoredText.replace(pattern, '***NÚMERO BLOQUEADO***')
+                          phonePatterns.forEach((pattern) => {
+                            censoredText = censoredText.replace(pattern, "***NÚMERO BLOQUEADO***")
                           })
                           return censoredText
                         }
@@ -1277,15 +1158,9 @@ export default function ProductDetailPage() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </ProductDetailSection>
 
-        {/* Questions and Answers */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Preguntas y Respuestas ({questions.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
+          <ProductDetailSection title="Preguntas y respuestas" icon={HelpCircle} count={questions.length}>
             {questionError && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
@@ -1302,10 +1177,10 @@ export default function ProductDetailPage() {
             )}
 
             {currentUser && currentUser.firebaseUser.uid !== product.sellerId && (
-              <form onSubmit={handleSubmitQuestion} className="mb-8 p-4 border rounded-lg bg-gray-50">
-                <h3 className="text-lg font-medium mb-3">Hacer una pregunta</h3>
+              <form onSubmit={handleSubmitQuestion} className="mb-8 rounded-2xl bg-purple-50/60 p-5 ring-1 ring-purple-100">
+                <h3 className="mb-3 font-semibold text-gray-900">Hacé una pregunta</h3>
                 <div className="mb-4">
-                  <Label htmlFor="question" className="block text-sm font-medium text-gray-700 mb-1">
+                  <Label htmlFor="question" className="mb-2 block text-sm font-medium text-gray-700">
                     Tu pregunta
                   </Label>
                   <Textarea
@@ -1314,10 +1189,11 @@ export default function ProductDetailPage() {
                     onChange={(e) => setNewQuestion(e.target.value)}
                     placeholder="¿Qué te gustaría saber sobre este producto?"
                     rows={3}
+                    className="rounded-xl border-0 bg-white ring-1 ring-gray-200"
                     required
                   />
                 </div>
-                <Button type="submit" disabled={submittingQuestion}>
+                <Button type="submit" disabled={submittingQuestion} className="rounded-full bg-purple-700 hover:bg-purple-800">
                   {submittingQuestion ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
@@ -1334,10 +1210,12 @@ export default function ProductDetailPage() {
             ) : (
               <div className="space-y-6">
                 {questions.map((question) => (
-                  <div key={question.id} className="border-b pb-4 last:border-b-0 last:pb-0">
-                    <div className="mb-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-blue-600">Pregunta:</span>
+                  <div key={question.id} className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-100">
+                    <div className="mb-3">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-800">
+                          Pregunta
+                        </span>
                         <span className="text-sm text-gray-500">{question.userName}</span>
                         <span className="text-xs text-gray-400">
                           {question.createdAt?.toDate
@@ -1366,9 +1244,11 @@ export default function ProductDetailPage() {
                     </div>
 
                     {question.answer ? (
-                      <div className="ml-4 p-3 bg-blue-50 rounded-lg">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-green-600">Respuesta:</span>
+                      <div className="ml-0 rounded-xl bg-purple-50 p-4 ring-1 ring-purple-100 sm:ml-4">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                            Respuesta
+                          </span>
                           <span className="text-sm text-gray-500">{question.answeredBy}</span>
                           <span className="text-xs text-gray-400">
                             {question.answeredAt?.toDate
@@ -1398,19 +1278,20 @@ export default function ProductDetailPage() {
                     ) : currentUser && currentUser.firebaseUser.uid === product.sellerId ? (
                       <div className="ml-4">
                         {answeringQuestionId === question.id ? (
-                          <div className="p-3 bg-gray-50 rounded-lg">
+                          <div className="rounded-xl bg-white p-4 ring-1 ring-gray-200 sm:ml-4">
                             <Textarea
                               value={answerText}
                               onChange={(e) => setAnswerText(e.target.value)}
-                              placeholder="Escribe tu respuesta..."
+                              placeholder="Escribí tu respuesta..."
                               rows={2}
-                              className="mb-2"
+                              className="mb-2 rounded-xl border-0 bg-gray-50 ring-1 ring-gray-200"
                             />
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
                                 onClick={() => handleSubmitAnswer(question.id)}
                                 disabled={submittingAnswer}
+                                className="rounded-full bg-purple-700 hover:bg-purple-800"
                               >
                                 {submittingAnswer ? (
                                   <>
@@ -1427,57 +1308,63 @@ export default function ProductDetailPage() {
                                   setAnsweringQuestionId(null)
                                   setAnswerText("")
                                 }}
+                                className="rounded-full"
                               >
                                 Cancelar
                               </Button>
                             </div>
                           </div>
                         ) : (
-                          <Button size="sm" variant="outline" onClick={() => setAnsweringQuestionId(question.id)}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setAnsweringQuestionId(question.id)}
+                            className="ml-0 rounded-full sm:ml-4"
+                          >
                             Responder
                           </Button>
                         )}
                       </div>
                     ) : (
-                      <div className="ml-4 text-sm text-gray-500 italic">Esperando respuesta del vendedor...</div>
+                      <div className="ml-0 text-sm italic text-gray-400 sm:ml-4">
+                        Esperando respuesta del vendedor...
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </ProductDetailSection>
 
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">Productos relacionados</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
-              {relatedProducts.map((relatedProduct) => {
-                const relatedMedia = getProductMedia(relatedProduct)
-                const firstImage = relatedMedia.find((m) => m.type === "image")
-
-                return (
-                  <Link key={relatedProduct.id} href={`/product/${relatedProduct.id}`}>
-                    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                      <div className="aspect-square relative">
-                        <SimpleImage 
-                          src={firstImage?.url || relatedProduct.imageUrl || "/placeholder.svg"} 
-                          alt={relatedProduct.name} 
-                          className="w-full h-full object-contain bg-gray-50"
-                        />
-                      </div>
-                      <CardContent className="p-3">
-                        <h3 className="text-sm font-medium truncate mb-1">{relatedProduct.name}</h3>
-                        <p className="text-lg font-bold text-blue-600">{formatPrice(relatedProduct.price)}</p>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        )}
+          {relatedProducts.length > 0 && (
+            <section>
+              <HomeSectionHeader
+                title="Productos relacionados"
+                subtitle="Otros artículos que te pueden interesar"
+                accent="purple"
+              />
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+                {relatedProducts.map((relatedProduct) => (
+                  <HomeProductCard
+                    key={relatedProduct.id}
+                    id={relatedProduct.id}
+                    name={relatedProduct.name}
+                    price={relatedProduct.price}
+                    imageUrl={getProductThumbnail(
+                      relatedProduct.media,
+                      relatedProduct.imageUrl,
+                      relatedProduct.name
+                    )}
+                    media={relatedProduct.media}
+                    condition={relatedProduct.condition}
+                    freeShipping={relatedProduct.freeShipping}
+                    shippingCost={relatedProduct.shippingCost}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   )

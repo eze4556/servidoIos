@@ -320,7 +320,7 @@ export function CartDrawer() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-navbar-foreground hover:bg-purple-700 p-1"
+          className="relative h-10 w-10 rounded-full text-gray-700 hover:bg-purple-50 hover:text-purple-800"
           aria-label="Abrir carrito"
         >
           <ShoppingCart className="h-5 w-5" />
