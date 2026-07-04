@@ -25,8 +25,8 @@ export default function SellerDashboardLayout({
 
   if (authLoading || !currentUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/40">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
       </div>
     )
   }

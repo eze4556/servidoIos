@@ -2,16 +2,13 @@
 
 import Link from "next/link"
 import {
-  Home,
   ShoppingBag,
   PlusCircle,
   Edit,
   Trash2,
   XCircle,
   BarChart3,
-  LogOut,
   ListFilter,
-  Store,
   ImageIcon as ImageIconLucide,
   MessageSquare,
   UserIcon,
@@ -40,8 +37,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
-import { Menu } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -101,6 +96,12 @@ import * as XLSX from "xlsx"
 import { getDashboardProductImage } from "@/lib/image-utils"
 import { formatPrice, formatPriceNumber } from "@/lib/utils"
 import { SubscriptionNotification } from "@/components/subscription-notification"
+import {
+  SellerDashboardShell,
+  type SellerDashboardTab,
+} from "@/components/dashboard/seller/seller-dashboard-shell"
+import { BuyerStatCard } from "@/components/dashboard/buyer/buyer-stat-card"
+import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
 
 interface UserProfile {
   uid: string
@@ -341,21 +342,21 @@ export default function SellerDashboardPage() {
 
   const renderSubscriptionGate = (showActionButton = true) => (
     <div
-      className={`mb-4 flex items-center justify-between rounded-lg border p-3 ${
-        hasActiveSubscription ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"
+      className={`mb-4 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+        hasActiveSubscription ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"
       }`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {hasActiveSubscription ? (
-          <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />
         ) : (
-          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
         )}
         <div className="flex flex-col">
-          <span className={`text-sm ${hasActiveSubscription ? "text-green-800" : "text-yellow-800"}`}>
+          <span className={`text-sm font-medium ${hasActiveSubscription ? "text-emerald-800" : "text-amber-800"}`}>
             {hasActiveSubscription ? subscriptionActiveMessage : subscriptionRequiredMessage}
           </span>
-          <span className={`text-xs ${hasActiveSubscription ? "text-green-700" : "text-yellow-700"}`}>
+          <span className={`text-xs ${hasActiveSubscription ? "text-emerald-700" : "text-amber-700"}`}>
             {subscriptionStatusSummary}
           </span>
         </div>
@@ -365,15 +366,15 @@ export default function SellerDashboardPage() {
           onClick={() => setActiveTab("profile")}
           variant="outline"
           size="sm"
-          className="text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+          className="shrink-0 rounded-full border-amber-300 text-amber-800 hover:bg-amber-100"
         >
-          Renovar suscripción
+          {subscriptionActionLabel}
         </Button>
       )}
     </div>
   )
 
-  const [activeTab, setActiveTab] = useState("dashboard")
+  const [activeTab, setActiveTab] = useState<SellerDashboardTab>("dashboard")
   const [myProducts, setMyProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
@@ -704,10 +705,6 @@ export default function SellerDashboardPage() {
     XLSX.writeFile(wb, "ventas_vendedor.xlsx")
   }
 
-  // Function to close mobile menu
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false)
-  }
 
   // Shipping management functions
   const fetchShipments = async () => {
@@ -2239,8 +2236,8 @@ export default function SellerDashboardPage() {
 
   if (authLoading || (!currentUser && !authLoading)) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <Loader2 className="h-12 w-12 animate-spin text-orange-600" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/40">
+        <Loader2 className="h-12 w-12 animate-spin text-purple-700" />
       </div>
     )
   }
@@ -2262,8 +2259,8 @@ export default function SellerDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/40">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
       </div>
     )
   }
@@ -2350,384 +2347,109 @@ export default function SellerDashboardPage() {
     }
   };
 
+  const handleSellerNav = (tab: SellerDashboardTab) => {
+    if (tab === "products" || tab === "addProduct" || tab === "addService") {
+      resetForm()
+    }
+    if (tab === "addService") {
+      setActiveAddTab("service")
+    }
+    setActiveTab(tab)
+  }
+
+  const sellerStoreHref = currentUser?.firebaseUser?.uid
+    ? `/seller/${currentUser.firebaseUser.uid}`
+    : undefined
+
   return (
-    <div className="flex flex-col lg:grid lg:grid-cols-[280px_1fr] min-h-screen w-full bg-gray-100">
-      {/* Sidebar - keeping existing code */}
-      <div className="hidden border-r bg-white lg:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-[60px] items-center border-b px-6">
-            <Link href="/" className="flex items-center gap-2 font-semibold text-orange-600">
-              <Store className="h-6 w-6" />
-              <span>Panel Vendedor</span>
-            </Link>
-          </div>
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="grid items-start px-4 text-sm font-medium">
-              <Button
-                variant={activeTab === "dashboard" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => setActiveTab("dashboard")}
-              >
-                <Home className="h-4 w-4" />
-                Resumen
-              </Button>
-              <Button
-                variant={activeTab === "products" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => {
-                  resetForm()
-                  setActiveTab("products")
-                }}
-              >
-                <ShoppingBag className="h-4 w-4" />
-                Mis Productos
-              </Button>
-              <Button
-                variant={activeTab === "addProduct" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => {
-                  resetForm()
-                  setActiveTab("addProduct")
-                }}
-              >
-                <PlusCircle className="h-4 w-4" />
-                {isEditing ? "Editar Producto" : "Añadir Producto"}
-              </Button>
-              <Button
-                variant={activeTab === "addService" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => {
-                  resetForm()
-                  setActiveTab("addService")
-                  setActiveAddTab("service")
-                }}
-              >
-                <PlusCircle className="h-4 w-4" />
-                Añadir Servicio
-              </Button>
-              <Button
-                variant={activeTab === "shipping" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => setActiveTab("shipping")}
-              >
-                <Truck className="h-4 w-4" />
-                Gestión de Envíos
-              </Button>
-              <Button
-                variant={activeTab === "earnings" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => setActiveTab("earnings")}
-              >
-                <DollarSign className="h-4 w-4" />
-                Mis Ventas
-              </Button>
-              {/* Chat functionality temporarily disabled */}
-              {/* <Button
-                variant={activeTab === "chats" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => setActiveTab("chats")}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Chats
-              </Button> */}
-              {/* <Button
-                variant={activeTab === "coupons" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => setActiveTab("coupons")}
-              >
-                <Tag className="h-4 w-4" />
-                Cupones
-              </Button> */}
-              <Button
-                variant={activeTab === "create-coupons" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => setActiveTab("create-coupons")}
-              >
-                <PlusCircle className="h-4 w-4" />
-                Crear Cupones
-              </Button>
-
-              <Button
-                variant={activeTab === "profile" ? "secondary" : "ghost"}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                onClick={() => setActiveTab("profile")}
-              >
-                <User className="h-4 w-4" />
-                Configuración
-              </Button>
-            </nav>
-          </div>
-          <div className="mt-auto p-4">
-            <Button variant="outline" className="w-full" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Cerrar Sesión
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex flex-col">
-        {/* Header for mobile sidebar - keeping existing code */}
-        <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-white px-6 lg:hidden">
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="lg:hidden">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Abrir menú</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="lg:hidden w-72">
-              <SheetTitle className="sr-only">Menú de navegación del panel vendedor</SheetTitle>
-              {/* Mobile navigation - keeping existing code */}
-              <div className="flex h-[60px] items-center border-b px-6">
-                <Link href="/" className="flex items-center gap-2 font-semibold text-orange-600">
-                  <Store className="h-6 w-6" />
-                  <span>Panel Vendedor</span>
-                </Link>
-              </div>
-              <nav className="grid gap-2 p-4 text-base font-medium">
-                <Button
-                  variant={activeTab === "dashboard" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    setActiveTab("dashboard")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <Home className="mr-2 h-5 w-5" />
-                  Resumen
-                </Button>
-                <Button
-                  variant={activeTab === "products" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    resetForm()
-                    setActiveTab("products")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <ShoppingBag className="mr-2 h-5 w-5" />
-                  Mis Productos
-                </Button>
-                <Button
-                  variant={activeTab === "addProduct" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    resetForm()
-                    setActiveTab("addProduct")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <PlusCircle className="mr-2 h-5 w-5" />
-                  {isEditing ? "Editar" : "Añadir"} Producto
-                </Button>
-                <Button
-                  variant={activeTab === "addService" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    resetForm()
-                    setActiveTab("addService")
-                    setActiveAddTab("service")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <PlusCircle className="mr-2 h-5 w-5" />
-                  Añadir Servicio
-                </Button>
-                <Button
-                  variant={activeTab === "shipping" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    setActiveTab("shipping")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <Truck className="mr-2 h-5 w-5" />
-                  Gestión de Envíos
-                </Button>
-                <Button
-                  variant={activeTab === "earnings" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    setActiveTab("earnings")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <DollarSign className="mr-2 h-5 w-5" />
-                  Mis Ventas
-                </Button>
-                {/* Chat functionality temporarily disabled */}
-                {/* <Button
-                  variant={activeTab === "chats" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    setActiveTab("chats")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <MessageSquare className="mr-2 h-5 w-5" />
-                  Mis Chats
-                </Button> */}
-                {/* <Button
-                  variant={activeTab === "coupons" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    setActiveTab("coupons")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <Tag className="mr-2 h-5 w-5" />
-                  Cupones
-                </Button> */}
-                <Button
-                  variant={activeTab === "create-coupons" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    setActiveTab("create-coupons")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <PlusCircle className="mr-2 h-5 w-5" />
-                  Crear Cupones
-                </Button>
-
-                <Button
-                  variant={activeTab === "profile" ? "secondary" : "ghost"}
-                  onClick={() => {
-                    setActiveTab("profile")
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 hover:text-orange-600 justify-start"
-                >
-                  <UserIcon className="mr-2 h-5 w-5" />
-                  Configuración
-                </Button>
-              </nav>
-              <div className="mt-auto p-4">
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={() => {
-                    handleLogout()
-                    closeMobileMenu()
-                  }}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Cerrar Sesión
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
-          <h1 className="font-semibold text-sm sm:text-lg md:text-xl text-gray-800 flex-1 text-left truncate">
-            Panel - {currentUser?.firebaseUser?.displayName || "Vendedor"}
-          </h1>
-        </header>
-
-        {/* Main Area with Tabs */}
-        <main className="flex flex-1 flex-col gap-4 p-4 pb-20 md:gap-8 md:p-6 md:pb-6">
+    <>
+    <SellerDashboardShell
+      activeTab={activeTab}
+      onNavigate={handleSellerNav}
+      isEditing={isEditing}
+      userName={currentUser?.firebaseUser?.displayName || currentUser?.firebaseUser?.email?.split("@")[0]}
+      userPhoto={profileImagePreviewUrl || currentUser?.photoURL}
+      storeHref={sellerStoreHref}
+      onLogout={handleLogout}
+      isMobileMenuOpen={isMobileMenuOpen}
+      onMobileMenuOpenChange={setIsMobileMenuOpen}
+    >
           {error && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive" className="mb-4 rounded-2xl">
               <AlertCircle className="h-5 w-5" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
           {successMessage && (
-            <Alert variant="default" className="mb-4 bg-green-50 border-green-300 text-green-700">
-              <AlertCircle className="h-4 w-4 text-green-600" />
+            <Alert className="mb-4 rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
+              <CheckCircle className="h-4 w-4" />
               <AlertTitle>Éxito</AlertTitle>
               <AlertDescription>{successMessage}</AlertDescription>
             </Alert>
           )}
 
-
-
-          {/* Dashboard Tab - keeping existing code */}
           {activeTab === "dashboard" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Resumen del Vendedor</CardTitle>
-                <CardDescription>Un vistazo rápido a tu actividad.</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {!mercadoPagoConnected && (
-                  <div className="sm:col-span-2 lg:col-span-3">
-                    <Alert variant={mercadoPagoTokenExpired ? "destructive" : "default"}>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>
-                        {mercadoPagoTokenExpired ? "Reconecta Mercado Pago" : "Conecta Mercado Pago"}
-                      </AlertTitle>
-                      <AlertDescription className="flex flex-col gap-3">
-                        <span>
-                          {mercadoPagoTokenExpired
-                            ? "Tu token de Mercado Pago venció. Reconecta para volver a cobrar ventas."
-                            : "Debes conectar Mercado Pago para poder cobrar ventas de productos y servicios."}
-                        </span>
-                        <div>
-                          <Button
-                            type="button"
-                            onClick={handleConnectMercadoPago}
-                            disabled={connectingMercadoPago}
-                            size="sm"
-                            className="bg-blue-600 text-white hover:bg-blue-700"
-                          >
-                            {connectingMercadoPago ? "Conectando..." : "Conectar Mercado Pago"}
-                          </Button>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  </div>
-                )}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">Productos Publicados</CardTitle>
-                    <ShoppingBag className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{myProducts.length}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">Valor Total (Stock x Precio)</CardTitle>
-                    <ListFilter className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{formatPriceNumber(totalProductsValue)}</div>
-                    <p className="text-xs text-muted-foreground">Estimación basada en stock y precio actual.</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">Gestión de Envíos</CardTitle>
-                    <Truck className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{shippingStats.total}</div>
-                    <div className="text-xs text-muted-foreground space-y-1">
-                      <div className="flex justify-between">
-                        <span>Pendientes:</span>
-                        <span className="font-medium">{shippingStats.pending}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Enviados:</span>
-                        <span className="font-medium">{shippingStats.shipped}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Entregados:</span>
-                        <span className="font-medium text-green-600">{shippingStats.delivered}</span>
-                      </div>
+            <div className="space-y-6">
+              {!mercadoPagoConnected && (
+                <Alert
+                  variant={mercadoPagoTokenExpired ? "destructive" : "default"}
+                  className="rounded-2xl border-purple-200 bg-purple-50"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>
+                    {mercadoPagoTokenExpired ? "Reconecta Mercado Pago" : "Conecta Mercado Pago"}
+                  </AlertTitle>
+                  <AlertDescription className="flex flex-col gap-3">
+                    <span>{mercadoPagoConnectionSummary}</span>
+                    <div>
+                      <Button
+                        type="button"
+                        onClick={handleConnectMercadoPago}
+                        disabled={connectingMercadoPago}
+                        size="sm"
+                        className="rounded-full bg-purple-900 text-white hover:bg-purple-800"
+                      >
+                        {connectingMercadoPago ? "Conectando…" : mercadoPagoActionLabel}
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              </CardContent>
-            </Card>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <BuyerStatCard title="Productos publicados" value={myProducts.length} icon={ShoppingBag} />
+                <BuyerStatCard
+                  title="Valor en catálogo"
+                  value={formatPriceNumber(totalProductsValue)}
+                  icon={ListFilter}
+                  accent="green"
+                />
+                <BuyerStatCard title="Envíos totales" value={shippingStats.total} icon={Truck} accent="amber" />
+              </div>
+
+              <BuyerPanel title="Detalle de envíos" description="Estado actual de tus pedidos">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 text-center">
+                    <p className="text-2xl font-bold text-gray-900">{shippingStats.pending}</p>
+                    <p className="text-sm text-gray-500">Pendientes</p>
+                  </div>
+                  <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4 text-center">
+                    <p className="text-2xl font-bold text-gray-900">{shippingStats.shipped}</p>
+                    <p className="text-sm text-gray-500">Enviados</p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 text-center">
+                    <p className="text-2xl font-bold text-emerald-700">{shippingStats.delivered}</p>
+                    <p className="text-sm text-gray-500">Entregados</p>
+                  </div>
+                </div>
+              </BuyerPanel>
+            </div>
           )}
 
           {/* Products Tab - Updated to show media */}
           {activeTab === "products" && (
-            <Card>
+            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
                 <CardTitle>Mis Productos y Servicios</CardTitle>
                 <CardDescription>Gestiona los ítems que tienes a la venta.</CardDescription>
@@ -2735,7 +2457,7 @@ export default function SellerDashboardPage() {
               <CardContent>
                 {loadingData ? (
                   <div className="flex justify-center items-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+                    <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
                   </div>
                 ) : myProducts.length === 0 ? (
                   <div className="text-center py-10">
@@ -2835,7 +2557,7 @@ export default function SellerDashboardPage() {
 
           {/* Add/Edit Product Tab - Updated with new media upload */}
           {activeTab === "addProduct" && (
-            <Card>
+            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
                 <CardTitle>Añadir Nuevo Producto</CardTitle>
                 <CardDescription>Completa los detalles para agregar un ítem.</CardDescription>
@@ -2951,7 +2673,7 @@ export default function SellerDashboardPage() {
 
                         {/* Loading States */}
                         {validatingImages && (
-                        <div className="flex items-center gap-2 text-orange-600">
+                        <div className="flex items-center gap-2 text-purple-700">
                           <Loader2 className="h-4 w-4 animate-spin" />
                             <span className="text-sm">Validando archivos...</span>
                         </div>
@@ -3125,7 +2847,7 @@ export default function SellerDashboardPage() {
 
           {/* Add/Edit Service Tab - Updated with new media upload */}
           {activeTab === "addService" && (
-            <Card>
+            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
                 <CardTitle>Añadir Nuevo Servicio</CardTitle>
                 <CardDescription>Completa los detalles para agregar un servicio.</CardDescription>
@@ -3221,7 +2943,7 @@ export default function SellerDashboardPage() {
                           />
 
                           {validatingImages && (
-                            <div className="flex items-center gap-2 text-orange-600">
+                            <div className="flex items-center gap-2 text-purple-700">
                               <Loader2 className="h-4 w-4 animate-spin" />
                               <span className="text-sm">Validando archivos...</span>
                             </div>
@@ -3319,7 +3041,7 @@ export default function SellerDashboardPage() {
                         )}
 
                         {uploadingMedia && (
-                          <div className="flex items-center gap-2 text-orange-600">
+                          <div className="flex items-center gap-2 text-purple-700">
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span className="text-sm">Subiendo archivos...</span>
                           </div>
@@ -3420,7 +3142,7 @@ export default function SellerDashboardPage() {
 
           {/* Chat functionality temporarily disabled */}
           {/* {activeTab === "chats" && (
-            <Card>
+            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
                 <CardTitle>Mis Chats</CardTitle>
                 <CardDescription>Comunícate con tus clientes y resuelve sus dudas.</CardDescription>
@@ -3437,7 +3159,7 @@ export default function SellerDashboardPage() {
 
 
           {activeTab === "profile" && (
-            <Card>
+            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
                 <CardTitle>Configuración</CardTitle>
                 <CardDescription>Gestiona tu perfil y configuración de cuenta.</CardDescription>
@@ -3557,7 +3279,7 @@ export default function SellerDashboardPage() {
                           type="button"
                           onClick={handleConnectMercadoPago}
                           disabled={connectingMercadoPago}
-                          className="bg-blue-600 text-white hover:bg-blue-700"
+                          className="bg-purple-900 hover:bg-purple-800"
                         >
                           {connectingMercadoPago ? "Conectando..." : mercadoPagoActionLabel}
                         </Button>
@@ -3592,7 +3314,7 @@ export default function SellerDashboardPage() {
                              </AlertDescription>
                            </Alert>
                            
-                           <Card>
+                           <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                              <CardHeader>
                                <CardTitle>Estado de tu Suscripción</CardTitle>
                                <CardDescription>
@@ -3634,7 +3356,7 @@ export default function SellerDashboardPage() {
                     </AlertDescription>
                   </Alert>
                            
-                <Card>
+                <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                   <CardHeader>
                                <CardTitle>Suscripción para el Marketplace</CardTitle>
                     <CardDescription>
@@ -3711,7 +3433,7 @@ export default function SellerDashboardPage() {
                       />
                       
                       {/* Otras configuraciones pueden ir aquí */}
-                      <Card>
+                      <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                         <CardHeader>
                           <CardTitle>Otras Configuraciones</CardTitle>
                           <CardDescription>
@@ -3733,7 +3455,7 @@ export default function SellerDashboardPage() {
           {/* Earnings Tab */}
           {activeTab === "earnings" && (
             <div className="space-y-6">
-              <Card>
+              <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                 <CardHeader>
                   <CardTitle>Mis Ventas</CardTitle>
                   <CardDescription>Revisa tus ventas, el estado del cobro y el neto a recibir.</CardDescription>
@@ -3742,7 +3464,7 @@ export default function SellerDashboardPage() {
 
               {/* Resumen de ventas y pagos */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card>
+                <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium">Total Ganado</CardTitle>
                     <DollarSign className="w-4 h-4 text-muted-foreground" />
@@ -3756,7 +3478,7 @@ export default function SellerDashboardPage() {
                     </p>
               </CardContent>
             </Card>
-                <Card>
+                <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium">Pendiente de Pago</CardTitle>
                     <Clock className="w-4 h-4 text-muted-foreground" />
@@ -3770,7 +3492,7 @@ export default function SellerDashboardPage() {
                     </p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium">Ya Pagado</CardTitle>
                     <CheckCircle className="w-4 h-4 text-muted-foreground" />
@@ -3787,7 +3509,7 @@ export default function SellerDashboardPage() {
               </div>
 
               
-              <Card>
+              <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                 <CardHeader>
                   <CardTitle>Filtros de Historial</CardTitle>
                   <CardDescription>
@@ -3837,7 +3559,7 @@ export default function SellerDashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                 <CardHeader>
                   <CardTitle>Ventas y Pagos</CardTitle>
                   <CardDescription>
@@ -3847,7 +3569,7 @@ export default function SellerDashboardPage() {
                 <CardContent>
                   {loadingEarnings ? (
                     <div className="flex justify-center items-center py-10">
-                      <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+                      <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
                     </div>
                   ) : visibleSellerSales.length === 0 ? (
                     <div className="text-center py-10 text-gray-500">
@@ -3919,7 +3641,7 @@ export default function SellerDashboardPage() {
           )}
 
           {/* {activeTab === "coupons" && (
-            <Card>
+            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
                 <CardTitle>Gestionar Cupones de Descuento</CardTitle>
                 <CardDescription>Asocia cupones a tus productos y define el período de validez.</CardDescription>
@@ -4100,7 +3822,7 @@ export default function SellerDashboardPage() {
 
           {/* Create Coupons Tab */}
           {activeTab === "create-coupons" && (
-            <Card>
+            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
                 <CardTitle>Crear Cupones de Descuento</CardTitle>
                 <CardDescription>Crea tus propios cupones para promocionar tus productos y servicios.</CardDescription>
@@ -4345,7 +4067,7 @@ export default function SellerDashboardPage() {
 
           {/* Shipping Management Tab */}
           {activeTab === "shipping" && (
-            <Card>
+            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
                 <CardTitle>Gestión de Envíos</CardTitle>
                 <CardDescription>Administra el estado de envío de tus productos vendidos</CardDescription>
@@ -4460,9 +4182,8 @@ export default function SellerDashboardPage() {
               </CardContent>
             </Card>
           )}
-        </main>
-      </div>
-      
+    </SellerDashboardShell>
+
       {/* Notificación de suscripción */}
       {subscriptionNotification.show && (
         <SubscriptionNotification
@@ -4470,7 +4191,7 @@ export default function SellerDashboardPage() {
           onClose={() => setSubscriptionNotification({ show: false, status: 'success' })}
         />
       )}
-    </div>
+    </>
   )
 }
 
