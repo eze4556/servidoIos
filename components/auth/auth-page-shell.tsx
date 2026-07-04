@@ -19,8 +19,8 @@ const highlights = [
 
 export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthPageShellProps) {
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-50 via-white to-purple-50/40 lg:min-h-screen">
-      <div className="grid min-h-[inherit] lg:grid-cols-2">
+    <div className="min-h-dvh min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/40">
+      <div className="grid min-h-dvh min-h-screen lg:grid-cols-2">
         {/* Panel marca — desktop */}
         <div className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between">
           <div className="absolute inset-0 bg-gradient-to-br from-[#2d0057] via-purple-900 to-violet-950" />
@@ -70,33 +70,49 @@ export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthP
         </div>
 
         {/* Formulario */}
-        <div className="flex flex-col justify-center px-4 py-8 sm:px-6 lg:px-10 lg:py-12 xl:px-16">
-          <div className="mb-6 flex items-center justify-between lg:hidden">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-purple-800"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver
-            </Link>
-            <Link href="/">
-              <Image src="/images/logo.png" alt="Servido" width={100} height={40} className="h-8 w-auto" />
-            </Link>
+        <div className="flex min-h-dvh min-h-screen flex-col lg:min-h-0 lg:justify-center">
+          {/* Franja marca — mobile */}
+          <div className="relative overflow-hidden px-4 py-6 sm:px-6 lg:hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#2d0057] via-purple-900 to-violet-950" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_100%_at_50%_0%,rgba(168,85,247,0.2),transparent_60%)]" />
+            <div className="relative z-10">
+              <div className="mb-3 flex items-center justify-between">
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Volver
+                </Link>
+                <Link href="/">
+                  <Image src="/images/logo.png" alt="Servido" width={100} height={40} className="h-8 w-auto" />
+                </Link>
+              </div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-purple-100">
+                <Sparkles className="h-3 w-3" />
+                Servido Marketplace
+              </span>
+              <p className="mt-2 max-w-xs text-sm text-purple-100/90">
+                Comprá, vendé y encontrá servicios de confianza.
+              </p>
+            </div>
           </div>
 
+          <div className="flex flex-1 flex-col justify-center px-4 pb-8 pt-2 sm:px-6 sm:pb-10 lg:px-10 lg:py-12 xl:px-16">
           <div
-            className={`mx-auto w-full rounded-3xl bg-white p-6 shadow-xl shadow-purple-900/5 ring-1 ring-gray-100 sm:p-8 ${
+            className={`mx-auto w-full rounded-2xl bg-white p-5 shadow-xl shadow-purple-900/5 ring-1 ring-gray-100 sm:rounded-3xl sm:p-8 ${
               wide ? "max-w-xl" : "max-w-md"
             }`}
           >
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900">{title}</h2>
+            <div className="mb-5 sm:mb-6">
+              <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">{title}</h2>
               <p className="mt-1.5 text-sm text-gray-500">{subtitle}</p>
             </div>
 
             {children}
 
-            {footer && <div className="mt-6 border-t border-gray-100 pt-6">{footer}</div>}
+            {footer && <div className="mt-5 border-t border-gray-100 pt-5 sm:mt-6 sm:pt-6">{footer}</div>}
+          </div>
           </div>
         </div>
       </div>
@@ -105,6 +121,6 @@ export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthP
 }
 
 export const authInputClass =
-  "rounded-xl border-0 bg-gray-50 py-2.5 ring-1 ring-gray-200 transition-all focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-purple-300"
+  "h-11 rounded-xl border-0 bg-gray-50 text-base ring-1 ring-gray-200 transition-all focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-purple-300 sm:h-10 sm:text-sm"
 
 export const authLabelClass = "text-xs font-semibold uppercase tracking-wider text-gray-500"

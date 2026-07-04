@@ -157,7 +157,7 @@ export default function SignupPage() {
                 type="button"
                 onClick={() => setAccountType(value)}
                 className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-sm font-semibold transition-all",
+                  "flex flex-col items-center gap-1 rounded-xl px-2 py-3 text-xs font-semibold transition-all sm:gap-1.5 sm:px-3 sm:text-sm",
                   accountType === value
                     ? "bg-purple-700 text-white shadow-md shadow-purple-200"
                     : "text-gray-600 hover:bg-white hover:text-purple-800"
