@@ -8,6 +8,7 @@ import { TabBar } from "@/components/layout/tab-bar"
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const isHomeRoute = pathname === "/"
   const isAdminRoute = pathname?.startsWith("/admin")
   const isAuthRoute = pathname === "/login" || pathname === "/signup"
 
@@ -21,9 +22,13 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <Header />
-      <main className="flex-1 pb-16 md:pb-16">{children}</main>
-      <Footer />
+      <div className={isHomeRoute ? "hidden lg:block" : undefined}>
+        <Header />
+      </div>
+      <main className={`flex-1 pb-16 ${isHomeRoute ? "lg:pb-16" : ""}`}>{children}</main>
+      <div className={isHomeRoute ? "hidden lg:block" : undefined}>
+        <Footer />
+      </div>
       <TabBar />
     </div>
   )

@@ -65,18 +65,26 @@ const config = {
           DEFAULT: "hsl(var(--navbar))",
           foreground: "hsl(var(--navbar-foreground))",
         },
-        // Custom purple for Servido theme
+        servido: {
+          950: "#4c1d95",
+          900: "#4c1d95",
+          800: "#5b21b6",
+          700: "#6d28d9",
+          600: "#7b2cff",
+          500: "#7b2cff",
+          gold: "#ffd400",
+        },
         purple: {
           50: "#faf5ff",
           100: "#f3e8ff",
           200: "#e9d5ff",
           300: "#d8b4fe",
           400: "#c084fc",
-          500: "#a855f7",
-          600: "#9333ea",
-          700: "#7c3aed",
-          800: "#6b21a8",
-          900: "#4a008e", // Main purple
+          500: "#7b2cff",
+          600: "#6d28d9",
+          700: "#6d28d9",
+          800: "#5b21b6",
+          900: "#4c1d95",
         },
       },
       borderRadius: {

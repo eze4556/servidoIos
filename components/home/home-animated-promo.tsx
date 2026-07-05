@@ -26,13 +26,13 @@ export function HomeAnimatedPromo() {
 
           <div className="relative z-10 flex flex-col items-center px-6 py-14 text-center sm:py-16 md:py-20">
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-purple-200">
-              Tu marketplace de confianza
+              Próximamente en Servido
             </p>
             <h2 className="max-w-xl text-2xl font-bold text-white sm:text-3xl md:text-4xl">
-              Comprá, vendé y contratá en un solo lugar
+              Estamos trabajando para ofrecerte la mejor experiencia.
             </h2>
             <p className="mt-4 max-w-lg text-sm text-purple-100 sm:text-base">
-              Miles de productos y servicios te esperan. Simple, seguro y cerca tuyo.
+              Muy pronto podrás encontrar miles de productos, servicios y comercios.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-purple-100">

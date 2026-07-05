@@ -51,8 +51,8 @@ export function Footer() {
               <p className="text-xs font-medium text-purple-200">Marketplace</p>
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-purple-100/90">
-              Tu marketplace confiable para comprar y vender productos y servicios. Conectamos compradores
-              con vendedores de confianza.
+              Estamos trabajando para ofrecerte la mejor experiencia. Muy pronto podrás encontrar miles de
+              productos, servicios y comercios.
             </p>
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-purple-100 ring-1 ring-white/10">

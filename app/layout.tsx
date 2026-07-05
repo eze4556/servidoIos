@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
   openGraph: {
     title: 'Servido - Marketplace de Productos y Servicios',
-    description: 'Tu marketplace confiable para comprar y vender productos y servicios en Argentina',
+    description: 'Estamos trabajando para ofrecerte la mejor experiencia. Muy pronto podrás encontrar miles de productos, servicios y comercios en Argentina.',
     url: 'https://www.servido.com.ar',
     siteName: 'Servido',
     images: [
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Servido - Marketplace de Productos y Servicios',
-    description: 'Tu marketplace confiable para comprar y vender productos y servicios en Argentina',
+    description: 'Estamos trabajando para ofrecerte la mejor experiencia. Muy pronto podrás encontrar miles de productos, servicios y comercios en Argentina.',
     images: ['/images/logo-512.png']
   },
   icons: {

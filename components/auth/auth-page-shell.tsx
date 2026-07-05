@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Shield, Sparkles, Store, Truck } from "lucide-react"
+import { ArrowLeft, Shield, Store, Truck } from "lucide-react"
 
 interface AuthPageShellProps {
   title: string
@@ -17,39 +17,50 @@ const highlights = [
   { icon: Store, text: "Vendedores verificados" },
 ]
 
+function AuthLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+  const sizes = {
+    sm: { wrap: "h-12 w-12", img: "h-10 w-10", px: 40, ring: "ring-[3px]" },
+    md: { wrap: "h-16 w-16", img: "h-[3.25rem] w-[3.25rem]", px: 52, ring: "ring-4" },
+    lg: { wrap: "h-[4.75rem] w-[4.75rem]", img: "h-[3.75rem] w-[3.75rem]", px: 60, ring: "ring-4" },
+  }[size]
+
+  return (
+    <span
+      className={`flex ${sizes.wrap} items-center justify-center rounded-full bg-white p-1 shadow-lg shadow-black/15 ${sizes.ring} ring-white/30`}
+    >
+      <Image
+        src="/images/logo-192.png"
+        alt="Servido"
+        width={sizes.px}
+        height={sizes.px}
+        className={`${sizes.img} object-contain`}
+        priority
+      />
+    </span>
+  )
+}
+
 export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthPageShellProps) {
   return (
     <div className="min-h-dvh min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/40">
       <div className="grid min-h-dvh min-h-screen lg:grid-cols-2">
         {/* Panel marca — desktop */}
         <div className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#2d0057] via-purple-900 to-violet-950" />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_20%_20%,rgba(168,85,247,0.25),transparent_50%)]" />
-          <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-violet-400/20 blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-br from-servido-950 via-servido-700 to-servido-600" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_20%_20%,rgba(123,44,255,0.25),transparent_50%)]" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-servido-600/20 blur-3xl" />
 
           <div className="relative z-10 flex flex-1 flex-col justify-center px-10 py-12 xl:px-16">
-            <Link href="/" className="mb-10 inline-flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
-                <Image
-                  src="/images/logo.png"
-                  alt="Servido"
-                  width={36}
-                  height={36}
-                  className="h-9 w-9 object-contain"
-                />
-              </span>
+            <Link href="/" className="mb-10 inline-flex items-center gap-4">
+              <AuthLogo size="lg" />
               <span className="text-2xl font-bold text-white">Servido</span>
             </Link>
 
-            <span className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-purple-100">
-              <Sparkles className="h-3.5 w-3.5" />
-              Marketplace
-            </span>
             <h1 className="max-w-md text-3xl font-bold tracking-tight text-white xl:text-4xl">
-              Comprá, vendé y encontrá servicios en un solo lugar
+              Estamos trabajando para ofrecerte la mejor experiencia.
             </h1>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-purple-100/90">
-              Miles de productos y servicios de vendedores de confianza. Unite a la comunidad Servido.
+              Muy pronto podrás encontrar miles de productos, servicios y comercios.
             </p>
 
             <ul className="mt-8 space-y-3">
@@ -73,10 +84,10 @@ export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthP
         <div className="flex min-h-dvh min-h-screen flex-col lg:min-h-0 lg:justify-center">
           {/* Franja marca — mobile */}
           <div className="relative overflow-hidden px-4 py-6 sm:px-6 lg:hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#2d0057] via-purple-900 to-violet-950" />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_100%_at_50%_0%,rgba(168,85,247,0.2),transparent_60%)]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-servido-950 via-servido-700 to-servido-600" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_100%_at_50%_0%,rgba(123,44,255,0.2),transparent_60%)]" />
             <div className="relative z-10">
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-4 flex items-center justify-between gap-3">
                 <Link
                   href="/"
                   className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm"
@@ -84,16 +95,13 @@ export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthP
                   <ArrowLeft className="h-4 w-4" />
                   Volver
                 </Link>
-                <Link href="/">
-                  <Image src="/images/logo.png" alt="Servido" width={100} height={40} className="h-8 w-auto" />
+                <Link href="/" className="shrink-0" aria-label="Servido">
+                  <AuthLogo size="sm" />
                 </Link>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-purple-100">
-                <Sparkles className="h-3 w-3" />
-                Servido Marketplace
-              </span>
-              <p className="mt-2 max-w-xs text-sm text-purple-100/90">
-                Comprá, vendé y encontrá servicios de confianza.
+              <p className="text-sm leading-relaxed text-purple-50/95">
+                Estamos trabajando para ofrecerte la mejor experiencia. Muy pronto podrás encontrar miles de
+                productos, servicios y comercios.
               </p>
             </div>
           </div>
