@@ -327,6 +327,26 @@
   }
 }
 
+@keyframes shortcut-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shortcut-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
 .home-hero-glow {
   background: radial-gradient(circle at 30% 50%, rgba(91, 33, 182, 0.4), transparent 55%);
   animation: hero-glow 6s ease-in-out infinite;
@@ -360,10 +380,40 @@
   min-height: 280px;
 }
 
+.home-shortcut-enter {
+  animation: shortcut-enter 0.45s ease-out both;
+}
+
+.home-shortcut-float {
+  animation: shortcut-float 2.8s ease-in-out infinite;
+}
+
+.home-shortcut-float-delay-1 {
+  animation: shortcut-float 2.8s ease-in-out 0.2s infinite;
+}
+
+.home-shortcut-float-delay-2 {
+  animation: shortcut-float 2.8s ease-in-out 0.4s infinite;
+}
+
+.home-shortcut-float-delay-3 {
+  animation: shortcut-float 2.8s ease-in-out 0.6s infinite;
+}
+
+.home-shortcut-float-delay-4 {
+  animation: shortcut-float 2.8s ease-in-out 0.8s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-hero-glow,
   .home-animated-gradient,
-  .home-particle {
+  .home-particle,
+  .home-shortcut-enter,
+  .home-shortcut-float,
+  .home-shortcut-float-delay-1,
+  .home-shortcut-float-delay-2,
+  .home-shortcut-float-delay-3,
+  .home-shortcut-float-delay-4 {
     animation: none;
   }
 }
