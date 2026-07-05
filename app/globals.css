@@ -43,11 +43,11 @@
     --card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
 
-    --primary: 263 69% 50%; /* #6d28d9 */
+    --primary: 263 69% 42%; /* #5b21b6 — violeta más profundo */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 48 100% 50%; /* #ffd400 gold accent */
-    --secondary-foreground: 263 67% 20%;
+    --secondary-foreground: 263 67% 18%;
 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
@@ -55,12 +55,12 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --ring: 215 20.2% 65.1%;
+    --ring: 263 69% 42%;
 
     --radius: 0.5rem;
 
     /* Custom purple navbar */
-    --navbar: 263 67% 35%; /* #4c1d95 */
+    --navbar: 263 67% 26%; /* #3b0764 — más oscuro */
     --navbar-foreground: 0 0% 100%; /* White text */
   }
 }
@@ -328,7 +328,7 @@
 }
 
 .home-hero-glow {
-  background: radial-gradient(circle at 30% 50%, rgba(168, 85, 247, 0.35), transparent 55%);
+  background: radial-gradient(circle at 30% 50%, rgba(91, 33, 182, 0.4), transparent 55%);
   animation: hero-glow 6s ease-in-out infinite;
 }
 
@@ -336,10 +336,10 @@
   background: linear-gradient(
     -45deg,
     #2e1065,
-    #4a008e,
-    #6b21a8,
-    #7c3aed,
-    #4a008e,
+    #3b0764,
+    #4c1d95,
+    #5b21b6,
+    #3b0764,
     #2e1065
   );
   background-size: 400% 400%;

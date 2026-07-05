@@ -18,7 +18,7 @@ export function HomePromoBanner({ className }: HomePromoBannerProps) {
             priority
             sizes="(max-width: 768px) 100vw, 800px"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-servido-950/90 via-servido-700/75 to-servido-600/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-servido-950/90 via-servido-800/85 to-servido-900/80" />
           <div className="absolute inset-0 flex flex-col justify-center px-5 py-4 sm:px-8">
             <p className="max-w-[85%] text-base font-bold leading-snug text-white sm:text-xl">
               Estamos trabajando para ofrecerte la mejor experiencia.

@@ -127,9 +127,9 @@ export function DashboardSidebar<T extends string>({
   return (
     <div className="relative flex h-full flex-col">
       {/* Fondo */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#1a0038] via-[#2d0057] to-violet-950" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_0%_0%,rgba(168,85,247,0.28),transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_100%_100%,rgba(139,92,246,0.18),transparent_50%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-servido-950 via-servido-900 to-servido-950" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_0%_0%,rgba(76,29,149,0.35),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_100%_100%,rgba(59,7,100,0.25),transparent_50%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
 
       <div className="relative z-10 flex h-full flex-col">
@@ -249,7 +249,7 @@ export function DashboardSidebarBackdrop({ children }: { children: ReactNode }) 
 export function DashboardMobileSidebar({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex h-full flex-col">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0038] via-[#2d0057] to-violet-950" />
+      <div className="absolute inset-0 bg-gradient-to-b from-servido-950 via-servido-900 to-servido-950" />
       <div className="relative z-10 flex h-full flex-col">{children}</div>
     </div>
   )

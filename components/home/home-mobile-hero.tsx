@@ -70,7 +70,7 @@ export function HomeMobileHero() {
   return (
     <section className="lg:hidden">
       {/* Header morado integrado */}
-      <div className="bg-gradient-to-br from-servido-950 via-servido-700 to-servido-600 px-4 pb-10 pt-3">
+      <div className="bg-gradient-to-br from-servido-950 via-servido-800 to-servido-700 px-4 pb-10 pt-3">
         <div className="flex items-center justify-between gap-3">
           <Link href="/" className="flex flex-col">
             <span className="text-xl font-bold tracking-tight text-white">Servido</span>

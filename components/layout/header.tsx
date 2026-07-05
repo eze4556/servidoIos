@@ -381,9 +381,9 @@ export function Header() {
 
       {/* Sub navegación */}
       <div className="relative hidden overflow-hidden lg:block">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#2d0057] via-purple-900 to-violet-950" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_120%_at_0%_50%,rgba(168,85,247,0.22),transparent_55%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_100%_at_100%_50%,rgba(139,92,246,0.12),transparent_50%)]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-servido-950 via-servido-900 to-servido-950" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_120%_at_0%_50%,rgba(76,29,149,0.28),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_100%_at_100%_50%,rgba(59,7,100,0.18),transparent_50%)]" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
         <div className="container relative mx-auto flex items-center justify-between gap-6 px-4 py-2.5">

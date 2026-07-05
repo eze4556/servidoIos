@@ -34,7 +34,7 @@ export function InfoPageShell({
           Volver al inicio
         </Link>
 
-        <section className="relative mb-10 overflow-hidden rounded-3xl bg-gradient-to-br from-[#2d0057] via-purple-900 to-violet-900 px-6 py-10 shadow-xl shadow-purple-900/20 sm:px-8 sm:py-12">
+        <section className="relative mb-10 overflow-hidden rounded-3xl bg-gradient-to-br from-servido-950 via-servido-900 to-servido-800 px-6 py-10 shadow-xl shadow-servido-950/30 sm:px-8 sm:py-12">
           <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-purple-400/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-violet-300/15 blur-3xl" />
 

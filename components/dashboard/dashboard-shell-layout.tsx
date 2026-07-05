@@ -62,7 +62,7 @@ export function DashboardShellLayout({
               <Button
                 asChild
                 size="sm"
-                className="hidden shrink-0 rounded-full bg-purple-900 hover:bg-purple-800 sm:inline-flex"
+                className="hidden shrink-0 rounded-full bg-servido-800 hover:bg-servido-900 sm:inline-flex"
               >
                 <Link href={headerAction.href}>{headerAction.label}</Link>
               </Button>

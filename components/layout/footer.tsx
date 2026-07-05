@@ -35,9 +35,9 @@ export function Footer() {
 
   return (
     <footer className="relative mt-auto shrink-0 overflow-hidden pb-16 lg:pb-0">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#2d0057] via-purple-900 to-violet-950" />
+      <div className="absolute inset-0 bg-gradient-to-b from-servido-950 via-servido-900 to-servido-950" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_0%_100%,rgba(168,85,247,0.18),transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_100%_0%,rgba(139,92,246,0.14),transparent_50%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_100%_0%,rgba(76,29,149,0.18),transparent_50%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
       <div className="container relative mx-auto px-4 py-12 md:px-6 md:py-14">

@@ -46,9 +46,9 @@ export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthP
       <div className="grid min-h-dvh min-h-screen lg:grid-cols-2">
         {/* Panel marca — desktop */}
         <div className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between">
-          <div className="absolute inset-0 bg-gradient-to-br from-servido-950 via-servido-700 to-servido-600" />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_20%_20%,rgba(123,44,255,0.25),transparent_50%)]" />
-          <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-servido-600/20 blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-br from-servido-950 via-servido-800 to-servido-700" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_20%_20%,rgba(76,29,149,0.3),transparent_50%)]" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-servido-800/25 blur-3xl" />
 
           <div className="relative z-10 flex flex-1 flex-col justify-center px-10 py-12 xl:px-16">
             <Link href="/" className="mb-10 inline-flex items-center gap-4">
@@ -84,8 +84,8 @@ export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthP
         <div className="flex min-h-dvh min-h-screen flex-col lg:min-h-0 lg:justify-center">
           {/* Franja marca — mobile */}
           <div className="relative overflow-hidden px-4 py-6 sm:px-6 lg:hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-servido-950 via-servido-700 to-servido-600" />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_100%_at_50%_0%,rgba(123,44,255,0.2),transparent_60%)]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-servido-950 via-servido-800 to-servido-700" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_100%_at_50%_0%,rgba(76,29,149,0.22),transparent_60%)]" />
             <div className="relative z-10">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <Link
