@@ -5,25 +5,18 @@ import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import {
   Search,
-  ShoppingCart,
   ChevronDown,
   Menu,
-  X,
   Heart,
-  Star,
   Users,
-  Store,
   Package,
   User,
   Loader2,
-  LogOut,
-  ShieldCheck,
   MapPin,
   RotateCcw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,8 +72,7 @@ export function Header() {
   // Estado para almacenar todos los productos
   const [allProducts, setAllProducts] = useState<SearchProduct[] | null>(null)
 
-  // Estado para controlar el menú móvil
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  // Estado para controlar el menú móvil — ahora en MobileAppHeader
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -168,24 +160,15 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false)
-  }
-
   const searchInputClass =
     "w-full rounded-full border-0 bg-gray-100 py-2.5 pl-11 pr-12 text-sm text-gray-900 shadow-inner ring-1 ring-gray-200/80 placeholder:text-gray-500 transition-all focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-purple-300 lg:text-base"
 
-  const searchInputCompactClass =
-    "w-full rounded-full border-0 bg-gray-100 py-2 pl-10 pr-4 text-xs text-gray-900 shadow-inner ring-1 ring-gray-200/80 placeholder:text-gray-500 transition-all focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-purple-300 sm:text-sm"
-
-  const renderSearchResults = (compact = false, onResultClick?: () => void) => {
+  const renderSearchResults = (onResultClick?: () => void) => {
     if (!showSearchResults || !searchTerm.trim()) return null
 
     return (
       <div
-        className={`absolute top-[calc(100%+0.5rem)] left-0 right-0 z-50 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-purple-900/10 ${
-          compact ? "max-h-64" : "max-h-96"
-        }`}
+        className={`absolute top-[calc(100%+0.5rem)] left-0 right-0 z-50 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-purple-900/10 max-h-96`}
       >
         {isSearching ? (
           <div className="flex items-center justify-center gap-2 p-4 text-gray-500">
@@ -227,38 +210,23 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50">
-      {/* Barra principal */}
+    <header className="sticky top-0 z-50 hidden lg:block">
+      {/* Barra principal — solo desktop */}
       <div className="border-b border-gray-100/80 bg-white/95 shadow-sm backdrop-blur-md">
         <div className="container mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Logo */}
             <Link
               href="/"
-              className="group flex shrink-0 flex-col transition-opacity hover:opacity-90"
+              className="group flex shrink-0 items-center gap-3 transition-opacity hover:opacity-90"
             >
-              <span className="text-lg font-bold tracking-tight text-purple-900 transition-colors group-hover:text-purple-700 sm:text-xl">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white p-1 shadow-md ring-2 ring-servido-100">
+                <Image src="/images/logo-128.png" alt="Servido" width={32} height={32} className="h-8 w-8 object-contain" />
+              </span>
+              <span className="text-xl font-bold tracking-tight text-servido-900 transition-colors group-hover:text-servido-800">
                 Servido
               </span>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-purple-600/80 sm:text-xs">
-                Marketplace
-              </span>
             </Link>
-
-            {/* Búsqueda móvil */}
-            <div className="search-container relative mx-1 flex-1 lg:hidden">
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  className={searchInputCompactClass}
-                />
-              </form>
-              {renderSearchResults(true)}
-            </div>
 
             {/* Centro desktop: categorías + búsqueda */}
             <div className="hidden min-w-0 flex-1 items-center gap-3 lg:flex">
@@ -364,16 +332,9 @@ export function Header() {
                 </div>
               )}
 
-              <CartDrawer />
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="h-10 w-10 rounded-full text-gray-700 hover:bg-purple-50 hover:text-purple-800 lg:hidden"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
+              <div className="hidden items-center gap-2 lg:flex">
+                <CartDrawer />
+              </div>
             </div>
           </div>
         </div>
@@ -470,210 +431,6 @@ export function Header() {
         </div>
       </div>
 
-      {/* Menú móvil */}
-      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="w-full max-w-sm overflow-y-auto border-r-0 bg-white p-0 sm:w-80">
-          <div className="bg-gradient-to-br from-purple-900 via-purple-800 to-violet-900 px-5 py-6 text-white">
-            <SheetTitle className="text-left text-xl font-bold">Menú</SheetTitle>
-            <p className="mt-1 text-sm text-purple-200">Explorá Servido</p>
-          </div>
-
-          <div className="space-y-5 p-5 pb-8">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Búsqueda</p>
-              <form onSubmit={handleSearchSubmit} className="search-container relative">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Buscar productos, servicios..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  className="rounded-full border-0 bg-gray-100 py-2.5 pl-10 pr-4 ring-1 ring-gray-200"
-                />
-              </form>
-              {showSearchResults && searchTerm.trim() && (
-                <div className="overflow-hidden rounded-2xl border border-gray-100 shadow-lg">
-                  {isSearching ? (
-                    <div className="flex items-center justify-center gap-2 p-4 text-gray-500">
-                      <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
-                      Buscando...
-                    </div>
-                  ) : searchResults.length > 0 ? (
-                    <div className="max-h-64 divide-y divide-gray-50 overflow-y-auto">
-                      {searchResults.map((product) => (
-                        <Link
-                          key={product.id}
-                          href={`/product/${product.id}`}
-                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-purple-50"
-                          onClick={() => {
-                            setShowSearchResults(false)
-                            setIsMobileMenuOpen(false)
-                          }}
-                        >
-                          <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-gray-100">
-                            <Image
-                              src={getSearchResultImage(product.media, product.imageUrl, product.name)}
-                              alt={product.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="truncate text-sm font-medium text-gray-900">{product.name}</h4>
-                            <p className="text-sm text-purple-700">{formatPrice(product.price)}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-4 text-center text-sm text-gray-500">No se encontraron productos</div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Ubicación</p>
-              <div className="flex items-center gap-3 rounded-2xl bg-purple-50 px-4 py-3 ring-1 ring-purple-100">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100">
-                  <MapPin className="h-4 w-4 text-purple-700" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  {loadingLocation ? (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Detectando...
-                    </div>
-                  ) : (
-                    <p className="truncate text-sm font-medium text-gray-800">{userLocation}</p>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={refreshLocation}
-                  className="h-8 w-8 shrink-0 rounded-full text-purple-700 hover:bg-purple-100"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {currentUser ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 rounded-2xl bg-gray-50 p-3 ring-1 ring-gray-100">
-                  <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                    <AvatarImage
-                      src={currentUser.firebaseUser.photoURL || undefined}
-                      alt={currentUser.firebaseUser.displayName || "Usuario"}
-                    />
-                    <AvatarFallback className="bg-purple-700 text-white">
-                      {currentUser.firebaseUser.displayName?.charAt(0).toUpperCase() ||
-                        currentUser.firebaseUser.email?.charAt(0).toUpperCase() ||
-                        "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-gray-900">
-                      {currentUser.firebaseUser.displayName || "Usuario"}
-                    </p>
-                    <p className="truncate text-xs text-gray-500">{currentUser.firebaseUser.email}</p>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Link
-                    href="/dashboard/buyer"
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-800"
-                    onClick={closeMobileMenu}
-                  >
-                    <User className="h-4 w-4 text-purple-600" />
-                    Mi Panel Comprador
-                  </Link>
-                  {currentUser.role === "seller" && (
-                    <Link
-                      href={`/seller/${currentUser.firebaseUser.uid}`}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-800"
-                      onClick={closeMobileMenu}
-                    >
-                      <Store className="h-4 w-4 text-purple-600" />
-                      Mi Tienda
-                    </Link>
-                  )}
-                  <button
-                    onClick={() => {
-                      handleLogout()
-                      closeMobileMenu()
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700"
-                  >
-                    <LogOut className="h-4 w-4 text-red-500" />
-                    Cerrar sesión
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <Link
-                  href="/login"
-                  className="flex flex-1 items-center justify-center rounded-full border border-gray-200 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  onClick={closeMobileMenu}
-                >
-                  Ingresar
-                </Link>
-                <Link
-                  href="/signup"
-                  className="flex flex-1 items-center justify-center rounded-full bg-purple-700 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-purple-800"
-                  onClick={closeMobileMenu}
-                >
-                  Crear cuenta
-                </Link>
-              </div>
-            )}
-
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">Categorías</p>
-              {loadingCategories ? (
-                <p className="text-sm text-gray-500">Cargando categorías...</p>
-              ) : categories.length === 0 ? (
-                <p className="text-sm text-gray-500">No hay categorías disponibles.</p>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {categories.map((category) => (
-                    <Link
-                      key={category.id}
-                      href={`/category/${category.id}`}
-                      className="rounded-xl bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-700 ring-1 ring-gray-100 transition-colors hover:bg-purple-50 hover:text-purple-800"
-                      onClick={closeMobileMenu}
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-gray-100 pt-4">
-              <div className="grid grid-cols-1 gap-1">
-                {[
-                  { href: "/acerca-de-nosotros", icon: Users, label: "Quiénes somos" },
-                  { href: "/services", icon: Package, label: "Servicios" },
-                  { href: "/favorites", icon: Heart, label: "Mis favoritos" },
-                ].map(({ href, icon: Icon, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-800"
-                    onClick={closeMobileMenu}
-                  >
-                    <Icon className="h-4 w-4 text-purple-600" />
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
     </header>
   )
 }
