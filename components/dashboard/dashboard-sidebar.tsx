@@ -144,8 +144,15 @@ export function DashboardSidebar<T extends string>({
           </Link>
 
           <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 shadow-lg shadow-purple-950/30 ring-1 ring-white/20 backdrop-blur-sm">
-              <Image src="/images/logo.png" alt="Servido" width={30} height={30} className="h-8 w-8 object-contain" />
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-lg shadow-black/15 ring-[3px] ring-white/30">
+              <Image
+                src="/images/logo-192.png"
+                alt="Servido"
+                width={40}
+                height={40}
+                className="h-10 w-10 object-contain"
+                priority
+              />
             </span>
             <div className="min-w-0">
               <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-100">
@@ -153,7 +160,7 @@ export function DashboardSidebar<T extends string>({
                 {variant === "buyer" ? "Comprador" : "Vendedor"}
               </span>
               <p className="truncate text-sm font-bold text-white">{panelTitle}</p>
-              <p className="text-[11px] text-purple-200/90">Servido Marketplace</p>
+              <p className="text-[11px] font-medium text-purple-200/90">Servido</p>
             </div>
           </Link>
         </div>
