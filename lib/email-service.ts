@@ -14,8 +14,13 @@ export interface WelcomeEmailData {
 
 export const sendWelcomeEmail = async (data: WelcomeEmailData): Promise<void> => {
   try {
-    const isSeller = data.account_type === 'seller';
-    const accountTypeText = isSeller ? 'Vendedor' : 'Comprador';
+    const accountTypeLabels: Record<string, string> = {
+      seller: "Vendedor",
+      buyer: "Comprador",
+      restaurant: "Restaurante",
+      cadete: "Cadete",
+    }
+    const accountTypeText = accountTypeLabels[data.account_type] || "Comprador"
     
     const templateParams = {
       to_name: data.user_name,

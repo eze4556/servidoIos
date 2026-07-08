@@ -14,7 +14,13 @@ import {
   Shield,
   Sparkles,
   Users,
+  UtensilsCrossed,
 } from "lucide-react"
+
+const partnerLinks = [
+  { href: "/signup/restaurante", label: "Soy restaurante", icon: UtensilsCrossed },
+  { href: "/signup/cadete", label: "Trabajá como cadete", icon: Users },
+]
 
 const quickLinks = [
   { href: "/", label: "Inicio", icon: Home },
@@ -43,7 +49,7 @@ export function Footer() {
       <div className="container relative mx-auto px-4 py-12 md:px-6 md:py-14">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           {/* Brand */}
-          <div className="space-y-5 lg:col-span-5">
+          <div className="space-y-5 lg:col-span-4">
             <Link href="/" className="group inline-flex flex-col">
               <h3 className="text-xl font-bold tracking-tight text-white transition-colors group-hover:text-purple-100">
                 Servido
@@ -86,6 +92,29 @@ export function Footer() {
             </div>
           </div>
 
+          {/* Partners */}
+          <div className="lg:col-span-2">
+            <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
+              <span className="h-1.5 w-1.5 rounded-full bg-servido-gold" />
+              Partners
+            </h4>
+            <ul className="space-y-1">
+              {partnerLinks.map(({ href, label, icon: Icon }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="group flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-purple-100/90 transition-all hover:bg-white/10 hover:text-white"
+                  >
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-purple-200 transition-colors group-hover:bg-white/10 group-hover:text-white">
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Quick links */}
           <div className="lg:col-span-3">
             <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
@@ -110,8 +139,8 @@ export function Footer() {
           </div>
 
           {/* Legal + about */}
-          <div className="sm:col-span-2 lg:col-span-4">
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-2">
+          <div className="sm:col-span-2 lg:col-span-3">
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-1">
               <div>
                 <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
                   <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />

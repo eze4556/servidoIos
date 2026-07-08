@@ -992,6 +992,34 @@ export async function handleMercadoPagoWebhook(request: Request): Promise<Webhoo
       }
     }
 
+    if (externalReference.startsWith("food_")) {
+      const { updateFoodOrderPaymentStatus } = await import("@/lib/food-order-server")
+      if (status === "approved") {
+        await updateFoodOrderPaymentStatus(externalReference, "approved", String(paymentId))
+        await markWebhookEventProcessed(reservation.eventRef, status, externalReference)
+        return {
+          status: 200,
+          body: { received: true, handled: true, type: "food", status, duplicate: false },
+        }
+      }
+      if (status === "pending") {
+        await updateFoodOrderPaymentStatus(externalReference, "pending", String(paymentId))
+        await markWebhookEventProcessed(reservation.eventRef, status, externalReference)
+        return {
+          status: 200,
+          body: { received: true, handled: true, type: "food", status, duplicate: false },
+        }
+      }
+      if (status === "rejected" || status === "cancelled") {
+        await updateFoodOrderPaymentStatus(externalReference, status === "rejected" ? "rejected" : "cancelled", String(paymentId))
+        await markWebhookEventProcessed(reservation.eventRef, status, externalReference)
+        return {
+          status: 200,
+          body: { received: true, handled: true, type: "food", status, duplicate: false },
+        }
+      }
+    }
+
     if (externalReference.startsWith("subscription_")) {
       if (status === "approved") {
         await handleSubscriptionPayment(externalReference, paymentInfo)

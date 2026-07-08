@@ -11,7 +11,9 @@ import { getMercadoPagoConnectionSnapshot, type MercadoPagoConnectionStatus } fr
 
 interface UserProfile {
   firebaseUser: FirebaseUser
-  role?: "user" | "seller" | "admin"
+  role?: "user" | "seller" | "admin" | "cadete"
+  businessType?: "restaurant" | "store"
+  restaurantId?: string
   subscriptionStatus?: SubscriptionStatus
   subscriptionEndsAt?: Date | null
   subscriptionDaysRemaining?: number | null
@@ -40,9 +42,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authLoading, setAuthLoading] = useState(true)
   const router = useRouter()
 
-  const getEffectiveRole = useCallback((user: FirebaseUser, role?: "user" | "seller" | "admin") => {
+  const getEffectiveRole = useCallback((user: FirebaseUser, role?: "user" | "seller" | "admin" | "cadete") => {
     return role || "user"
   }, [])
+
+  const buildUserProfile = useCallback(
+    (user: FirebaseUser, userData: Record<string, unknown>): UserProfile => {
+      const subscriptionSnapshot = getSubscriptionSnapshot(userData)
+      const mercadoPagoSnapshot = getMercadoPagoConnectionSnapshot(userData)
+      return {
+        firebaseUser: user,
+        role: getEffectiveRole(user, userData.role as UserProfile["role"]),
+        businessType: userData.businessType as UserProfile["businessType"],
+        restaurantId: (userData.restaurantId as string) || undefined,
+        subscriptionStatus: subscriptionSnapshot.status,
+        subscriptionEndsAt: subscriptionSnapshot.endsAt,
+        subscriptionDaysRemaining: subscriptionSnapshot.daysRemaining,
+        isSubscribed: subscriptionSnapshot.status === "active",
+        mercadoPagoStatus: mercadoPagoSnapshot.status,
+        mercadoPagoConnectionEndsAt: mercadoPagoSnapshot.expiresAt,
+        mercadoPagoAccountId: mercadoPagoSnapshot.accountId,
+        productUploadLimit: (userData.productUploadLimit as number) || 0,
+        photoURL: (userData.photoURL as string) || user.photoURL || undefined,
+        photoPath: (userData.photoPath as string) || undefined,
+      }
+    },
+    [getEffectiveRole]
+  )
 
   // Function to refresh user profile data from Firestore
   const refreshUserProfile = useCallback(async () => {
@@ -51,23 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userDocRef = doc(db, "users", user.uid)
       const userDocSnap = await getDoc(userDocRef)
       if (userDocSnap.exists()) {
-        const userData = userDocSnap.data()
-        const subscriptionSnapshot = getSubscriptionSnapshot(userData)
-        const mercadoPagoSnapshot = getMercadoPagoConnectionSnapshot(userData)
-        setCurrentUser({
-          firebaseUser: user,
-          role: getEffectiveRole(user, userData.role),
-          subscriptionStatus: subscriptionSnapshot.status,
-          subscriptionEndsAt: subscriptionSnapshot.endsAt,
-          subscriptionDaysRemaining: subscriptionSnapshot.daysRemaining,
-          isSubscribed: subscriptionSnapshot.status === "active",
-          mercadoPagoStatus: mercadoPagoSnapshot.status,
-          mercadoPagoConnectionEndsAt: mercadoPagoSnapshot.expiresAt,
-          mercadoPagoAccountId: mercadoPagoSnapshot.accountId,
-          productUploadLimit: userData.productUploadLimit || 0,
-          photoURL: userData.photoURL || user.photoURL || undefined,
-          photoPath: userData.photoPath || undefined,
-        })
+        setCurrentUser(buildUserProfile(user, userDocSnap.data()))
       } else {
         setCurrentUser({
           firebaseUser: user,
@@ -87,46 +97,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setCurrentUser(null)
     }
-  }, [])
+  }, [buildUserProfile, getEffectiveRole])
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userDocRef = doc(db, "users", user.uid)
         const userDocSnap = await getDoc(userDocRef)
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data()
-        const subscriptionSnapshot = getSubscriptionSnapshot(userData)
-        const mercadoPagoSnapshot = getMercadoPagoConnectionSnapshot(userData)
-        setCurrentUser({
-          firebaseUser: user,
-          role: getEffectiveRole(user, userData.role),
-          subscriptionStatus: subscriptionSnapshot.status,
-          subscriptionEndsAt: subscriptionSnapshot.endsAt,
-          subscriptionDaysRemaining: subscriptionSnapshot.daysRemaining,
-          isSubscribed: subscriptionSnapshot.status === "active",
-          mercadoPagoStatus: mercadoPagoSnapshot.status,
-          mercadoPagoConnectionEndsAt: mercadoPagoSnapshot.expiresAt,
-          mercadoPagoAccountId: mercadoPagoSnapshot.accountId,
-          productUploadLimit: userData.productUploadLimit || 0,
-          photoURL: userData.photoURL || user.photoURL || undefined,
-          photoPath: userData.photoPath || undefined,
-        })
-      } else {
+        if (userDocSnap.exists()) {
+          setCurrentUser(buildUserProfile(user, userDocSnap.data()))
+        } else {
           setCurrentUser({
             firebaseUser: user,
             role: getEffectiveRole(user, "user"),
-          subscriptionStatus: "inactive",
-          subscriptionEndsAt: null,
-          subscriptionDaysRemaining: null,
-          isSubscribed: false,
-          mercadoPagoStatus: "not_connected",
-          mercadoPagoConnectionEndsAt: null,
-          mercadoPagoAccountId: null,
-          productUploadLimit: 0,
-          photoURL: user.photoURL || undefined,
-          photoPath: undefined,
-        })
+            subscriptionStatus: "inactive",
+            subscriptionEndsAt: null,
+            subscriptionDaysRemaining: null,
+            isSubscribed: false,
+            mercadoPagoStatus: "not_connected",
+            mercadoPagoConnectionEndsAt: null,
+            mercadoPagoAccountId: null,
+            productUploadLimit: 0,
+            photoURL: user.photoURL || undefined,
+            photoPath: undefined,
+          })
         }
       } else {
         setCurrentUser(null)
@@ -134,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthLoading(false)
     })
     return () => unsubscribe()
-  }, [])
+  }, [buildUserProfile, getEffectiveRole])
 
   useEffect(() => {
     if (!currentUser?.firebaseUser.uid) return
@@ -178,7 +172,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     switch (currentUser.role) {
       case "admin":
         return "/admin"
+      case "cadete":
+        return "/dashboard/cadete"
       case "seller":
+        if (currentUser.businessType === "restaurant") {
+          return "/dashboard/restaurant"
+        }
         return "/dashboard/seller"
       default:
         return "/dashboard/buyer"
@@ -187,7 +186,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getVenderLink = useCallback(() => {
     if (!currentUser) return "/signup?role=seller"
-    if (currentUser.role === "seller") return "/dashboard/seller"
+    if (currentUser.role === "seller") {
+      if (currentUser.businessType === "restaurant") return "/dashboard/restaurant"
+      return "/dashboard/seller"
+    }
     return "/signup?role=seller&prompt=true"
   }, [currentUser])
 

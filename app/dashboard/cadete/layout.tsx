@@ -5,11 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { Loader2 } from "lucide-react"
 
-export default function SellerDashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function CadeteDashboardLayout({ children }: { children: React.ReactNode }) {
   const { currentUser, authLoading } = useAuth()
   const router = useRouter()
 
@@ -17,15 +13,13 @@ export default function SellerDashboardLayout({
     if (!authLoading) {
       if (!currentUser) {
         router.push("/login")
-      } else if (currentUser.role !== "seller") {
+      } else if (currentUser.role !== "cadete") {
         router.push("/")
-      } else if (currentUser.businessType === "restaurant") {
-        router.push("/dashboard/restaurant")
       }
     }
   }, [currentUser, authLoading, router])
 
-  if (authLoading || !currentUser) {
+  if (authLoading || !currentUser || currentUser.role !== "cadete") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/40">
         <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
@@ -34,4 +28,4 @@ export default function SellerDashboardLayout({
   }
 
   return <>{children}</>
-} 
+}

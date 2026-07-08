@@ -136,12 +136,20 @@ export default function SignupPage() {
       title="Crear cuenta"
       subtitle="Elegí tu tipo de cuenta y completá tus datos"
       footer={
-        <p className="text-center text-sm text-gray-600">
-          ¿Ya tenés cuenta?{" "}
-          <Link href="/login" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
-            Iniciá sesión
-          </Link>
-        </p>
+        <div className="space-y-3 text-center text-sm text-gray-600">
+          <p>
+            ¿Tenés un restaurante?{" "}
+            <Link href="/signup/restaurante" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
+              Registrate acá
+            </Link>
+          </p>
+          <p>
+            ¿Ya tenés cuenta?{" "}
+            <Link href="/login" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
+              Iniciá sesión
+            </Link>
+          </p>
+        </div>
       }
     >
       <form onSubmit={handleSignup} className="space-y-5">

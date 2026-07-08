@@ -81,6 +81,27 @@ export class ApiService {
     }, true)
   }
 
+  static async createFoodPreference(data: {
+    restaurantId: string
+    buyerId: string
+    buyerEmail: string
+    items: { menuItemId: string; quantity: number }[]
+    deliveryMode: "delivery_propio" | "retiro_en_local" | "ambos"
+    address?: string
+    phone?: string
+    notes?: string
+    deliveryFee?: number
+  }): Promise<ApiResponse<{
+    id: string
+    init_point: string
+    orderId: string
+  }>> {
+    return this.fetchApi("/api/mercadopago/payments/create-food-preference", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, true)
+  }
+
   // Crear preferencia para suscripciones
   static async createSubscriptionPreference(data: {
     userId: string

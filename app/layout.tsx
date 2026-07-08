@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { CartProvider } from "@/contexts/cart-context"
+import { FoodCartProvider } from "@/contexts/food-cart-context"
 import { AuthProvider } from "@/contexts/auth-context"
 import { LocationProvider } from "@/contexts/location-context"
 import { CacheProvider } from "@/contexts/cache-context"
@@ -57,9 +58,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AuthProvider>
               <LocationProvider>
                 <CartProvider>
-                  <SafeArea>
-                    <AppChrome>{children}</AppChrome>
-                  </SafeArea>
+                  <FoodCartProvider>
+                    <SafeArea>
+                      <AppChrome>{children}</AppChrome>
+                    </SafeArea>
+                  </FoodCartProvider>
                 </CartProvider>
               </LocationProvider>
             </AuthProvider>

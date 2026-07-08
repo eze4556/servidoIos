@@ -33,7 +33,7 @@ const serviceShortcuts: {
     id: "restaurantes",
     label: "Restaurantes",
     icon: UtensilsCrossed,
-    href: "/proximamente?seccion=restaurantes",
+    href: "/restaurantes",
     circle: "bg-gradient-to-br from-orange-400 via-orange-500 to-red-500",
     shadow: "shadow-orange-500/40",
     iconAnim: "home-shortcut-float-delay-1",
