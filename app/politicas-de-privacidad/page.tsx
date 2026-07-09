@@ -1,92 +1,142 @@
-import React from 'react';
+import Link from "next/link"
+import { FileText, Mail, Shield } from "lucide-react"
+import { InfoCtaCard } from "@/components/info/info-cta-card"
+import { InfoPageShell } from "@/components/info/info-page-shell"
+import { InfoSection } from "@/components/info/info-section"
+
+const sections = [
+  { id: "informacion", number: 1, title: "Información que recopilamos" },
+  { id: "cuenta", number: 2, title: "Creación de cuenta" },
+  { id: "ubicacion", number: 3, title: "Uso de la ubicación" },
+  { id: "publicidad", number: 4, title: "Publicidad" },
+  { id: "terceros", number: 5, title: "Compartir información con terceros" },
+  { id: "seguridad", number: 6, title: "Seguridad de los datos" },
+  { id: "contacto", number: 7, title: "Contacto" },
+  { id: "cambios", number: 8, title: "Cambios en esta política" },
+]
 
 export default function PoliticasDePrivacidadPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Política de Privacidad – ServiDo</h1>
-      <p className="text-gray-600 mb-8">Última actualización: 4 de agosto de 2025</p>
+    <InfoPageShell
+      badge="Legal"
+      badgeIcon={Shield}
+      title="Política de Privacidad – ServiDo"
+      subtitle="En ServiDo nos comprometemos a proteger la privacidad de nuestros usuarios y a manejar sus datos personales con transparencia y seguridad. Esta política describe qué información recopilamos, cómo la utilizamos y qué medidas tomamos para protegerla."
+      lastUpdated="4 de agosto de 2025"
+    >
+      <div className="grid gap-8 lg:grid-cols-[220px_1fr] lg:gap-10 xl:grid-cols-[260px_1fr]">
+        <aside className="hidden lg:block">
+          <nav className="sticky top-28 rounded-2xl border border-purple-100 bg-white p-4 shadow-sm">
+            <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-purple-700">
+              <FileText className="h-3.5 w-3.5" />
+              Índice
+            </p>
+            <ol className="space-y-1 text-sm">
+              {sections.map(({ id, number, title }) => (
+                <li key={id}>
+                  <a
+                    href={`#${id}`}
+                    className="block rounded-lg px-2 py-1.5 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-900"
+                  >
+                    <span className="font-medium text-purple-800">{number}.</span> {title}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </aside>
 
-      <section className="mb-8">
-        <p className="text-gray-700 leading-relaxed mb-6">
-          En ServiDo nos comprometemos a proteger la privacidad de nuestros usuarios y a manejar sus datos personales con transparencia y seguridad. Esta política describe qué información recopilamos, cómo la utilizamos y qué medidas tomamos para protegerla.
-        </p>
-      </section>
+        <div className="space-y-5">
+          <InfoSection id="informacion" number={1} title="Información que recopilamos">
+            <p>Al registrarse y utilizar ServiDo, podemos recolectar la siguiente información personal:</p>
+            <ul>
+              <li>Nombre y apellido</li>
+              <li>Dirección de correo electrónico</li>
+              <li>Número de teléfono</li>
+              <li>Ubicación geográfica (para coordinar envíos y mostrar servicios cercanos)</li>
+            </ul>
+          </InfoSection>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">1. Información que recopilamos</h2>
-        <p className="text-gray-700 leading-relaxed mb-4">
-          Al registrarse y utilizar ServiDo, podemos recolectar la siguiente información personal:
-        </p>
-        <ul className="list-disc list-inside ml-4 text-gray-700 space-y-2">
-          <li>Nombre y apellido</li>
-          <li>Dirección de correo electrónico</li>
-          <li>Número de teléfono</li>
-          <li>Ubicación geográfica (para coordinar envíos y mostrar servicios cercanos)</li>
-        </ul>
-      </section>
+          <InfoSection id="cuenta" number={2} title="Creación de cuenta">
+            <p>
+              Para utilizar ServiDo, el usuario debe crear una cuenta ingresando a la opción &quot;Registrarse&quot; en la
+              plataforma y completando los datos solicitados.
+            </p>
+          </InfoSection>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">2. Creación de cuenta</h2>
-        <p className="text-gray-700 leading-relaxed">
-          Para utilizar ServiDo, el usuario debe crear una cuenta ingresando a la opción "Registrarse" en la plataforma y completando los datos solicitados.
-        </p>
-      </section>
+          <InfoSection id="ubicacion" number={3} title="Uso de la ubicación">
+            <p>ServiDo utiliza la ubicación del usuario para:</p>
+            <ul>
+              <li>Coordinar entregas o envíos de productos y servicios.</li>
+              <li>Mostrar resultados relevantes cercanos a su ubicación.</li>
+            </ul>
+            <p>
+              El usuario puede gestionar los permisos de ubicación desde la configuración de su dispositivo.
+            </p>
+          </InfoSection>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">3. Uso de la ubicación</h2>
-        <p className="text-gray-700 leading-relaxed mb-4">
-          ServiDo utiliza la ubicación del usuario para:
-        </p>
-        <ul className="list-disc list-inside ml-4 text-gray-700 space-y-2">
-          <li>Coordinar entregas o envíos de productos y servicios.</li>
-          <li>Mostrar resultados relevantes cercanos a su ubicación.</li>
-        </ul>
-        <p className="text-gray-700 leading-relaxed mt-4">
-          El usuario puede gestionar los permisos de ubicación desde la configuración de su dispositivo.
-        </p>
-      </section>
+          <InfoSection id="publicidad" number={4} title="Publicidad">
+            <p>
+              ServiDo muestra anuncios dentro de la aplicación. Estos anuncios pueden ser propios o de terceros, pero no
+              implican la entrega de datos personales del usuario a anunciantes.
+            </p>
+          </InfoSection>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">4. Publicidad</h2>
-        <p className="text-gray-700 leading-relaxed">
-          ServiDo muestra anuncios dentro de la aplicación. Estos anuncios pueden ser propios o de terceros, pero no implican la entrega de datos personales del usuario a anunciantes.
-        </p>
-      </section>
+          <InfoSection id="terceros" number={5} title="Compartir información con terceros">
+            <p>
+              ServiDo no comparte datos personales ni información de los usuarios con terceros, salvo obligación legal.
+            </p>
+          </InfoSection>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">5. Compartir información con terceros</h2>
-        <p className="text-gray-700 leading-relaxed">
-          ServiDo no comparte datos personales ni información de los usuarios con terceros, salvo obligación legal.
-        </p>
-      </section>
+          <InfoSection id="seguridad" number={6} title="Seguridad de los datos">
+            <p>
+              En ServiDo implementamos medidas técnicas y organizativas para proteger la información de nuestros
+              usuarios:
+            </p>
+            <ul>
+              <li>
+                <strong>Encriptación:</strong> utilizamos encriptación para proteger los datos tanto en tránsito como en
+                reposo.
+              </li>
+              <li>
+                <strong>Servidores seguros:</strong> las operaciones se ejecutan en servidores robustos, protegidos con
+                firewalls y sistemas de detección de intrusiones, ubicados en entornos controlados con acceso
+                restringido.
+              </li>
+            </ul>
+          </InfoSection>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">6. Seguridad de los datos</h2>
-        <p className="text-gray-700 leading-relaxed mb-4">
-          En ServiDo implementamos medidas técnicas y organizativas para proteger la información de nuestros usuarios:
-        </p>
-        <ul className="list-disc list-inside ml-4 text-gray-700 space-y-2">
-          <li><strong>Encriptación:</strong> utilizamos encriptación para proteger los datos tanto en tránsito como en reposo.</li>
-          <li><strong>Servidores seguros:</strong> las operaciones se ejecutan en servidores robustos, protegidos con firewalls y sistemas de detección de intrusiones, ubicados en entornos controlados con acceso restringido.</li>
-        </ul>
-      </section>
+          <InfoSection id="contacto" number={7} title="Contacto">
+            <p>Para consultas o solicitudes relacionadas con privacidad, puede comunicarse con nosotros a:</p>
+            <p>
+              <a
+                href="mailto:servidoarg@gmail.com"
+                className="inline-flex items-center gap-2 font-medium text-purple-800 hover:text-purple-950 hover:underline"
+              >
+                <Mail className="h-4 w-4" />
+                servidoarg@gmail.com
+              </a>
+            </p>
+          </InfoSection>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">7. Contacto</h2>
-        <p className="text-gray-700 leading-relaxed">
-          Para consultas o solicitudes relacionadas con privacidad, puede comunicarse con nosotros a:
-        </p>
-        <p className="text-gray-700 leading-relaxed mt-2">
-          📧 <a href="mailto:servidoarg@gmail.com" className="text-blue-600 hover:text-blue-800">servidoarg@gmail.com</a>
-        </p>
-      </section>
+          <InfoSection id="cambios" number={8} title="Cambios en esta política">
+            <p>
+              Podemos actualizar esta política de privacidad ocasionalmente. Cualquier cambio será publicado en esta
+              misma sección con la fecha de última actualización.
+            </p>
+          </InfoSection>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">8. Cambios en esta política</h2>
-        <p className="text-gray-700 leading-relaxed">
-          Podemos actualizar esta política de privacidad ocasionalmente. Cualquier cambio será publicado en esta misma sección con la fecha de última actualización.
-        </p>
-      </section>
-    </div>
-  );
-} 
+          <InfoCtaCard
+            icon={Shield}
+            title="¿Tenés dudas sobre privacidad?"
+            description="Escribinos por correo o revisá los términos y condiciones de uso de la plataforma."
+            primaryLabel="Contactar por email"
+            primaryHref="mailto:servidoarg@gmail.com"
+            secondaryLabel="Ver términos y condiciones"
+            secondaryHref="/terminos-y-condiciones"
+          />
+        </div>
+      </div>
+    </InfoPageShell>
+  )
+}
