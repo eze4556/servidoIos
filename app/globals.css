@@ -347,6 +347,18 @@
   }
 }
 
+@keyframes wave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(14deg);
+  }
+  75% {
+    transform: rotate(-8deg);
+  }
+}
+
 .home-hero-glow {
   background: radial-gradient(circle at 30% 50%, rgba(91, 33, 182, 0.4), transparent 55%);
   animation: hero-glow 6s ease-in-out infinite;

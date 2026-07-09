@@ -37,6 +37,7 @@ import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
 import { formatPrice } from "@/lib/utils"
+import { UserGreeting } from "@/components/layout/user-greeting"
 
 interface CategoryItem {
   id: string
@@ -227,6 +228,8 @@ export function Header() {
                 Servido
               </span>
             </Link>
+
+            <UserGreeting variant="desktop" />
 
             {/* Centro desktop: categorías + búsqueda */}
             <div className="hidden min-w-0 flex-1 items-center gap-3 lg:flex">

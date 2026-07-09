@@ -31,6 +31,7 @@ import { db } from "@/lib/firebase"
 import { collection, getDocs } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
 import { formatPrice } from "@/lib/utils"
+import { UserGreeting } from "@/components/layout/user-greeting"
 
 interface SearchProduct {
   id: string
@@ -79,7 +80,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
     const observer = new ResizeObserver(updateHeight)
     observer.observe(el)
     return () => observer.disconnect()
-  }, [userLocation, loadingLocation, roleBadge])
+  }, [userLocation, loadingLocation, roleBadge, currentUser?.firebaseUser.uid])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -149,7 +150,8 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
             </span>
             <div className="min-w-0">
               <span className="block text-lg font-bold leading-tight tracking-tight text-white">Servido</span>
-              {roleBadge && (
+              <UserGreeting variant="mobile" className="mt-0.5" />
+              {roleBadge && !currentUser && (
                 <span className="block text-[10px] font-semibold uppercase tracking-wider text-purple-200/90">
                   {roleBadge}
                 </span>
