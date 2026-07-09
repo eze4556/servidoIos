@@ -9,6 +9,7 @@ const sectionLabels: Record<string, string> = {
   restaurantes: "Restaurantes",
   mercados: "Mercados",
   farmacias: "Farmacias",
+  envios: "Envíos",
   mas: "Más comercios",
 }
 

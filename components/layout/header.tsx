@@ -264,7 +264,7 @@ export function Header() {
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   <Input
                     type="text"
-                    placeholder="Buscar productos, servicios..."
+                    placeholder="¿Qué necesitas hoy?"
                     value={searchTerm}
                     onChange={handleSearchChange}
                     className={searchInputClass}

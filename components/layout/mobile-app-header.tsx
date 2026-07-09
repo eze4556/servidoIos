@@ -194,7 +194,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
               setQuery(e.target.value)
               runSearch(e.target.value)
             }}
-            placeholder="Buscar productos, servicios, comida..."
+            placeholder="¿Qué necesitas hoy?"
             className="h-11 rounded-2xl border-0 bg-white pl-11 pr-4 text-sm shadow-lg placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-servido-gold/50"
           />
           {showSearchResults && query.trim() && (

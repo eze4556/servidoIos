@@ -107,7 +107,7 @@ export default function SearchPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <Input
                 type="search"
-                placeholder="Buscar productos, marcas y más..."
+                placeholder="¿Qué necesitas hoy?"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 border-gray-200 focus:ring-2 focus:ring-purple-400"

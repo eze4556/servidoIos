@@ -62,7 +62,7 @@ export function HomeSearchHero({ chips = defaultChips }: HomeSearchHeroProps) {
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar productos, marcas, servicios..."
+                  placeholder="¿Qué necesitas hoy?"
                   className="h-12 rounded-2xl border-0 bg-white pl-12 pr-4 text-base shadow-lg placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-purple-300 sm:h-14"
                 />
               </div>
