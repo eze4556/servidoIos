@@ -21,6 +21,20 @@ const nextConfig = {
     ],
   },
   trailingSlash: false,
+  async headers() {
+    return [
+      {
+        // Evita que el navegador/CDN guarde HTML viejo al recargar (F5)
+        source: '/((?!_next/static|_next/image|api|images|favicon.ico).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0, must-revalidate',
+          },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig

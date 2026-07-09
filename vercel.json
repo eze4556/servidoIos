@@ -1,9 +1,5 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "framework": "nextjs",
   "installCommand": "npm install --legacy-peer-deps",
-  "devCommand": "npm run dev",
   "regions": ["gru1"],
   "crons": [
     {
@@ -16,4 +12,4 @@
       "maxDuration": 30
     }
   }
-} 
+}
