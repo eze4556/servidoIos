@@ -1,7 +1,6 @@
 "use client"
 
-// Banner carousel — rebuild trigger
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
@@ -51,18 +50,90 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
   const slides = currentUser ? LOGGED_IN_BANNERS : GUEST_BANNERS
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<{
+    active: boolean
+    startX: number
+    scrollLeft: number
+    moved: boolean
+  }>({ active: false, startX: 0, scrollLeft: 0, moved: false })
 
   useEffect(() => {
     setIndex(0)
+    const el = scrollerRef.current
+    if (el) el.scrollTo({ left: 0, behavior: "auto" })
   }, [currentUser?.firebaseUser.uid])
+
+  const syncIndexFromScroll = useCallback(() => {
+    const el = scrollerRef.current
+    if (!el || slides.length === 0) return
+    const width = el.clientWidth
+    if (width <= 0) return
+    const next = Math.round(el.scrollLeft / width)
+    setIndex(Math.max(0, Math.min(slides.length - 1, next)))
+  }, [slides.length])
+
+  const goTo = useCallback((next: number) => {
+    const el = scrollerRef.current
+    if (!el) return
+    const clamped = ((next % slides.length) + slides.length) % slides.length
+    el.scrollTo({ left: clamped * el.clientWidth, behavior: "smooth" })
+    setIndex(clamped)
+  }, [slides.length])
 
   useEffect(() => {
     if (paused || slides.length <= 1 || authLoading) return
     const timer = window.setInterval(() => {
-      setIndex((prev) => (prev + 1) % slides.length)
+      const el = scrollerRef.current
+      if (!el) return
+      const width = el.clientWidth
+      const current = Math.round(el.scrollLeft / width)
+      const next = (current + 1) % slides.length
+      el.scrollTo({ left: next * width, behavior: "smooth" })
     }, 4500)
     return () => window.clearInterval(timer)
   }, [paused, slides.length, authLoading])
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return
+    const el = scrollerRef.current
+    if (!el) return
+    setPaused(true)
+    dragRef.current = {
+      active: true,
+      startX: e.clientX,
+      scrollLeft: el.scrollLeft,
+      moved: false,
+    }
+    el.setPointerCapture(e.pointerId)
+  }
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current
+    const drag = dragRef.current
+    if (!el || !drag.active) return
+    const delta = e.clientX - drag.startX
+    if (Math.abs(delta) > 6) drag.moved = true
+    el.scrollLeft = drag.scrollLeft - delta
+  }
+
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current
+    const drag = dragRef.current
+    if (!el || !drag.active) return
+    drag.active = false
+    try {
+      el.releasePointerCapture(e.pointerId)
+    } catch {
+      // ignore
+    }
+    // Snap al slide más cercano
+    const width = el.clientWidth
+    const nearest = Math.round(el.scrollLeft / width)
+    el.scrollTo({ left: nearest * width, behavior: "smooth" })
+    setIndex(Math.max(0, Math.min(slides.length - 1, nearest)))
+    window.setTimeout(() => setPaused(false), 800)
+  }
 
   if (authLoading) {
     return (
@@ -79,11 +150,18 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
       className={cn(className)}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      onTouchStart={() => setPaused(true)}
-      onTouchEnd={() => setPaused(false)}
     >
       <div className="relative w-full overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-black/5 sm:rounded-3xl">
-        <div className="grid w-full">
+        <div
+          ref={scrollerRef}
+          className="flex w-full cursor-grab touch-pan-y overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ WebkitOverflowScrolling: "touch" }}
+          onScroll={syncIndexFromScroll}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+        >
           {slides.map((slide, i) => {
             const image = (
               <Image
@@ -92,7 +170,8 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
                 width={slide.width}
                 height={slide.height}
                 priority={i === 0}
-                className="h-auto w-full"
+                draggable={false}
+                className="pointer-events-none h-auto w-full select-none"
                 sizes={
                   variant === "desktop"
                     ? "(max-width: 1280px) 90vw, 1200px"
@@ -102,16 +181,20 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
             )
 
             return (
-              <div
-                key={slide.id}
-                className={cn(
-                  "col-start-1 row-start-1 w-full transition-opacity duration-500 ease-out",
-                  i === index ? "z-[1] opacity-100" : "z-0 pointer-events-none opacity-0"
-                )}
-                aria-hidden={i !== index}
-              >
+              <div key={slide.id} className="w-full shrink-0 snap-center snap-always">
                 {slide.href ? (
-                  <Link href={slide.href} className="block w-full" tabIndex={i === index ? 0 : -1}>
+                  <Link
+                    href={slide.href}
+                    className="block w-full"
+                    draggable={false}
+                    onClick={(e) => {
+                      // Si el usuario estaba arrastrando, no navegar
+                      if (dragRef.current.moved) {
+                        e.preventDefault()
+                        dragRef.current.moved = false
+                      }
+                    }}
+                  >
                     {image}
                   </Link>
                 ) : (
@@ -128,7 +211,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
               <button
                 key={slide.id}
                 type="button"
-                onClick={() => setIndex(i)}
+                onClick={() => goTo(i)}
                 aria-label={`Ir al banner ${i + 1}`}
                 aria-current={i === index}
                 className={cn(
@@ -141,7 +224,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
         )}
 
         <span className="sr-only">
-          Banner {index + 1} de {slides.length}: {current?.alt}
+          Banner {index + 1} de {slides.length}: {current?.alt}. Deslizá para ver más.
         </span>
       </div>
     </section>
