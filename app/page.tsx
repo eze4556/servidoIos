@@ -13,7 +13,7 @@ import { HomeBrandsShowcase } from "@/components/home/home-brands-showcase"
 import { HomeSectionShell } from "@/components/home/home-section-shell"
 import { HomeMobileHero } from "@/components/home/home-mobile-hero"
 import { HomeCategoryPills } from "@/components/home/home-category-pills"
-import { HomePromoBanner } from "@/components/home/home-promo-banner"
+import { HomeBannerCarousel } from "@/components/home/home-banner-carousel"
 import { HomeProductGrid } from "@/components/home/home-product-grid"
 
 interface Product {
@@ -200,7 +200,7 @@ export default function HomePage() {
             />
           </div>
 
-          <HomePromoBanner />
+          <HomeBannerCarousel variant="mobile" />
 
           <HomeProductGrid
             products={mobileGridProducts}
@@ -236,6 +236,10 @@ export default function HomePage() {
       {/* Desktop home */}
       <div className="hidden lg:block">
         <HomeSearchHero chips={searchChips} />
+
+        <div className="container mx-auto max-w-screen-xl px-4 pt-2 md:px-6">
+          <HomeBannerCarousel variant="desktop" />
+        </div>
 
         <HomeSectionShell variant="default" className="home-section-delay-1">
           <HomeSectionHeader
