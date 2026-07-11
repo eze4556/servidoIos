@@ -6,12 +6,16 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { TabBar } from "@/components/layout/tab-bar"
 import { MobileAppHeader } from "@/components/layout/mobile-app-header"
+import { LocationPickerSheet } from "@/components/location/location-picker-sheet"
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isHomeRoute = pathname === "/"
   const isAdminRoute = pathname?.startsWith("/admin")
-  const isAuthRoute = pathname === "/login" || pathname === "/signup"
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname?.startsWith("/signup/")
   const showMobileHeader = !isHomeRoute && !isAdminRoute && !isAuthRoute
 
   if (isAdminRoute) {
@@ -33,6 +37,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
         <Footer />
       </div>
       <TabBar />
+      <LocationPickerSheet />
     </div>
   )
 }

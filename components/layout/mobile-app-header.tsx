@@ -13,7 +13,6 @@ import {
   MapPin,
   Menu,
   Package,
-  RotateCcw,
   Search,
   Sparkles,
   Store,
@@ -58,7 +57,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { currentUser, authLoading, handleLogout, getDashboardLink } = useAuth()
-  const { userLocation, loadingLocation, refreshLocation } = useLocation()
+  const { userLocation, shortLocation, loadingLocation, openLocationPicker } = useLocation()
 
   const [query, setQuery] = useState("")
   const [searchResults, setSearchResults] = useState<SearchProduct[]>([])
@@ -125,8 +124,8 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
   }
 
   const locationText = loadingLocation
-    ? "Obteniendo ubicación..."
-    : userLocation || "Seleccionar ubicación"
+    ? "Detectando..."
+    : shortLocation || userLocation || "Elegí tu ubicación"
 
   const closeMenu = () => setMenuOpen(false)
 
@@ -237,12 +236,16 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
 
         <button
           type="button"
-          className="mt-2.5 flex w-full items-start gap-1.5 text-left text-[11px] leading-snug text-purple-100"
-          onClick={refreshLocation}
+          className="mt-2.5 flex w-full items-center gap-1.5 text-left text-[11px] leading-snug text-purple-100"
+          onClick={openLocationPicker}
         >
-          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-servido-gold" />
-          <span className="min-w-0 flex-1 whitespace-normal break-words">Enviar a: {locationText}</span>
-          <RotateCcw className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70" />
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-servido-gold" />
+          <span className="min-w-0 flex-1 truncate">
+            <span className="font-semibold text-purple-200/90">Enviar a:</span> {locationText}
+          </span>
+          <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-purple-100 ring-1 ring-white/15">
+            Cambiar
+          </span>
         </button>
       </div>
 

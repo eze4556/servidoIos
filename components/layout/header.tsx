@@ -10,10 +10,8 @@ import {
   Heart,
   Users,
   Package,
-  User,
   Loader2,
   MapPin,
-  RotateCcw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -58,7 +56,7 @@ interface SearchProduct {
 
 export function Header() {
   const { currentUser, authLoading, handleLogout, getDashboardLink, getVenderLink } = useAuth()
-  const { userLocation, loadingLocation, refreshLocation } = useLocation()
+  const { userLocation, shortLocation, loadingLocation, openLocationPicker } = useLocation()
   const router = useRouter()
   const pathname = usePathname()
   const [categories, setCategories] = useState<CategoryItem[]>([])
@@ -354,7 +352,11 @@ export function Header() {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="group flex max-w-lg items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-left shadow-lg shadow-purple-950/25 backdrop-blur-md transition-all duration-300 hover:border-white/25 hover:bg-white/15 hover:shadow-purple-900/30">
+                <button
+                  type="button"
+                  onClick={openLocationPicker}
+                  className="group flex max-w-lg items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-left shadow-lg shadow-purple-950/25 backdrop-blur-md transition-all duration-300 hover:border-white/25 hover:bg-white/15 hover:shadow-purple-900/30"
+                >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/10 transition-colors group-hover:bg-white/20">
                     <MapPin className="h-4 w-4 text-purple-100" />
                   </span>
@@ -369,23 +371,14 @@ export function Header() {
                       </span>
                     ) : (
                       <span className="block truncate text-sm font-semibold text-white">
-                        {userLocation}
+                        {shortLocation || userLocation || "Elegí tu ubicación"}
                       </span>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      refreshLocation()
-                    }}
-                    className="h-8 w-8 shrink-0 rounded-full text-purple-200 hover:bg-white/15 hover:text-white"
-                    aria-label="Actualizar ubicación"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                  <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-purple-100 ring-1 ring-white/10">
+                    Cambiar
+                  </span>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-xs rounded-xl border-0 shadow-xl">
                 <div className="space-y-2">
@@ -393,8 +386,8 @@ export function Header() {
                     <MapPin className="h-4 w-4 text-purple-600" />
                     <span className="font-medium">Tu ubicación</span>
                   </div>
-                  <p className="text-sm">{userLocation || "Ubicación no disponible"}</p>
-                  <p className="text-xs text-gray-500">Tocá el ícono para actualizar</p>
+                  <p className="text-sm">{userLocation || "Todavía no elegiste una ubicación"}</p>
+                  <p className="text-xs text-gray-500">Tocá para buscar ciudad o usar el GPS</p>
                 </div>
               </TooltipContent>
             </Tooltip>

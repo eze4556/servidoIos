@@ -3,11 +3,31 @@ export interface CachedLocation {
   latitude: number
   longitude: number
   updatedAt: number
+  source?: "gps" | "manual" | "profile" | "ip"
 }
 
 const CACHE_KEY = "servido:location"
 const DENIED_KEY = "servido:location-denied"
 const TTL_MS = 24 * 60 * 60 * 1000
+
+/** Acorta direcciones largas para mostrar en navbar */
+export function formatShortLocation(location: string, maxLen = 42): string {
+  if (!location) return ""
+  const cleaned = location
+    .replace(/,\s*Argentina\s*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  if (cleaned.length <= maxLen) return cleaned
+
+  const parts = cleaned.split(",").map((p) => p.trim()).filter(Boolean)
+  if (parts.length >= 2) {
+    const short = `${parts[0]}, ${parts[1]}`
+    if (short.length <= maxLen) return short
+  }
+
+  return `${cleaned.slice(0, maxLen - 1).trim()}…`
+}
 
 export function readLocationCache(): CachedLocation | null {
   if (typeof window === "undefined") return null
@@ -88,6 +108,7 @@ export function migrateLegacyLocationCache(): CachedLocation | null {
         latitude: 0,
         longitude: 0,
         updatedAt: Date.now(),
+        source: "manual",
       }
       writeLocationCache(migrated)
       localStorage.removeItem(key)
@@ -110,6 +131,7 @@ export function migrateLegacyLocationCache(): CachedLocation | null {
         latitude: 0,
         longitude: 0,
         updatedAt: Date.now(),
+        source: "manual",
       }
       writeLocationCache(migrated)
       localStorage.removeItem(key)

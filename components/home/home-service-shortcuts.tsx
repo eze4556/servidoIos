@@ -70,17 +70,20 @@ const serviceShortcuts: {
 
 export function HomeServiceShortcuts() {
   return (
-    <div className="px-4 pb-2 pt-3">
-      <div className="rounded-3xl bg-white px-3 py-4 shadow-md shadow-black/[0.08] ring-1 ring-black/[0.04] sm:px-4 sm:py-5">
-        <div className="grid grid-cols-3 gap-x-2 gap-y-4">
+    <div className="pb-2 pt-3">
+      <div className="mx-4 rounded-3xl bg-white py-3 shadow-md shadow-black/[0.08] ring-1 ring-black/[0.04] sm:py-4">
+        <div
+          className="flex gap-1 overflow-x-auto px-3 pb-1 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory sm:gap-2 sm:px-4 [&::-webkit-scrollbar]:hidden"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           {serviceShortcuts.map(({ id, label, emoji, href, circle, shadow, iconAnim }, index) => (
             <Link
               key={id}
               href={href}
-              className="home-shortcut-enter group flex flex-col items-center gap-2 rounded-2xl py-0.5 text-center"
+              className="home-shortcut-enter group flex w-[4.5rem] shrink-0 snap-start flex-col items-center gap-2 rounded-2xl py-0.5 text-center xs:w-[4.75rem] sm:w-[5.25rem]"
               style={{ animationDelay: `${index * 70}ms` }}
             >
-              <span className="transition-transform duration-300 group-hover:scale-110 group-active:scale-95">
+              <span className="transition-transform duration-300 group-hover:scale-105 group-active:scale-95">
                 <span
                   className={cn(
                     "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full ring-2 ring-white/90 xs:h-[3.25rem] xs:w-[3.25rem]",

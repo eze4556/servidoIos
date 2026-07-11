@@ -1,12 +1,13 @@
 "use client"
 
 import type React from "react"
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { doc, getDoc, updateDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
 import {
   clearLocationDenied,
+  formatShortLocation,
   isCacheFresh,
   markLocationDenied,
   migrateLegacyLocationCache,
@@ -16,10 +17,22 @@ import {
   type CachedLocation,
 } from "@/lib/location-cache"
 
+interface SetManualLocationInput {
+  location: string
+  latitude?: number
+  longitude?: number
+}
+
 interface LocationContextType {
   userLocation: string
+  shortLocation: string
   loadingLocation: boolean
+  locationSource: CachedLocation["source"] | null
+  pickerOpen: boolean
+  openLocationPicker: () => void
+  closeLocationPicker: () => void
   refreshLocation: () => Promise<void>
+  setManualLocation: (input: SetManualLocationInput) => Promise<void>
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined)
@@ -51,7 +64,9 @@ function getCurrentPosition(options: PositionOptions): Promise<GeolocationPositi
 export function LocationProvider({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth()
   const [userLocation, setUserLocation] = useState("")
+  const [locationSource, setLocationSource] = useState<CachedLocation["source"] | null>(null)
   const [loadingLocation, setLoadingLocation] = useState(true)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const hasResolvedRef = useRef(false)
   const isFetchingRef = useRef(false)
   const currentUserRef = useRef(currentUser)
@@ -62,24 +77,45 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
   const applyCachedLocation = useCallback((cache: CachedLocation) => {
     setUserLocation(cache.location)
+    setLocationSource(cache.source ?? null)
     setLoadingLocation(false)
   }, [])
 
-  const saveUserLocation = useCallback(async (location: string, latitude: number, longitude: number) => {
-    const user = currentUserRef.current
-    if (!user) return
+  const saveUserLocation = useCallback(
+    async (location: string, latitude: number, longitude: number, source: CachedLocation["source"]) => {
+      const user = currentUserRef.current
+      if (!user) return
 
-    try {
-      const userDocRef = doc(db, "users", user.firebaseUser.uid)
-      await updateDoc(userDocRef, {
-        location,
-        coordinates: { latitude, longitude },
-        lastLocationUpdate: new Date(),
-      })
-    } catch (error) {
-      console.error("Error saving user location:", error)
-    }
-  }, [])
+      try {
+        const userDocRef = doc(db, "users", user.firebaseUser.uid)
+        await updateDoc(userDocRef, {
+          location,
+          coordinates: { latitude, longitude },
+          locationSource: source ?? "manual",
+          lastLocationUpdate: new Date(),
+        })
+      } catch (error) {
+        console.error("Error saving user location:", error)
+      }
+    },
+    []
+  )
+
+  const persistLocation = useCallback(
+    async (
+      location: string,
+      latitude: number,
+      longitude: number,
+      source: NonNullable<CachedLocation["source"]>
+    ) => {
+      writeLocationCache({ location, latitude, longitude, updatedAt: Date.now(), source })
+      setUserLocation(location)
+      setLocationSource(source)
+      setLoadingLocation(false)
+      await saveUserLocation(location, latitude, longitude, source)
+    },
+    [saveUserLocation]
+  )
 
   const resolveFromGps = useCallback(
     async (precise = false, showLoading = true) => {
@@ -99,11 +135,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         const location = await reverseGeocode(latitude, longitude)
 
         if (location) {
-          writeLocationCache({ location, latitude, longitude, updatedAt: Date.now() })
-          setUserLocation(location)
-          await saveUserLocation(location, latitude, longitude)
+          await persistLocation(location, latitude, longitude, "gps")
         } else {
           setUserLocation("Ubicación no disponible")
+          setLoadingLocation(false)
         }
       } catch (error) {
         const geoError = error as GeolocationPositionError
@@ -111,13 +146,13 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
           markLocationDenied()
         }
         console.error("Error getting location:", error)
-        setUserLocation("Ubicación no disponible")
+        setUserLocation((prev) => prev || "Ubicación no disponible")
+        setLoadingLocation(false)
       } finally {
         isFetchingRef.current = false
-        setLoadingLocation(false)
       }
     },
-    [saveUserLocation]
+    [persistLocation]
   )
 
   const loadFromFirestore = useCallback(async (): Promise<boolean> => {
@@ -132,6 +167,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       const userData = userDocSnap.data()
       const location = userData.location as string | undefined
       const coordinates = userData.coordinates as { latitude?: number; longitude?: number } | undefined
+      const source = (userData.locationSource as CachedLocation["source"]) || "profile"
 
       if (!location) return false
 
@@ -140,8 +176,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         latitude: coordinates?.latitude ?? 0,
         longitude: coordinates?.longitude ?? 0,
         updatedAt: Date.now(),
+        source,
       })
       setUserLocation(location)
+      setLocationSource(source)
       setLoadingLocation(false)
       return true
     } catch (error) {
@@ -189,6 +227,20 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     await resolveFromGps(true, true)
   }, [resolveFromGps])
 
+  const setManualLocation = useCallback(
+    async ({ location, latitude = 0, longitude = 0 }: SetManualLocationInput) => {
+      const trimmed = location.trim()
+      if (!trimmed) return
+      clearLocationDenied()
+      await persistLocation(trimmed, latitude, longitude, "manual")
+      setPickerOpen(false)
+    },
+    [persistLocation]
+  )
+
+  const openLocationPicker = useCallback(() => setPickerOpen(true), [])
+  const closeLocationPicker = useCallback(() => setPickerOpen(false), [])
+
   useEffect(() => {
     const cached = migrateLegacyLocationCache() ?? readLocationCache()
     if (cached) {
@@ -222,8 +274,22 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     })
   }, [currentUser, loadFromFirestore])
 
+  const shortLocation = useMemo(() => formatShortLocation(userLocation), [userLocation])
+
   return (
-    <LocationContext.Provider value={{ userLocation, loadingLocation, refreshLocation }}>
+    <LocationContext.Provider
+      value={{
+        userLocation,
+        shortLocation,
+        loadingLocation,
+        locationSource,
+        pickerOpen,
+        openLocationPicker,
+        closeLocationPicker,
+        refreshLocation,
+        setManualLocation,
+      }}
+    >
       {children}
     </LocationContext.Provider>
   )
