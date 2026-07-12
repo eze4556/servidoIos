@@ -16,6 +16,7 @@ import {
   writeLocationCache,
   type CachedLocation,
 } from "@/lib/location-cache"
+import { hasValidCoordinates } from "@/lib/geo"
 
 interface SetManualLocationInput {
   location: string
@@ -28,6 +29,8 @@ interface LocationContextType {
   shortLocation: string
   loadingLocation: boolean
   locationSource: CachedLocation["source"] | null
+  coordinates: { latitude: number; longitude: number } | null
+  hasValidLocation: boolean
   pickerOpen: boolean
   openLocationPicker: () => void
   closeLocationPicker: () => void
@@ -65,6 +68,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth()
   const [userLocation, setUserLocation] = useState("")
   const [locationSource, setLocationSource] = useState<CachedLocation["source"] | null>(null)
+  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null)
   const [loadingLocation, setLoadingLocation] = useState(true)
   const [pickerOpen, setPickerOpen] = useState(false)
   const hasResolvedRef = useRef(false)
@@ -78,6 +82,11 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const applyCachedLocation = useCallback((cache: CachedLocation) => {
     setUserLocation(cache.location)
     setLocationSource(cache.source ?? null)
+    if (hasValidCoordinates(cache.latitude, cache.longitude)) {
+      setCoordinates({ latitude: cache.latitude, longitude: cache.longitude })
+    } else {
+      setCoordinates(null)
+    }
     setLoadingLocation(false)
   }, [])
 
@@ -111,6 +120,11 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       writeLocationCache({ location, latitude, longitude, updatedAt: Date.now(), source })
       setUserLocation(location)
       setLocationSource(source)
+      if (hasValidCoordinates(latitude, longitude)) {
+        setCoordinates({ latitude, longitude })
+      } else {
+        setCoordinates(null)
+      }
       setLoadingLocation(false)
       await saveUserLocation(location, latitude, longitude, source)
     },
@@ -180,6 +194,12 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       })
       setUserLocation(location)
       setLocationSource(source)
+      if (hasValidCoordinates(coordinates?.latitude, coordinates?.longitude)) {
+        setCoordinates({
+          latitude: coordinates!.latitude!,
+          longitude: coordinates!.longitude!,
+        })
+      }
       setLoadingLocation(false)
       return true
     } catch (error) {
@@ -275,6 +295,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   }, [currentUser, loadFromFirestore])
 
   const shortLocation = useMemo(() => formatShortLocation(userLocation), [userLocation])
+  const hasValidLocation = hasValidCoordinates(coordinates?.latitude, coordinates?.longitude)
 
   return (
     <LocationContext.Provider
@@ -283,6 +304,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         shortLocation,
         loadingLocation,
         locationSource,
+        coordinates,
+        hasValidLocation,
         pickerOpen,
         openLocationPicker,
         closeLocationPicker,

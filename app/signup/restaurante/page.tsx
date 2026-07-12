@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useAuth } from "@/contexts/auth-context"
 import { signupRestaurant } from "@/lib/auth/signup-partner"
 import type { DeliveryMode } from "@/types/restaurant"
 import { DELIVERY_MODE_LABELS } from "@/types/restaurant"
@@ -34,6 +35,7 @@ import { cn } from "@/lib/utils"
 
 export default function RestaurantSignupPage() {
   const router = useRouter()
+  const { currentUser, authLoading, getDashboardLink, handleLogout } = useAuth()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
@@ -45,6 +47,18 @@ export default function RestaurantSignupPage() {
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const isRestaurantSeller =
+    currentUser?.role === "seller" && currentUser.businessType === "restaurant"
+  const isStoreSeller =
+    currentUser?.role === "seller" && currentUser.businessType !== "restaurant"
+
+  useEffect(() => {
+    if (authLoading) return
+    if (isRestaurantSeller) {
+      router.replace("/dashboard/restaurant")
+    }
+  }, [authLoading, isRestaurantSeller, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,6 +106,56 @@ export default function RestaurantSignupPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (authLoading || isRestaurantSeller) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/40">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
+      </div>
+    )
+  }
+
+  if (currentUser) {
+    const title = isStoreSeller
+      ? "Ya tenés una cuenta de vendedor"
+      : "Ya iniciaste sesión"
+    const description = isStoreSeller
+      ? "Esta cuenta es de tienda/vendedor. No se puede convertir a restaurante desde acá. Si querés registrar un restaurante, cerrá sesión y usá otro correo, o contactá a soporte."
+      : "Para registrar un restaurante nuevo tenés que cerrar sesión primero."
+
+    return (
+      <PartnerSignupShell
+        variant="restaurant"
+        icon={UtensilsCrossed}
+        heroTitle="Sumá tu restaurante a Servido"
+        heroSubtitle="Recibí pedidos online, gestioná tu menú y llegá a más clientes en tu zona."
+        highlights={[
+          { icon: ClipboardList, text: "Panel de pedidos en tiempo real" },
+          { icon: TrendingUp, text: "Mayor visibilidad en tu zona" },
+          { icon: Store, text: "Menú digital fácil de actualizar" },
+        ]}
+        formTitle={title}
+        formSubtitle={description}
+      >
+        <div className="space-y-3">
+          <Button asChild className="h-11 w-full rounded-full bg-servido-800 hover:bg-servido-900">
+            <Link href={getDashboardLink()}>Ir a mi panel</Link>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 w-full rounded-full"
+            onClick={() => void handleLogout()}
+          >
+            Cerrar sesión
+          </Button>
+          <Button asChild variant="ghost" className="h-11 w-full rounded-full">
+            <Link href="/">Volver al inicio</Link>
+          </Button>
+        </div>
+      </PartnerSignupShell>
+    )
   }
 
   return (

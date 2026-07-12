@@ -1,13 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { Compass, Heart, Home, ShoppingBag, User } from "lucide-react"
+import { Compass, Heart, Home, Sparkles, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
 import { usePathname } from "next/navigation"
 
 export function TabBar() {
-  const { currentUser, authLoading, getDashboardLink } = useAuth()
+  const { authLoading, getDashboardLink } = useAuth()
   const pathname = usePathname()
 
   const tabItems = [
@@ -28,10 +28,10 @@ export function TabBar() {
         pathname.startsWith("/search"),
     },
     {
-      name: "Pedidos",
-      icon: ShoppingBag,
-      href: currentUser ? "/dashboard/buyer" : "/login",
-      active: pathname.startsWith("/dashboard/buyer") || pathname.startsWith("/purchase"),
+      name: "Historias",
+      icon: Sparkles,
+      href: "/historias",
+      active: pathname.startsWith("/historias"),
     },
     {
       name: "Favoritos",

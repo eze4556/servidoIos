@@ -14,6 +14,7 @@ import { HomeSectionShell } from "@/components/home/home-section-shell"
 import { HomeMobileHero } from "@/components/home/home-mobile-hero"
 import { HomeCategoryPills } from "@/components/home/home-category-pills"
 import { HomeBannerCarousel } from "@/components/home/home-banner-carousel"
+import { HomeStoriesSection } from "@/components/stories/home-stories-section"
 import { HomeProductGrid } from "@/components/home/home-product-grid"
 
 interface Product {
@@ -237,7 +238,17 @@ export default function HomePage() {
       <div className="hidden lg:block">
         <HomeSearchHero chips={searchChips} />
 
-        <div className="container mx-auto max-w-screen-xl px-4 pt-2 md:px-6">
+        <div className="container mx-auto max-w-screen-xl px-4 pt-4 md:px-6">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-800">Historias</h2>
+            <a href="/historias" className="text-xs font-medium text-servido-800 hover:underline">
+              Ver todas
+            </a>
+          </div>
+          <HomeStoriesSection />
+        </div>
+
+        <div className="container mx-auto max-w-screen-xl px-4 pt-4 md:px-6">
           <HomeBannerCarousel variant="desktop" />
         </div>
 

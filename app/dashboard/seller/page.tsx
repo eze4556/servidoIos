@@ -26,6 +26,7 @@ import {
   Download,
   Filter,
   TrendingUp,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -96,6 +97,7 @@ import * as XLSX from "xlsx"
 import { getDashboardProductImage } from "@/lib/image-utils"
 import { formatPrice, formatPriceNumber } from "@/lib/utils"
 import { SubscriptionNotification } from "@/components/subscription-notification"
+import { SellerBusinessLocationCard } from "@/components/dashboard/seller-business-location-card"
 import {
   SellerDashboardShell,
   type SellerDashboardTab,
@@ -2535,6 +2537,17 @@ export default function SellerDashboardPage() {
                                     <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                                   </Button>
                                   <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-7 w-7 sm:h-8 sm:w-8"
+                                    title="Publicar historia"
+                                    asChild
+                                  >
+                                    <Link href={`/historias/nueva?product=${prod.id}`}>
+                                      <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    </Link>
+                                  </Button>
+                                  <Button
                                     variant="destructive"
                                     size="icon"
                                     className="h-7 w-7 sm:h-8 sm:w-8"
@@ -3222,6 +3235,8 @@ export default function SellerDashboardPage() {
                   <Label htmlFor="email" className="text-base">Email</Label>
                   <Input id="email" value={currentUser?.firebaseUser.email || ""} disabled className="mt-1" />
                 </div>
+
+                <SellerBusinessLocationCard />
 
                 <Card className="border-dashed">
                   <CardHeader>

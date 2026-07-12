@@ -359,6 +359,15 @@
   }
 }
 
+@keyframes story-progress-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 .home-hero-glow {
   background: radial-gradient(circle at 30% 50%, rgba(91, 33, 182, 0.4), transparent 55%);
   animation: hero-glow 6s ease-in-out infinite;

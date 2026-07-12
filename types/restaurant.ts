@@ -19,6 +19,9 @@ export interface Restaurant {
   description?: string
   address: string
   zone?: string
+  city?: string | null
+  locationLabel?: string
+  coordinates?: { latitude: number; longitude: number } | null
   deliveryMode: DeliveryMode
   status: RestaurantStatus
   imageUrl?: string

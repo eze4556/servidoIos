@@ -25,6 +25,7 @@ const partnerLinks = [
 const quickLinks = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/products", label: "Productos", icon: Package },
+  { href: "/historias", label: "Historias", icon: Sparkles },
   { href: "/services", label: "Servicios", icon: Sparkles },
   { href: "/favorites", label: "Favoritos", icon: Heart },
 ]

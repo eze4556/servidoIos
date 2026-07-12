@@ -6,6 +6,9 @@ import Link from "next/link"
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
+import { saveBusinessLocation } from "@/lib/business-location"
+import { hasValidCoordinates, type BusinessLocation } from "@/lib/geo"
+import { BusinessLocationPicker } from "@/components/location/business-location-picker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,10 +30,9 @@ export default function RestaurantOnboardingPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [description, setDescription] = useState("")
-  const [zone, setZone] = useState("")
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("ambos")
   const [restaurantName, setRestaurantName] = useState("")
-  const [address, setAddress] = useState("")
+  const [businessLocation, setBusinessLocation] = useState<BusinessLocation | null>(null)
 
   useEffect(() => {
     async function loadRestaurant() {
@@ -42,10 +44,19 @@ export default function RestaurantOnboardingPage() {
       if (snap.exists()) {
         const data = snap.data() as Restaurant
         setRestaurantName(data.name || "")
-        setAddress(data.address || "")
         setDescription(data.description || "")
-        setZone(data.zone || "")
         setDeliveryMode(data.deliveryMode || "ambos")
+        if (data.coordinates && hasValidCoordinates(data.coordinates.latitude, data.coordinates.longitude)) {
+          setBusinessLocation({
+            label: data.locationLabel || data.address || "",
+            city: data.city || data.zone || null,
+            latitude: data.coordinates.latitude,
+            longitude: data.coordinates.longitude,
+          })
+        } else if (data.address) {
+          // Solo texto: el usuario puede buscar y confirmar en el picker
+          setBusinessLocation(null)
+        }
         if (data.status === "active" && data.description) {
           router.replace("/dashboard/restaurant")
         }
@@ -56,14 +67,18 @@ export default function RestaurantOnboardingPage() {
   }, [currentUser?.restaurantId, router])
 
   const handleSave = async () => {
-    if (!currentUser?.restaurantId) return
+    if (!currentUser?.restaurantId || !currentUser.firebaseUser.uid) return
+    if (!businessLocation || !hasValidCoordinates(businessLocation.latitude, businessLocation.longitude)) {
+      return
+    }
     setSaving(true)
     try {
+      await saveBusinessLocation(currentUser.firebaseUser.uid, businessLocation, {
+        restaurantId: currentUser.restaurantId,
+      })
       await updateDoc(doc(db, "restaurants", currentUser.restaurantId), {
         name: restaurantName.trim(),
-        address: address.trim(),
         description: description.trim(),
-        zone: zone.trim(),
         deliveryMode,
         status: "active",
         updatedAt: serverTimestamp(),
@@ -83,6 +98,11 @@ export default function RestaurantOnboardingPage() {
       </div>
     )
   }
+
+  const canSave =
+    restaurantName.trim() &&
+    businessLocation &&
+    hasValidCoordinates(businessLocation.latitude, businessLocation.longitude)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30">
@@ -107,25 +127,14 @@ export default function RestaurantOnboardingPage() {
               className="h-11 rounded-xl"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="address">Dirección</Label>
-            <Input
-              id="address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="h-11 rounded-xl"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="zone">Zona / barrio</Label>
-            <Input
-              id="zone"
-              placeholder="Ej: Centro, Palermo, Zona norte"
-              value={zone}
-              onChange={(e) => setZone(e.target.value)}
-              className="h-11 rounded-xl"
-            />
-          </div>
+
+          <BusinessLocationPicker
+            value={businessLocation}
+            onChange={setBusinessLocation}
+            label="Ubicación del local"
+            helperText="Buscá tu dirección o ciudad. Así te encuentran en historias cercanas."
+          />
+
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>
             <Textarea
@@ -167,8 +176,8 @@ export default function RestaurantOnboardingPage() {
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button
-              onClick={handleSave}
-              disabled={saving || !restaurantName.trim() || !address.trim()}
+              onClick={() => void handleSave()}
+              disabled={saving || !canSave}
               className="h-11 flex-1 rounded-full bg-servido-800 hover:bg-servido-900"
             >
               {saving ? (
