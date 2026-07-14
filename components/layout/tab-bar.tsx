@@ -1,14 +1,16 @@
 "use client"
 
 import Link from "next/link"
-import { Compass, Heart, Home, Sparkles, User } from "lucide-react"
+import { Home, MessageCircle, Sparkles, User, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
 import { usePathname } from "next/navigation"
+import { useChatUnread } from "@/components/chat/chat-unread-context"
 
 export function TabBar() {
   const { authLoading, getDashboardLink } = useAuth()
   const pathname = usePathname()
+  const { unreadCount } = useChatUnread()
 
   const tabItems = [
     {
@@ -18,14 +20,10 @@ export function TabBar() {
       active: pathname === "/",
     },
     {
-      name: "Explorar",
-      icon: Compass,
-      href: "/products",
-      active:
-        pathname.startsWith("/products") ||
-        pathname.startsWith("/product") ||
-        pathname.startsWith("/category") ||
-        pathname.startsWith("/search"),
+      name: "Seguir",
+      icon: UserPlus,
+      href: "/siguiendo",
+      active: pathname.startsWith("/siguiendo"),
     },
     {
       name: "Historias",
@@ -34,10 +32,11 @@ export function TabBar() {
       active: pathname.startsWith("/historias"),
     },
     {
-      name: "Favoritos",
-      icon: Heart,
-      href: "/favorites",
-      active: pathname === "/favorites",
+      name: "Chat",
+      icon: MessageCircle,
+      href: "/mensajes",
+      active: pathname.startsWith("/mensajes") || pathname.startsWith("/chat"),
+      badge: unreadCount,
     },
     {
       name: "Mi Cuenta",
@@ -63,15 +62,22 @@ export function TabBar() {
             <Button
               variant="ghost"
               size="sm"
-              className={`flex h-full w-full min-w-0 flex-col gap-0.5 px-1 py-2 text-xs ${
+              className={`relative flex h-full w-full min-w-0 flex-col gap-0.5 px-1 py-2 text-xs ${
                 item.active
                   ? "font-semibold text-servido-700"
                   : "text-gray-500 hover:text-servido-600"
               }`}
             >
-              <item.icon
-                className={`h-5 w-5 shrink-0 ${item.active ? "text-servido-700" : ""}`}
-              />
+              <span className="relative">
+                <item.icon
+                  className={`h-5 w-5 shrink-0 ${item.active ? "text-servido-700" : ""}`}
+                />
+                {"badge" in item && typeof item.badge === "number" && item.badge > 0 && (
+                  <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white">
+                    {item.badge > 9 ? "9+" : item.badge}
+                  </span>
+                )}
+              </span>
               <span className="truncate text-[10px] leading-tight">{item.name}</span>
             </Button>
           </Link>

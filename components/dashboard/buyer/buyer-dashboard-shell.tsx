@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { CreditCard, Heart, Home, Settings, ShoppingBag, Sparkles } from "lucide-react"
+import { CreditCard, Heart, Home, MessageCircle, Settings, ShoppingBag, Sparkles } from "lucide-react"
 import {
   DashboardMobileSidebar,
   DashboardSidebar,
@@ -59,7 +59,10 @@ export function BuyerDashboardShell({
     userName,
     userPhoto,
     onLogout,
-    footerLinks: [{ label: "Explorar catálogo", href: "/products", icon: Sparkles }],
+    footerLinks: [
+      { label: "Chat / mensajes", href: "/mensajes", icon: MessageCircle },
+      { label: "Explorar catálogo", href: "/products", icon: Sparkles },
+    ],
   }
 
   return (

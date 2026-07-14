@@ -26,6 +26,7 @@ const quickLinks = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/products", label: "Productos", icon: Package },
   { href: "/historias", label: "Historias", icon: Sparkles },
+  { href: "/mensajes", label: "Mensajes", icon: Mail },
   { href: "/services", label: "Servicios", icon: Sparkles },
   { href: "/favorites", label: "Favoritos", icon: Heart },
 ]

@@ -6,6 +6,7 @@ import { doc, getDoc, collection, getDocs, query, where } from "firebase/firesto
 import { db } from "@/lib/firebase"
 import { useFoodCart } from "@/contexts/food-cart-context"
 import { FoodCartDrawer } from "@/components/restaurants/food-cart-drawer"
+import { FollowButton } from "@/components/follows/follow-button"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, ArrowLeft, MapPin, Plus } from "lucide-react"
@@ -95,6 +96,17 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
               </Badge>
             )}
           </div>
+          {restaurant.ownerId && (
+            <div className="mt-4">
+              <FollowButton
+                targetUserId={restaurant.ownerId}
+                targetType="restaurant"
+                targetName={restaurant.name}
+                targetPhotoURL={restaurant.imageUrl}
+                restaurantId={restaurant.id}
+              />
+            </div>
+          )}
         </div>
       </div>
 

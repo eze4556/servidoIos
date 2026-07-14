@@ -12,6 +12,7 @@ import {
   LogOut,
   MapPin,
   Menu,
+  MessageCircle,
   Package,
   Search,
   Sparkles,
@@ -284,6 +285,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                   { href: "/", label: "Inicio", icon: Home },
                   { href: "/products", label: "Productos", icon: Package },
                   { href: "/services", label: "Servicios", icon: Sparkles },
+                  { href: "/mensajes", label: "Chat", icon: MessageCircle },
                   { href: "/favorites", label: "Favoritos", icon: Heart },
                   {
                     href: getDashboardLink(),

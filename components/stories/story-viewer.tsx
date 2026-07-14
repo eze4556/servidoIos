@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ExternalLink, Eye, Loader2, Trash2, X } from "lucide-react"
+import { Check, ExternalLink, Eye, Loader2, Send, Trash2, X } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { recordStoryView, softDeleteStory } from "@/lib/stories"
+import { replyToStory } from "@/lib/story-chat"
 import { formatStoryRelativeTime } from "@/lib/story-time"
+import { FollowButton } from "@/components/follows/follow-button"
 import { STORY_VIEW_MS, type StoryAuthorGroup } from "@/types/story"
 
 interface StoryViewerProps {
@@ -37,6 +40,12 @@ export function StoryViewer({
   const [holdHint, setHoldHint] = useState(false)
   const [localViewCount, setLocalViewCount] = useState<number | null>(null)
   const [dragY, setDragY] = useState(0)
+  const [replyText, setReplyText] = useState("")
+  const [replyFocused, setReplyFocused] = useState(false)
+  const [replySending, setReplySending] = useState(false)
+  const [replyError, setReplyError] = useState<string | null>(null)
+  const [replySentChatId, setReplySentChatId] = useState<string | null>(null)
+  const replyInputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startedAtRef = useRef(0)
   const remainingRef = useRef(STORY_VIEW_MS)
@@ -49,6 +58,8 @@ export function StoryViewer({
   const isAuthor = Boolean(
     currentUser && story && currentUser.firebaseUser.uid === story.authorId
   )
+  const canReply = Boolean(open && story && !isAuthor)
+  const replyActive = replyFocused || replySending || Boolean(replySentChatId)
 
   useEffect(() => {
     if (open) {
@@ -62,6 +73,11 @@ export function StoryViewer({
       setHoldHint(false)
       setLocalViewCount(null)
       setDragY(0)
+      setReplyText("")
+      setReplyFocused(false)
+      setReplySending(false)
+      setReplyError(null)
+      setReplySentChatId(null)
       remainingRef.current = STORY_VIEW_MS
       setProgressKey((k) => k + 1)
     }
@@ -119,7 +135,7 @@ export function StoryViewer({
 
   useEffect(() => {
     clearTimer()
-    if (!open || !story || paused || navigatingOffer || deleting || deleteOpen) return
+    if (!open || !story || paused || navigatingOffer || deleting || deleteOpen || replyActive) return
 
     startedAtRef.current = Date.now()
     timerRef.current = setTimeout(() => {
@@ -137,10 +153,17 @@ export function StoryViewer({
     navigatingOffer,
     deleting,
     deleteOpen,
+    replyActive,
     progressKey,
     goNext,
     clearTimer,
   ])
+
+  // Al cambiar de historia, limpiar reply enviado (pero no el texto si el usuario escribe)
+  useEffect(() => {
+    setReplySentChatId(null)
+    setReplyError(null)
+  }, [story?.id])
 
   // Vistas
   useEffect(() => {
@@ -166,7 +189,7 @@ export function StoryViewer({
   }, [open, group, storyIndex, authorIndex, groups])
 
   const handlePause = () => {
-    if (paused || navigatingOffer || deleting || deleteOpen || swipingRef.current) return
+    if (paused || navigatingOffer || deleting || deleteOpen || replyActive || swipingRef.current) return
     const elapsed = Date.now() - startedAtRef.current
     remainingRef.current = Math.max(50, remainingRef.current - elapsed)
     setPaused(true)
@@ -178,8 +201,64 @@ export function StoryViewer({
   }
 
   const handleResume = () => {
-    if (!paused || navigatingOffer || deleting || deleteOpen || swipingRef.current) return
+    if (!paused || navigatingOffer || deleting || deleteOpen || replyActive || swipingRef.current) return
     setPaused(false)
+  }
+
+  const focusReply = () => {
+    if (!canReply || replySending) return
+    if (!currentUser) {
+      onClose()
+      router.push("/login")
+      return
+    }
+    const elapsed = Date.now() - startedAtRef.current
+    remainingRef.current = Math.max(50, remainingRef.current - elapsed)
+    setPaused(true)
+    setReplyFocused(true)
+    setReplyError(null)
+  }
+
+  const blurReply = () => {
+    setReplyFocused(false)
+    if (!replySending && !replySentChatId) {
+      setPaused(false)
+    }
+  }
+
+  const sendReply = async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    if (!story || !currentUser || !replyText.trim() || replySending) return
+    if (isAuthor) return
+
+    setReplySending(true)
+    setReplyError(null)
+    setPaused(true)
+    try {
+      const senderName =
+        currentUser.name ||
+        currentUser.firebaseUser.displayName ||
+        currentUser.firebaseUser.email?.split("@")[0] ||
+        "Usuario"
+      const chatId = await replyToStory({
+        story,
+        text: replyText,
+        senderId: currentUser.firebaseUser.uid,
+        senderName,
+      })
+      setReplyText("")
+      setReplySentChatId(chatId)
+      setReplyFocused(false)
+      window.setTimeout(() => {
+        setReplySentChatId(null)
+        setPaused(false)
+      }, 2800)
+    } catch (err) {
+      console.error(err)
+      setReplyError(err instanceof Error ? err.message : "No se pudo enviar")
+    } finally {
+      setReplySending(false)
+    }
   }
 
   const openOffer = () => {
@@ -260,14 +339,14 @@ export function StoryViewer({
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (navigatingOffer || deleting || deleteOpen) return
+      if (navigatingOffer || deleting || deleteOpen || replyFocused || replySending) return
       if (e.key === "Escape") onClose()
       if (e.key === "ArrowRight") goNext()
       if (e.key === "ArrowLeft") goPrev()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [open, onClose, goNext, goPrev, navigatingOffer, deleting, deleteOpen])
+  }, [open, onClose, goNext, goPrev, navigatingOffer, deleting, deleteOpen, replyFocused, replySending])
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartYRef.current = e.touches[0]?.clientY ?? null
@@ -334,7 +413,9 @@ export function StoryViewer({
                           transform: "scaleX(0)",
                           animation: `story-progress-fill ${STORY_VIEW_MS}ms linear forwards`,
                           animationPlayState:
-                            paused || navigatingOffer || deleting || deleteOpen ? "paused" : "running",
+                            paused || navigatingOffer || deleting || deleteOpen || replyActive
+                              ? "paused"
+                              : "running",
                         }
                 }
               />
@@ -366,6 +447,15 @@ export function StoryViewer({
               {group.authorType === "restaurant" ? "Restaurante" : "Tienda"}
             </p>
           </div>
+          {!isAuthor && (
+            <FollowButton
+              variant="story"
+              targetUserId={group.authorId}
+              targetType={group.authorType}
+              targetName={group.authorName}
+              targetPhotoURL={group.authorPhotoURL}
+            />
+          )}
           {isAuthor && (
             <>
               <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-medium text-white">
@@ -418,14 +508,24 @@ export function StoryViewer({
           />
         </div>
 
-        {(story.caption || story.linkUrl) && (
-          <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent px-4 pb-8 pt-16">
-            {story.caption && <p className="text-sm leading-relaxed text-white">{story.caption}</p>}
+        {(story.caption || story.linkUrl || canReply) && (
+          <div
+            className={`absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pt-16 ${
+              canReply ? "pb-3" : "pb-8"
+            }`}
+          >
+            {story.caption && (
+              <p className={`text-sm leading-relaxed text-white ${canReply ? "mb-3" : ""}`}>
+                {story.caption}
+              </p>
+            )}
             {story.linkUrl && (
               <button
                 type="button"
                 disabled={navigatingOffer}
-                className="mt-3 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-servido-900 disabled:opacity-90"
+                className={`inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-servido-900 disabled:opacity-90 ${
+                  canReply ? "mb-3" : "mt-3"
+                }`}
                 onClick={openOffer}
               >
                 {navigatingOffer ? (
@@ -440,6 +540,66 @@ export function StoryViewer({
                   </>
                 )}
               </button>
+            )}
+
+            {canReply && (
+              <div className="relative z-30" onPointerDown={(e) => e.stopPropagation()}>
+                {replySentChatId ? (
+                  <div className="flex items-center justify-between gap-2 rounded-full bg-white/15 px-4 py-2.5 text-sm text-white backdrop-blur-sm">
+                    <span className="inline-flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-300" />
+                      Enviado
+                    </span>
+                    <Link
+                      href={`/chat/${replySentChatId}`}
+                      className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-servido-900"
+                      onClick={onClose}
+                    >
+                      Ver chat
+                    </Link>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={(e) => void sendReply(e)}
+                    className="flex items-center gap-2"
+                  >
+                    <input
+                      ref={replyInputRef}
+                      type="text"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onFocus={focusReply}
+                      onBlur={blurReply}
+                      disabled={replySending}
+                      placeholder={`Enviar mensaje a ${group.authorName}…`}
+                      className="h-11 min-w-0 flex-1 rounded-full border border-white/40 bg-black/25 px-4 text-sm text-white placeholder:text-white/55 outline-none backdrop-blur-sm focus:border-white/70"
+                      enterKeyHint="send"
+                      autoComplete="off"
+                    />
+                    <button
+                      type="submit"
+                      disabled={replySending || !replyText.trim()}
+                      onMouseDown={(e) => e.preventDefault()}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-servido-900 disabled:opacity-40"
+                      aria-label="Enviar mensaje"
+                    >
+                      {replySending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </button>
+                  </form>
+                )}
+                {replyError && (
+                  <p className="mt-2 text-center text-xs text-red-300">{replyError}</p>
+                )}
+                {!currentUser && (
+                  <p className="mt-2 text-center text-[11px] text-white/60">
+                    Iniciá sesión para responder
+                  </p>
+                )}
+              </div>
             )}
           </div>
         )}

@@ -12,6 +12,8 @@ import {
   Package,
   Loader2,
   MapPin,
+  MessageCircle,
+  UserPlus,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +33,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useLocation } from "@/contexts/location-context"
 import { CartDrawer } from "@/components/cart-drawer"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useChatUnread } from "@/components/chat/chat-unread-context"
 import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
@@ -57,6 +60,7 @@ interface SearchProduct {
 export function Header() {
   const { currentUser, authLoading, handleLogout, getDashboardLink, getVenderLink } = useAuth()
   const { userLocation, shortLocation, loadingLocation, openLocationPicker } = useLocation()
+  const { unreadCount } = useChatUnread()
   const router = useRouter()
   const pathname = usePathname()
   const [categories, setCategories] = useState<CategoryItem[]>([])
@@ -334,6 +338,22 @@ export function Header() {
               )}
 
               <div className="hidden items-center gap-2 lg:flex">
+                <Link
+                  href="/mensajes"
+                  className={`relative flex h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold transition ${
+                    pathname?.startsWith("/mensajes") || pathname?.startsWith("/chat")
+                      ? "bg-servido-800 text-white"
+                      : "bg-servido-50 text-servido-900 ring-1 ring-servido-100 hover:bg-servido-100"
+                  }`}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Chat
+                  {unreadCount > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </Link>
                 <CartDrawer />
               </div>
             </div>
@@ -395,11 +415,16 @@ export function Header() {
 
           <nav className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-sm">
             {[
+              { href: "/siguiendo", icon: UserPlus, label: "Seguir" },
+              { href: "/mensajes", icon: MessageCircle, label: "Chat" },
               { href: "/acerca-de-nosotros", icon: Users, label: "Quiénes somos" },
               { href: "/services", icon: Package, label: "Servicios" },
-              { href: "/favorites", icon: Heart, label: "Mis favoritos" },
+              { href: "/favorites", icon: Heart, label: "Favoritos" },
             ].map(({ href, icon: Icon, label }) => {
-              const isActive = pathname === href || pathname?.startsWith(`${href}/`)
+              const isActive =
+                href === "/mensajes"
+                  ? pathname?.startsWith("/mensajes") || pathname?.startsWith("/chat")
+                  : pathname === href || pathname?.startsWith(`${href}/`)
               return (
                 <Link
                   key={href}

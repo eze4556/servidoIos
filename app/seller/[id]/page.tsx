@@ -34,6 +34,7 @@ import { formatPrice } from "@/lib/utils"
 import { getProductThumbnail } from "@/lib/image-utils"
 import { useAuth } from "@/contexts/auth-context"
 import { useCart } from "@/contexts/cart-context"
+import { FollowButton } from "@/components/follows/follow-button"
 
 interface SellerProfile {
   uid: string
@@ -363,7 +364,15 @@ export default function SellerProfilePage() {
             </div>
 
             {/* Acciones */}
-            <div className="flex gap-2 ml-auto">
+            <div className="flex gap-2 ml-auto flex-wrap">
+              {!isOwner && (
+                <FollowButton
+                  targetUserId={sellerId}
+                  targetType="store"
+                  targetName={seller.displayName || "Vendedor"}
+                  targetPhotoURL={seller.photoURL}
+                />
+              )}
               {!isOwner && (
                 <Button onClick={handleContactSeller} className="bg-orange-600 hover:bg-orange-700">
                   <MessageSquare className="h-4 w-4 mr-2" />

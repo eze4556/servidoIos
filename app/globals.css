@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* Safe Area Support */
 @supports (padding-top: env(safe-area-inset-top)) {
   .safe-area {
