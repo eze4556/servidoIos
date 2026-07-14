@@ -32,6 +32,7 @@ export default function RestaurantOnboardingPage() {
   const [description, setDescription] = useState("")
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("ambos")
   const [restaurantName, setRestaurantName] = useState("")
+  const [deliveryFee, setDeliveryFee] = useState("300")
   const [businessLocation, setBusinessLocation] = useState<BusinessLocation | null>(null)
 
   useEffect(() => {
@@ -46,6 +47,8 @@ export default function RestaurantOnboardingPage() {
         setRestaurantName(data.name || "")
         setDescription(data.description || "")
         setDeliveryMode(data.deliveryMode || "ambos")
+        const fee = Number(data.deliveryFee)
+        setDeliveryFee(Number.isFinite(fee) && fee >= 0 ? String(fee) : "300")
         if (data.coordinates && hasValidCoordinates(data.coordinates.latitude, data.coordinates.longitude)) {
           setBusinessLocation({
             label: data.locationLabel || data.address || "",
@@ -80,6 +83,7 @@ export default function RestaurantOnboardingPage() {
         name: restaurantName.trim(),
         description: description.trim(),
         deliveryMode,
+        deliveryFee: Number.isFinite(Number(deliveryFee)) && Number(deliveryFee) >= 0 ? Number(deliveryFee) : 300,
         status: "active",
         updatedAt: serverTimestamp(),
       })
@@ -160,6 +164,22 @@ export default function RestaurantOnboardingPage() {
               </SelectContent>
             </Select>
           </div>
+
+          {deliveryMode !== "retiro_en_local" && (
+            <div className="space-y-2">
+              <Label htmlFor="deliveryFee">Precio de envío ($)</Label>
+              <Input
+                id="deliveryFee"
+                type="number"
+                min="0"
+                step="1"
+                value={deliveryFee}
+                onChange={(e) => setDeliveryFee(e.target.value)}
+                className="h-11 rounded-xl"
+              />
+              <p className="text-xs text-gray-500">Lo paga el cliente. Podés cambiarlo después en Perfil.</p>
+            </div>
+          )}
 
           <ul className="space-y-2 rounded-2xl bg-purple-50/60 p-4 text-sm text-gray-600">
             {[

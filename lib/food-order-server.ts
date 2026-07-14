@@ -112,7 +112,12 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
   }
 
   subtotal = roundMoney(subtotal)
-  const fee = roundMoney(deliveryFee)
+  // El precio de envío lo define el restaurante (no el client)
+  const configuredFee = Number(restaurantData.deliveryFee)
+  const restaurantDeliveryFee =
+    Number.isFinite(configuredFee) && configuredFee >= 0 ? configuredFee : 300
+  const fee =
+    deliveryMode === "retiro_en_local" ? 0 : roundMoney(restaurantDeliveryFee)
   const total = roundMoney(subtotal + fee)
   const orderId = `food_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 

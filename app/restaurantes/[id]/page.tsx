@@ -82,6 +82,16 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
             <Badge className="bg-white/20 text-white hover:bg-white/25">
               {DELIVERY_MODE_LABELS[restaurant.deliveryMode]}
             </Badge>
+            {restaurant.deliveryMode !== "retiro_en_local" && (
+              <Badge className="bg-white/20 text-white hover:bg-white/25">
+                Envío{" "}
+                {Number(restaurant.deliveryFee) > 0
+                  ? `$${formatPriceNumber(restaurant.deliveryFee || 0)}`
+                  : Number(restaurant.deliveryFee) === 0
+                    ? "gratis"
+                    : "$300"}
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -136,6 +146,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
 
       <FoodCartDrawer
         deliveryMode={restaurant.deliveryMode}
+        restaurantDeliveryFee={restaurant.deliveryFee}
         paymentMethods={restaurant.paymentMethods}
         transferInfo={restaurant.transferInfo}
       />

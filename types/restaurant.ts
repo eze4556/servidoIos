@@ -37,6 +37,8 @@ export interface Restaurant {
   status: RestaurantStatus
   imageUrl?: string
   phone?: string
+  /** Precio de envío que cobra el restaurante (0 = gratis). No aplica a retiro. */
+  deliveryFee?: number
   /** Métodos habilitados. Si está vacío, el checkout no puede completar. */
   paymentMethods?: RestaurantPaymentMethod[]
   transferInfo?: RestaurantTransferInfo

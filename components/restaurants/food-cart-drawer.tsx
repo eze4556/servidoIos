@@ -28,12 +28,15 @@ import { RESTAURANT_PAYMENT_METHOD_LABELS } from "@/types/restaurant"
 
 interface FoodCartDrawerProps {
   deliveryMode: DeliveryMode
+  /** Precio de envío configurado por el restaurante */
+  restaurantDeliveryFee?: number
   paymentMethods?: RestaurantPaymentMethod[]
   transferInfo?: RestaurantTransferInfo
 }
 
 export function FoodCartDrawer({
   deliveryMode,
+  restaurantDeliveryFee = 300,
   paymentMethods = ["cash", "transfer"],
   transferInfo,
 }: FoodCartDrawerProps) {
@@ -60,7 +63,11 @@ export function FoodCartDrawer({
     else if (paymentMethod && !enabledMethods.includes(paymentMethod)) setPaymentMethod(null)
   }, [enabledMethods, paymentMethod])
 
-  const deliveryFee = deliveryMode === "retiro_en_local" ? 0 : 300
+  const configuredFee =
+    Number.isFinite(restaurantDeliveryFee) && restaurantDeliveryFee >= 0
+      ? restaurantDeliveryFee
+      : 300
+  const deliveryFee = deliveryMode === "retiro_en_local" ? 0 : configuredFee
   const total = subtotal + deliveryFee
 
   const handleCheckout = async () => {

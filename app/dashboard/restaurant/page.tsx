@@ -95,6 +95,7 @@ export default function RestaurantDashboardPage() {
   const [savingMenu, setSavingMenu] = useState(false)
 
   const [paymentMethods, setPaymentMethods] = useState<RestaurantPaymentMethod[]>(["cash", "transfer"])
+  const [deliveryFeeInput, setDeliveryFeeInput] = useState("300")
   const [transferAlias, setTransferAlias] = useState("")
   const [transferCbu, setTransferCbu] = useState("")
   const [transferBank, setTransferBank] = useState("")
@@ -141,6 +142,8 @@ export default function RestaurantDashboardPage() {
           ? data.paymentMethods
           : (["cash", "transfer"] as RestaurantPaymentMethod[])
         setPaymentMethods(methods)
+        const fee = Number(data.deliveryFee)
+        setDeliveryFeeInput(Number.isFinite(fee) && fee >= 0 ? String(fee) : "300")
         setTransferAlias(data.transferInfo?.alias || "")
         setTransferCbu(data.transferInfo?.cbu || "")
         setTransferBank(data.transferInfo?.bankName || "")
@@ -294,12 +297,18 @@ export default function RestaurantDashboardPage() {
       setPaymentMsg("Elegí al menos un método de cobro.")
       return
     }
+    const feeNum = Number(deliveryFeeInput)
+    if (!Number.isFinite(feeNum) || feeNum < 0) {
+      setPaymentMsg("El precio de envío tiene que ser 0 o más.")
+      return
+    }
 
     setSavingPayments(true)
     setPaymentMsg(null)
     try {
       await updateDoc(doc(db, "restaurants", restaurantId), {
         paymentMethods,
+        deliveryFee: feeNum,
         transferInfo: {
           alias: transferAlias.trim() || null,
           cbu: transferCbu.trim() || null,
@@ -314,6 +323,7 @@ export default function RestaurantDashboardPage() {
           ? {
               ...prev,
               paymentMethods,
+              deliveryFee: feeNum,
               transferInfo: {
                 alias: transferAlias.trim() || undefined,
                 cbu: transferCbu.trim() || undefined,
@@ -324,7 +334,7 @@ export default function RestaurantDashboardPage() {
             }
           : prev
       )
-      setPaymentMsg("Formas de cobro guardadas.")
+      setPaymentMsg("Formas de cobro y envío guardados.")
     } catch (err) {
       setPaymentMsg(err instanceof Error ? err.message : "No se pudo guardar")
     } finally {
@@ -677,6 +687,22 @@ export default function RestaurantDashboardPage() {
                 <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">{paymentMsg}</p>
               )}
 
+              <div className="space-y-2 rounded-xl border border-gray-100 p-4">
+                <Label>Precio de envío ($)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={deliveryFeeInput}
+                  onChange={(e) => setDeliveryFeeInput(e.target.value)}
+                  className="rounded-xl"
+                />
+                <p className="text-xs text-gray-500">
+                  Lo paga el cliente en pedidos con delivery. Poné 0 si el envío es gratis. En retiro no se cobra.
+                  Referencia para acordar el pago con el cadete afuera de la app.
+                </p>
+              </div>
+
               <div className="space-y-3">
                 {(["cash", "transfer", "mercadopago"] as RestaurantPaymentMethod[]).map((method) => (
                   <label
@@ -763,7 +789,7 @@ export default function RestaurantDashboardPage() {
                 onClick={() => void savePaymentSettings()}
               >
                 {savingPayments ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Guardar formas de cobro
+                Guardar cobro y envío
               </Button>
             </div>
           </div>
