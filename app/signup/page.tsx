@@ -144,6 +144,12 @@ export default function SignupPage() {
             </Link>
           </p>
           <p>
+            ¿Querés ser cadete?{" "}
+            <Link href="/signup/cadete" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
+              Postulate acá
+            </Link>
+          </p>
+          <p>
             ¿Ya tenés cuenta?{" "}
             <Link href="/login" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
               Iniciá sesión
