@@ -67,6 +67,11 @@ export interface FoodOrder {
   paymentStatus: FoodPaymentStatus
   paymentId?: string
   preferenceId?: string
+  cadeteId?: string | null
+  cadeteName?: string | null
+  assignedAt?: unknown
+  /** Zona del restaurante (denormalizada para filtrar el pool de cadetes) */
+  restaurantZone?: string | null
   createdAt?: unknown
   updatedAt?: unknown
 }

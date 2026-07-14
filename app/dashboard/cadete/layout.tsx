@@ -21,8 +21,8 @@ export default function CadeteDashboardLayout({ children }: { children: React.Re
 
   if (authLoading || !currentUser || currentUser.role !== "cadete") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/40">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
+      <div className="flex min-h-[100dvh] items-center justify-center bg-slate-950">
+        <Loader2 className="h-8 w-8 animate-spin text-sky-400" />
       </div>
     )
   }

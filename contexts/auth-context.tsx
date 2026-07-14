@@ -14,6 +14,12 @@ interface UserProfile {
   role?: "user" | "seller" | "admin" | "cadete"
   businessType?: "restaurant" | "store"
   restaurantId?: string
+  status?: string
+  isActive?: boolean
+  zone?: string
+  vehicle?: string
+  phone?: string
+  name?: string
   subscriptionStatus?: SubscriptionStatus
   subscriptionEndsAt?: Date | null
   subscriptionDaysRemaining?: number | null
@@ -55,6 +61,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: getEffectiveRole(user, userData.role as UserProfile["role"]),
         businessType: userData.businessType as UserProfile["businessType"],
         restaurantId: (userData.restaurantId as string) || undefined,
+        status: (userData.status as string) || undefined,
+        isActive: typeof userData.isActive === "boolean" ? userData.isActive : undefined,
+        zone: (userData.zone as string) || undefined,
+        vehicle: (userData.vehicle as string) || undefined,
+        phone: (userData.phone as string) || undefined,
+        name: (userData.name as string) || user.displayName || undefined,
         subscriptionStatus: subscriptionSnapshot.status,
         subscriptionEndsAt: subscriptionSnapshot.endsAt,
         subscriptionDaysRemaining: subscriptionSnapshot.daysRemaining,

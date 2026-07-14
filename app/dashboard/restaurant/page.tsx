@@ -15,6 +15,7 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  onSnapshot,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
@@ -35,19 +36,36 @@ import {
   UtensilsCrossed,
 } from "lucide-react"
 import type { FoodOrder, FoodOrderStatus, MenuItem, Restaurant } from "@/types/restaurant"
-import { FOOD_ORDER_STATUS_LABELS } from "@/types/restaurant"
+import { DELIVERY_MODE_LABELS, FOOD_ORDER_STATUS_LABELS } from "@/types/restaurant"
 import { formatPriceNumber } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 
 type RestaurantTab = "orders" | "menu" | "profile"
 
-const STATUS_FLOW: FoodOrderStatus[] = [
-  "recibido",
-  "en_preparacion",
-  "listo",
-  "en_camino",
-  "entregado",
-]
+const PAYMENT_LABELS: Record<string, string> = {
+  pending: "Pago pendiente",
+  approved: "Pago aprobado",
+  rejected: "Pago rechazado",
+  cancelled: "Pago cancelado",
+}
+
+function getNextRestaurantStatus(order: FoodOrder): FoodOrderStatus | null {
+  if (order.status === "entregado" || order.status === "cancelado") return null
+
+  // Delivery: restaurant advances until listo; cadete claim moves to en_camino
+  if (order.deliveryMode !== "retiro_en_local") {
+    if (order.status === "recibido") return "en_preparacion"
+    if (order.status === "en_preparacion") return "listo"
+    if (order.status === "listo" || order.status === "en_camino") return null
+    return null
+  }
+
+  // Pickup: skip en_camino
+  if (order.status === "recibido") return "en_preparacion"
+  if (order.status === "en_preparacion") return "listo"
+  if (order.status === "listo") return "entregado"
+  return null
+}
 
 export default function RestaurantDashboardPage() {
   const { currentUser, handleLogout } = useAuth()
@@ -57,6 +75,7 @@ export default function RestaurantDashboardPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [orders, setOrders] = useState<FoodOrder[]>([])
   const [loading, setLoading] = useState(true)
+  const [showOtherPayments, setShowOtherPayments] = useState(false)
 
   const [newItemName, setNewItemName] = useState("")
   const [newItemPrice, setNewItemPrice] = useState("")
@@ -72,37 +91,82 @@ export default function RestaurantDashboardPage() {
       return
     }
 
-    async function loadData() {
-      const restSnap = await getDoc(doc(db, "restaurants", restaurantId))
-      if (restSnap.exists()) {
+    let cancelled = false
+    let unsubscribe: (() => void) | undefined
+
+    async function loadStatic() {
+      const restSnap = await getDoc(doc(db, "restaurants", restaurantId!))
+      if (!cancelled && restSnap.exists()) {
         setRestaurant({ id: restSnap.id, ...restSnap.data() } as Restaurant)
       }
 
       const menuSnap = await getDocs(query(collection(db, "menuItems"), where("restaurantId", "==", restaurantId)))
-      setMenuItems(
-        menuSnap.docs
-          .map((d) => ({ id: d.id, ...d.data() } as MenuItem))
-          .sort((a, b) => a.name.localeCompare(b.name))
-      )
-
-      try {
-        const ordersSnap = await getDocs(
-          query(collection(db, "foodOrders"), where("restaurantId", "==", restaurantId), orderBy("createdAt", "desc"))
-        )
-        setOrders(ordersSnap.docs.map((d) => ({ id: d.id, ...d.data() } as FoodOrder)))
-      } catch {
-        const ordersSnap = await getDocs(query(collection(db, "foodOrders"), where("restaurantId", "==", restaurantId)))
-        setOrders(
-          ordersSnap.docs
-            .map((d) => ({ id: d.id, ...d.data() } as FoodOrder))
-            .sort((a, b) => String(b.id).localeCompare(String(a.id)))
+      if (!cancelled) {
+        setMenuItems(
+          menuSnap.docs
+            .map((d) => ({ id: d.id, ...d.data() } as MenuItem))
+            .sort((a, b) => a.name.localeCompare(b.name))
         )
       }
-
-      setLoading(false)
     }
 
-    void loadData()
+    void loadStatic()
+
+    const ordersQuery = query(collection(db, "foodOrders"), where("restaurantId", "==", restaurantId))
+
+    try {
+      unsubscribe = onSnapshot(
+        ordersQuery,
+        (snap) => {
+          const next = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() } as FoodOrder))
+            .sort((a, b) => String(b.id).localeCompare(String(a.id)))
+          setOrders(next)
+          setLoading(false)
+        },
+        async () => {
+          // Fallback one-shot if listener fails (e.g. rules)
+          try {
+            const ordersSnap = await getDocs(
+              query(collection(db, "foodOrders"), where("restaurantId", "==", restaurantId), orderBy("createdAt", "desc"))
+            )
+            if (!cancelled) {
+              setOrders(ordersSnap.docs.map((d) => ({ id: d.id, ...d.data() } as FoodOrder)))
+            }
+          } catch {
+            const ordersSnap = await getDocs(
+              query(collection(db, "foodOrders"), where("restaurantId", "==", restaurantId))
+            )
+            if (!cancelled) {
+              setOrders(
+                ordersSnap.docs
+                  .map((d) => ({ id: d.id, ...d.data() } as FoodOrder))
+                  .sort((a, b) => String(b.id).localeCompare(String(a.id)))
+              )
+            }
+          } finally {
+            if (!cancelled) setLoading(false)
+          }
+        }
+      )
+    } catch {
+      void (async () => {
+        const ordersSnap = await getDocs(query(collection(db, "foodOrders"), where("restaurantId", "==", restaurantId)))
+        if (!cancelled) {
+          setOrders(
+            ordersSnap.docs
+              .map((d) => ({ id: d.id, ...d.data() } as FoodOrder))
+              .sort((a, b) => String(b.id).localeCompare(String(a.id)))
+          )
+          setLoading(false)
+        }
+      })()
+    }
+
+    return () => {
+      cancelled = true
+      unsubscribe?.()
+    }
   }, [restaurantId])
 
   const handleAddMenuItem = async () => {
@@ -146,16 +210,12 @@ export default function RestaurantDashboardPage() {
   }
 
   const advanceOrderStatus = async (order: FoodOrder) => {
-    const currentIndex = STATUS_FLOW.indexOf(order.status)
-    if (currentIndex < 0 || currentIndex >= STATUS_FLOW.length - 1) return
-    const nextStatus = STATUS_FLOW[currentIndex + 1]
+    const nextStatus = getNextRestaurantStatus(order)
+    if (!nextStatus) return
     await updateDoc(doc(db, "foodOrders", order.id), {
       status: nextStatus,
       updatedAt: serverTimestamp(),
     })
-    setOrders((prev) =>
-      prev.map((o) => (o.id === order.id ? { ...o, status: nextStatus } : o))
-    )
   }
 
   if (loading) {
@@ -165,6 +225,10 @@ export default function RestaurantDashboardPage() {
       </div>
     )
   }
+
+  const approvedOrders = orders.filter((o) => o.paymentStatus === "approved")
+  const otherOrders = orders.filter((o) => o.paymentStatus !== "approved")
+  const visibleOrders = showOtherPayments ? orders : approvedOrders
 
   const tabs: { id: RestaurantTab; label: string; icon: typeof ClipboardList }[] = [
     { id: "orders", label: "Pedidos", icon: ClipboardList },
@@ -217,43 +281,97 @@ export default function RestaurantDashboardPage() {
       <main className="container mx-auto px-4 py-6">
         {activeTab === "orders" && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Pedidos entrantes</h2>
-            {orders.length === 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-gray-900">Pedidos entrantes</h2>
+              {otherOrders.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full text-xs"
+                  onClick={() => setShowOtherPayments((v) => !v)}
+                >
+                  {showOtherPayments
+                    ? "Solo pagos aprobados"
+                    : `Ver ${otherOrders.length} sin pago aprobado`}
+                </Button>
+              )}
+            </div>
+            {visibleOrders.length === 0 ? (
               <div className="rounded-2xl bg-white p-8 text-center text-gray-500 ring-1 ring-gray-100">
-                Todavía no hay pedidos. Cuando lleguen, los verás acá.
+                {orders.length === 0
+                  ? "Todavía no hay pedidos. Cuando lleguen, los verás acá."
+                  : "No hay pedidos con pago aprobado. Usá el filtro para ver pendientes."}
               </div>
             ) : (
-              orders.map((order) => (
-                <div key={order.id} className="rounded-2xl bg-white p-5 ring-1 ring-gray-100">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-gray-900">Pedido #{order.id.slice(-6)}</p>
-                      <p className="text-sm text-gray-500">{order.buyerEmail}</p>
-                      {order.address && <p className="text-sm text-gray-500">{order.address}</p>}
+              visibleOrders.map((order) => {
+                const next = getNextRestaurantStatus(order)
+                const isDelivery = order.deliveryMode !== "retiro_en_local"
+                return (
+                  <div key={order.id} className="rounded-2xl bg-white p-5 ring-1 ring-gray-100">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-gray-900">Pedido #{order.id.slice(-6)}</p>
+                        <p className="text-sm text-gray-500">{order.buyerEmail}</p>
+                        {order.address && <p className="text-sm text-gray-500">{order.address}</p>}
+                        {order.phone && <p className="text-sm text-gray-500">Tel: {order.phone}</p>}
+                        {order.notes && (
+                          <p className="mt-1 text-xs text-amber-700">Nota: {order.notes}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge variant="secondary">{FOOD_ORDER_STATUS_LABELS[order.status]}</Badge>
+                        <Badge
+                          variant={order.paymentStatus === "approved" ? "default" : "outline"}
+                          className="text-[10px]"
+                        >
+                          {PAYMENT_LABELS[order.paymentStatus] || order.paymentStatus}
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge variant="secondary">{FOOD_ORDER_STATUS_LABELS[order.status]}</Badge>
+
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                      <span>
+                        {DELIVERY_MODE_LABELS[order.deliveryMode] || order.deliveryMode}
+                      </span>
+                      {isDelivery && (
+                        <span>
+                          · Cadete:{" "}
+                          {order.cadeteName || (order.cadeteId ? "Asignado" : "Sin cadete (pool)")}
+                        </span>
+                      )}
+                    </div>
+
+                    <ul className="mt-3 space-y-1 text-sm text-gray-700">
+                      {order.items.map((item, i) => (
+                        <li key={i}>
+                          {item.quantity}x {item.name} — ${formatPriceNumber(item.price * item.quantity)}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="font-bold text-servido-800">${formatPriceNumber(order.total)}</span>
+                      {next && order.paymentStatus === "approved" && (
+                        <Button
+                          size="sm"
+                          className="rounded-full bg-servido-800"
+                          onClick={() => void advanceOrderStatus(order)}
+                        >
+                          {next === "en_preparacion"
+                            ? "Preparar"
+                            : next === "listo"
+                              ? "Marcar listo"
+                              : next === "entregado"
+                                ? "Entregado (retiro)"
+                                : "Avanzar estado"}
+                        </Button>
+                      )}
+                      {order.status === "listo" && isDelivery && !order.cadeteId && (
+                        <span className="text-xs text-sky-700">Esperando cadete del pool</span>
+                      )}
+                    </div>
                   </div>
-                  <ul className="mt-3 space-y-1 text-sm text-gray-700">
-                    {order.items.map((item, i) => (
-                      <li key={i}>
-                        {item.quantity}x {item.name} — ${formatPriceNumber(item.price * item.quantity)}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="font-bold text-servido-800">${formatPriceNumber(order.total)}</span>
-                    {order.status !== "entregado" && order.status !== "cancelado" && (
-                      <Button
-                        size="sm"
-                        className="rounded-full bg-servido-800"
-                        onClick={() => void advanceOrderStatus(order)}
-                      >
-                        Avanzar estado
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         )}

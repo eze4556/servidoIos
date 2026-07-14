@@ -126,6 +126,7 @@ export async function createMercadoPagoFoodPreference(request: Request, body: Cr
     buyerEmail,
     restaurantId,
     restaurantName: restaurantData.name || "Restaurante",
+    restaurantZone: restaurantData.zone || restaurantData.locationLabel || null,
     items: validatedItems,
     subtotal,
     deliveryFee: fee,

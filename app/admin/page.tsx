@@ -32,6 +32,7 @@ import {
   Clock,
   X,
   Search,
+  Bike,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -95,6 +96,8 @@ import { useToast } from "@/components/ui/use-toast"
 import { getDashboardProductImage } from "@/lib/image-utils"
 import { formatPrice, formatPriceNumber } from "@/lib/utils"
 import SubscriptionPricingManager from "@/components/admin/subscription-pricing-manager"
+import { CADETE_STATUS_LABELS, type CadeteStatus } from "@/types/cadete"
+import { sendCadeteStatusEmail } from "@/lib/email-service"
 
 interface UserData {
   id: string
@@ -104,6 +107,11 @@ interface UserData {
   createdAt: Date
   role?: string
   photoURL?: string
+  phone?: string
+  zone?: string
+  vehicle?: string
+  documentId?: string
+  status?: string
   subscription_status?: "active" | "inactive" | "cancelled"
   isSubscribed?: boolean
   productUploadLimit?: number
@@ -1307,12 +1315,83 @@ export default function AdminDashboard() {
 
   const handleToggleUserActive = async (userId: string, currentStatus: boolean) => {
     try {
+      const user = users.find((u) => u.id === userId)
       const userRef = doc(db, "users", userId)
-      await updateDoc(userRef, { isActive: !currentStatus })
-      setUsers(users.map((user) => (user.id === userId ? { ...user, isActive: !currentStatus } : user)))
+      const nextActive = !currentStatus
+      const updates: Record<string, unknown> = { isActive: nextActive }
+
+      if (user?.role === "cadete") {
+        updates.status = nextActive ? "approved" : "rejected"
+        if (nextActive) {
+          updates.approvedAt = serverTimestamp()
+        } else {
+          updates.rejectedAt = serverTimestamp()
+        }
+      }
+
+      await updateDoc(userRef, updates)
+      setUsers(
+        users.map((u) =>
+          u.id === userId
+            ? {
+                ...u,
+                isActive: nextActive,
+                status: user?.role === "cadete" ? (nextActive ? "approved" : "rejected") : u.status,
+              }
+            : u
+        )
+      )
     } catch (error) {
       console.error("Error updating user status:", error)
       setError("Error al actualizar el estado del usuario.")
+    }
+  }
+
+  const handleApproveCadete = async (userId: string) => {
+    try {
+      const cadete = users.find((u) => u.id === userId)
+      await updateDoc(doc(db, "users", userId), {
+        status: "approved",
+        isActive: true,
+        approvedAt: serverTimestamp(),
+      })
+      setUsers(
+        users.map((u) => (u.id === userId ? { ...u, status: "approved", isActive: true } : u))
+      )
+      if (cadete?.email) {
+        void sendCadeteStatusEmail({
+          user_name: cadete.name || "Cadete",
+          user_email: cadete.email,
+          decision: "approved",
+        })
+      }
+    } catch (error) {
+      console.error("Error approving cadete:", error)
+      setError("Error al aprobar el cadete.")
+    }
+  }
+
+  const handleRejectCadete = async (userId: string) => {
+    try {
+      const cadete = users.find((u) => u.id === userId)
+      await updateDoc(doc(db, "users", userId), {
+        status: "rejected",
+        isActive: false,
+        rejectedAt: serverTimestamp(),
+      })
+      setUsers(
+        users.map((u) => (u.id === userId ? { ...u, status: "rejected", isActive: false } : u))
+      )
+      if (cadete?.email) {
+        void sendCadeteStatusEmail({
+          user_name: cadete.name || "Cadete",
+          user_email: cadete.email,
+          decision: "rejected",
+        })
+      }
+    } catch (error) {
+      console.error("Error rejecting cadete:", error)
+      setError("Error al rechazar el cadete.")
     }
   }
 
@@ -1652,20 +1731,30 @@ export default function AdminDashboard() {
         if (action === 'delete') {
           await deleteDoc(doc(db, "users", userId))
         } else {
-          await updateDoc(doc(db, "users", userId), {
-            isActive: action === 'activate'
-          })
+          const user = users.find((u) => u.id === userId)
+          const nextActive = action === 'activate'
+          const updates: Record<string, unknown> = { isActive: nextActive }
+          if (user?.role === "cadete") {
+            updates.status = nextActive ? "approved" : "rejected"
+            if (nextActive) updates.approvedAt = serverTimestamp()
+            else updates.rejectedAt = serverTimestamp()
+          }
+          await updateDoc(doc(db, "users", userId), updates)
         }
       }
 
       if (action === 'delete') {
         setUsers(users.filter(u => !selectedUsers.includes(u.id)))
       } else {
-        setUsers(users.map(u => 
-          selectedUsers.includes(u.id) 
-            ? { ...u, isActive: action === 'activate' }
-            : u
-        ))
+        setUsers(users.map(u => {
+          if (!selectedUsers.includes(u.id)) return u
+          const nextActive = action === 'activate'
+          return {
+            ...u,
+            isActive: nextActive,
+            status: u.role === "cadete" ? (nextActive ? "approved" : "rejected") : u.status,
+          }
+        }))
       }
 
       setSelectedUsers([])
@@ -1933,6 +2022,7 @@ export default function AdminDashboard() {
               {[
                 { tab: "overview", label: "Resumen", icon: Home },
                 { tab: "users", label: "Usuarios", icon: Users },
+                { tab: "cadetes", label: "Cadetes", icon: Bike },
                 { tab: "categories", label: "Categorías", icon: List },
                 { tab: "brands", label: "Marcas", icon: Tag },
                 { tab: "allProducts", label: "Todos los Productos", icon: ShoppingCart },
@@ -1991,6 +2081,7 @@ export default function AdminDashboard() {
                 {[
                   { tab: "overview", label: "Resumen", icon: Home },
                   { tab: "users", label: "Usuarios", icon: Users },
+                  { tab: "cadetes", label: "Cadetes", icon: Bike },
                   { tab: "categories", label: "Categorías", icon: List },
                   { tab: "brands", label: "Marcas", icon: Tag },
                   { tab: "allProducts", label: "Todos los Productos", icon: ShoppingCart },
@@ -2351,6 +2442,118 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Cadetes Tab */}
+            <TabsContent value="cadetes" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gestión de Cadetes</CardTitle>
+                  <CardDescription>
+                    Aprobá o rechazá postulaciones. Solo los aprobados pueden tomar pedidos del pool.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const cadetes = users.filter((u) => u.role === "cadete")
+                    const pending = cadetes.filter((u) => u.status === "pending_approval" || (!u.status && !u.isActive))
+                    if (cadetes.length === 0) {
+                      return (
+                        <p className="py-8 text-center text-gray-500">
+                          Todavía no hay postulaciones de cadetes.
+                        </p>
+                      )
+                    }
+                    return (
+                      <div className="space-y-6">
+                        {pending.length > 0 && (
+                          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                            {pending.length} cadete(s) pendiente(s) de revisión
+                          </p>
+                        )}
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Nombre</TableHead>
+                                <TableHead>Contacto</TableHead>
+                                <TableHead className="hidden md:table-cell">Zona</TableHead>
+                                <TableHead className="hidden md:table-cell">Vehículo</TableHead>
+                                <TableHead className="hidden lg:table-cell">Documento</TableHead>
+                                <TableHead>Estado</TableHead>
+                                <TableHead>Acciones</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {cadetes
+                                .slice()
+                                .sort((a, b) => {
+                                  const rank = (s?: string) =>
+                                    s === "pending_approval" ? 0 : s === "approved" ? 1 : 2
+                                  return rank(a.status) - rank(b.status)
+                                })
+                                .map((cadete) => {
+                                  const status = (cadete.status || "pending_approval") as CadeteStatus
+                                  return (
+                                    <TableRow key={cadete.id}>
+                                      <TableCell className="font-medium">{cadete.name}</TableCell>
+                                      <TableCell>
+                                        <div className="text-sm">{cadete.email}</div>
+                                        {cadete.phone && (
+                                          <div className="text-xs text-muted-foreground">{cadete.phone}</div>
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="hidden md:table-cell">{cadete.zone || "—"}</TableCell>
+                                      <TableCell className="hidden md:table-cell">{cadete.vehicle || "—"}</TableCell>
+                                      <TableCell className="hidden lg:table-cell">{cadete.documentId || "—"}</TableCell>
+                                      <TableCell>
+                                        <Badge
+                                          variant={
+                                            status === "approved"
+                                              ? "default"
+                                              : status === "rejected"
+                                                ? "destructive"
+                                                : "secondary"
+                                          }
+                                        >
+                                          {CADETE_STATUS_LABELS[status] || status}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex flex-wrap gap-2">
+                                          {status !== "approved" && (
+                                            <Button
+                                              size="sm"
+                                              className="bg-green-600 hover:bg-green-700"
+                                              onClick={() => void handleApproveCadete(cadete.id)}
+                                            >
+                                              <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                                              Aprobar
+                                            </Button>
+                                          )}
+                                          {status !== "rejected" && (
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => void handleRejectCadete(cadete.id)}
+                                            >
+                                              <XCircle className="mr-1 h-3.5 w-3.5" />
+                                              Rechazar
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  )
+                                })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </CardContent>
               </Card>
             </TabsContent>
