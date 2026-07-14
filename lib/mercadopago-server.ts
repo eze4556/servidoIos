@@ -712,6 +712,26 @@ async function handleRefundedPurchase(paymentInfo: any, purchaseId: string) {
   })
 }
 
+async function syncRestaurantSubscriptionFlag(userId: string, active: boolean) {
+  try {
+    const userSnap = await getDoc(doc(db, "users", userId))
+    if (!userSnap.exists()) return
+    const userData = userSnap.data() as { restaurantId?: string; businessType?: string }
+    const restaurantId = userData.restaurantId
+    if (!restaurantId || userData.businessType !== "restaurant") return
+    await setDoc(
+      doc(db, "restaurants", restaurantId),
+      {
+        subscriptionActive: active,
+        updatedAt: new Date(),
+      },
+      { merge: true }
+    )
+  } catch (err) {
+    console.error("syncRestaurantSubscriptionFlag failed:", err)
+  }
+}
+
 async function handleSubscriptionPayment(externalReference: string, paymentInfo: any) {
   const [, userId, planType = "basic"] = externalReference.split("_")
 
@@ -726,6 +746,10 @@ async function handleSubscriptionPayment(externalReference: string, paymentInfo:
   const subscriptionStart = new Date()
   const subscriptionEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
+  // Preservar businessType / restaurantId del usuario
+  const existingUserSnap = await getDoc(doc(db, "users", userId))
+  const existingUser = existingUserSnap.exists() ? (existingUserSnap.data() as any) : {}
+
   logFirestoreAccess("runTransaction", "users", userId)
   logFirestoreAccess("runTransaction", "subscriptions", paymentInfo.id)
   logFirestoreAccess("runTransaction", "transactions", paymentInfo.id)
@@ -734,7 +758,9 @@ async function handleSubscriptionPayment(externalReference: string, paymentInfo:
     transaction.set(
       doc(db, "users", userId),
       {
-        role: "seller",
+        role: existingUser.role || "seller",
+        businessType: existingUser.businessType || undefined,
+        restaurantId: existingUser.restaurantId || undefined,
         subscription_status: "active",
         isSubscribed: true,
         subscription: {
@@ -779,6 +805,8 @@ async function handleSubscriptionPayment(externalReference: string, paymentInfo:
       updatedAt: new Date(),
     }, { merge: true })
   })
+
+  await syncRestaurantSubscriptionFlag(userId, true)
 }
 
 async function reserveWebhookEvent(params: {

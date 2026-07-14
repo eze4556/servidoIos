@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button"
 import { Loader2, UtensilsCrossed } from "lucide-react"
 import type { Restaurant } from "@/types/restaurant"
 
+function isRestaurantOperative(restaurant: Restaurant) {
+  // Nuevos: subscriptionActive === true. Legacy sin campo: no aparecen hasta suscribirse.
+  return restaurant.subscriptionActive === true && (restaurant.status === "active" || restaurant.status === "approved")
+}
+
 export default function RestaurantesPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [loading, setLoading] = useState(true)
@@ -17,7 +22,12 @@ export default function RestaurantesPage() {
     async function loadRestaurants() {
       try {
         const snap = await getDocs(
-          query(collection(db, "restaurants"), where("status", "in", ["active", "approved"]), orderBy("name"))
+          query(
+            collection(db, "restaurants"),
+            where("subscriptionActive", "==", true),
+            where("status", "in", ["active", "approved"]),
+            orderBy("name")
+          )
         )
         setRestaurants(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Restaurant)))
       } catch {
@@ -25,7 +35,8 @@ export default function RestaurantesPage() {
         setRestaurants(
           snap.docs
             .map((d) => ({ id: d.id, ...d.data() } as Restaurant))
-            .filter((r) => r.status === "active" || r.status === "approved")
+            .filter(isRestaurantOperative)
+            .sort((a, b) => a.name.localeCompare(b.name))
         )
       } finally {
         setLoading(false)

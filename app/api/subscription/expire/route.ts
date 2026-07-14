@@ -48,14 +48,24 @@ export async function GET(request: NextRequest) {
     })
 
     const updateResults = await Promise.allSettled(
-      expiredDocs.map((docSnap) =>
-        docSnap.ref.update({
+      expiredDocs.map(async (docSnap) => {
+        const userData = docSnap.data() as { restaurantId?: string; businessType?: string }
+        await docSnap.ref.update({
           subscription_status: "inactive",
           isSubscribed: false,
           "subscription.status": "inactive",
           updatedAt: now,
-        }),
-      ),
+        })
+        if (userData.businessType === "restaurant" && userData.restaurantId) {
+          await db.collection("restaurants").doc(userData.restaurantId).set(
+            {
+              subscriptionActive: false,
+              updatedAt: now,
+            },
+            { merge: true }
+          )
+        }
+      }),
     )
 
     const updatedCount = updateResults.filter((result) => result.status === "fulfilled").length

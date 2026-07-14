@@ -72,6 +72,7 @@ export async function signupRestaurant(input: RestaurantSignupInput) {
     deliveryMode: input.deliveryMode,
     status: "pending",
     deliveryFee: 300,
+    subscriptionActive: false,
     paymentMethods: ["cash", "transfer"],
     transferInfo: {},
     createdAt: serverTimestamp(),

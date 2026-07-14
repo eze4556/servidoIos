@@ -104,14 +104,17 @@ export default function RestaurantDashboardPage() {
   const [savingPayments, setSavingPayments] = useState(false)
   const [connectingMp, setConnectingMp] = useState(false)
   const [paymentMsg, setPaymentMsg] = useState<string | null>(null)
+  const [subscribing, setSubscribing] = useState(false)
 
   const restaurantId = currentUser?.restaurantId
   const mpConnected = currentUser?.mercadoPagoStatus === "connected"
+  const hasActiveSubscription = currentUser?.subscriptionStatus === "active"
 
   useEffect(() => {
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
     const flag = params.get("mercadopago")
+    const sub = params.get("subscription")
     if (flag === "connected") {
       setPaymentMsg("Mercado Pago conectado correctamente.")
       setActiveTab("profile")
@@ -121,8 +124,27 @@ export default function RestaurantDashboardPage() {
       setPaymentMsg("No se pudo conectar Mercado Pago. Intentá de nuevo.")
       setActiveTab("profile")
       window.history.replaceState({}, "", "/dashboard/restaurant")
+    } else if (sub === "success") {
+      setPaymentMsg("¡Suscripción activada! Ya podés operar tu restaurante.")
+      void refreshUserProfile()
+      window.history.replaceState({}, "", "/dashboard/restaurant")
+    } else if (sub === "failure") {
+      setPaymentMsg("No se pudo activar la suscripción. Intentá de nuevo.")
+      window.history.replaceState({}, "", "/dashboard/restaurant")
     }
   }, [refreshUserProfile])
+
+  // Si ya tiene suscripción activa pero el flag del local no, sincronizar
+  useEffect(() => {
+    if (!restaurantId || !hasActiveSubscription) return
+    if (restaurant?.subscriptionActive === true) return
+    void updateDoc(doc(db, "restaurants", restaurantId), {
+      subscriptionActive: true,
+      updatedAt: serverTimestamp(),
+    }).then(() => {
+      setRestaurant((prev) => (prev ? { ...prev, subscriptionActive: true } : prev))
+    })
+  }, [restaurantId, hasActiveSubscription, restaurant?.subscriptionActive])
 
   useEffect(() => {
     if (!restaurantId) {
@@ -221,6 +243,10 @@ export default function RestaurantDashboardPage() {
   }, [restaurantId])
 
   const handleAddMenuItem = async () => {
+    if (!hasActiveSubscription) {
+      setPaymentMsg("Necesitás una suscripción activa para cargar el menú.")
+      return
+    }
     if (!restaurantId || !newItemName.trim() || !newItemPrice) return
     setSavingMenu(true)
     try {
@@ -261,6 +287,10 @@ export default function RestaurantDashboardPage() {
   }
 
   const advanceOrderStatus = async (order: FoodOrder) => {
+    if (!hasActiveSubscription) {
+      setPaymentMsg("Necesitás una suscripción activa para operar.")
+      return
+    }
     const nextStatus = getNextRestaurantStatus(order)
     if (!nextStatus) return
     await updateDoc(doc(db, "foodOrders", order.id), {
@@ -270,10 +300,34 @@ export default function RestaurantDashboardPage() {
   }
 
   const confirmOrderPayment = async (order: FoodOrder) => {
+    if (!hasActiveSubscription) {
+      setPaymentMsg("Necesitás una suscripción activa para operar.")
+      return
+    }
     await updateDoc(doc(db, "foodOrders", order.id), {
       paymentStatus: "approved",
       updatedAt: serverTimestamp(),
     })
+  }
+
+  const handleSubscribe = async () => {
+    if (!currentUser) return
+    setSubscribing(true)
+    setPaymentMsg(null)
+    try {
+      const response = await ApiService.createSubscriptionPreference({
+        userId: currentUser.firebaseUser.uid,
+        planType: "basic",
+        returnPath: "/dashboard/restaurant",
+      })
+      if (response.error || !response.data?.init_point) {
+        throw new Error(response.error || "No se pudo iniciar la suscripción")
+      }
+      window.location.href = response.data.init_point
+    } catch (err) {
+      setPaymentMsg(err instanceof Error ? err.message : "Error al suscribirse")
+      setSubscribing(false)
+    }
   }
 
   const togglePaymentMethod = (method: RestaurantPaymentMethod) => {
@@ -285,6 +339,10 @@ export default function RestaurantDashboardPage() {
 
   const savePaymentSettings = async () => {
     if (!restaurantId) return
+    if (!hasActiveSubscription) {
+      setPaymentMsg("Necesitás una suscripción activa para configurar cobros.")
+      return
+    }
     if (paymentMethods.includes("mercadopago") && !mpConnected) {
       setPaymentMsg("Conectá Mercado Pago antes de habilitarlo como método.")
       return
@@ -449,7 +507,31 @@ export default function RestaurantDashboardPage() {
         </div>
       </header>
 
+      {!hasActiveSubscription && (
+        <div className="border-b border-amber-200 bg-amber-50">
+          <div className="container mx-auto flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-amber-950">Suscripción requerida</p>
+              <p className="text-sm text-amber-800">
+                Sin suscripción activa no podés operar el menú ni los pedidos (igual que vendedores de productos).
+              </p>
+            </div>
+            <Button
+              className="shrink-0 rounded-full bg-amber-600 hover:bg-amber-700"
+              disabled={subscribing}
+              onClick={() => void handleSubscribe()}
+            >
+              {subscribing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Activar suscripción
+            </Button>
+          </div>
+        </div>
+      )}
+
       <main className="container mx-auto px-4 py-6">
+        {paymentMsg && (
+          <p className="mb-4 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">{paymentMsg}</p>
+        )}
         {activeTab === "orders" && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -548,6 +630,7 @@ export default function RestaurantDashboardPage() {
                               size="sm"
                               variant="outline"
                               className="rounded-full"
+                              disabled={!hasActiveSubscription}
                               onClick={() => void confirmOrderPayment(order)}
                             >
                               Confirmar cobro
@@ -557,6 +640,7 @@ export default function RestaurantDashboardPage() {
                           <Button
                             size="sm"
                             className="rounded-full bg-servido-800"
+                            disabled={!hasActiveSubscription}
                             onClick={() => void advanceOrderStatus(order)}
                           >
                             {next === "en_preparacion"
@@ -619,7 +703,7 @@ export default function RestaurantDashboardPage() {
               </div>
               <Button
                 onClick={() => void handleAddMenuItem()}
-                disabled={savingMenu || !newItemName.trim() || !newItemPrice}
+                disabled={savingMenu || !newItemName.trim() || !newItemPrice || !hasActiveSubscription}
                 className="mt-4 rounded-full bg-servido-800"
               >
                 {savingMenu ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
@@ -785,7 +869,7 @@ export default function RestaurantDashboardPage() {
 
               <Button
                 className="w-full rounded-full bg-servido-800"
-                disabled={savingPayments}
+                disabled={savingPayments || !hasActiveSubscription}
                 onClick={() => void savePaymentSettings()}
               >
                 {savingPayments ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

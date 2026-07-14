@@ -7,7 +7,7 @@ import { configureMercadoPago, getMercadoPagoSiteUrl } from '@/lib/mercadopago'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, planType } = body
+    const { userId, planType, returnPath } = body
     const siteUrl = getMercadoPagoSiteUrl(request)
 
     console.log("request.url =", request.url)
@@ -22,6 +22,11 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    const dashboardPath =
+      returnPath === "/dashboard/restaurant" || returnPath === "restaurant"
+        ? "/dashboard/restaurant"
+        : "/dashboard/seller"
 
     // Obtener el precio activo de suscripción
     const pricingRef = collection(db, 'subscriptionPricing')
@@ -38,17 +43,17 @@ export async function POST(request: NextRequest) {
     const preferenceData: Record<string, any> = {
       items: [
         {
-          title: `Suscripción ${planType.charAt(0).toUpperCase() + planType.slice(1)} - Marketplace`,
-          description: 'Acceso completo para crear y ofrecer productos y servicios en la plataforma',
+          title: `Suscripción ${planType.charAt(0).toUpperCase() + planType.slice(1)} - Servido`,
+          description: 'Acceso completo para operar como vendedor o restaurante en la plataforma',
           quantity: 1,
           unit_price: subscriptionPrice,
           currency_id: 'ARS'
         }
       ],
       back_urls: {
-        success: `${siteUrl}/dashboard/seller?subscription=success`,
-        failure: `${siteUrl}/dashboard/seller?subscription=failure`,
-        pending: `${siteUrl}/dashboard/seller?subscription=pending`
+        success: `${siteUrl}${dashboardPath}?subscription=success`,
+        failure: `${siteUrl}${dashboardPath}?subscription=failure`,
+        pending: `${siteUrl}${dashboardPath}?subscription=pending`
       },
       external_reference: `subscription_${userId}_${planType}`,
       notification_url: `${siteUrl}/api/mercadopago/webhook`,

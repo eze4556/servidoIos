@@ -42,6 +42,8 @@ export interface Restaurant {
   /** Métodos habilitados. Si está vacío, el checkout no puede completar. */
   paymentMethods?: RestaurantPaymentMethod[]
   transferInfo?: RestaurantTransferInfo
+  /** Si el dueño tiene suscripción activa (para listados / operación pública) */
+  subscriptionActive?: boolean
   createdAt?: unknown
   updatedAt?: unknown
 }

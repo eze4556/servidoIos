@@ -65,6 +65,19 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
   }
   const restaurantData = restaurantDoc.data()
   const ownerId = (restaurantData.ownerId as string) || restaurantId
+
+  // Suscripción activa del dueño (misma regla que vendedores)
+  const ownerSnap = await getDoc(doc(db, "users", ownerId))
+  if (!ownerSnap.exists()) {
+    throw new Error("Dueño del restaurante no encontrado")
+  }
+  const ownerData = ownerSnap.data() as any
+  const subStatus = ownerData.subscription_status || ownerData.subscription?.status
+  const isSubscribed = ownerData.isSubscribed === true || subStatus === "active"
+  if (!isSubscribed) {
+    throw new Error("Este restaurante no tiene suscripción activa en Servido")
+  }
+
   const enabledMethods = Array.isArray(restaurantData.paymentMethods)
     ? (restaurantData.paymentMethods as RestaurantPaymentMethod[])
     : (["cash", "transfer"] as RestaurantPaymentMethod[])

@@ -61,6 +61,8 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
     )
   }
 
+  const canOrder = restaurant.subscriptionActive === true
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-28">
       <div className="bg-gradient-to-br from-orange-500 to-red-600 px-4 py-8 text-white">
@@ -97,6 +99,18 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
       </div>
 
       <div className="container mx-auto space-y-8 px-4 py-6">
+        {!canOrder && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+            <p className="font-semibold">Este local no está recibiendo pedidos ahora</p>
+            <p className="mt-1 text-sm text-amber-800">
+              El restaurante necesita una suscripción activa en Servido para operar.
+            </p>
+            <Button asChild variant="outline" className="mt-4 rounded-full">
+              <Link href="/restaurantes">Ver otros restaurantes</Link>
+            </Button>
+          </div>
+        )}
+
         {menuItems.length === 0 ? (
           <div className="rounded-2xl bg-white p-8 text-center text-gray-500 ring-1 ring-gray-100">
             Este restaurante todavía no cargó su menú.
@@ -123,6 +137,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                       <Button
                         size="sm"
                         className="shrink-0 rounded-full bg-servido-800"
+                        disabled={!canOrder}
                         onClick={() =>
                           addItem({
                             menuItemId: item.id,
@@ -144,12 +159,14 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
         )}
       </div>
 
-      <FoodCartDrawer
-        deliveryMode={restaurant.deliveryMode}
-        restaurantDeliveryFee={restaurant.deliveryFee}
-        paymentMethods={restaurant.paymentMethods}
-        transferInfo={restaurant.transferInfo}
-      />
+      {canOrder && (
+        <FoodCartDrawer
+          deliveryMode={restaurant.deliveryMode}
+          restaurantDeliveryFee={restaurant.deliveryFee}
+          paymentMethods={restaurant.paymentMethods}
+          transferInfo={restaurant.transferInfo}
+        />
+      )}
     </div>
   )
 }

@@ -115,6 +115,7 @@ export class ApiService {
   static async createSubscriptionPreference(data: {
     userId: string
     planType: 'basic' | 'premium' | 'enterprise'
+    returnPath?: '/dashboard/seller' | '/dashboard/restaurant' | 'seller' | 'restaurant'
   }): Promise<ApiResponse<{
     id: string
     init_point: string
