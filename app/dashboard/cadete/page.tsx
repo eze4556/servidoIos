@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
   Bike,
@@ -34,6 +34,16 @@ function telUrl(phone: string) {
   return `tel:${phone.replace(/[^\d+]/g, "")}`
 }
 
+/** Patrón corto-corto-largo: “llegó un pedido” (solo si el browser lo permite). */
+function vibrateNewOrder() {
+  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return
+  try {
+    navigator.vibrate([120, 80, 120, 80, 220])
+  } catch {
+    // Algunos browsers bloquean vibrate sin gesto; ignorar.
+  }
+}
+
 export default function CadeteDashboardPage() {
   const { currentUser, handleLogout } = useAuth()
   const [available, setAvailable] = useState<FoodOrder[]>([])
@@ -41,6 +51,7 @@ export default function CadeteDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const prevAvailableCount = useRef<number | null>(null)
 
   const approved = isCadeteApproved(currentUser?.status, currentUser?.isActive)
   const rejected = currentUser?.status === "rejected"
@@ -96,6 +107,19 @@ export default function CadeteDashboardPage() {
     return () => {
       document.title = DEFAULT_TITLE
     }
+  }, [available.length, approved, active])
+
+  // Vibrar solo cuando sube la cantidad (pedido nuevo), no en la carga inicial
+  useEffect(() => {
+    if (!approved || active) {
+      prevAvailableCount.current = available.length
+      return
+    }
+    const prev = prevAvailableCount.current
+    if (prev !== null && available.length > prev) {
+      vibrateNewOrder()
+    }
+    prevAvailableCount.current = available.length
   }, [available.length, approved, active])
 
   const handleClaim = async (orderId: string) => {

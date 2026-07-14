@@ -201,8 +201,6 @@ export default function HomePage() {
             />
           </div>
 
-          <HomeBannerCarousel variant="mobile" />
-
           <HomeProductGrid
             products={mobileGridProducts}
             loading={loadingData}
