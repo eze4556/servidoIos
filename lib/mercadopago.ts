@@ -6,8 +6,8 @@ type MercadoPagoClient = {
   }
 }
 
-const configureMercadoPago = (): MercadoPagoClient => {
-  const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN
+const configureMercadoPago = (accessTokenOverride?: string): MercadoPagoClient => {
+  const accessToken = accessTokenOverride || process.env.MERCADOPAGO_ACCESS_TOKEN
   
   if (!accessToken) {
     throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado')
@@ -34,6 +34,7 @@ const configureMercadoPago = (): MercadoPagoClient => {
           preferenceData,
           back_urls: backUrls,
           auto_return: (preferenceData as any).auto_return,
+          usingSellerToken: Boolean(accessTokenOverride),
         })
 
         return preferenceClient.create({ body: preferenceData })

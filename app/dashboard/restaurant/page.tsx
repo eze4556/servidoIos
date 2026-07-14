@@ -19,6 +19,7 @@ import {
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
+import { ApiService } from "@/lib/services/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,8 +36,18 @@ import {
   Trash2,
   UtensilsCrossed,
 } from "lucide-react"
-import type { FoodOrder, FoodOrderStatus, MenuItem, Restaurant } from "@/types/restaurant"
-import { DELIVERY_MODE_LABELS, FOOD_ORDER_STATUS_LABELS } from "@/types/restaurant"
+import type {
+  FoodOrder,
+  FoodOrderStatus,
+  MenuItem,
+  Restaurant,
+  RestaurantPaymentMethod,
+} from "@/types/restaurant"
+import {
+  DELIVERY_MODE_LABELS,
+  FOOD_ORDER_STATUS_LABELS,
+  RESTAURANT_PAYMENT_METHOD_LABELS,
+} from "@/types/restaurant"
 import { formatPriceNumber } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 
@@ -68,7 +79,7 @@ function getNextRestaurantStatus(order: FoodOrder): FoodOrderStatus | null {
 }
 
 export default function RestaurantDashboardPage() {
-  const { currentUser, handleLogout } = useAuth()
+  const { currentUser, handleLogout, refreshUserProfile } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<RestaurantTab>("orders")
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
@@ -83,7 +94,34 @@ export default function RestaurantDashboardPage() {
   const [newItemDescription, setNewItemDescription] = useState("")
   const [savingMenu, setSavingMenu] = useState(false)
 
+  const [paymentMethods, setPaymentMethods] = useState<RestaurantPaymentMethod[]>(["cash", "transfer"])
+  const [transferAlias, setTransferAlias] = useState("")
+  const [transferCbu, setTransferCbu] = useState("")
+  const [transferBank, setTransferBank] = useState("")
+  const [transferHolder, setTransferHolder] = useState("")
+  const [transferInstructions, setTransferInstructions] = useState("")
+  const [savingPayments, setSavingPayments] = useState(false)
+  const [connectingMp, setConnectingMp] = useState(false)
+  const [paymentMsg, setPaymentMsg] = useState<string | null>(null)
+
   const restaurantId = currentUser?.restaurantId
+  const mpConnected = currentUser?.mercadoPagoStatus === "connected"
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    const flag = params.get("mercadopago")
+    if (flag === "connected") {
+      setPaymentMsg("Mercado Pago conectado correctamente.")
+      setActiveTab("profile")
+      void refreshUserProfile()
+      window.history.replaceState({}, "", "/dashboard/restaurant")
+    } else if (flag === "error") {
+      setPaymentMsg("No se pudo conectar Mercado Pago. Intentá de nuevo.")
+      setActiveTab("profile")
+      window.history.replaceState({}, "", "/dashboard/restaurant")
+    }
+  }, [refreshUserProfile])
 
   useEffect(() => {
     if (!restaurantId) {
@@ -97,7 +135,17 @@ export default function RestaurantDashboardPage() {
     async function loadStatic() {
       const restSnap = await getDoc(doc(db, "restaurants", restaurantId!))
       if (!cancelled && restSnap.exists()) {
-        setRestaurant({ id: restSnap.id, ...restSnap.data() } as Restaurant)
+        const data = { id: restSnap.id, ...restSnap.data() } as Restaurant
+        setRestaurant(data)
+        const methods = data.paymentMethods?.length
+          ? data.paymentMethods
+          : (["cash", "transfer"] as RestaurantPaymentMethod[])
+        setPaymentMethods(methods)
+        setTransferAlias(data.transferInfo?.alias || "")
+        setTransferCbu(data.transferInfo?.cbu || "")
+        setTransferBank(data.transferInfo?.bankName || "")
+        setTransferHolder(data.transferInfo?.holderName || "")
+        setTransferInstructions(data.transferInfo?.instructions || "")
       }
 
       const menuSnap = await getDocs(query(collection(db, "menuItems"), where("restaurantId", "==", restaurantId)))
@@ -218,6 +266,103 @@ export default function RestaurantDashboardPage() {
     })
   }
 
+  const confirmOrderPayment = async (order: FoodOrder) => {
+    await updateDoc(doc(db, "foodOrders", order.id), {
+      paymentStatus: "approved",
+      updatedAt: serverTimestamp(),
+    })
+  }
+
+  const togglePaymentMethod = (method: RestaurantPaymentMethod) => {
+    setPaymentMethods((prev) => {
+      if (prev.includes(method)) return prev.filter((m) => m !== method)
+      return [...prev, method]
+    })
+  }
+
+  const savePaymentSettings = async () => {
+    if (!restaurantId) return
+    if (paymentMethods.includes("mercadopago") && !mpConnected) {
+      setPaymentMsg("Conectá Mercado Pago antes de habilitarlo como método.")
+      return
+    }
+    if (paymentMethods.includes("transfer") && !transferAlias.trim() && !transferCbu.trim()) {
+      setPaymentMsg("Para transferencia necesitás alias o CBU/CVU.")
+      return
+    }
+    if (paymentMethods.length === 0) {
+      setPaymentMsg("Elegí al menos un método de cobro.")
+      return
+    }
+
+    setSavingPayments(true)
+    setPaymentMsg(null)
+    try {
+      await updateDoc(doc(db, "restaurants", restaurantId), {
+        paymentMethods,
+        transferInfo: {
+          alias: transferAlias.trim() || null,
+          cbu: transferCbu.trim() || null,
+          bankName: transferBank.trim() || null,
+          holderName: transferHolder.trim() || null,
+          instructions: transferInstructions.trim() || null,
+        },
+        updatedAt: serverTimestamp(),
+      })
+      setRestaurant((prev) =>
+        prev
+          ? {
+              ...prev,
+              paymentMethods,
+              transferInfo: {
+                alias: transferAlias.trim() || undefined,
+                cbu: transferCbu.trim() || undefined,
+                bankName: transferBank.trim() || undefined,
+                holderName: transferHolder.trim() || undefined,
+                instructions: transferInstructions.trim() || undefined,
+              },
+            }
+          : prev
+      )
+      setPaymentMsg("Formas de cobro guardadas.")
+    } catch (err) {
+      setPaymentMsg(err instanceof Error ? err.message : "No se pudo guardar")
+    } finally {
+      setSavingPayments(false)
+    }
+  }
+
+  const connectMercadoPago = async () => {
+    setConnectingMp(true)
+    setPaymentMsg(null)
+    try {
+      const response = await ApiService.startMercadoPagoConnection()
+      if (response.error || !response.data?.authorizationUrl) {
+        throw new Error(response.error || "No se pudo iniciar la conexión")
+      }
+      window.location.href = response.data.authorizationUrl
+    } catch (err) {
+      setPaymentMsg(err instanceof Error ? err.message : "Error al conectar Mercado Pago")
+      setConnectingMp(false)
+    }
+  }
+
+  const disconnectMercadoPago = async () => {
+    setConnectingMp(true)
+    setPaymentMsg(null)
+    try {
+      const response = await ApiService.disconnectMercadoPagoConnection()
+      if (response.error) throw new Error(response.error)
+      await refreshUserProfile()
+      setPaymentMethods((prev) => prev.filter((m) => m !== "mercadopago"))
+      setPaymentMsg("Mercado Pago desconectado.")
+    } catch (err) {
+      setPaymentMsg(err instanceof Error ? err.message : "Error al desconectar")
+    } finally {
+      setConnectingMp(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -227,8 +372,24 @@ export default function RestaurantDashboardPage() {
   }
 
   const approvedOrders = orders.filter((o) => o.paymentStatus === "approved")
-  const otherOrders = orders.filter((o) => o.paymentStatus !== "approved")
-  const visibleOrders = showOtherPayments ? orders : approvedOrders
+  const actionablePending = orders.filter(
+    (o) =>
+      o.paymentStatus === "pending" &&
+      (o.paymentMethod === "cash" || o.paymentMethod === "transfer") &&
+      o.status !== "cancelado"
+  )
+  const otherOrders = orders.filter(
+    (o) =>
+      o.paymentStatus !== "approved" &&
+      !(
+        o.paymentStatus === "pending" &&
+        (o.paymentMethod === "cash" || o.paymentMethod === "transfer") &&
+        o.status !== "cancelado"
+      )
+  )
+  const visibleOrders = showOtherPayments
+    ? orders
+    : [...approvedOrders, ...actionablePending].sort((a, b) => String(b.id).localeCompare(String(a.id)))
 
   const tabs: { id: RestaurantTab; label: string; icon: typeof ClipboardList }[] = [
     { id: "orders", label: "Pedidos", icon: ClipboardList },
@@ -291,8 +452,8 @@ export default function RestaurantDashboardPage() {
                   onClick={() => setShowOtherPayments((v) => !v)}
                 >
                   {showOtherPayments
-                    ? "Solo pagos aprobados"
-                    : `Ver ${otherOrders.length} sin pago aprobado`}
+                    ? "Ocultar rechazados / cancelados"
+                    : `Ver ${otherOrders.length} rechazados/cancelados`}
                 </Button>
               )}
             </div>
@@ -333,13 +494,32 @@ export default function RestaurantDashboardPage() {
                       <span>
                         {DELIVERY_MODE_LABELS[order.deliveryMode] || order.deliveryMode}
                       </span>
+                      {order.paymentMethod && (
+                        <span>
+                          · Pago: {RESTAURANT_PAYMENT_METHOD_LABELS[order.paymentMethod]}
+                        </span>
+                      )}
                       {isDelivery && (
                         <span>
                           · Cadete:{" "}
                           {order.cadeteName || (order.cadeteId ? "Asignado" : "Sin cadete (pool)")}
                         </span>
                       )}
+                      {isDelivery && order.deliveryFee > 0 && (
+                        <span>· Envío cliente: ${formatPriceNumber(order.deliveryFee)}</span>
+                      )}
                     </div>
+
+                    {order.cadeteId && isDelivery && (
+                      <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                        El cadete no cobra por la app. Coordiná el pago del envío con{" "}
+                        <strong>{order.cadeteName || "el cadete"}</strong> afuera
+                        {order.deliveryFee > 0
+                          ? ` (referencia envío: $${formatPriceNumber(order.deliveryFee)})`
+                          : ""}
+                        .
+                      </p>
+                    )}
 
                     <ul className="mt-3 space-y-1 text-sm text-gray-700">
                       {order.items.map((item, i) => (
@@ -348,25 +528,39 @@ export default function RestaurantDashboardPage() {
                         </li>
                       ))}
                     </ul>
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                       <span className="font-bold text-servido-800">${formatPriceNumber(order.total)}</span>
-                      {next && order.paymentStatus === "approved" && (
-                        <Button
-                          size="sm"
-                          className="rounded-full bg-servido-800"
-                          onClick={() => void advanceOrderStatus(order)}
-                        >
-                          {next === "en_preparacion"
-                            ? "Preparar"
-                            : next === "listo"
-                              ? "Marcar listo"
-                              : next === "entregado"
-                                ? "Entregado (retiro)"
-                                : "Avanzar estado"}
-                        </Button>
-                      )}
+                      <div className="flex flex-wrap gap-2">
+                        {order.paymentStatus !== "approved" &&
+                          (order.paymentMethod === "cash" || order.paymentMethod === "transfer") &&
+                          order.status !== "cancelado" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-full"
+                              onClick={() => void confirmOrderPayment(order)}
+                            >
+                              Confirmar cobro
+                            </Button>
+                          )}
+                        {next && order.paymentStatus === "approved" && (
+                          <Button
+                            size="sm"
+                            className="rounded-full bg-servido-800"
+                            onClick={() => void advanceOrderStatus(order)}
+                          >
+                            {next === "en_preparacion"
+                              ? "Preparar"
+                              : next === "listo"
+                                ? "Marcar listo"
+                                : next === "entregado"
+                                  ? "Entregado (retiro)"
+                                  : "Avanzar estado"}
+                          </Button>
+                        )}
+                      </div>
                       {order.status === "listo" && isDelivery && !order.cadeteId && (
-                        <span className="text-xs text-sky-700">Esperando cadete del pool</span>
+                        <span className="w-full text-xs text-sky-700">Esperando cadete del pool</span>
                       )}
                     </div>
                   </div>
@@ -452,24 +646,126 @@ export default function RestaurantDashboardPage() {
         )}
 
         {activeTab === "profile" && (
-          <div className="max-w-lg space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
-            <h2 className="font-semibold text-gray-900">Perfil del restaurante</h2>
-            <p className="text-sm text-gray-600">
-              <strong>Estado:</strong> {restaurant?.status || "pending"}
-            </p>
-            <p className="text-sm text-gray-600">
-              <strong>Dirección:</strong> {restaurant?.address}
-            </p>
-            <p className="text-sm text-gray-600">
-              <strong>Zona:</strong> {restaurant?.zone || "Sin definir"}
-            </p>
-            <Button
-              variant="outline"
-              className="rounded-full"
-              onClick={() => router.push("/dashboard/restaurant/onboarding")}
-            >
-              Editar perfil
-            </Button>
+          <div className="mx-auto max-w-lg space-y-4">
+            <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
+              <h2 className="font-semibold text-gray-900">Perfil del restaurante</h2>
+              <p className="text-sm text-gray-600">
+                <strong>Estado:</strong> {restaurant?.status || "pending"}
+              </p>
+              <p className="text-sm text-gray-600">
+                <strong>Dirección:</strong> {restaurant?.address}
+              </p>
+              <p className="text-sm text-gray-600">
+                <strong>Zona:</strong> {restaurant?.zone || "Sin definir"}
+              </p>
+              <Button
+                variant="outline"
+                className="rounded-full"
+                onClick={() => router.push("/dashboard/restaurant/onboarding")}
+              >
+                Editar perfil
+              </Button>
+            </div>
+
+            <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
+              <h2 className="font-semibold text-gray-900">Cómo cobrás</h2>
+              <p className="text-sm text-gray-500">
+                El cliente elige entre los métodos que actives. El dinero de Mercado Pago va a tu cuenta.
+              </p>
+
+              {paymentMsg && (
+                <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">{paymentMsg}</p>
+              )}
+
+              <div className="space-y-3">
+                {(["cash", "transfer", "mercadopago"] as RestaurantPaymentMethod[]).map((method) => (
+                  <label
+                    key={method}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-3"
+                  >
+                    <span className="text-sm font-medium text-gray-800">
+                      {RESTAURANT_PAYMENT_METHOD_LABELS[method]}
+                    </span>
+                    <Switch
+                      checked={paymentMethods.includes(method)}
+                      onCheckedChange={() => togglePaymentMethod(method)}
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <div className="rounded-xl border border-sky-100 bg-sky-50/60 p-4">
+                <p className="text-sm font-medium text-sky-950">Mercado Pago</p>
+                <p className="mt-1 text-xs text-sky-800">
+                  {mpConnected
+                    ? "Cuenta conectada. Los cobros MP van a tu billetera."
+                    : "Conectá tu cuenta para aceptar Mercado Pago (igual que los vendedores)."}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {!mpConnected ? (
+                    <Button
+                      size="sm"
+                      className="rounded-full bg-sky-600 hover:bg-sky-700"
+                      disabled={connectingMp}
+                      onClick={() => void connectMercadoPago()}
+                    >
+                      {connectingMp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Conectar Mercado Pago
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      disabled={connectingMp}
+                      onClick={() => void disconnectMercadoPago()}
+                    >
+                      Desconectar
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {paymentMethods.includes("transfer") && (
+                <div className="space-y-3 rounded-xl border border-gray-100 p-4">
+                  <p className="text-sm font-medium text-gray-900">Datos de transferencia</p>
+                  <div className="space-y-2">
+                    <Label>Alias</Label>
+                    <Input value={transferAlias} onChange={(e) => setTransferAlias(e.target.value)} className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>CBU / CVU</Label>
+                    <Input value={transferCbu} onChange={(e) => setTransferCbu(e.target.value)} className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Titular</Label>
+                    <Input value={transferHolder} onChange={(e) => setTransferHolder(e.target.value)} className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Banco</Label>
+                    <Input value={transferBank} onChange={(e) => setTransferBank(e.target.value)} className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Instrucciones (opcional)</Label>
+                    <Textarea
+                      value={transferInstructions}
+                      onChange={(e) => setTransferInstructions(e.target.value)}
+                      className="rounded-xl"
+                      placeholder="Ej: enviar comprobante por WhatsApp..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              <Button
+                className="w-full rounded-full bg-servido-800"
+                disabled={savingPayments}
+                onClick={() => void savePaymentSettings()}
+              >
+                {savingPayments ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Guardar formas de cobro
+              </Button>
+            </div>
           </div>
         )}
       </main>

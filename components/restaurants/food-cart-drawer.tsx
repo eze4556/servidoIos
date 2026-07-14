@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
@@ -19,13 +19,24 @@ import {
 } from "@/components/ui/sheet"
 import { Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react"
 import { formatPriceNumber } from "@/lib/utils"
-import type { DeliveryMode } from "@/types/restaurant"
+import type {
+  DeliveryMode,
+  RestaurantPaymentMethod,
+  RestaurantTransferInfo,
+} from "@/types/restaurant"
+import { RESTAURANT_PAYMENT_METHOD_LABELS } from "@/types/restaurant"
 
 interface FoodCartDrawerProps {
   deliveryMode: DeliveryMode
+  paymentMethods?: RestaurantPaymentMethod[]
+  transferInfo?: RestaurantTransferInfo
 }
 
-export function FoodCartDrawer({ deliveryMode }: FoodCartDrawerProps) {
+export function FoodCartDrawer({
+  deliveryMode,
+  paymentMethods = ["cash", "transfer"],
+  transferInfo,
+}: FoodCartDrawerProps) {
   const { currentUser } = useAuth()
   const router = useRouter()
   const { items, restaurantName, itemCount, subtotal, updateQuantity, removeItem, clearCart, restaurantId } =
@@ -36,6 +47,18 @@ export function FoodCartDrawer({ deliveryMode }: FoodCartDrawerProps) {
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<RestaurantPaymentMethod | null>(null)
+
+  const enabledMethods = useMemo(() => {
+    const list = paymentMethods?.length ? paymentMethods : (["cash", "transfer"] as RestaurantPaymentMethod[])
+    return list.filter((m) => m !== "transfer" || Boolean(transferInfo?.alias || transferInfo?.cbu))
+  }, [paymentMethods, transferInfo])
+
+  useEffect(() => {
+    if (enabledMethods.length === 1) setPaymentMethod(enabledMethods[0])
+    else if (paymentMethod && !enabledMethods.includes(paymentMethod)) setPaymentMethod(null)
+  }, [enabledMethods, paymentMethod])
 
   const deliveryFee = deliveryMode === "retiro_en_local" ? 0 : 300
   const total = subtotal + deliveryFee
@@ -50,9 +73,14 @@ export function FoodCartDrawer({ deliveryMode }: FoodCartDrawerProps) {
       setError("Ingresá tu dirección de entrega")
       return
     }
+    if (!paymentMethod) {
+      setError("Elegí cómo vas a pagar")
+      return
+    }
 
     setLoading(true)
     setError(null)
+    setSuccessMsg(null)
     try {
       const response = await ApiService.createFoodPreference({
         restaurantId,
@@ -64,14 +92,44 @@ export function FoodCartDrawer({ deliveryMode }: FoodCartDrawerProps) {
         phone: phone.trim() || undefined,
         notes: notes.trim() || undefined,
         deliveryFee,
+        paymentMethod,
       })
 
-      if (response.error || !response.data?.init_point) {
-        throw new Error(response.error || "No se pudo iniciar el pago")
+      if (response.error) {
+        throw new Error(response.error)
+      }
+
+      if (paymentMethod === "mercadopago") {
+        if (!response.data?.init_point) {
+          throw new Error("No se pudo iniciar el pago con Mercado Pago")
+        }
+        clearCart()
+        window.location.href = response.data.init_point
+        return
       }
 
       clearCart()
-      window.location.href = response.data.init_point
+      if (paymentMethod === "transfer") {
+        const info = response.data?.transferInfo || transferInfo
+        setSuccessMsg(
+          [
+            "Pedido creado. Transferí el total y el restaurante va a confirmar el cobro.",
+            info?.alias ? `Alias: ${info.alias}` : null,
+            info?.cbu ? `CBU/CVU: ${info.cbu}` : null,
+            info?.holderName ? `Titular: ${info.holderName}` : null,
+            info?.bankName ? `Banco: ${info.bankName}` : null,
+            info?.instructions || null,
+          ]
+            .filter(Boolean)
+            .join("\n")
+        )
+      } else {
+        setSuccessMsg("Pedido creado. Vas a pagar en efectivo al recibir o retirar.")
+      }
+      setTimeout(() => {
+        setOpen(false)
+        router.push("/pedidos/comida")
+      }, 2500)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al procesar el pedido")
     } finally {
@@ -80,6 +138,15 @@ export function FoodCartDrawer({ deliveryMode }: FoodCartDrawerProps) {
   }
 
   if (itemCount === 0) return null
+
+  const ctaLabel =
+    paymentMethod === "mercadopago"
+      ? "Pagar con Mercado Pago"
+      : paymentMethod === "transfer"
+        ? "Confirmar pedido (transferencia)"
+        : paymentMethod === "cash"
+          ? "Confirmar pedido (efectivo)"
+          : "Confirmar pedido"
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -141,6 +208,37 @@ export function FoodCartDrawer({ deliveryMode }: FoodCartDrawerProps) {
             <Label>Notas (opcional)</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Sin cebolla, timbre roto..." />
           </div>
+
+          <div className="space-y-2 pt-2">
+            <Label>Forma de pago</Label>
+            {enabledMethods.length === 0 ? (
+              <p className="text-sm text-amber-700">
+                Este restaurante todavía no configuró cómo cobrar. Probá más tarde.
+              </p>
+            ) : (
+              <div className="grid gap-2">
+                {enabledMethods.map((method) => (
+                  <button
+                    key={method}
+                    type="button"
+                    onClick={() => setPaymentMethod(method)}
+                    className={`rounded-xl border px-3 py-3 text-left text-sm font-medium transition ${
+                      paymentMethod === method
+                        ? "border-servido-800 bg-servido-50 text-servido-900"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    {RESTAURANT_PAYMENT_METHOD_LABELS[method]}
+                    {method === "transfer" && (transferInfo?.alias || transferInfo?.cbu) && (
+                      <span className="mt-1 block text-xs font-normal text-gray-500">
+                        {transferInfo.alias ? `Alias ${transferInfo.alias}` : `CBU ${transferInfo.cbu}`}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="border-t pt-4">
@@ -158,7 +256,8 @@ export function FoodCartDrawer({ deliveryMode }: FoodCartDrawerProps) {
             <span>Total</span>
             <span>${formatPriceNumber(total)}</span>
           </div>
-          {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+          {error && <p className="mb-3 whitespace-pre-line text-sm text-red-600">{error}</p>}
+          {successMsg && <p className="mb-3 whitespace-pre-line text-sm text-emerald-700">{successMsg}</p>}
           {!currentUser ? (
             <Button asChild className="w-full rounded-full bg-servido-800">
               <Link href="/login">Iniciá sesión para pedir</Link>
@@ -167,10 +266,10 @@ export function FoodCartDrawer({ deliveryMode }: FoodCartDrawerProps) {
             <Button
               className="w-full rounded-full bg-servido-800"
               onClick={() => void handleCheckout()}
-              disabled={loading}
+              disabled={loading || enabledMethods.length === 0 || !paymentMethod}
             >
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Pagar con Mercado Pago
+              {ctaLabel}
             </Button>
           )}
         </div>

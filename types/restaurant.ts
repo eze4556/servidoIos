@@ -12,6 +12,17 @@ export type FoodOrderStatus =
 
 export type FoodPaymentStatus = "pending" | "approved" | "rejected" | "cancelled"
 
+/** Cómo cobra el restaurante al cliente */
+export type RestaurantPaymentMethod = "mercadopago" | "cash" | "transfer"
+
+export interface RestaurantTransferInfo {
+  alias?: string
+  cbu?: string
+  bankName?: string
+  holderName?: string
+  instructions?: string
+}
+
 export interface Restaurant {
   id: string
   ownerId: string
@@ -26,6 +37,9 @@ export interface Restaurant {
   status: RestaurantStatus
   imageUrl?: string
   phone?: string
+  /** Métodos habilitados. Si está vacío, el checkout no puede completar. */
+  paymentMethods?: RestaurantPaymentMethod[]
+  transferInfo?: RestaurantTransferInfo
   createdAt?: unknown
   updatedAt?: unknown
 }
@@ -65,13 +79,17 @@ export interface FoodOrder {
   notes?: string
   status: FoodOrderStatus
   paymentStatus: FoodPaymentStatus
+  paymentMethod?: RestaurantPaymentMethod
   paymentId?: string
   preferenceId?: string
+  restaurantOwnerId?: string | null
   cadeteId?: string | null
   cadeteName?: string | null
   assignedAt?: unknown
   /** Zona del restaurante (denormalizada para filtrar el pool de cadetes) */
   restaurantZone?: string | null
+  /** Dirección del local (para navegación del cadete) */
+  restaurantAddress?: string | null
   createdAt?: unknown
   updatedAt?: unknown
 }
@@ -89,4 +107,10 @@ export const DELIVERY_MODE_LABELS: Record<DeliveryMode, string> = {
   delivery_propio: "Delivery propio",
   retiro_en_local: "Retiro en local",
   ambos: "Delivery y retiro",
+}
+
+export const RESTAURANT_PAYMENT_METHOD_LABELS: Record<RestaurantPaymentMethod, string> = {
+  mercadopago: "Mercado Pago",
+  cash: "Efectivo",
+  transfer: "Transferencia",
 }

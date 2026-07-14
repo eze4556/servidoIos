@@ -134,7 +134,11 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
         )}
       </div>
 
-      <FoodCartDrawer deliveryMode={restaurant.deliveryMode} />
+      <FoodCartDrawer
+        deliveryMode={restaurant.deliveryMode}
+        paymentMethods={restaurant.paymentMethods}
+        transferInfo={restaurant.transferInfo}
+      />
     </div>
   )
 }

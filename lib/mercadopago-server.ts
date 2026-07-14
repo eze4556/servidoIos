@@ -395,8 +395,8 @@ export async function createMercadoPagoProductPreference(request: Request, body:
   }
 }
 
-async function fetchMercadoPagoPayment(paymentId: string) {
-  const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN
+async function fetchMercadoPagoPayment(paymentId: string, accessTokenOverride?: string) {
+  const accessToken = accessTokenOverride || process.env.MERCADOPAGO_ACCESS_TOKEN
   if (!accessToken) {
     throw new Error("MERCADOPAGO_ACCESS_TOKEN no está configurado")
   }
@@ -414,6 +414,31 @@ async function fetchMercadoPagoPayment(paymentId: string) {
   }
 
   return response.json()
+}
+
+async function resolveSellerAccessTokenFromMpUserId(mpUserId: string | number | null | undefined) {
+  if (mpUserId == null || mpUserId === "") return null
+  const target = String(mpUserId)
+  try {
+    const { collection, getDocs, query, where, limit } = await import("firebase/firestore")
+    // Prefer top-level account id used by our OAuth save
+    let snap = await getDocs(query(collection(db, "users"), where("mercadopagoAccountId", "==", target), limit(1)))
+    if (snap.empty) {
+      snap = await getDocs(query(collection(db, "users"), where("mercadopagoUserId", "==", target), limit(1)))
+    }
+    if (snap.empty) {
+      // user_id se guarda como string en mercadopago.user_id
+      snap = await getDocs(
+        query(collection(db, "users"), where("mercadopago.user_id", "==", target), limit(1))
+      )
+    }
+    if (snap.empty) return null
+    const { getMercadoPagoSellerAccessToken } = await import("@/lib/mercadopago-oauth")
+    return await getMercadoPagoSellerAccessToken(snap.docs[0].id)
+  } catch (err) {
+    console.error("resolveSellerAccessTokenFromMpUserId failed:", err)
+    return null
+  }
 }
 
 async function updateCentralizedPurchaseStatus(
@@ -880,15 +905,35 @@ export async function handleMercadoPagoWebhook(request: Request): Promise<Webhoo
 
   try {
     paymentInfo = await fetchMercadoPagoPayment(String(paymentId))
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Error consultando pago"
-    logMercadoPagoEvent("error", "webhook_payment_fetch_failed", {
-      paymentId: String(paymentId),
-      error: errorMessage,
-    })
-    return {
-      status: 502,
-      body: { received: false, handled: false, error: "No se pudo consultar el pago" },
+  } catch (platformError) {
+    // Cobros con token del vendedor/restaurante: intentar con el user_id del collector
+    const mpUserId = payload?.user_id ?? payload?.userId ?? null
+    const sellerToken = await resolveSellerAccessTokenFromMpUserId(mpUserId)
+    if (!sellerToken) {
+      const errorMessage = platformError instanceof Error ? platformError.message : "Error consultando pago"
+      logMercadoPagoEvent("error", "webhook_payment_fetch_failed", {
+        paymentId: String(paymentId),
+        error: errorMessage,
+        mpUserId,
+      })
+      return {
+        status: 502,
+        body: { received: false, handled: false, error: "No se pudo consultar el pago" },
+      }
+    }
+    try {
+      paymentInfo = await fetchMercadoPagoPayment(String(paymentId), sellerToken)
+    } catch (sellerError) {
+      const errorMessage = sellerError instanceof Error ? sellerError.message : "Error consultando pago"
+      logMercadoPagoEvent("error", "webhook_payment_fetch_failed_seller", {
+        paymentId: String(paymentId),
+        error: errorMessage,
+        mpUserId,
+      })
+      return {
+        status: 502,
+        body: { received: false, handled: false, error: "No se pudo consultar el pago" },
+      }
     }
   }
 

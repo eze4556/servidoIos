@@ -192,11 +192,11 @@ export function Footer() {
               </div>
             </div>
             <a
-              href="mailto:servidoarg@gmail.com"
+              href="mailto:servido.interno@gmail.com"
               className="flex w-full min-w-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:border-white/25 hover:bg-white/15 sm:text-base"
               style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
             >
-              servidoarg@gmail.com
+              servido.interno@gmail.com
             </a>
           </div>
         </div>

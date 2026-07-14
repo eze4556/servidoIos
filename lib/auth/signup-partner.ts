@@ -71,6 +71,8 @@ export async function signupRestaurant(input: RestaurantSignupInput) {
     phone: input.phone.trim(),
     deliveryMode: input.deliveryMode,
     status: "pending",
+    paymentMethods: ["cash", "transfer"],
+    transferInfo: {},
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   }

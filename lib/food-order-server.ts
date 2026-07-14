@@ -1,10 +1,15 @@
 import { auth as adminAuth } from "@/lib/firebase-admin"
 import { db } from "@/lib/firebase"
 import { configureMercadoPago, getMercadoPagoSiteUrl } from "@/lib/mercadopago"
+import { getMercadoPagoSellerAccessToken } from "@/lib/mercadopago-oauth"
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore"
-import type { DeliveryMode, FoodOrderItem } from "@/types/restaurant"
+import type {
+  DeliveryMode,
+  FoodOrderItem,
+  RestaurantPaymentMethod,
+} from "@/types/restaurant"
 
-export type CreateFoodPreferencePayload = {
+export type CreateFoodOrderPayload = {
   restaurantId: string
   buyerId: string
   buyerEmail: string
@@ -14,7 +19,11 @@ export type CreateFoodPreferencePayload = {
   phone?: string
   notes?: string
   deliveryFee?: number
+  paymentMethod: RestaurantPaymentMethod
 }
+
+/** @deprecated use CreateFoodOrderPayload */
+export type CreateFoodPreferencePayload = CreateFoodOrderPayload
 
 function getBearerToken(request: Request) {
   const authorizationHeader = request.headers.get("authorization") || request.headers.get("Authorization")
@@ -36,8 +45,9 @@ function roundMoney(amount: number) {
   return Math.round(amount * 100) / 100
 }
 
-export async function createMercadoPagoFoodPreference(request: Request, body: CreateFoodPreferencePayload) {
-  const { restaurantId, buyerId, buyerEmail, items, deliveryMode, address, phone, notes, deliveryFee = 0 } = body
+async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
+  const { restaurantId, buyerId, buyerEmail, items, deliveryMode, address, phone, notes, deliveryFee = 0, paymentMethod } =
+    body
 
   if (!restaurantId || !buyerId || !buyerEmail) {
     throw new Error("Faltan datos del pedido")
@@ -45,14 +55,35 @@ export async function createMercadoPagoFoodPreference(request: Request, body: Cr
   if (!Array.isArray(items) || items.length === 0) {
     throw new Error("El pedido no tiene items")
   }
-
-  await requireAuthenticatedUser(request, buyerId)
+  if (!paymentMethod || !["mercadopago", "cash", "transfer"].includes(paymentMethod)) {
+    throw new Error("Elegí un método de pago")
+  }
 
   const restaurantDoc = await getDoc(doc(db, "restaurants", restaurantId))
   if (!restaurantDoc.exists()) {
     throw new Error("Restaurante no encontrado")
   }
   const restaurantData = restaurantDoc.data()
+  const ownerId = (restaurantData.ownerId as string) || restaurantId
+  const enabledMethods = Array.isArray(restaurantData.paymentMethods)
+    ? (restaurantData.paymentMethods as RestaurantPaymentMethod[])
+    : (["cash", "transfer"] as RestaurantPaymentMethod[])
+
+  if (!enabledMethods.includes(paymentMethod)) {
+    throw new Error("Este restaurante no acepta ese método de pago")
+  }
+
+  if (paymentMethod === "mercadopago") {
+    // Fuerza token válido del dueño (falla claro si no conectó MP)
+    await getMercadoPagoSellerAccessToken(ownerId)
+  }
+
+  if (paymentMethod === "transfer") {
+    const info = restaurantData.transferInfo || {}
+    if (!info.alias && !info.cbu) {
+      throw new Error("El restaurante todavía no cargó datos de transferencia")
+    }
+  }
 
   const validatedItems: FoodOrderItem[] = []
   let subtotal = 0
@@ -85,7 +116,57 @@ export async function createMercadoPagoFoodPreference(request: Request, body: Cr
   const total = roundMoney(subtotal + fee)
   const orderId = `food_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 
-  const preference = configureMercadoPago()
+  const baseOrder = {
+    id: orderId,
+    buyerId,
+    buyerEmail,
+    restaurantId,
+    restaurantName: restaurantData.name || "Restaurante",
+    restaurantZone: restaurantData.zone || restaurantData.locationLabel || null,
+    restaurantAddress: restaurantData.address || null,
+    restaurantOwnerId: ownerId,
+    items: validatedItems,
+    subtotal,
+    deliveryFee: fee,
+    total,
+    deliveryMode,
+    address: address || null,
+    phone: phone || null,
+    notes: notes || null,
+    paymentMethod,
+    status: "recibido" as const,
+    paymentStatus: "pending" as const,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }
+
+  return { baseOrder, restaurantData, ownerId, orderId, validatedItems, fee, total, paymentMethod }
+}
+
+export async function createFoodOrder(request: Request, body: CreateFoodOrderPayload) {
+  const { buyerId } = body
+  await requireAuthenticatedUser(request, buyerId)
+
+  const { baseOrder, ownerId, orderId, validatedItems, fee, paymentMethod } = await validateAndBuildOrder(body)
+
+  if (paymentMethod === "cash" || paymentMethod === "transfer") {
+    await setDoc(doc(db, "foodOrders", orderId), {
+      ...baseOrder,
+      preferenceId: null,
+      paymentId: null,
+    })
+    return {
+      orderId,
+      paymentMethod,
+      init_point: null as string | null,
+      id: null as string | null,
+      transferInfo: paymentMethod === "transfer" ? (await getDoc(doc(db, "restaurants", body.restaurantId))).data()?.transferInfo || null : null,
+    }
+  }
+
+  // Mercado Pago del restaurante (cuenta del dueño)
+  const sellerToken = await getMercadoPagoSellerAccessToken(ownerId)
+  const preference = configureMercadoPago(sellerToken)
   const mpItems = validatedItems.map((item) => ({
     id: item.menuItemId,
     title: item.name,
@@ -114,39 +195,36 @@ export async function createMercadoPagoFoodPreference(request: Request, body: Cr
     },
     notification_url: `${siteUrl}/api/mercadopago/webhook`,
     external_reference: orderId,
-    payer: { email: buyerEmail },
+    payer: { email: body.buyerEmail },
     auto_return: "approved",
+    metadata: {
+      order_id: orderId,
+      restaurant_id: body.restaurantId,
+      owner_id: ownerId,
+      type: "food",
+    },
   }
 
   const result = (await preference.preferences.create(preferenceData)) as { id?: string; init_point?: string }
 
   await setDoc(doc(db, "foodOrders", orderId), {
-    id: orderId,
-    buyerId,
-    buyerEmail,
-    restaurantId,
-    restaurantName: restaurantData.name || "Restaurante",
-    restaurantZone: restaurantData.zone || restaurantData.locationLabel || null,
-    items: validatedItems,
-    subtotal,
-    deliveryFee: fee,
-    total,
-    deliveryMode,
-    address: address || null,
-    phone: phone || null,
-    notes: notes || null,
-    status: "recibido",
-    paymentStatus: "pending",
+    ...baseOrder,
     preferenceId: result.id || null,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    paymentId: null,
   })
 
   return {
-    id: result.id,
-    init_point: result.init_point,
+    id: result.id || null,
+    init_point: result.init_point || null,
     orderId,
+    paymentMethod,
+    transferInfo: null,
   }
+}
+
+/** Compat: misma firma que antes */
+export async function createMercadoPagoFoodPreference(request: Request, body: CreateFoodOrderPayload) {
+  return createFoodOrder(request, { ...body, paymentMethod: body.paymentMethod || "mercadopago" })
 }
 
 export async function updateFoodOrderPaymentStatus(

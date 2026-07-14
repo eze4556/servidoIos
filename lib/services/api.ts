@@ -91,10 +91,19 @@ export class ApiService {
     phone?: string
     notes?: string
     deliveryFee?: number
+    paymentMethod: "mercadopago" | "cash" | "transfer"
   }): Promise<ApiResponse<{
-    id: string
-    init_point: string
+    id: string | null
+    init_point: string | null
     orderId: string
+    paymentMethod: "mercadopago" | "cash" | "transfer"
+    transferInfo?: {
+      alias?: string
+      cbu?: string
+      bankName?: string
+      holderName?: string
+      instructions?: string
+    } | null
   }>> {
     return this.fetchApi("/api/mercadopago/payments/create-food-preference", {
       method: "POST",
