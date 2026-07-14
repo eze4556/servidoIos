@@ -51,6 +51,8 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
   const slides = currentUser ? LOGGED_IN_BANNERS : GUEST_BANNERS
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [controlsVisible, setControlsVisible] = useState(false)
+  const hideControlsTimer = useRef<number | null>(null)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{
     active: boolean
@@ -58,6 +60,30 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
     scrollLeft: number
     moved: boolean
   }>({ active: false, startX: 0, scrollLeft: 0, moved: false })
+
+  const clearHideControlsTimer = useCallback(() => {
+    if (hideControlsTimer.current != null) {
+      window.clearTimeout(hideControlsTimer.current)
+      hideControlsTimer.current = null
+    }
+  }, [])
+
+  const showControls = useCallback(() => {
+    clearHideControlsTimer()
+    setControlsVisible(true)
+  }, [clearHideControlsTimer])
+
+  const scheduleHideControls = useCallback(() => {
+    clearHideControlsTimer()
+    hideControlsTimer.current = window.setTimeout(() => {
+      setControlsVisible(false)
+      hideControlsTimer.current = null
+    }, 2200)
+  }, [clearHideControlsTimer])
+
+  useEffect(() => {
+    return () => clearHideControlsTimer()
+  }, [clearHideControlsTimer])
 
   useEffect(() => {
     setIndex(0)
@@ -158,10 +184,33 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
   return (
     <section
       className={cn(className)}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onMouseEnter={() => {
+        setPaused(true)
+        showControls()
+      }}
+      onMouseLeave={() => {
+        setPaused(false)
+        clearHideControlsTimer()
+        setControlsVisible(false)
+      }}
+      onFocusCapture={showControls}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          scheduleHideControls()
+        }
+      }}
     >
-      <div className="relative w-full overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-black/5 sm:rounded-3xl">
+      <div
+        className="relative w-full overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-black/5 sm:rounded-3xl"
+        onTouchStart={() => {
+          setPaused(true)
+          showControls()
+        }}
+        onTouchEnd={() => {
+          window.setTimeout(() => setPaused(false), 800)
+          scheduleHideControls()
+        }}
+      >
         <div
           ref={scrollerRef}
           className="flex w-full cursor-grab touch-pan-y overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -221,7 +270,12 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
               type="button"
               onClick={() => stepBy(-1)}
               aria-label="Banner anterior"
-              className="absolute left-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition hover:bg-black/60 active:scale-95 sm:left-3 sm:h-10 sm:w-10"
+              className={cn(
+                "absolute left-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-black/60 active:scale-95 sm:left-3 sm:h-10 sm:w-10",
+                controlsVisible
+                  ? "pointer-events-auto opacity-100"
+                  : "pointer-events-none opacity-0"
+              )}
             >
               <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
             </button>
@@ -229,7 +283,12 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
               type="button"
               onClick={() => stepBy(1)}
               aria-label="Banner siguiente"
-              className="absolute right-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition hover:bg-black/60 active:scale-95 sm:right-3 sm:h-10 sm:w-10"
+              className={cn(
+                "absolute right-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-black/60 active:scale-95 sm:right-3 sm:h-10 sm:w-10",
+                controlsVisible
+                  ? "pointer-events-auto opacity-100"
+                  : "pointer-events-none opacity-0"
+              )}
             >
               <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
             </button>
