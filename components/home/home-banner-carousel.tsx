@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
 
@@ -80,6 +81,15 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
     el.scrollTo({ left: clamped * el.clientWidth, behavior: "smooth" })
     setIndex(clamped)
   }, [slides.length])
+
+  const stepBy = useCallback(
+    (delta: number) => {
+      setPaused(true)
+      goTo(index + delta)
+      window.setTimeout(() => setPaused(false), 2500)
+    },
+    [goTo, index]
+  )
 
   useEffect(() => {
     if (paused || slides.length <= 1 || authLoading) return
@@ -206,25 +216,44 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
         </div>
 
         {slides.length > 1 && (
-          <div className="absolute bottom-3 left-0 right-0 z-[2] flex items-center justify-center gap-1.5">
-            {slides.map((slide, i) => (
-              <button
-                key={slide.id}
-                type="button"
-                onClick={() => goTo(i)}
-                aria-label={`Ir al banner ${i + 1}`}
-                aria-current={i === index}
-                className={cn(
-                  "h-1.5 rounded-full transition-all",
-                  i === index ? "w-5 bg-white shadow-sm" : "w-1.5 bg-white/55 hover:bg-white/80"
-                )}
-              />
-            ))}
-          </div>
+          <>
+            <button
+              type="button"
+              onClick={() => stepBy(-1)}
+              aria-label="Banner anterior"
+              className="absolute left-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition hover:bg-black/60 active:scale-95 sm:left-3 sm:h-10 sm:w-10"
+            >
+              <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+            </button>
+            <button
+              type="button"
+              onClick={() => stepBy(1)}
+              aria-label="Banner siguiente"
+              className="absolute right-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition hover:bg-black/60 active:scale-95 sm:right-3 sm:h-10 sm:w-10"
+            >
+              <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
+            </button>
+
+            <div className="absolute bottom-3 left-0 right-0 z-[2] flex items-center justify-center gap-1.5">
+              {slides.map((slide, i) => (
+                <button
+                  key={slide.id}
+                  type="button"
+                  onClick={() => goTo(i)}
+                  aria-label={`Ir al banner ${i + 1}`}
+                  aria-current={i === index}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    i === index ? "w-5 bg-white shadow-sm" : "w-1.5 bg-white/55 hover:bg-white/80"
+                  )}
+                />
+              ))}
+            </div>
+          </>
         )}
 
         <span className="sr-only">
-          Banner {index + 1} de {slides.length}: {current?.alt}. Deslizá para ver más.
+          Banner {index + 1} de {slides.length}: {current?.alt}. Usá las flechas o deslizá para ver más.
         </span>
       </div>
     </section>
