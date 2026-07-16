@@ -228,6 +228,7 @@ export function mapMenuPromotionDoc(id: string, data: Record<string, unknown>): 
     includedItems,
     sortOrder: typeof data.sortOrder === "number" ? data.sortOrder : 0,
     imageUrl: typeof data.imageUrl === "string" ? data.imageUrl : null,
+    imagePath: typeof data.imagePath === "string" ? data.imagePath : null,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   }

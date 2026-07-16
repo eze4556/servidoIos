@@ -1,20 +1,26 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Image from "next/image"
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
   getDocs,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore"
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react"
+import { ImagePlus, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
 import { db } from "@/lib/firebase"
 import { mapMenuPromotionDoc } from "@/lib/restaurant-options"
+import {
+  deleteStoragePaths,
+  uploadMenuPromotionImage,
+  validateRestaurantImageFile,
+} from "@/lib/restaurant-storage"
 import type { MenuItem, MenuPromotion, MenuPromotionIncludedItem } from "@/types/restaurant"
 import { formatPriceNumber } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -52,6 +58,8 @@ export function MenuCombosAdmin({
   const [comboPrice, setComboPrice] = useState("")
   const [available, setAvailable] = useState(true)
   const [included, setIncluded] = useState<Record<string, number>>({})
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -81,6 +89,25 @@ export function MenuCombosAdmin({
     void load()
   }, [restaurantId])
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview)
+    }
+  }, [imagePreview])
+
+  const setComboImage = (file: File | undefined) => {
+    if (!file) return
+    const validation = validateRestaurantImageFile(file)
+    if (validation) {
+      setError(validation)
+      return
+    }
+    if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview)
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+    setError(null)
+  }
+
   const openCreate = () => {
     if (!enabled) {
       onNeedSubscription()
@@ -92,6 +119,8 @@ export function MenuCombosAdmin({
     setComboPrice("")
     setAvailable(true)
     setIncluded({})
+    setImageFile(null)
+    setImagePreview(null)
     setError(null)
     setFormOpen(true)
   }
@@ -106,6 +135,8 @@ export function MenuCombosAdmin({
     setDescription(promo.description || "")
     setComboPrice(String(promo.comboPrice))
     setAvailable(promo.available !== false)
+    setImageFile(null)
+    setImagePreview(promo.imageUrl || null)
     const map: Record<string, number> = {}
     for (const item of promo.includedItems) {
       map[item.menuItemId] = item.quantity
@@ -153,7 +184,25 @@ export function MenuCombosAdmin({
 
     setSaving(true)
     setError(null)
+    let uploadedPath: string | null = null
     try {
+      const promotionRef = editing
+        ? doc(db, "menuPromotions", editing.id)
+        : doc(collection(db, "menuPromotions"))
+      let imageUrl = editing?.imageUrl || null
+      let imagePath = editing?.imagePath || null
+
+      if (imageFile) {
+        const uploaded = await uploadMenuPromotionImage(
+          restaurantId,
+          promotionRef.id,
+          imageFile
+        )
+        imageUrl = uploaded.url
+        imagePath = uploaded.path
+        uploadedPath = uploaded.path
+      }
+
       const payload = {
         restaurantId,
         name: name.trim(),
@@ -163,11 +212,16 @@ export function MenuCombosAdmin({
         comboPrice: priceNum,
         includedItems,
         sortOrder: editing?.sortOrder ?? promotions.length,
+        imageUrl,
+        imagePath,
         updatedAt: serverTimestamp(),
       }
 
       if (editing) {
-        await updateDoc(doc(db, "menuPromotions", editing.id), payload)
+        await updateDoc(promotionRef, payload)
+        if (imageFile && editing.imagePath && editing.imagePath !== imagePath) {
+          await deleteStoragePaths([editing.imagePath])
+        }
         setPromotions((prev) =>
           prev.map((p) =>
             p.id === editing.id
@@ -180,14 +234,14 @@ export function MenuCombosAdmin({
           )
         )
       } else {
-        const ref = await addDoc(collection(db, "menuPromotions"), {
+        await setDoc(promotionRef, {
           ...payload,
           createdAt: serverTimestamp(),
         })
         setPromotions((prev) => [
           ...prev,
           {
-            id: ref.id,
+            id: promotionRef.id,
             restaurantId,
             name: name.trim(),
             description: description.trim(),
@@ -196,11 +250,14 @@ export function MenuCombosAdmin({
             comboPrice: priceNum,
             includedItems,
             sortOrder: promotions.length,
+            imageUrl,
+            imagePath,
           },
         ])
       }
       setFormOpen(false)
     } catch (err) {
+      if (uploadedPath) await deleteStoragePaths([uploadedPath])
       setError(err instanceof Error ? err.message : "No se pudo guardar el combo")
     } finally {
       setSaving(false)
@@ -214,6 +271,7 @@ export function MenuCombosAdmin({
     }
     if (!window.confirm(`¿Eliminar el combo "${promo.name}"?`)) return
     await deleteDoc(doc(db, "menuPromotions", promo.id))
+    await deleteStoragePaths([promo.imagePath])
     setPromotions((prev) => prev.filter((p) => p.id !== promo.id))
   }
 
@@ -267,6 +325,21 @@ export function MenuCombosAdmin({
               key={promo.id}
               className="flex items-center gap-3 rounded-2xl bg-white p-4 ring-1 ring-gray-100"
             >
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-orange-400 to-red-500">
+                {promo.imageUrl ? (
+                  <Image
+                    src={promo.imageUrl}
+                    alt={promo.name}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-[10px] font-semibold text-white">
+                    Combo
+                  </div>
+                )}
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-gray-900">{promo.name}</p>
                 <p className="text-sm text-gray-500">
@@ -302,6 +375,40 @@ export function MenuCombosAdmin({
           </DialogHeader>
           <div className="space-y-4">
             {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+            <div className="space-y-2">
+              <Label>Imagen del combo</Label>
+              <div className="flex items-center gap-3">
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-orange-400 to-red-500">
+                  {imagePreview ? (
+                    <Image
+                      src={imagePreview}
+                      alt="Vista previa del combo"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-xs font-semibold text-white">
+                      Combo
+                    </div>
+                  )}
+                </div>
+                <label className="inline-flex cursor-pointer items-center rounded-full border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  <ImagePlus className="mr-2 h-4 w-4" />
+                  {imagePreview ? "Reemplazar" : "Subir imagen"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={(event) => {
+                      setComboImage(event.target.files?.[0])
+                      event.target.value = ""
+                    }}
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-gray-500">JPG, PNG, WEBP o GIF. Máximo 5 MB.</p>
+            </div>
             <div className="space-y-2">
               <Label>Nombre</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl" />

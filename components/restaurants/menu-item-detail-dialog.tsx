@@ -149,6 +149,20 @@ export function MenuItemDetailDialog({
           <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-orange-100 to-red-100 text-sm text-orange-800">
             Sin imagen
           </div>
+        ) : promotion?.imageUrl ? (
+          <div className="relative aspect-[4/3] w-full bg-gray-100">
+            <Image
+              src={promotion.imageUrl}
+              alt={title}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-4 pt-12 text-white">
+              <p className="text-sm font-medium uppercase tracking-wide text-orange-100">Combo</p>
+              <p className="mt-1 text-2xl font-bold">{title}</p>
+            </div>
+          </div>
         ) : (
           <div className="bg-gradient-to-br from-orange-500 to-red-600 px-4 py-8 text-white">
             <p className="text-sm font-medium uppercase tracking-wide text-orange-100">Combo</p>

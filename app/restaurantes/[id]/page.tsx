@@ -242,8 +242,18 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                     }
                   }}
                 >
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-red-500 text-xs font-bold text-white">
-                    Combo
+                  <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-orange-400 to-red-500 text-xs font-bold text-white">
+                    {promo.imageUrl ? (
+                      <Image
+                        src={promo.imageUrl}
+                        alt={promo.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      "Combo"
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-gray-900">{promo.name}</p>

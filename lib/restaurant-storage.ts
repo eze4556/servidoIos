@@ -60,6 +60,22 @@ export async function uploadMenuItemImage(
   return { url, path }
 }
 
+export async function uploadMenuPromotionImage(
+  restaurantId: string,
+  promotionId: string,
+  file: File
+): Promise<{ url: string; path: string }> {
+  const error = validateRestaurantImageFile(file)
+  if (error) throw new Error(error)
+
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg"
+  const path = `restaurants/${restaurantId}/promotions/${promotionId}/${Date.now()}.${ext}`
+  const storageRef = ref(storage, path)
+  await uploadBytes(storageRef, file)
+  const url = await getDownloadURL(storageRef)
+  return { url, path }
+}
+
 export async function deleteStoragePaths(paths: Array<string | null | undefined>) {
   await Promise.all(paths.map((p) => safeDeletePath(p)))
 }

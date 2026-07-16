@@ -127,6 +127,7 @@ export interface MenuPromotion {
   includedItems: MenuPromotionIncludedItem[]
   sortOrder: number
   imageUrl?: string | null
+  imagePath?: string | null
   createdAt?: unknown
   updatedAt?: unknown
 }
