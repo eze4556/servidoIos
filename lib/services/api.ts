@@ -85,7 +85,12 @@ export class ApiService {
     restaurantId: string
     buyerId: string
     buyerEmail: string
-    items: { menuItemId: string; quantity: number }[]
+    items: {
+      menuItemId: string
+      quantity: number
+      selections?: { groupId: string; optionId: string }[]
+      promotionId?: string
+    }[]
     deliveryMode: "delivery_propio" | "retiro_en_local" | "ambos"
     address?: string
     phone?: string

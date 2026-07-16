@@ -1,14 +1,22 @@
 "use client"
 
 import { createContext, useContext, useReducer, useCallback, type ReactNode } from "react"
+import type { FoodOrderItemSelection } from "@/types/restaurant"
+import { buildLineKey } from "@/lib/restaurant-options"
 
 export interface FoodCartItem {
+  lineId: string
   menuItemId: string
   restaurantId: string
   restaurantName: string
   name: string
+  /** Precio unitario final mostrado en UI */
   price: number
   quantity: number
+  selections?: FoodOrderItemSelection[]
+  promotionId?: string
+  /** Texto auxiliar (ej. contenido del combo) */
+  subtitle?: string
 }
 
 interface FoodCartState {
@@ -19,8 +27,8 @@ interface FoodCartState {
 
 type FoodCartAction =
   | { type: "ADD_ITEM"; payload: FoodCartItem }
-  | { type: "REMOVE_ITEM"; payload: { menuItemId: string } }
-  | { type: "UPDATE_QUANTITY"; payload: { menuItemId: string; quantity: number } }
+  | { type: "REMOVE_ITEM"; payload: { lineId: string } }
+  | { type: "UPDATE_QUANTITY"; payload: { lineId: string; quantity: number } }
   | { type: "CLEAR" }
 
 const initialState: FoodCartState = {
@@ -40,13 +48,13 @@ function foodCartReducer(state: FoodCartState, action: FoodCartAction): FoodCart
           items: [payload],
         }
       }
-      const existing = state.items.find((i) => i.menuItemId === payload.menuItemId)
+      const existing = state.items.find((i) => i.lineId === payload.lineId)
       if (existing) {
         return {
           restaurantId: payload.restaurantId,
           restaurantName: payload.restaurantName,
           items: state.items.map((i) =>
-            i.menuItemId === payload.menuItemId ? { ...i, quantity: i.quantity + payload.quantity } : i
+            i.lineId === payload.lineId ? { ...i, quantity: i.quantity + payload.quantity } : i
           ),
         }
       }
@@ -59,19 +67,19 @@ function foodCartReducer(state: FoodCartState, action: FoodCartAction): FoodCart
     case "REMOVE_ITEM":
       return {
         ...state,
-        items: state.items.filter((i) => i.menuItemId !== action.payload.menuItemId),
+        items: state.items.filter((i) => i.lineId !== action.payload.lineId),
       }
     case "UPDATE_QUANTITY": {
-      const { menuItemId, quantity } = action.payload
+      const { lineId, quantity } = action.payload
       if (quantity <= 0) {
         return {
           ...state,
-          items: state.items.filter((i) => i.menuItemId !== menuItemId),
+          items: state.items.filter((i) => i.lineId !== lineId),
         }
       }
       return {
         ...state,
-        items: state.items.map((i) => (i.menuItemId === menuItemId ? { ...i, quantity } : i)),
+        items: state.items.map((i) => (i.lineId === lineId ? { ...i, quantity } : i)),
       }
     }
     case "CLEAR":
@@ -81,15 +89,28 @@ function foodCartReducer(state: FoodCartState, action: FoodCartAction): FoodCart
   }
 }
 
+export type AddFoodCartItemInput = {
+  menuItemId: string
+  restaurantId: string
+  restaurantName: string
+  name: string
+  price: number
+  quantity?: number
+  selections?: FoodOrderItemSelection[]
+  promotionId?: string
+  subtitle?: string
+  lineId?: string
+}
+
 interface FoodCartContextType {
   items: FoodCartItem[]
   restaurantId: string | null
   restaurantName: string | null
   itemCount: number
   subtotal: number
-  addItem: (item: Omit<FoodCartItem, "quantity"> & { quantity?: number }) => void
-  removeItem: (menuItemId: string) => void
-  updateQuantity: (menuItemId: string, quantity: number) => void
+  addItem: (item: AddFoodCartItemInput) => void
+  removeItem: (lineId: string) => void
+  updateQuantity: (lineId: string, quantity: number) => void
   clearCart: () => void
 }
 
@@ -98,22 +119,37 @@ const FoodCartContext = createContext<FoodCartContextType | undefined>(undefined
 export function FoodCartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(foodCartReducer, initialState)
 
-  const addItem = useCallback(
-    (item: Omit<FoodCartItem, "quantity"> & { quantity?: number }) => {
-      dispatch({
-        type: "ADD_ITEM",
-        payload: { ...item, quantity: item.quantity ?? 1 },
-      })
-    },
-    []
-  )
-
-  const removeItem = useCallback((menuItemId: string) => {
-    dispatch({ type: "REMOVE_ITEM", payload: { menuItemId } })
+  const addItem = useCallback((item: AddFoodCartItemInput) => {
+    const lineId =
+      item.lineId ||
+      buildLineKey(
+        item.menuItemId,
+        item.selections || [],
+        item.promotionId
+      )
+    dispatch({
+      type: "ADD_ITEM",
+      payload: {
+        lineId,
+        menuItemId: item.menuItemId,
+        restaurantId: item.restaurantId,
+        restaurantName: item.restaurantName,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity ?? 1,
+        selections: item.selections,
+        promotionId: item.promotionId,
+        subtitle: item.subtitle,
+      },
+    })
   }, [])
 
-  const updateQuantity = useCallback((menuItemId: string, quantity: number) => {
-    dispatch({ type: "UPDATE_QUANTITY", payload: { menuItemId, quantity } })
+  const removeItem = useCallback((lineId: string) => {
+    dispatch({ type: "REMOVE_ITEM", payload: { lineId } })
+  }, [])
+
+  const updateQuantity = useCallback((lineId: string, quantity: number) => {
+    dispatch({ type: "UPDATE_QUANTITY", payload: { lineId, quantity } })
   }, [])
 
   const clearCart = useCallback(() => {

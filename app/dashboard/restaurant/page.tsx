@@ -8,9 +8,7 @@ import {
   doc,
   getDoc,
   getDocs,
-  addDoc,
   updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
@@ -31,18 +29,17 @@ import {
   Loader2,
   LogOut,
   Menu,
-  Plus,
   Settings,
-  Trash2,
   UtensilsCrossed,
 } from "lucide-react"
 import type {
   FoodOrder,
   FoodOrderStatus,
-  MenuItem,
   Restaurant,
   RestaurantPaymentMethod,
 } from "@/types/restaurant"
+import { RestaurantBrandingForm } from "@/components/restaurants/menu-admin/restaurant-branding-form"
+import { MenuAdminPanel } from "@/components/restaurants/menu-admin/menu-admin-panel"
 import {
   DELIVERY_MODE_LABELS,
   FOOD_ORDER_STATUS_LABELS,
@@ -83,16 +80,9 @@ export default function RestaurantDashboardPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<RestaurantTab>("orders")
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [orders, setOrders] = useState<FoodOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [showOtherPayments, setShowOtherPayments] = useState(false)
-
-  const [newItemName, setNewItemName] = useState("")
-  const [newItemPrice, setNewItemPrice] = useState("")
-  const [newItemCategory, setNewItemCategory] = useState("")
-  const [newItemDescription, setNewItemDescription] = useState("")
-  const [savingMenu, setSavingMenu] = useState(false)
 
   const [paymentMethods, setPaymentMethods] = useState<RestaurantPaymentMethod[]>(["cash", "transfer"])
   const [deliveryFeeInput, setDeliveryFeeInput] = useState("300")
@@ -173,14 +163,6 @@ export default function RestaurantDashboardPage() {
         setTransferInstructions(data.transferInfo?.instructions || "")
       }
 
-      const menuSnap = await getDocs(query(collection(db, "menuItems"), where("restaurantId", "==", restaurantId)))
-      if (!cancelled) {
-        setMenuItems(
-          menuSnap.docs
-            .map((d) => ({ id: d.id, ...d.data() } as MenuItem))
-            .sort((a, b) => a.name.localeCompare(b.name))
-        )
-      }
     }
 
     void loadStatic()
@@ -241,50 +223,6 @@ export default function RestaurantDashboardPage() {
       unsubscribe?.()
     }
   }, [restaurantId])
-
-  const handleAddMenuItem = async () => {
-    if (!hasActiveSubscription) {
-      setPaymentMsg("Necesitás una suscripción activa para cargar el menú.")
-      return
-    }
-    if (!restaurantId || !newItemName.trim() || !newItemPrice) return
-    setSavingMenu(true)
-    try {
-      await addDoc(collection(db, "menuItems"), {
-        restaurantId,
-        name: newItemName.trim(),
-        price: Number(newItemPrice),
-        category: newItemCategory.trim() || "General",
-        description: newItemDescription.trim(),
-        available: true,
-        createdAt: serverTimestamp(),
-      })
-      const menuSnap = await getDocs(query(collection(db, "menuItems"), where("restaurantId", "==", restaurantId)))
-      setMenuItems(
-        menuSnap.docs
-          .map((d) => ({ id: d.id, ...d.data() } as MenuItem))
-          .sort((a, b) => a.name.localeCompare(b.name))
-      )
-      setNewItemName("")
-      setNewItemPrice("")
-      setNewItemCategory("")
-      setNewItemDescription("")
-    } finally {
-      setSavingMenu(false)
-    }
-  }
-
-  const toggleMenuItem = async (item: MenuItem) => {
-    await updateDoc(doc(db, "menuItems", item.id), { available: !item.available })
-    setMenuItems((prev) =>
-      prev.map((m) => (m.id === item.id ? { ...m, available: !m.available } : m))
-    )
-  }
-
-  const deleteMenuItem = async (itemId: string) => {
-    await deleteDoc(doc(db, "menuItems", itemId))
-    setMenuItems((prev) => prev.filter((m) => m.id !== itemId))
-  }
 
   const advanceOrderStatus = async (order: FoodOrder) => {
     if (!hasActiveSubscription) {
@@ -614,11 +552,21 @@ export default function RestaurantDashboardPage() {
                     )}
 
                     <ul className="mt-3 space-y-1 text-sm text-gray-700">
-                      {order.items.map((item, i) => (
-                        <li key={i}>
-                          {item.quantity}x {item.name} — ${formatPriceNumber(item.price * item.quantity)}
-                        </li>
-                      ))}
+                      {order.items.map((item, i) => {
+                        const details =
+                          item.selections?.map((s) => s.optionName).join(" · ") || null
+                        return (
+                          <li key={i}>
+                            <span>
+                              {item.quantity}x {item.name} — $
+                              {formatPriceNumber(item.price * item.quantity)}
+                            </span>
+                            {details && !item.name.includes(details) && (
+                              <span className="mt-0.5 block text-xs text-gray-500">{details}</span>
+                            )}
+                          </li>
+                        )
+                      })}
                     </ul>
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                       <span className="font-bold text-servido-800">${formatPriceNumber(order.total)}</span>
@@ -664,79 +612,14 @@ export default function RestaurantDashboardPage() {
           </div>
         )}
 
-        {activeTab === "menu" && (
-          <div className="space-y-6">
-            <div className="rounded-2xl bg-white p-5 ring-1 ring-gray-100">
-              <h2 className="mb-4 font-semibold text-gray-900">Agregar plato</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Nombre</Label>
-                  <Input value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Precio ($)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={newItemPrice}
-                    onChange={(e) => setNewItemPrice(e.target.value)}
-                    className="rounded-xl"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Categoría</Label>
-                  <Input
-                    value={newItemCategory}
-                    onChange={(e) => setNewItemCategory(e.target.value)}
-                    placeholder="Ej: Entradas, Principales"
-                    className="rounded-xl"
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Descripción</Label>
-                  <Textarea
-                    value={newItemDescription}
-                    onChange={(e) => setNewItemDescription(e.target.value)}
-                    className="rounded-xl"
-                  />
-                </div>
-              </div>
-              <Button
-                onClick={() => void handleAddMenuItem()}
-                disabled={savingMenu || !newItemName.trim() || !newItemPrice || !hasActiveSubscription}
-                className="mt-4 rounded-full bg-servido-800"
-              >
-                {savingMenu ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                Agregar al menú
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {menuItems.length === 0 ? (
-                <p className="text-center text-gray-500">Tu menú está vacío. Agregá tu primer plato.</p>
-              ) : (
-                menuItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-4 rounded-2xl bg-white p-4 ring-1 ring-gray-100"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {item.category} · ${formatPriceNumber(item.price)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Switch checked={item.available} onCheckedChange={() => void toggleMenuItem(item)} />
-                      <Button variant="ghost" size="icon" onClick={() => void deleteMenuItem(item.id)}>
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+        {activeTab === "menu" && restaurantId && (
+          <MenuAdminPanel
+            restaurantId={restaurantId}
+            enabled={hasActiveSubscription}
+            onNeedSubscription={() =>
+              setPaymentMsg("Necesitás una suscripción activa para cargar el menú.")
+            }
+          />
         )}
 
         {activeTab === "profile" && (
@@ -760,6 +643,14 @@ export default function RestaurantDashboardPage() {
                 Editar perfil
               </Button>
             </div>
+
+            {restaurant && (
+              <RestaurantBrandingForm
+                restaurant={restaurant}
+                onUpdated={setRestaurant}
+                disabled={!hasActiveSubscription}
+              />
+            )}
 
             <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
               <h2 className="font-semibold text-gray-900">Cómo cobrás</h2>

@@ -2,6 +2,15 @@ import { auth as adminAuth } from "@/lib/firebase-admin"
 import { db } from "@/lib/firebase"
 import { configureMercadoPago, getMercadoPagoSiteUrl } from "@/lib/mercadopago"
 import { getMercadoPagoSellerAccessToken } from "@/lib/mercadopago-oauth"
+import {
+  mapMenuItemDoc,
+} from "@/lib/restaurant-menu"
+import {
+  mapMenuPromotionDoc,
+  resolveComboPromotion,
+  resolveMenuItemSelections,
+  type SelectionInput,
+} from "@/lib/restaurant-options"
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore"
 import type {
   DeliveryMode,
@@ -9,11 +18,18 @@ import type {
   RestaurantPaymentMethod,
 } from "@/types/restaurant"
 
+export type CreateFoodOrderItemPayload = {
+  menuItemId: string
+  quantity: number
+  selections?: SelectionInput[]
+  promotionId?: string
+}
+
 export type CreateFoodOrderPayload = {
   restaurantId: string
   buyerId: string
   buyerEmail: string
-  items: { menuItemId: string; quantity: number }[]
+  items: CreateFoodOrderItemPayload[]
   deliveryMode: DeliveryMode
   address?: string
   phone?: string
@@ -46,7 +62,7 @@ function roundMoney(amount: number) {
 }
 
 async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
-  const { restaurantId, buyerId, buyerEmail, items, deliveryMode, address, phone, notes, deliveryFee = 0, paymentMethod } =
+  const { restaurantId, buyerId, buyerEmail, items, deliveryMode, address, phone, notes, paymentMethod } =
     body
 
   if (!restaurantId || !buyerId || !buyerEmail) {
@@ -102,25 +118,67 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
   let subtotal = 0
 
   for (const item of items) {
+    const quantity = Number(item.quantity) || 0
+    if (quantity <= 0) {
+      throw new Error("Cantidad inválida")
+    }
+
+    if (item.promotionId) {
+      const promoDoc = await getDoc(doc(db, "menuPromotions", item.promotionId))
+      if (!promoDoc.exists()) {
+        throw new Error(`Combo no encontrado: ${item.promotionId}`)
+      }
+      const promotion = mapMenuPromotionDoc(promoDoc.id, promoDoc.data() as Record<string, unknown>)
+      if (promotion.restaurantId !== restaurantId) {
+        throw new Error("El combo no pertenece a este restaurante")
+      }
+      const resolved = resolveComboPromotion(promotion)
+      const lineTotal = roundMoney(resolved.unitPrice * quantity)
+      subtotal += lineTotal
+      validatedItems.push({
+        menuItemId: `promo_${promotion.id}`,
+        name: resolved.displayName,
+        price: resolved.unitPrice,
+        quantity,
+        basePrice: resolved.unitPrice,
+        lineKey: resolved.lineKey,
+        promotionId: promotion.id,
+        selections: [
+          {
+            groupId: "combo",
+            groupName: "Incluye",
+            optionId: "included",
+            optionName: resolved.includedSummary,
+            priceDelta: 0,
+          },
+        ],
+      })
+      continue
+    }
+
     const menuDoc = await getDoc(doc(db, "menuItems", item.menuItemId))
     if (!menuDoc.exists()) {
       throw new Error(`Plato no encontrado: ${item.menuItemId}`)
     }
-    const menuData = menuDoc.data()
-    if (menuData.restaurantId !== restaurantId) {
+    const menuItem = mapMenuItemDoc(menuDoc.id, menuDoc.data() as Record<string, unknown>)
+    if (menuItem.restaurantId !== restaurantId) {
       throw new Error("El plato no pertenece a este restaurante")
     }
-    if (menuData.available === false) {
-      throw new Error(`El plato ${menuData.name} no está disponible`)
+    if (menuItem.available === false) {
+      throw new Error(`El plato ${menuItem.name} no está disponible`)
     }
-    const price = Number(menuData.price) || 0
-    const lineTotal = roundMoney(price * item.quantity)
+
+    const resolved = resolveMenuItemSelections(menuItem, item.selections || [])
+    const lineTotal = roundMoney(resolved.unitPrice * quantity)
     subtotal += lineTotal
     validatedItems.push({
-      menuItemId: item.menuItemId,
-      name: menuData.name,
-      price,
-      quantity: item.quantity,
+      menuItemId: menuItem.id,
+      name: resolved.displayName,
+      price: resolved.unitPrice,
+      quantity,
+      basePrice: Number(menuItem.price) || 0,
+      selections: resolved.selections.length ? resolved.selections : undefined,
+      lineKey: resolved.lineKey,
     })
   }
 
@@ -187,7 +245,7 @@ export async function createFoodOrder(request: Request, body: CreateFoodOrderPay
   const preference = configureMercadoPago(sellerToken)
   const mpItems = validatedItems.map((item) => ({
     id: item.menuItemId,
-    title: item.name,
+    title: item.name.slice(0, 120),
     quantity: item.quantity,
     unit_price: item.price,
     currency_id: "ARS",

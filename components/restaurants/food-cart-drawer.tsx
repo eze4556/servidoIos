@@ -93,7 +93,15 @@ export function FoodCartDrawer({
         restaurantId,
         buyerId: currentUser.firebaseUser.uid,
         buyerEmail: currentUser.firebaseUser.email || "",
-        items: items.map((i) => ({ menuItemId: i.menuItemId, quantity: i.quantity })),
+        items: items.map((i) => ({
+          menuItemId: i.menuItemId,
+          quantity: i.quantity,
+          selections: i.selections?.map((s) => ({
+            groupId: s.groupId,
+            optionId: s.optionId,
+          })),
+          promotionId: i.promotionId,
+        })),
         deliveryMode,
         address: address.trim() || undefined,
         phone: phone.trim() || undefined,
@@ -169,9 +177,12 @@ export function FoodCartDrawer({
         </SheetHeader>
         <div className="flex-1 space-y-3 overflow-y-auto py-4">
           {items.map((item) => (
-            <div key={item.menuItemId} className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3">
+            <div key={item.lineId} className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3">
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-gray-900">{item.name}</p>
+                {item.subtitle && (
+                  <p className="line-clamp-2 text-xs text-gray-500">{item.subtitle}</p>
+                )}
                 <p className="text-sm text-gray-500">${formatPriceNumber(item.price)}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -179,7 +190,7 @@ export function FoodCartDrawer({
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
+                  onClick={() => updateQuantity(item.lineId, item.quantity - 1)}
                 >
                   <Minus className="h-3 w-3" />
                 </Button>
@@ -188,11 +199,11 @@ export function FoodCartDrawer({
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
+                  onClick={() => updateQuantity(item.lineId, item.quantity + 1)}
                 >
                   <Plus className="h-3 w-3" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => removeItem(item.menuItemId)}>
+                <Button variant="ghost" size="icon" onClick={() => removeItem(item.lineId)}>
                   <Trash2 className="h-4 w-4 text-red-500" />
                 </Button>
               </div>

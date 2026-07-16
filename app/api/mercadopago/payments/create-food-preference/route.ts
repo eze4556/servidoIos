@@ -19,7 +19,11 @@ export async function POST(request: NextRequest) {
             message.includes("Elegí") ||
             message.includes("conectar") ||
             message.includes("transferencia") ||
-            message.includes("Faltan")
+            message.includes("Faltan") ||
+            message.includes("Opción") ||
+            message.includes("Combo") ||
+            message.includes("Cantidad") ||
+            message.includes("Podés elegir")
           ? 400
           : 500
     return NextResponse.json({ error: message }, { status })

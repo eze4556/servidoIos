@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2, UtensilsCrossed } from "lucide-react"
 import type { FoodOrder } from "@/types/restaurant"
-import { FOOD_ORDER_STATUS_LABELS } from "@/types/restaurant"
+import { FOOD_ORDER_STATUS_LABELS, formatOrderItemSelections } from "@/types/restaurant"
 import { formatPriceNumber } from "@/lib/utils"
 
 export default function FoodOrdersPage() {
@@ -99,11 +99,19 @@ export default function FoodOrdersPage() {
                   </div>
                 </div>
                 <ul className="mt-3 space-y-1 text-sm text-gray-700">
-                  {order.items.map((item, i) => (
-                    <li key={i}>
-                      {item.quantity}x {item.name}
-                    </li>
-                  ))}
+                  {order.items.map((item, i) => {
+                    const details = formatOrderItemSelections(item)
+                    return (
+                      <li key={i}>
+                        <span>
+                          {item.quantity}x {item.name}
+                        </span>
+                        {details && !item.name.includes(details) && (
+                          <span className="mt-0.5 block text-xs text-gray-500">{details}</span>
+                        )}
+                      </li>
+                    )
+                  })}
                 </ul>
                 <p className="mt-3 font-bold text-servido-800">${formatPriceNumber(order.total)}</p>
               </div>
