@@ -187,15 +187,18 @@ export default function ServicesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-800 to-purple-900 text-white py-12">
+      <div className="bg-white py-5">
         <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Servicios</h1>
-            <p className="text-xl text-purple-200 max-w-2xl mx-auto">
-              Encuentra los mejores servicios profesionales en nuestra plataforma. 
-              Desde consultoría hasta mantenimiento, todo lo que necesitas está aquí.
-            </p>
+          <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5 sm:rounded-3xl">
+            <Image
+              src="/images/bannernuevooficial4.jpeg"
+              alt="Todos los servicios en un solo lugar"
+              width={1600}
+              height={723}
+              className="h-auto w-full"
+              sizes="(max-width: 1056px) calc(100vw - 2rem), 1024px"
+              priority
+            />
           </div>
         </div>
       </div>

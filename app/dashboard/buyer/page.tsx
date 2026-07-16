@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
@@ -558,6 +559,20 @@ export default function BuyerDashboardPage() {
           <AlertTitle>Éxito</AlertTitle>
           <AlertDescription>{successMessage}</AlertDescription>
         </Alert>
+      )}
+
+      {activeTab === "dashboard" && (
+        <div className="mb-5 overflow-hidden rounded-2xl shadow-md ring-1 ring-black/5">
+          <Image
+            src="/images/bannernuevooficial5.jpeg"
+            alt="Servido Market: todo lo que necesitás"
+            width={1600}
+            height={728}
+            className="h-auto w-full"
+            sizes="(max-width: 1024px) calc(100vw - 2rem), 960px"
+            priority
+          />
+        </div>
       )}
 
       <BuyerDashboardTabs

@@ -178,8 +178,8 @@ export default function RestaurantesPage() {
             <Image
               src="/images/bannerestaurante.jfif"
               alt="Los mejores sabores, directo a tu mesa"
-              width={1014}
-              height={486}
+              width={1600}
+              height={759}
               className="h-auto w-full"
               sizes="(max-width: 1046px) calc(100vw - 2rem), 1014px"
               priority

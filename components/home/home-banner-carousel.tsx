@@ -16,28 +16,46 @@ interface BannerSlide {
   height: number
 }
 
-const GUEST_BANNERS: BannerSlide[] = [
-  { id: "banner1", src: "/images/banner1.png", alt: "Promoción Servido 1", href: "/products", width: 1717, height: 916 },
-  { id: "banner2", src: "/images/banner2.png", alt: "Promoción Servido 2", href: "/products", width: 1717, height: 916 },
-  { id: "banner3", src: "/images/banner3.png", alt: "Promoción Servido 3", href: "/signup", width: 1717, height: 916 },
-]
-
-const LOGGED_IN_BANNERS: BannerSlide[] = [
+const OFFICIAL_BANNERS: BannerSlide[] = [
   {
-    id: "bannerlogueado",
-    src: "/images/bannerlogueado.png",
-    alt: "Promoción para vos",
+    id: "bannernuevooficial",
+    src: "/images/bannernuevooficial.jpeg",
+    alt: "Encontrá la tecnología ideal para vos",
     href: "/products",
-    width: 1672,
-    height: 941,
+    width: 1600,
+    height: 724,
   },
   {
-    id: "bannerlogueado2",
-    src: "/images/bannerlogueado2.png",
-    alt: "Promoción exclusiva",
-    href: "/dashboard/buyer",
-    width: 1672,
-    height: 941,
+    id: "bannernuevooficial2",
+    src: "/images/bannernuevooficial2.jpeg",
+    alt: "Equipá tu hogar con lo mejor",
+    href: "/products",
+    width: 1600,
+    height: 726,
+  },
+  {
+    id: "bannernuevooficial3",
+    src: "/images/bannernuevooficial3.jpeg",
+    alt: "Pedí lo que más te gusta",
+    href: "/restaurantes",
+    width: 1600,
+    height: 729,
+  },
+  {
+    id: "bannernuevooficial4",
+    src: "/images/bannernuevooficial4.jpeg",
+    alt: "Todos los servicios en un solo lugar",
+    href: "/services",
+    width: 1600,
+    height: 723,
+  },
+  {
+    id: "bannernuevooficial5",
+    src: "/images/bannernuevooficial5.jpeg",
+    alt: "Servido Market: todo lo que necesitás",
+    href: "/products",
+    width: 1600,
+    height: 728,
   },
 ]
 
@@ -47,8 +65,8 @@ interface HomeBannerCarouselProps {
 }
 
 export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBannerCarouselProps) {
-  const { currentUser, authLoading } = useAuth()
-  const slides = currentUser ? LOGGED_IN_BANNERS : GUEST_BANNERS
+  const { authLoading } = useAuth()
+  const slides = OFFICIAL_BANNERS
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
   const [controlsVisible, setControlsVisible] = useState(false)
@@ -89,7 +107,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
     setIndex(0)
     const el = scrollerRef.current
     if (el) el.scrollTo({ left: 0, behavior: "auto" })
-  }, [currentUser?.firebaseUser.uid])
+  }, [])
 
   const syncIndexFromScroll = useCallback(() => {
     const el = scrollerRef.current
@@ -174,7 +192,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
   if (authLoading) {
     return (
       <section className={cn(className)}>
-        <div className="aspect-[1717/916] w-full animate-pulse rounded-2xl bg-purple-100/60" />
+        <div className="aspect-[1600/724] w-full animate-pulse rounded-2xl bg-purple-100/60" />
       </section>
     )
   }
