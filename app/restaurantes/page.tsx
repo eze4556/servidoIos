@@ -176,13 +176,14 @@ export default function RestaurantesPage() {
         <div className="container mx-auto px-4 py-5">
           <div className="mx-auto max-w-[1014px] overflow-hidden rounded-2xl shadow-md">
             <Image
-              src="/images/bannerestaurante.jfif"
+              src="/images/bannerrestaurante.jpg"
               alt="Los mejores sabores, directo a tu mesa"
               width={1600}
               height={759}
               className="h-auto w-full"
               sizes="(max-width: 1046px) calc(100vw - 2rem), 1014px"
               priority
+              unoptimized
             />
           </div>
         </div>
