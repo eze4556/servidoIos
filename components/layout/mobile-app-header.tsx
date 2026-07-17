@@ -19,6 +19,7 @@ import {
   Store,
   User,
   Users,
+  UtensilsCrossed,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -284,6 +285,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                 {[
                   { href: "/", label: "Inicio", icon: Home },
                   { href: "/products", label: "Productos", icon: Package },
+                  { href: "/restaurantes", label: "Restaurantes", icon: UtensilsCrossed },
                   { href: "/services", label: "Servicios", icon: Sparkles },
                   { href: "/mensajes", label: "Chat", icon: MessageCircle },
                   { href: "/favorites", label: "Favoritos", icon: Heart },

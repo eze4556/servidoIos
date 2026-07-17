@@ -8,12 +8,12 @@ import {
   ChevronDown,
   Menu,
   Heart,
-  Users,
   Package,
   Loader2,
   MapPin,
   MessageCircle,
   UserPlus,
+  UtensilsCrossed,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -417,7 +417,7 @@ export function Header() {
             {[
               { href: "/siguiendo", icon: UserPlus, label: "Seguir" },
               { href: "/mensajes", icon: MessageCircle, label: "Chat" },
-              { href: "/acerca-de-nosotros", icon: Users, label: "Quiénes somos" },
+              { href: "/restaurantes", icon: UtensilsCrossed, label: "Restaurantes" },
               { href: "/services", icon: Package, label: "Servicios" },
               { href: "/favorites", icon: Heart, label: "Favoritos" },
             ].map(({ href, icon: Icon, label }) => {
