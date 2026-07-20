@@ -257,6 +257,7 @@ export default function RestaurantDashboardPage() {
         userId: currentUser.firebaseUser.uid,
         planType: "basic",
         returnPath: "/dashboard/restaurant",
+        payerEmail: currentUser.firebaseUser.email || undefined,
       })
       if (response.error || !response.data?.init_point) {
         throw new Error(response.error || "No se pudo iniciar la suscripción")
@@ -449,9 +450,9 @@ export default function RestaurantDashboardPage() {
         <div className="border-b border-amber-200 bg-amber-50">
           <div className="container mx-auto flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-semibold text-amber-950">Suscripción requerida</p>
+              <p className="font-semibold text-amber-950">Suscripción mensual requerida</p>
               <p className="text-sm text-amber-800">
-                Sin suscripción activa no podés operar el menú ni los pedidos (igual que vendedores de productos).
+                Sin suscripción activa no podés operar el menú ni los pedidos. El cobro se renueva solo cada mes con Mercado Pago.
               </p>
             </div>
             <Button
@@ -460,7 +461,7 @@ export default function RestaurantDashboardPage() {
               onClick={() => void handleSubscribe()}
             >
               {subscribing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Activar suscripción
+              Activar suscripción mensual
             </Button>
           </div>
         </div>

@@ -35,7 +35,7 @@ export class ApiService {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.message || 'Error en la solicitud')
+        throw new Error(data.error || data.message || 'Error en la solicitud')
       }
 
       return { data }
@@ -116,15 +116,18 @@ export class ApiService {
     }, true)
   }
 
-  // Crear preferencia para suscripciones
+  // Crear suscripción recurrente (PreApproval Mercado Pago)
   static async createSubscriptionPreference(data: {
     userId: string
     planType: 'basic' | 'premium' | 'enterprise'
     returnPath?: '/dashboard/seller' | '/dashboard/restaurant' | 'seller' | 'restaurant'
+    payerEmail?: string
   }): Promise<ApiResponse<{
     id: string
     init_point: string
     sandbox_init_point: string
+    billingMode?: 'recurring'
+    amount?: number
   }>> {
     return this.fetchApi('/api/mercadopago/subscription/create', {
       method: 'POST',

@@ -712,101 +712,9 @@ async function handleRefundedPurchase(paymentInfo: any, purchaseId: string) {
   })
 }
 
-async function syncRestaurantSubscriptionFlag(userId: string, active: boolean) {
-  try {
-    const userSnap = await getDoc(doc(db, "users", userId))
-    if (!userSnap.exists()) return
-    const userData = userSnap.data() as { restaurantId?: string; businessType?: string }
-    const restaurantId = userData.restaurantId
-    if (!restaurantId || userData.businessType !== "restaurant") return
-    await setDoc(
-      doc(db, "restaurants", restaurantId),
-      {
-        subscriptionActive: active,
-        updatedAt: new Date(),
-      },
-      { merge: true }
-    )
-  } catch (err) {
-    console.error("syncRestaurantSubscriptionFlag failed:", err)
-  }
-}
-
 async function handleSubscriptionPayment(externalReference: string, paymentInfo: any) {
-  const [, userId, planType = "basic"] = externalReference.split("_")
-
-  if (!userId) {
-    throw new Error("Referencia de suscripción inválida")
-  }
-
-  logFirestoreAccess("doc", "users", userId)
-  logFirestoreAccess("doc", "subscriptions", paymentInfo.id)
-  logFirestoreAccess("doc", "transactions", paymentInfo.id)
-  const paymentDocumentId = String(paymentInfo.id)
-  const subscriptionStart = new Date()
-  const subscriptionEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-
-  // Preservar businessType / restaurantId del usuario
-  const existingUserSnap = await getDoc(doc(db, "users", userId))
-  const existingUser = existingUserSnap.exists() ? (existingUserSnap.data() as any) : {}
-
-  logFirestoreAccess("runTransaction", "users", userId)
-  logFirestoreAccess("runTransaction", "subscriptions", paymentInfo.id)
-  logFirestoreAccess("runTransaction", "transactions", paymentInfo.id)
-  await runTransaction(db, async (transaction) => {
-    logFirestoreAccess("transaction.set", "users", userId)
-    transaction.set(
-      doc(db, "users", userId),
-      {
-        role: existingUser.role || "seller",
-        businessType: existingUser.businessType || undefined,
-        restaurantId: existingUser.restaurantId || undefined,
-        subscription_status: "active",
-        isSubscribed: true,
-        subscription: {
-          status: "active",
-          plan: planType,
-          startDate: subscriptionStart,
-          endDate: subscriptionEnd,
-          lastPaymentDate: subscriptionStart,
-          paymentId: paymentInfo.id,
-          paymentStatusRaw: paymentInfo.status,
-        },
-        updatedAt: new Date(),
-      },
-      { merge: true }
-    )
-
-    logFirestoreAccess("transaction.set", "subscriptions", paymentDocumentId)
-    transaction.set(doc(db, "subscriptions", paymentDocumentId), {
-      id: paymentInfo.id,
-      userId,
-      planType,
-      paymentId: paymentInfo.id,
-      autoRenew: true,
-      status: "active",
-      paymentStatusRaw: paymentInfo.status,
-      startDate: subscriptionStart,
-      endDate: subscriptionEnd,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }, { merge: true })
-
-    logFirestoreAccess("transaction.set", "transactions", paymentDocumentId)
-    transaction.set(doc(db, "transactions", paymentDocumentId), {
-      id: paymentInfo.id,
-      userId,
-      amount: paymentInfo.transaction_amount,
-      status: paymentInfo.status,
-      paymentStatusRaw: paymentInfo.status,
-      paymentId: paymentInfo.id,
-      planType,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }, { merge: true })
-  })
-
-  await syncRestaurantSubscriptionFlag(userId, true)
+  const { handleLegacySubscriptionPayment } = await import("@/lib/mercadopago-subscriptions")
+  return handleLegacySubscriptionPayment(externalReference, paymentInfo)
 }
 
 async function reserveWebhookEvent(params: {
@@ -914,18 +822,94 @@ async function markWebhookEventFailed(eventRef: DocumentReference, errorMessage:
   )
 }
 
+function resolveWebhookEventType(request: Request, payload: any) {
+  const url = new URL(request.url)
+  const fromQuery = url.searchParams.get("type") || url.searchParams.get("topic")
+  const raw = String(
+    payload?.type || payload?.topic || payload?.action || fromQuery || "payment"
+  ).toLowerCase()
+
+  if (raw.includes("subscription_preapproval") || raw === "subscription_preapproval") {
+    return "subscription_preapproval"
+  }
+  if (raw.includes("subscription_authorized_payment") || raw === "subscription_authorized_payment") {
+    return "subscription_authorized_payment"
+  }
+  if (raw.includes("preapproval") && !raw.includes("plan")) {
+    return "subscription_preapproval"
+  }
+  return raw || "payment"
+}
+
 export async function handleMercadoPagoWebhook(request: Request): Promise<WebhookResponse> {
   const payload = await request.json().catch(() => ({}))
-  const paymentId = payload?.data?.id || payload?.data?.payment_id || payload?.id
+  const url = new URL(request.url)
+  const paymentId =
+    payload?.data?.id ||
+    payload?.data?.payment_id ||
+    payload?.id ||
+    url.searchParams.get("data.id") ||
+    url.searchParams.get("id")
+
+  const eventType = resolveWebhookEventType(request, payload)
 
   if (!paymentId) {
     logMercadoPagoEvent("warn", "webhook_invalid_payload", {
-      reason: "missing_payment_id",
-      eventType: payload?.type || payload?.topic || payload?.action || null,
+      reason: "missing_resource_id",
+      eventType,
     })
     return {
       status: 400,
-      body: { received: false, handled: false, error: "payment_id requerido" },
+      body: { received: false, handled: false, error: "id de recurso requerido" },
+    }
+  }
+
+  // Suscripciones recurrentes (PreApproval / authorized payments)
+  if (eventType === "subscription_preapproval" || eventType === "subscription_authorized_payment") {
+    try {
+      const {
+        fetchMercadoPagoPreapproval,
+        fetchMercadoPagoAuthorizedPayment,
+        syncSubscriptionFromPreapproval,
+        syncSubscriptionFromAuthorizedPayment,
+      } = await import("@/lib/mercadopago-subscriptions")
+
+      if (eventType === "subscription_preapproval") {
+        const preapproval = await fetchMercadoPagoPreapproval(String(paymentId))
+        const result = await syncSubscriptionFromPreapproval(preapproval)
+        logMercadoPagoEvent("info", "webhook_subscription_preapproval", {
+          paymentId: String(paymentId),
+          eventType,
+          ...result,
+        })
+        return {
+          status: 200,
+          body: { received: true, handled: true, type: "subscription_preapproval", ...result },
+        }
+      }
+
+      const authorizedPayment = await fetchMercadoPagoAuthorizedPayment(String(paymentId))
+      const result = await syncSubscriptionFromAuthorizedPayment(authorizedPayment)
+      logMercadoPagoEvent("info", "webhook_subscription_authorized_payment", {
+        paymentId: String(paymentId),
+        eventType,
+        ...result,
+      })
+      return {
+        status: 200,
+        body: { received: true, handled: true, type: "subscription_authorized_payment", ...result },
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Error procesando suscripción"
+      logMercadoPagoEvent("error", "webhook_subscription_failed", {
+        paymentId: String(paymentId),
+        eventType,
+        error: errorMessage,
+      })
+      return {
+        status: 500,
+        body: { received: false, handled: false, error: errorMessage },
+      }
     }
   }
 
@@ -967,7 +951,6 @@ export async function handleMercadoPagoWebhook(request: Request): Promise<Webhoo
 
   const externalReference = String(paymentInfo.external_reference || "")
   const status = normalizePaymentStatus(paymentInfo.status)
-  const eventType = String(payload?.type || payload?.topic || payload?.action || "payment")
   const eventContext = {
     paymentId: String(paymentId),
     externalReference,

@@ -289,40 +289,40 @@ export default function SellerDashboardPage() {
   const { toast } = useToast()
   const searchParams = useSearchParams()
   const hasActiveSubscription = currentUser?.subscriptionStatus === "active"
-  const subscriptionRequiredMessage = "Suscripción requerida para publicar productos y servicios"
-  const subscriptionActiveMessage = "Suscripción activa - Puedes publicar productos y servicios"
-  const subscriptionBlockedMessage = "Debes activar tu suscripción para publicar productos y servicios."
+  const subscriptionRequiredMessage = "Suscripción mensual requerida para publicar productos y servicios"
+  const subscriptionActiveMessage = "Suscripción activa — se renueva automáticamente cada mes"
+  const subscriptionBlockedMessage = "Debes activar tu suscripción mensual para publicar productos y servicios."
 
   const subscriptionEndsAt = currentUser?.subscriptionEndsAt ?? null
   const subscriptionDaysRemaining = currentUser?.subscriptionDaysRemaining ?? null
   const subscriptionStatusSummary = useMemo(() => {
     if (hasActiveSubscription) {
       if (subscriptionEndsAt && format(subscriptionEndsAt, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")) {
-        return "Vence hoy"
+        return "Próximo cobro hoy (renovación automática)"
       }
 
       if (typeof subscriptionDaysRemaining === "number") {
         if (subscriptionDaysRemaining <= 0) {
-          return "Vence hoy"
+          return "Próximo cobro hoy (renovación automática)"
         }
 
         if (subscriptionDaysRemaining === 1) {
-          return "Te queda 1 día"
+          return "Próximo cobro en 1 día"
         }
 
-        return `Te quedan ${subscriptionDaysRemaining} días`
+        return `Próximo cobro estimado en ${subscriptionDaysRemaining} días`
       }
 
-      return "Suscripción activa"
+      return "Suscripción activa con renovación automática"
     }
 
     if (subscriptionEndsAt) {
-      return "Tu suscripción venció. Renueva para volver a publicar productos y servicios."
+      return "Tu suscripción venció o el cobro falló. Reactivala para volver a publicar."
     }
 
-    return "Activa tu suscripción para publicar productos y servicios"
+    return "Activá la suscripción mensual automática para publicar productos y servicios"
   }, [hasActiveSubscription, subscriptionEndsAt?.getTime(), subscriptionDaysRemaining])
-  const subscriptionActionLabel = subscriptionEndsAt && !hasActiveSubscription ? "Renovar suscripción" : "Activar Suscripción"
+  const subscriptionActionLabel = subscriptionEndsAt && !hasActiveSubscription ? "Reactivar suscripción" : "Activar suscripción mensual"
 
   const mercadoPagoStatus = currentUser?.mercadoPagoStatus ?? "not_connected"
   const mercadoPagoConnected = mercadoPagoStatus === "connected"
@@ -1940,6 +1940,7 @@ export default function SellerDashboardPage() {
       const response = await ApiService.createSubscriptionPreference({
         userId: currentUser.firebaseUser.uid,
         planType: 'basic', // Cambiar de 'BASICO' a 'basic' para coincidir con el backend
+        payerEmail: currentUser.firebaseUser.email || undefined,
       });
 
       console.log("[handleSubscribe] Respuesta de la API:", response);
@@ -3325,7 +3326,7 @@ export default function SellerDashboardPage() {
                              <CheckCircle className="h-4 w-4 text-green-600" />
                              <AlertTitle className="text-green-800">Suscripción Activa</AlertTitle>
                              <AlertDescription className="text-green-700">
-                               Tu suscripción está activa y puedes crear y vender productos y servicios sin restricciones.
+                               Tu suscripción mensual está activa y se renueva automáticamente. Podés crear y vender productos y servicios.
                              </AlertDescription>
                            </Alert>
                            
@@ -3375,14 +3376,14 @@ export default function SellerDashboardPage() {
                   <CardHeader>
                                <CardTitle>Suscripción para el Marketplace</CardTitle>
                     <CardDescription>
-                                 Activa tu suscripción para poder crear y ofrecer productos y servicios.
+                                 Activá la suscripción mensual automática para crear y ofrecer productos y servicios.
                     </CardDescription>
                   </CardHeader>
                              <CardContent className="space-y-4">
                                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
                                   <p className="text-sm font-medium text-blue-800">{subscriptionStatusSummary}</p>
                                   <p className="text-xs text-blue-700">
-                                    La suscripción habilita el acceso completo al marketplace.
+                                    Se debita todos los meses con Mercado Pago. Si el cobro falla, el acceso se suspende hasta regularizar.
                                   </p>
                                 </div>
                                <div className="text-sm text-gray-600">
@@ -3396,13 +3397,13 @@ export default function SellerDashboardPage() {
                       </div>
                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                                   <p className="text-sm text-blue-800">
-                                    <strong>Nota:</strong> La suscripción vencida bloquea productos y servicios hasta renovar.
+                                    <strong>Nota:</strong> Si falla el cobro mensual o cancelás la adhesión, se bloquean productos y servicios hasta reactivar.
                                   </p>
                                 </div>
                       {/* Mostrar precio de suscripción */}
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">Precio de suscripción:</span>
+                          <span className="text-sm font-medium text-gray-700">Precio mensual:</span>
                           <span className="text-lg font-bold text-purple-700">
                             {loadingSubscriptionPrice ? (
                               <span className="flex items-center gap-2">
