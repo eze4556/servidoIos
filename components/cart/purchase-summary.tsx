@@ -43,10 +43,10 @@ export function PurchaseSummary({ cartItems, className = "" }: PurchaseSummaryPr
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShoppingCart className="h-5 w-5" />
-          Resumen de Compra Centralizada
+          Resumen de compra
         </CardTitle>
         <CardDescription>
-          Detalles de tu compra con múltiples vendedores
+          Si hay varios vendedores, vas a realizar un pago por cada uno. El precio publicado no sube por la comisión.
         </CardDescription>
       </CardHeader>
       
@@ -91,11 +91,11 @@ export function PurchaseSummary({ cartItems, className = "" }: PurchaseSummaryPr
                   <span>{formatPriceNumber(vendor.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Comisión (8%):</span>
+                  <span>Comisión Servido (8%):</span>
                   <span>-{formatPriceNumber(vendor.commission)}</span>
                 </div>
                 <div className="flex justify-between font-medium text-green-600">
-                  <span>Para vendedor:</span>
+                  <span>Neto vendedor (~92%):</span>
                   <span>{formatPriceNumber(vendor.netAmount)}</span>
                 </div>
               </div>
@@ -144,8 +144,9 @@ export function PurchaseSummary({ cartItems, className = "" }: PurchaseSummaryPr
         {/* Información adicional */}
         <div className="bg-blue-50 p-3 rounded-lg">
           <p className="text-xs text-blue-800">
-            <strong>Sistema centralizado:</strong> Los pagos se procesan a través de nuestra cuenta oficial de MercadoPago. 
-            Los vendedores recibirán sus pagos según la configuración establecida, descontando la comisión del 8%.
+            <strong>Cómo se reparte:</strong> vos pagás el precio publicado. Cada vendedor cobra en su
+            Mercado Pago y Servido retiene automáticamente el 8% de comisión sobre los productos
+            (el envío no se comisiona). Si hay varios vendedores, vas a hacer un pago por cada uno.
           </p>
         </div>
       </CardContent>

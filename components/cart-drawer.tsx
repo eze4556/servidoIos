@@ -18,6 +18,7 @@ import { getCartItemImage } from "@/lib/image-utils"
 import { formatPrice, formatPriceNumber } from "@/lib/utils"
 import { ShippingForm, type ShippingAddress } from "@/components/cart/shipping-form"
 import { CouponInput } from "@/components/ui/coupon-input"
+import { saveCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
 
 interface GroupedItems {
   [sellerId: string]: CartItem[]
@@ -234,26 +235,36 @@ export function CartDrawer() {
     try {
       setLoading(true)
 
-      // Convertir todos los items del carrito
       const products = items.map(item => ({
         productId: item.id,
         quantity: item.quantity
       }))
 
-      // Calcular costo total de envío para todos los items
-      const totalShippingCost = items.reduce((total, item) => {
-        if (item.freeShipping) return total
-        if (item.shippingCost !== undefined && item.shippingCost > 0) {
-          return total + item.shippingCost
+      const shippingBySeller: Record<string, number> = {}
+      for (const item of items) {
+        if (!item.sellerId) continue
+        if (item.freeShipping) {
+          shippingBySeller[item.sellerId] = shippingBySeller[item.sellerId] || 0
+          continue
         }
-        return total
-      }, 0)
+        const fee = item.shippingCost !== undefined && item.shippingCost > 0 ? item.shippingCost : 0
+        shippingBySeller[item.sellerId] = (shippingBySeller[item.sellerId] || 0) + fee
+      }
+
+      const vendorCount = getVendorCount()
+      if (vendorCount > 1) {
+        toast({
+          title: "Pagos por vendedor",
+          description: `Tu compra tiene ${vendorCount} vendedores. Vas a realizar ${vendorCount} pagos.`,
+          duration: 5000,
+        })
+      }
 
       const response = await ApiService.createMultipleProductsPurchase({
         products,
         buyerId: currentUser.firebaseUser.uid,
         buyerEmail: currentUser.firebaseUser.email || '',
-        shippingCost: totalShippingCost, // 🆕 Agregado: costo total de envío
+        shippingBySeller,
         shippingAddress: address
       })
 
@@ -265,19 +276,24 @@ export function CartDrawer() {
         throw new Error("No se recibió el punto de inicio del pago")
       }
 
-      const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-      const vendorCount = getVendorCount()
-      
+      if (response.data.mode === "multi_seller" && response.data.sessionId) {
+        saveCheckoutSessionId(response.data.sessionId)
+      }
+
+      // La sesión de checkout guarda el detalle; limpiamos el carrito al iniciar los pagos
+      clearCart()
+
+      const totalAmount = response.data.totals?.final ?? items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+
       toast({
-        title: "🎉 Compra centralizada creada",
-        description: `${items.length} productos de ${vendorCount} vendedor${vendorCount > 1 ? 'es' : ''} - ${formatPriceNumber(totalAmount)}`,
+        title: response.data.mode === "multi_seller" ? "Pago 1 iniciado" : "Compra creada",
+        description:
+          response.data.mode === "multi_seller"
+            ? `${vendorCount} pagos · primero ${formatPriceNumber(response.data.nextPayment?.amount || totalAmount)}`
+            : `${items.length} productos - ${formatPriceNumber(totalAmount)}`,
         duration: 5000,
       })
 
-      // Limpiar carrito completo
-      clearCart()
-
-      // Redirigir a MercadoPago
       window.location.href = response.data.init_point
     } catch (error) {
       console.error("Error al procesar el pago:", error)

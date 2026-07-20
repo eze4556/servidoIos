@@ -329,7 +329,7 @@ export default function SellerDashboardPage() {
   const mercadoPagoTokenExpired = mercadoPagoStatus === "token_expired"
   const mercadoPagoConnectionSummary = useMemo(() => {
     if (mercadoPagoConnected) {
-      return "Tu cuenta de Mercado Pago está conectada y lista para cobrar."
+      return "Tu cuenta de Mercado Pago está conectada. Cobrás el 92% de cada venta (8% comisión Servido)."
     }
 
     if (mercadoPagoTokenExpired) {
@@ -3244,7 +3244,9 @@ export default function SellerDashboardPage() {
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <CardTitle>Mercado Pago</CardTitle>
-                        <CardDescription>Conecta tu cuenta para cobrar ventas de productos y servicios.</CardDescription>
+                        <CardDescription>
+                          Conectá tu cuenta para cobrar ventas. En cada venta recibís el 92%; Servido retiene el 8% automáticamente.
+                        </CardDescription>
                       </div>
                       <Badge variant={mercadoPagoBadgeVariant as "default" | "secondary" | "destructive"}>
                         {mercadoPagoStatusLabel}

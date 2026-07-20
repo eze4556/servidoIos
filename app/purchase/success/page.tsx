@@ -1,34 +1,38 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle, Home, ShoppingBag, Package } from "lucide-react"
+import { CheckCircle, Home, Package } from "lucide-react"
 import Link from "next/link"
+import { MultiSellerCheckoutContinue, readCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
 
 export default function PurchaseSuccessPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [purchaseData, setPurchaseData] = useState<{
     paymentId?: string
     orderId?: string
     amount?: string
   }>({})
+  const [checkoutSessionId, setCheckoutSessionId] = useState<string | null>(null)
+  const [currentPurchaseId, setCurrentPurchaseId] = useState<string | null>(null)
 
   useEffect(() => {
-    // Obtener datos de la URL si existen
-    const paymentId = searchParams.get('payment_id')
-    const orderId = searchParams.get('external_reference')
-    const amount = searchParams.get('transaction_amount')
+    const paymentId = searchParams.get("payment_id")
+    const orderId = searchParams.get("external_reference") || searchParams.get("purchase")
+    const amount = searchParams.get("transaction_amount")
+    const checkout = searchParams.get("checkout") || readCheckoutSessionId()
 
     if (paymentId || orderId || amount) {
       setPurchaseData({
         paymentId: paymentId || undefined,
         orderId: orderId || undefined,
-        amount: amount || undefined
+        amount: amount || undefined,
       })
     }
+    setCheckoutSessionId(checkout)
+    setCurrentPurchaseId(orderId)
   }, [searchParams])
 
   return (
@@ -36,7 +40,6 @@ export default function PurchaseSuccessPage() {
       <div className="w-full max-w-md">
         <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
           <CardContent className="p-8 text-center">
-            {/* Iconos de celebración */}
             <div className="flex justify-center items-center gap-4 mb-6">
               <div className="text-4xl">🎉</div>
               <div className="relative">
@@ -47,20 +50,18 @@ export default function PurchaseSuccessPage() {
               <div className="text-4xl">🎉</div>
             </div>
 
-            {/* Mensaje principal */}
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              ¡Felicitaciones!
-            </h1>
-            <p className="text-xl text-gray-600 mb-6">
-              Tu compra fue un éxito.
-            </p>
-
-            {/* Mensaje descriptivo */}
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">¡Felicitaciones!</h1>
+            <p className="text-xl text-gray-600 mb-6">Tu pago fue un éxito.</p>
             <p className="text-gray-500 mb-8 leading-relaxed">
               Ya dimos el primer paso para que tu producto llegue a tus manos.
             </p>
 
-            {/* Información adicional si existe */}
+            <MultiSellerCheckoutContinue
+              sessionId={checkoutSessionId}
+              currentPurchaseId={currentPurchaseId}
+              variant="success"
+            />
+
             {purchaseData.paymentId && (
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <p className="text-sm text-gray-600">
@@ -79,7 +80,6 @@ export default function PurchaseSuccessPage() {
               </div>
             )}
 
-            {/* Botones de acción */}
             <div className="space-y-3">
               <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
                 <Link href="/dashboard/buyer">
@@ -87,7 +87,7 @@ export default function PurchaseSuccessPage() {
                   Ver mis compras
                 </Link>
               </Button>
-              
+
               <Button asChild variant="outline" className="w-full">
                 <Link href="/">
                   <Home className="w-4 h-4 mr-2" />
@@ -96,7 +96,6 @@ export default function PurchaseSuccessPage() {
               </Button>
             </div>
 
-            {/* Mensaje adicional */}
             <p className="text-xs text-gray-400 mt-6">
               Recibirás un email de confirmación con los detalles de tu compra.
             </p>
@@ -105,4 +104,4 @@ export default function PurchaseSuccessPage() {
       </div>
     </div>
   )
-} 
+}

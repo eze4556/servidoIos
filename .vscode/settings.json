@@ -5,9 +5,12 @@
         "sash.hoverBorder": "#8465d3",
         "statusBar.background": "#643dc8",
         "statusBarItem.hoverBackground": "#8465d3",
-        "statusBarItem.remoteBackground": "#643dc8",
+        "statusBarItem.remoteBackground": "#ce7451",
         "titleBar.activeBackground": "#643dc8",
-        "titleBar.inactiveBackground": "#643dc899"
+        "titleBar.inactiveBackground": "#643dc899",
+        "activityBarTop.activeBackground": "#8465d3",
+        "activityBarTop.background": "#8465d3",
+        "statusBar.debuggingBackground": "#643dc8"
     },
     "peacock.color": "#643DC8",
 }

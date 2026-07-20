@@ -51,7 +51,7 @@ export class ApiService {
   // ENDPOINTS DE MERCADOPAGO
   // ============================================================================
 
-  // Crear preferencia para productos (múltiples productos soportados)
+  // Crear preferencia para productos (1 vendedor o multi-vendedor automático)
   static async createProductPreference(data: {
     products: {
       productId: string
@@ -59,7 +59,8 @@ export class ApiService {
     }[]
     buyerId: string
     buyerEmail: string
-    shippingCost?: number 
+    shippingCost?: number
+    shippingBySeller?: Record<string, number>
     shippingAddress?: {
       fullName: string
       phone: string
@@ -67,18 +68,78 @@ export class ApiService {
       address: string
       city: string
       state: string
-      zipCode: string
+      zipCode?: string
       additionalInfo?: string
     }
   }): Promise<ApiResponse<{
-    id: string
-    init_point: string
-    sandbox_init_point: string
+    mode?: "single_seller" | "multi_seller"
+    id: string | null
+    init_point: string | null
+    sandbox_init_point: string | null
+    purchaseId?: string | null
+    sessionId?: string
+    sellerCount?: number
+    payments?: Array<{
+      sellerId: string
+      sellerName: string
+      purchaseId: string
+      preferenceId: string | null
+      init_point: string | null
+      amount: number
+      subtotal: number
+      shipping: number
+      productIds: string[]
+      status: string
+    }>
+    nextPayment?: {
+      sellerId: string
+      sellerName: string
+      purchaseId: string
+      init_point: string | null
+      amount: number
+    } | null
+    totals?: {
+      subtotal: number
+      shipping: number
+      final: number
+    }
   }>> {
     return this.fetchApi('/api/mercadopago/payments/create-preference', {
       method: 'POST',
       body: JSON.stringify(data),
     }, true)
+  }
+
+  static async getCheckoutSession(sessionId: string): Promise<ApiResponse<{
+    id: string
+    buyerId?: string
+    sellerCount?: number
+    status?: string
+    payments?: Array<{
+      sellerId: string
+      sellerName: string
+      purchaseId: string
+      init_point: string | null
+      amount: number
+      status: string
+      productIds?: string[]
+    }>
+    nextPayment?: {
+      sellerId: string
+      sellerName: string
+      purchaseId: string
+      init_point: string | null
+      amount: number
+      status: string
+    } | null
+    completedCount?: number
+    totalCount?: number
+  }>> {
+    return this.fetchApi(
+      `/api/mercadopago/payments/checkout-session?id=${encodeURIComponent(sessionId)}`,
+      {},
+      true
+    )
   }
 
   static async createFoodPreference(data: {
@@ -219,7 +280,8 @@ export class ApiService {
     }[]
     buyerId: string
     buyerEmail: string
-    shippingCost?: number 
+    shippingCost?: number
+    shippingBySeller?: Record<string, number>
     shippingAddress?: {
       fullName: string
       phone: string
@@ -227,7 +289,7 @@ export class ApiService {
       address: string
       city: string
       state: string
-      zipCode: string
+      zipCode?: string
       additionalInfo?: string
     }
   }) {

@@ -18,9 +18,9 @@ Se implementa **únicamente** lo del PDF (opción elegida):
 
 | Fase | Estado |
 |------|--------|
-| 1 Suscripciones recurrentes | **En progreso / código base listo** (PreApproval MP) |
-| 2 Checkout por vendedor | Pendiente |
-| 3 Comisión 8% | Pendiente |
+| 1 Suscripciones recurrentes | **Hecha en código** (PreApproval MP) |
+| 2 Checkout por vendedor | **Hecha en código** (1 pago por seller + sesión multi) |
+| 3 Comisión 8% | **Hecha en código** (`marketplace_fee` automático) |
 
 **Fuera de alcance por el momento (no se construye en esta etapa):**
 
@@ -92,7 +92,7 @@ No es custodia: la plata **no** queda retenida en Servido hasta la entrega.
 ### 3. Comisión automática 8%
 
 - Comprador paga el total publicado (sin recargo visible de comisión)  
-- MP descuenta el 8% a favor de Servido  
+- MP descuenta el 8% a favor de Servido (`marketplace_fee`)  
 - Vendedor recibe 92% en su MP  
 - Registro claro de importes por parte  
 
@@ -102,6 +102,8 @@ No es custodia: la plata **no** queda retenida en Servido hasta la entrega.
 - Depende del checkout por vendedor (Fase 2 antes que Fase 3)  
 - Validar con Mercado Pago que el esquema de comisión de plataforma esté disponible en la cuenta  
 - Esfuerzo: **medio/alto** (y dependencia de Fase 2 + MP)
+
+**Estado:** implementado en código (julio 2026). Requiere que la app MP esté configurada como marketplace/OAuth para que `marketplace_fee` funcione en producción.
 
 ---
 
@@ -170,3 +172,5 @@ Detalle viejo de opciones (custodia, cadete, etc.) se puede recuperar del histor
 | 2026-07-17 | Borrador de opciones (custodia, cadete, comisiones, glosario) |
 | 2026-07-20 | **Decisión:** solo el PDF (suscripción recurrente + checkout por vendedor + 8% auto). Custodia/cadete/billetera → fuera de alcance |
 | 2026-07-20 | Fase 1 en código: PreApproval recurrente, webhook preapproval/authorized_payment, auth en create, UI renovación automática |
+| 2026-07-20 | Fase 2 en código: cobro a cuenta MP de cada vendedor, checkout multi-vendedor con N pagos, continuidad en success/failure/pending |
+| 2026-07-20 | Fase 3 en código: `marketplace_fee` 8% a Servido / 92% al vendedor; textos UI actualizados |
