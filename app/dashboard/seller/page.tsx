@@ -289,14 +289,21 @@ export default function SellerDashboardPage() {
   const { toast } = useToast()
   const searchParams = useSearchParams()
   const hasActiveSubscription = currentUser?.subscriptionStatus === "active"
+  const cancelAtPeriodEnd = Boolean(currentUser?.subscriptionCancelAtPeriodEnd)
   const subscriptionRequiredMessage = "Suscripción mensual requerida para publicar productos y servicios"
-  const subscriptionActiveMessage = "Suscripción activa — se renueva automáticamente cada mes"
+  const subscriptionActiveMessage = cancelAtPeriodEnd
+    ? "Suscripción activa hasta el fin del período (sin renovación)"
+    : "Suscripción activa — se renueva automáticamente cada mes"
   const subscriptionBlockedMessage = "Debes activar tu suscripción mensual para publicar productos y servicios."
 
   const subscriptionEndsAt = currentUser?.subscriptionEndsAt ?? null
   const subscriptionDaysRemaining = currentUser?.subscriptionDaysRemaining ?? null
   const subscriptionStatusSummary = useMemo(() => {
     if (hasActiveSubscription) {
+      if (cancelAtPeriodEnd && subscriptionEndsAt) {
+        return `Cancelaste la renovación. Seguí operando hasta el ${format(subscriptionEndsAt, "dd/MM/yyyy")}.`
+      }
+
       if (subscriptionEndsAt && format(subscriptionEndsAt, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")) {
         return "Próximo cobro hoy (renovación automática)"
       }
@@ -321,7 +328,7 @@ export default function SellerDashboardPage() {
     }
 
     return "Activá la suscripción mensual automática para publicar productos y servicios"
-  }, [hasActiveSubscription, subscriptionEndsAt?.getTime(), subscriptionDaysRemaining])
+  }, [hasActiveSubscription, cancelAtPeriodEnd, subscriptionEndsAt?.getTime(), subscriptionDaysRemaining])
   const subscriptionActionLabel = subscriptionEndsAt && !hasActiveSubscription ? "Reactivar suscripción" : "Activar suscripción mensual"
 
   const mercadoPagoStatus = currentUser?.mercadoPagoStatus ?? "not_connected"
@@ -457,6 +464,7 @@ export default function SellerDashboardPage() {
 
   // 1. Añadir estado para controlar el loading de suscripción
   const [subscribing, setSubscribing] = useState(false)
+  const [cancellingSubscription, setCancellingSubscription] = useState(false)
   
   // Estado para notificación de suscripción
   const [subscriptionNotification, setSubscriptionNotification] = useState<{
@@ -1962,6 +1970,49 @@ export default function SellerDashboardPage() {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    if (!currentUser) {
+      toast({ title: "Error", description: "No hay usuario autenticado", variant: "destructive" })
+      return
+    }
+
+    const confirmed = window.confirm(
+      "¿Cancelar la suscripción?\n\nSe corta la renovación automática. Si todavía te queda tiempo del mes ya pagado, seguís operando hasta esa fecha."
+    )
+    if (!confirmed) return
+
+    setCancellingSubscription(true)
+    try {
+      const response = await ApiService.cancelSubscription()
+      if (response.error) throw new Error(response.error)
+
+      await refreshUserProfile()
+
+      if (response.data?.immediate) {
+        toast({
+          title: "Suscripción cancelada",
+          description: "Ya no tenés acceso para publicar. Podés reactivar cuando quieras.",
+        })
+      } else if (response.data?.accessUntil) {
+        toast({
+          title: "Renovación cancelada",
+          description: `Seguís operando hasta el ${format(new Date(response.data.accessUntil), "dd/MM/yyyy")}. Después se suspende el acceso.`,
+          duration: 6000,
+        })
+      } else {
+        toast({ title: "Suscripción cancelada", description: "No se renovará el próximo mes." })
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "No se pudo cancelar la suscripción",
+        variant: "destructive",
+      })
+    } finally {
+      setCancellingSubscription(false)
+    }
+  };
+
   const handleConnectMercadoPago = async () => {
     if (!currentUser) {
       toast({ title: "Error", description: "No hay usuario autenticado", variant: "destructive" })
@@ -3328,7 +3379,9 @@ export default function SellerDashboardPage() {
                              <CheckCircle className="h-4 w-4 text-green-600" />
                              <AlertTitle className="text-green-800">Suscripción Activa</AlertTitle>
                              <AlertDescription className="text-green-700">
-                               Tu suscripción mensual está activa y se renueva automáticamente. Podés crear y vender productos y servicios.
+                               {cancelAtPeriodEnd
+                                 ? "Cancelaste la renovación automática. Seguí operando hasta el fin del período ya pagado."
+                                 : "Tu suscripción mensual está activa y se renueva automáticamente. Podés crear y vender productos y servicios."}
                              </AlertDescription>
                            </Alert>
                            
@@ -3336,13 +3389,17 @@ export default function SellerDashboardPage() {
                              <CardHeader>
                                <CardTitle>Estado de tu Suscripción</CardTitle>
                                <CardDescription>
-                                 Tu suscripción para el marketplace está activa y funcionando.
+                                 {cancelAtPeriodEnd
+                                   ? "La adhesión en Mercado Pago ya no se renovará."
+                                   : "Tu suscripción para el marketplace está activa y funcionando."}
                                </CardDescription>
                              </CardHeader>
                              <CardContent className="space-y-3">
                                <div className="flex items-center gap-2">
                                  <CheckCircle className="h-5 w-5 text-green-600" />
-                                 <span className="font-semibold">Suscripción Activa</span>
+                                 <span className="font-semibold">
+                                   {cancelAtPeriodEnd ? "Activa hasta fin de período" : "Suscripción Activa"}
+                                 </span>
                                </div>
                                 <div className="rounded-lg border border-green-200 bg-green-50 p-3">
                                   <p className="text-sm font-medium text-green-800">{subscriptionStatusSummary}</p>
@@ -3356,11 +3413,31 @@ export default function SellerDashboardPage() {
                                  <p>• <strong>Pagos:</strong> Recibe pagos por tus publicaciones</p>
                                  <p>• <strong>Soporte:</strong> Acceso a soporte prioritario</p>
                                </div>
-                               <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                                 <p className="text-sm text-green-800">
-                                   <strong>Recordatorio:</strong> Esta suscripción habilita productos y servicios.
-                                 </p>
-                               </div>
+                               {!cancelAtPeriodEnd ? (
+                                 <Button
+                                   type="button"
+                                   variant="outline"
+                                   className="w-full border-red-200 text-red-700 hover:bg-red-50"
+                                   disabled={cancellingSubscription}
+                                   onClick={() => void handleCancelSubscription()}
+                                 >
+                                   {cancellingSubscription ? "Cancelando..." : "Cancelar suscripción"}
+                                 </Button>
+                               ) : (
+                                 <div className="space-y-2">
+                                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                                     Ya cancelaste la renovación. Cuando termine el período tendrás que reactivar para seguir publicando.
+                                   </div>
+                                   <Button
+                                     type="button"
+                                     className="w-full bg-purple-700 text-white hover:bg-purple-800"
+                                     disabled={subscribing}
+                                     onClick={handleSubscribe}
+                                   >
+                                     {subscribing ? "Redirigiendo..." : "Reactivar renovación"}
+                                   </Button>
+                                 </div>
+                               )}
                              </CardContent>
                            </Card>
                         </div>

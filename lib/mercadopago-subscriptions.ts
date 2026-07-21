@@ -203,6 +203,8 @@ export async function activateUserSubscription(params: {
           preapprovalStatus: preapprovalStatus || existingUser?.subscription?.preapprovalStatus || null,
           nextPaymentDate: nextPaymentDate || null,
           autoRenew: true,
+          cancelAtPeriodEnd: false,
+          cancelledAt: null,
         },
         updatedAt: new Date(),
       },
@@ -273,6 +275,7 @@ export async function deactivateUserSubscription(params: {
         ...(existingUser.subscription || {}),
         status: "inactive",
         autoRenew: false,
+        cancelAtPeriodEnd: false,
         preapprovalId: preapprovalId || existingUser?.subscription?.preapprovalId || null,
         preapprovalStatus,
         deactivatedAt: new Date(),
@@ -284,6 +287,126 @@ export async function deactivateUserSubscription(params: {
   )
 
   await syncRestaurantSubscriptionFlag(userId, false)
+}
+
+/**
+ * Cancela la renovación en MP.
+ * Si todavía queda período pagado, el usuario sigue operando hasta endDate.
+ */
+export async function cancelRecurringSubscription(request: Request) {
+  const decoded = await requireAuthenticatedUserId(request)
+  const userId = decoded.uid
+
+  const userSnap = await getDoc(doc(db, "users", userId))
+  if (!userSnap.exists()) {
+    throw new Error("Usuario no encontrado")
+  }
+
+  const userData = userSnap.data() as any
+  const subscription = userData.subscription || {}
+  const preapprovalId = subscription.preapprovalId || null
+  const endsAt = normalizeSubscriptionDate(subscription.endDate)
+  const now = new Date()
+  const hasRemainingAccess = Boolean(endsAt && endsAt.getTime() > now.getTime())
+
+  if (subscription.cancelAtPeriodEnd && (subscription.preapprovalStatus === "cancelled" || !preapprovalId)) {
+    return {
+      userId,
+      cancelled: true,
+      accessUntil: endsAt ? endsAt.toISOString() : null,
+      immediate: !hasRemainingAccess,
+      alreadyCancelled: true,
+    }
+  }
+
+  if (preapprovalId) {
+    const client = createPreApprovalClient()
+    try {
+      await client.update({
+        id: String(preapprovalId),
+        body: { status: "cancelled" },
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No se pudo cancelar en Mercado Pago"
+      // Si ya estaba cancelada en MP, seguimos igual en Servido
+      if (!message.toLowerCase().includes("cancelled") && !message.toLowerCase().includes("cancel")) {
+        console.error("cancel preapproval failed:", err)
+        throw new Error("No se pudo cancelar la suscripción en Mercado Pago. Intentá de nuevo.")
+      }
+    }
+  }
+
+  if (hasRemainingAccess) {
+    await setDoc(
+      doc(db, "users", userId),
+      {
+        subscription_status: "active",
+        isSubscribed: true,
+        subscription: {
+          ...subscription,
+          status: "active",
+          autoRenew: false,
+          cancelAtPeriodEnd: true,
+          preapprovalId,
+          preapprovalStatus: "cancelled",
+          cancelledAt: now,
+          deactivationReason: "user_cancelled",
+        },
+        updatedAt: now,
+      },
+      { merge: true }
+    )
+
+    if (preapprovalId) {
+      await setDoc(
+        doc(db, "subscriptionPreapprovals", String(preapprovalId)),
+        {
+          status: "cancelled",
+          cancelAtPeriodEnd: true,
+          cancelledAt: now,
+          updatedAt: now,
+        },
+        { merge: true }
+      )
+    }
+
+    return {
+      userId,
+      cancelled: true,
+      accessUntil: endsAt!.toISOString(),
+      immediate: false,
+      alreadyCancelled: false,
+    }
+  }
+
+  await deactivateUserSubscription({
+    userId,
+    reason: "user_cancelled",
+    preapprovalId,
+    preapprovalStatus: "cancelled",
+  })
+
+  return {
+    userId,
+    cancelled: true,
+    accessUntil: null,
+    immediate: true,
+    alreadyCancelled: false,
+  }
+}
+
+function normalizeSubscriptionDate(value: unknown): Date | null {
+  if (!value) return null
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
+  if (typeof value === "object" && value !== null && "toDate" in value && typeof (value as { toDate?: () => Date }).toDate === "function") {
+    const parsed = (value as { toDate: () => Date }).toDate()
+    return Number.isNaN(parsed.getTime()) ? null : parsed
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? null : parsed
+  }
+  return null
 }
 
 export async function createRecurringSubscription(request: Request, body: CreateRecurringSubscriptionPayload) {
@@ -459,6 +582,35 @@ export async function syncSubscriptionFromPreapproval(preapproval: {
   }
 
   if (status === "paused" || status === "cancelled") {
+    const userSnap = await getDoc(doc(db, "users", userId))
+    const userData = userSnap.exists() ? (userSnap.data() as any) : {}
+    const endsAt = normalizeSubscriptionDate(userData?.subscription?.endDate)
+    const now = new Date()
+    const hasRemainingAccess = Boolean(endsAt && endsAt.getTime() > now.getTime())
+
+    if (hasRemainingAccess) {
+      await setDoc(
+        doc(db, "users", userId),
+        {
+          subscription_status: "active",
+          isSubscribed: true,
+          subscription: {
+            ...(userData.subscription || {}),
+            status: "active",
+            autoRenew: false,
+            cancelAtPeriodEnd: true,
+            preapprovalId,
+            preapprovalStatus: status,
+            cancelledAt: now,
+            deactivationReason: status,
+          },
+          updatedAt: now,
+        },
+        { merge: true }
+      )
+      return { userId, status, action: "cancel_at_period_end" as const }
+    }
+
     await deactivateUserSubscription({
       userId,
       reason: status,

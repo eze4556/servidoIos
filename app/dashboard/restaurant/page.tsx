@@ -95,10 +95,12 @@ export default function RestaurantDashboardPage() {
   const [connectingMp, setConnectingMp] = useState(false)
   const [paymentMsg, setPaymentMsg] = useState<string | null>(null)
   const [subscribing, setSubscribing] = useState(false)
+  const [cancellingSubscription, setCancellingSubscription] = useState(false)
 
   const restaurantId = currentUser?.restaurantId
   const mpConnected = currentUser?.mercadoPagoStatus === "connected"
   const hasActiveSubscription = currentUser?.subscriptionStatus === "active"
+  const cancelAtPeriodEnd = Boolean(currentUser?.subscriptionCancelAtPeriodEnd)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -266,6 +268,34 @@ export default function RestaurantDashboardPage() {
     } catch (err) {
       setPaymentMsg(err instanceof Error ? err.message : "Error al suscribirse")
       setSubscribing(false)
+    }
+  }
+
+  const handleCancelSubscription = async () => {
+    if (!currentUser) return
+    const confirmed = window.confirm(
+      "¿Cancelar la suscripción?\n\nSe corta la renovación automática. Si todavía te queda tiempo del mes ya pagado, seguís operando hasta esa fecha."
+    )
+    if (!confirmed) return
+
+    setCancellingSubscription(true)
+    setPaymentMsg(null)
+    try {
+      const response = await ApiService.cancelSubscription()
+      if (response.error) throw new Error(response.error)
+      await refreshUserProfile()
+      if (response.data?.immediate) {
+        setPaymentMsg("Suscripción cancelada. Ya no podés operar hasta reactivar.")
+      } else if (response.data?.accessUntil) {
+        const until = new Date(response.data.accessUntil).toLocaleDateString("es-AR")
+        setPaymentMsg(`Renovación cancelada. Seguís operando hasta el ${until}.`)
+      } else {
+        setPaymentMsg("Suscripción cancelada. No se renovará el próximo mes.")
+      }
+    } catch (err) {
+      setPaymentMsg(err instanceof Error ? err.message : "No se pudo cancelar la suscripción")
+    } finally {
+      setCancellingSubscription(false)
     }
   }
 
@@ -462,6 +492,49 @@ export default function RestaurantDashboardPage() {
             >
               {subscribing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Activar suscripción mensual
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {hasActiveSubscription && cancelAtPeriodEnd && (
+        <div className="border-b border-sky-200 bg-sky-50">
+          <div className="container mx-auto flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-sky-950">Renovación cancelada</p>
+              <p className="text-sm text-sky-800">
+                Seguís operando hasta el fin del período ya pagado
+                {currentUser?.subscriptionEndsAt
+                  ? ` (${currentUser.subscriptionEndsAt.toLocaleDateString("es-AR")})`
+                  : ""}
+                . Después se suspende el acceso.
+              </p>
+            </div>
+            <Button
+              className="shrink-0 rounded-full bg-sky-700 hover:bg-sky-800"
+              disabled={subscribing}
+              onClick={() => void handleSubscribe()}
+            >
+              {subscribing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Reactivar renovación
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {hasActiveSubscription && !cancelAtPeriodEnd && (
+        <div className="border-b border-emerald-100 bg-white">
+          <div className="container mx-auto flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-600">Suscripción mensual activa con renovación automática.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 rounded-full border-red-200 text-red-700 hover:bg-red-50"
+              disabled={cancellingSubscription}
+              onClick={() => void handleCancelSubscription()}
+            >
+              {cancellingSubscription ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Cancelar suscripción
             </Button>
           </div>
         </div>

@@ -23,6 +23,7 @@ interface UserProfile {
   subscriptionStatus?: SubscriptionStatus
   subscriptionEndsAt?: Date | null
   subscriptionDaysRemaining?: number | null
+  subscriptionCancelAtPeriodEnd?: boolean
   isSubscribed?: boolean
   mercadoPagoStatus?: MercadoPagoConnectionStatus
   mercadoPagoConnectionEndsAt?: Date | null
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         subscriptionStatus: subscriptionSnapshot.status,
         subscriptionEndsAt: subscriptionSnapshot.endsAt,
         subscriptionDaysRemaining: subscriptionSnapshot.daysRemaining,
+        subscriptionCancelAtPeriodEnd: subscriptionSnapshot.cancelAtPeriodEnd,
         isSubscribed: subscriptionSnapshot.status === "active",
         mercadoPagoStatus: mercadoPagoSnapshot.status,
         mercadoPagoConnectionEndsAt: mercadoPagoSnapshot.expiresAt,
@@ -97,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           subscriptionStatus: "inactive",
           subscriptionEndsAt: null,
           subscriptionDaysRemaining: null,
+          subscriptionCancelAtPeriodEnd: false,
           isSubscribed: false,
           mercadoPagoStatus: "not_connected",
           mercadoPagoConnectionEndsAt: null,
@@ -125,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             subscriptionStatus: "inactive",
             subscriptionEndsAt: null,
             subscriptionDaysRemaining: null,
+            subscriptionCancelAtPeriodEnd: false,
             isSubscribed: false,
             mercadoPagoStatus: "not_connected",
             mercadoPagoConnectionEndsAt: null,

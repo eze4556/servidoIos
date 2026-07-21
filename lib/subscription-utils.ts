@@ -7,6 +7,8 @@ export interface SubscriptionSnapshot {
   endsAt: Date | null
   daysRemaining: number | null
   isExpired: boolean
+  /** Baja pedida: sigue con acceso hasta endsAt, no se renueva */
+  cancelAtPeriodEnd: boolean
 }
 
 export function normalizeSubscriptionDate(value: unknown): Date | null {
@@ -36,6 +38,7 @@ function readSubscriptionEndDate(userData: any): Date | null {
 export function getSubscriptionSnapshot(userData: any, now: Date = new Date()): SubscriptionSnapshot {
   const endsAt = readSubscriptionEndDate(userData)
   const rawStatus = userData?.subscription_status ?? userData?.subscription?.status
+  const cancelAtPeriodEnd = Boolean(userData?.subscription?.cancelAtPeriodEnd)
   const remainingMilliseconds = endsAt ? endsAt.getTime() - now.getTime() : null
   const isExpired = remainingMilliseconds !== null ? remainingMilliseconds <= 0 : false
   const daysRemaining = endsAt
@@ -45,14 +48,20 @@ export function getSubscriptionSnapshot(userData: any, now: Date = new Date()): 
     : null
 
   let status: SubscriptionStatus
-  if (rawStatus === "cancelled") {
-    status = "cancelled"
-  } else if (rawStatus === "inactive") {
+  if (rawStatus === "inactive") {
     status = "inactive"
-  } else if (rawStatus === "active") {
-    status = isExpired ? "inactive" : "active"
+  } else if (isExpired) {
+    // Período pagado terminó (incluye bajas programadas)
+    status = rawStatus === "cancelled" || cancelAtPeriodEnd ? "cancelled" : "inactive"
+  } else if (rawStatus === "cancelled" && endsAt && !isExpired) {
+    // Canceló pero todavía le queda tiempo del mes pagado → sigue operando
+    status = "active"
+  } else if (rawStatus === "active" || userData?.isSubscribed) {
+    status = "active"
+  } else if (rawStatus === "cancelled") {
+    status = "cancelled"
   } else {
-    status = isExpired ? "inactive" : userData?.isSubscribed ? "active" : "inactive"
+    status = "inactive"
   }
 
   return {
@@ -60,6 +69,7 @@ export function getSubscriptionSnapshot(userData: any, now: Date = new Date()): 
     endsAt,
     daysRemaining,
     isExpired,
+    cancelAtPeriodEnd: cancelAtPeriodEnd && status === "active",
   }
 }
 

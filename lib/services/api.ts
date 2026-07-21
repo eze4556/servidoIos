@@ -196,6 +196,18 @@ export class ApiService {
     }, true)
   }
 
+  static async cancelSubscription(): Promise<ApiResponse<{
+    userId: string
+    cancelled: boolean
+    accessUntil: string | null
+    immediate: boolean
+    alreadyCancelled?: boolean
+  }>> {
+    return this.fetchApi('/api/mercadopago/subscription/cancel', {
+      method: 'POST',
+    }, true)
+  }
+
   // Obtener estado de conexión de MercadoPago
   static async getConnectionStatus(userId: string): Promise<ApiResponse<{
     connected: boolean

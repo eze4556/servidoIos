@@ -174,3 +174,4 @@ Detalle viejo de opciones (custodia, cadete, etc.) se puede recuperar del histor
 | 2026-07-20 | Fase 1 en código: PreApproval recurrente, webhook preapproval/authorized_payment, auth en create, UI renovación automática |
 | 2026-07-20 | Fase 2 en código: cobro a cuenta MP de cada vendedor, checkout multi-vendedor con N pagos, continuidad en success/failure/pending |
 | 2026-07-20 | Fase 3 en código: `marketplace_fee` 8% a Servido / 92% al vendedor; textos UI actualizados |
+| 2026-07-20 | Baja de suscripción: botón cancelar; acceso hasta fin del período ya pagado |
