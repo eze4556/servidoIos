@@ -10,6 +10,7 @@ import { CacheProvider } from "@/contexts/cache-context"
 import { AppChrome } from "@/components/layout/app-chrome"
 import { NProgressProvider } from "@/components/providers/nprogress-provider"
 import { SafeArea } from "@/components/ui/safe-area"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -61,6 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <FoodCartProvider>
                     <SafeArea>
                       <AppChrome>{children}</AppChrome>
+                      <Toaster />
                     </SafeArea>
                   </FoodCartProvider>
                 </CartProvider>

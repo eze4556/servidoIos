@@ -104,6 +104,8 @@ import {
 } from "@/components/dashboard/seller/seller-dashboard-shell"
 import { BuyerStatCard } from "@/components/dashboard/buyer/buyer-stat-card"
 import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
+import { SellerAgendaPanel } from "@/components/dashboard/seller/seller-agenda-panel"
+import type { ServiceSchedule } from "@/types/service-appointments"
 
 interface UserProfile {
   uid: string
@@ -134,6 +136,7 @@ interface Product {
   isService: boolean
   stock?: number
   sellerId: string
+  serviceSchedule?: ServiceSchedule | null
   createdAt: any
   updatedAt?: any
   couponId?: string | null
@@ -643,6 +646,21 @@ export default function SellerDashboardPage() {
 
   // useEffect para manejar parámetros de suscripción en la URL
   useEffect(() => {
+    const tab = searchParams.get("tab")
+    if (
+      tab === "dashboard" ||
+      tab === "products" ||
+      tab === "addProduct" ||
+      tab === "addService" ||
+      tab === "agenda" ||
+      tab === "shipping" ||
+      tab === "earnings" ||
+      tab === "create-coupons" ||
+      tab === "profile"
+    ) {
+      setActiveTab(tab)
+    }
+
     const subscriptionStatus = searchParams.get('subscription')
     const mercadoPagoStatus = searchParams.get('mercadopago')
     const mercadoPagoReason = searchParams.get('reason')
@@ -1196,6 +1214,7 @@ export default function SellerDashboardPage() {
           isService: data.isService || false,
           stock: data.stock || undefined,
           sellerId: data.sellerId,
+          serviceSchedule: data.serviceSchedule || null,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt || undefined,
           couponId: data.couponId || null,
@@ -1678,7 +1697,13 @@ export default function SellerDashboardPage() {
     setProductCondition(product.condition || 'nuevo')
     setFreeShipping(product.freeShipping || false)
     setShippingCost(product.shippingCost ? product.shippingCost.toString() : '')
-    setActiveTab("addProduct")
+    if (product.isService) {
+      setActiveAddTab("service")
+      setActiveTab("addService")
+    } else {
+      setActiveAddTab("product")
+      setActiveTab("addProduct")
+    }
   }
 
   const handleDeleteProduct = async (productId: string) => {
@@ -4158,6 +4183,24 @@ export default function SellerDashboardPage() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {activeTab === "agenda" && currentUser?.firebaseUser?.uid && (
+            <SellerAgendaPanel
+              sellerId={currentUser.firebaseUser.uid}
+              services={myProducts
+                .filter((p) => p.isService)
+                .map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  serviceSchedule: p.serviceSchedule,
+                }))}
+              onScheduleSaved={(serviceId, schedule) => {
+                setMyProducts((prev) =>
+                  prev.map((p) => (p.id === serviceId ? { ...p, serviceSchedule: schedule } : p))
+                )
+              }}
+            />
           )}
 
           {/* Shipping Management Tab */}

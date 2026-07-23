@@ -9,6 +9,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { formatPrice } from "@/lib/utils"
+import { ServiceBookingCard } from "@/components/services/service-booking-card"
+import type { ServiceSchedule } from "@/types/service-appointments"
 
 // Props extendidos para lógica de favoritos, compartir, reseñas y preguntas
 interface ServiceDetailProps {
@@ -27,6 +29,7 @@ interface ServiceDetailProps {
     isFavorite?: boolean
     averageRating?: number
     reviewsCount?: number
+    serviceSchedule?: ServiceSchedule | null
     // ...otros campos necesarios
   }
   breadcrumbs?: { name: string; href?: string }[]
@@ -183,6 +186,14 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
       <div className="text-lg font-semibold text-blue-700">
         {service.price ? formatPrice(service.price) : "Precio a convenir"}
       </div>
+
+      <ServiceBookingCard
+        serviceId={service.id}
+        serviceName={service.name}
+        sellerId={service.sellerId}
+        schedule={service.serviceSchedule}
+      />
+
       <div className="flex flex-col gap-2 mt-2">
         <Button onClick={onContactSeller} className="w-full flex items-center gap-2">
           <MessageSquare className="h-5 w-5" /> Contactar al vendedor

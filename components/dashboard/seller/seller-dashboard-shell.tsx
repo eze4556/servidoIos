@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import {
+  CalendarDays,
   DollarSign,
   Home,
   PlusCircle,
@@ -22,6 +23,7 @@ export type SellerDashboardTab =
   | "products"
   | "addProduct"
   | "addService"
+  | "agenda"
   | "shipping"
   | "earnings"
   | "create-coupons"
@@ -39,6 +41,7 @@ function getNavItems(isEditing: boolean): DashboardNavItem<SellerDashboardTab>[]
       group: "tienda",
     },
     { id: "addService", label: "Añadir servicio", icon: PlusCircle, description: "Ofrecer un servicio", group: "tienda" },
+    { id: "agenda", label: "Agenda", icon: CalendarDays, description: "Turnos y horarios", group: "operaciones" },
     { id: "create-coupons", label: "Crear cupones", icon: Tag, description: "Promociones", group: "tienda" },
     { id: "shipping", label: "Envíos", icon: Truck, description: "Estado de entregas", group: "operaciones" },
     { id: "earnings", label: "Mis ventas", icon: DollarSign, description: "Ingresos y pagos", group: "operaciones" },
@@ -51,6 +54,7 @@ const tabTitles: Record<SellerDashboardTab, { title: string; subtitle: string }>
   products: { title: "Mis productos", subtitle: "Gestioná lo que tenés publicado" },
   addProduct: { title: "Publicar producto", subtitle: "Cargá un nuevo producto a tu tienda" },
   addService: { title: "Publicar servicio", subtitle: "Ofrecé un nuevo servicio" },
+  agenda: { title: "Agenda de servicios", subtitle: "Horarios y turnos de tus clientes" },
   shipping: { title: "Envíos", subtitle: "Gestioná el estado de tus envíos" },
   earnings: { title: "Mis ventas", subtitle: "Ingresos y transacciones" },
   "create-coupons": { title: "Cupones", subtitle: "Creá promociones para tus clientes" },

@@ -47,6 +47,7 @@ import {
 } from "@/types/restaurant"
 import { formatPriceNumber } from "@/lib/utils"
 import { cn } from "@/lib/utils"
+import { notifyFoodOrderStatus } from "@/lib/notifications"
 
 type RestaurantTab = "orders" | "menu" | "profile"
 
@@ -236,6 +237,12 @@ export default function RestaurantDashboardPage() {
     await updateDoc(doc(db, "foodOrders", order.id), {
       status: nextStatus,
       updatedAt: serverTimestamp(),
+    })
+    void notifyFoodOrderStatus({
+      buyerId: order.buyerId,
+      orderId: order.id,
+      status: nextStatus,
+      restaurantName: order.restaurantName,
     })
   }
 

@@ -11,6 +11,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { notifyFoodOrderStatus } from "@/lib/notifications"
 import type { FoodOrder } from "@/types/restaurant"
 
 export function normalizeZone(zone?: string | null): string {
@@ -166,6 +167,8 @@ export async function claimFoodOrder(
   cadeteName: string
 ): Promise<void> {
   const orderRef = doc(db, "foodOrders", orderId)
+  let buyerId = ""
+  let restaurantName = ""
 
   await runTransaction(db, async (transaction) => {
     const snap = await transaction.get(orderRef)
@@ -188,6 +191,9 @@ export async function claimFoodOrder(
       throw new Error("Ya fue tomado por otro cadete.")
     }
 
+    buyerId = data.buyerId
+    restaurantName = data.restaurantName
+
     transaction.update(orderRef, {
       cadeteId,
       cadeteName,
@@ -196,10 +202,20 @@ export async function claimFoodOrder(
       updatedAt: serverTimestamp(),
     })
   })
+
+  void notifyFoodOrderStatus({
+    buyerId,
+    orderId,
+    status: "en_camino",
+    restaurantName,
+  })
 }
 
 export async function markFoodOrderDelivered(orderId: string, cadeteId: string): Promise<void> {
   const orderRef = doc(db, "foodOrders", orderId)
+  let buyerId = ""
+  let restaurantName = ""
+
   await runTransaction(db, async (transaction) => {
     const snap = await transaction.get(orderRef)
     if (!snap.exists()) {
@@ -212,9 +228,18 @@ export async function markFoodOrderDelivered(orderId: string, cadeteId: string):
     if (data.status !== "en_camino") {
       throw new Error("Solo podés marcar como entregados los pedidos en camino.")
     }
+    buyerId = data.buyerId
+    restaurantName = data.restaurantName
     transaction.update(orderRef, {
       status: "entregado",
       updatedAt: serverTimestamp(),
     })
+  })
+
+  void notifyFoodOrderStatus({
+    buyerId,
+    orderId,
+    status: "entregado",
+    restaurantName,
   })
 }

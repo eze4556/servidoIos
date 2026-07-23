@@ -14,7 +14,7 @@ import { db, storage } from "@/lib/firebase"
 import { doc, collection, query, where, getDocs, deleteDoc, updateDoc, getDoc, serverTimestamp } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import { updateProfile, getAuth } from "firebase/auth"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import type { PurchaseWithShipping } from "@/types/shipping"
 import { getBuyerPurchases } from "@/lib/centralized-payments-api"
@@ -94,9 +94,24 @@ interface CompraProductoBuyer {
 export default function BuyerDashboardPage() {
   const { currentUser, authLoading, handleLogout, refreshUserProfile } = useAuth() // Use useAuth hook
   const router = useRouter()
+  const searchParams = useSearchParams()
   const auth = getAuth()
 
   const [activeTab, setActiveTab] = useState<BuyerDashboardTab>("dashboard")
+
+  useEffect(() => {
+    const tab = searchParams.get("tab")
+    if (
+      tab === "orders" ||
+      tab === "purchases" ||
+      tab === "appointments" ||
+      tab === "favorites" ||
+      tab === "profile" ||
+      tab === "dashboard"
+    ) {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
   const [orders, setOrders] = useState<Order[]>([])
   const [purchases, setPurchases] = useState<any[]>([])
   const [purchasesWithShipping, setPurchasesWithShipping] = useState<PurchaseWithShipping[]>([])
@@ -592,6 +607,7 @@ export default function BuyerDashboardPage() {
         onConfirmDelivery={handleConfirmDelivery}
         onConfirmDeliveryCentralized={handleConfirmDeliveryCentralized}
         canConfirmDelivery={canConfirmDelivery}
+        buyerId={currentUser?.firebaseUser?.uid}
         currentUser={{
           displayName: currentUser?.firebaseUser?.displayName || currentUser?.firebaseUser?.email?.split("@")[0],
           email: currentUser?.firebaseUser?.email,

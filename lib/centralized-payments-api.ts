@@ -802,11 +802,14 @@ async function createCentralizedShippingNotification(
       type: "centralized_shipping",
       title: statusTitles[status],
       description,
+      body: description,
+      link: "/dashboard/buyer",
       purchaseId,
       productName,
       shippingStatus: status,
       trackingNumber: trackingNumber || null,
       carrierName: carrierName || null,
+      read: false,
       isRead: false,
       createdAt: serverTimestamp()
     }

@@ -31,6 +31,7 @@ import { BuyerStatCard } from "@/components/dashboard/buyer/buyer-stat-card"
 import { BuyerEmptyState } from "@/components/dashboard/buyer/buyer-empty-state"
 import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
 import { StatusBadge } from "@/components/dashboard/buyer/buyer-status-badge"
+import { BuyerAppointmentsPanel } from "@/components/dashboard/buyer/buyer-appointments-panel"
 import type { CentralizedPurchase, PurchaseItem } from "@/types/centralized-payments"
 import { getDashboardProductImage } from "@/lib/image-utils"
 import { formatPriceNumber } from "@/lib/utils"
@@ -93,6 +94,7 @@ interface BuyerDashboardTabsProps {
   onUploadProfileImage: () => void
   onRemoveProfileImage: () => void
   onCancelProfileImageSelection: () => void
+  buyerId?: string | null
 }
 
 function LoadingBlock() {
@@ -130,6 +132,7 @@ export function BuyerDashboardTabs({
   onUploadProfileImage,
   onRemoveProfileImage,
   onCancelProfileImageSelection,
+  buyerId,
 }: BuyerDashboardTabsProps) {
   const totalSpent =
     productosComprados.filter((p) => p.estadoPago === "pagado").reduce((sum, p) => sum + p.productPrice * p.quantity, 0) +
@@ -138,6 +141,11 @@ export function BuyerDashboardTabs({
   const pendingPayments =
     productosComprados.filter((p) => p.estadoPago === "pendiente").length +
     centralizedPurchases.filter((p) => p.items.some((item) => item.estadoPagoVendedor === "pendiente")).length
+
+  if (activeTab === "appointments") {
+    if (!buyerId) return <LoadingBlock />
+    return <BuyerAppointmentsPanel buyerId={buyerId} />
+  }
 
   if (activeTab === "dashboard") {
     return (

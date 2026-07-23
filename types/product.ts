@@ -5,6 +5,8 @@ export interface ProductMedia {
   thumbnail?: string 
 }
 
+import type { ServiceSchedule } from "@/types/service-appointments"
+
 export interface Product {
   id: string
   name: string
@@ -16,6 +18,8 @@ export interface Product {
   isService: boolean
   stock?: number
   sellerId: string
+  /** Horarios de turnos (solo servicios) */
+  serviceSchedule?: ServiceSchedule | null
   createdAt: any
   updatedAt?: any
 }

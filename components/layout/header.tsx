@@ -32,6 +32,7 @@ import {
 import { useAuth } from "@/contexts/auth-context"
 import { useLocation } from "@/contexts/location-context"
 import { CartDrawer } from "@/components/cart-drawer"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useChatUnread } from "@/components/chat/chat-unread-context"
 import { db } from "@/lib/firebase"
@@ -338,6 +339,14 @@ export function Header() {
               )}
 
               <div className="hidden items-center gap-2 lg:flex">
+                <NotificationBell
+                  showLabel
+                  className={`h-10 px-3 ${
+                    pathname?.startsWith("/notifications")
+                      ? "bg-servido-800 text-white"
+                      : "bg-servido-50 text-servido-900 ring-1 ring-servido-100 hover:bg-servido-100"
+                  }`}
+                />
                 <Link
                   href="/mensajes"
                   className={`relative flex h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold transition ${

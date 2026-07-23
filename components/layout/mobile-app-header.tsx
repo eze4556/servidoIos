@@ -5,7 +5,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import {
-  Bell,
   Heart,
   Home,
   Loader2,
@@ -33,6 +32,7 @@ import { collection, getDocs } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
 import { formatPrice } from "@/lib/utils"
 import { UserGreeting } from "@/components/layout/user-greeting"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 
 interface SearchProduct {
   id: string
@@ -161,13 +161,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
           </Link>
 
           <div className="flex shrink-0 items-center gap-0.5">
-            <Link
-              href="/notifications"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-white/90 hover:bg-white/10"
-              aria-label="Notificaciones"
-            >
-              <Bell className="h-5 w-5" />
-            </Link>
+            <NotificationBell className="h-10 w-10 text-white/90 hover:bg-white/10" />
             <div className="[&_button]:text-white [&_button]:hover:bg-white/10">
               <CartDrawer />
             </div>

@@ -8,6 +8,7 @@ import { auth, db } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import { getSubscriptionSnapshot, type SubscriptionStatus } from "@/lib/subscription-utils"
 import { getMercadoPagoConnectionSnapshot, type MercadoPagoConnectionStatus } from "@/lib/mercadopago-connection"
+import { notifySubscriptionReminder } from "@/lib/notifications"
 
 interface UserProfile {
   firebaseUser: FirebaseUser
@@ -173,6 +174,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => window.clearTimeout(expiryTimer)
   }, [currentUser?.firebaseUser.uid, currentUser?.subscriptionStatus, currentUser?.subscriptionEndsAt, refreshUserProfile])
+
+  // Recordatorio in-app si la suscripción vence en ≤7 días (máx. 1 aviso por día)
+  useEffect(() => {
+    const uid = currentUser?.firebaseUser.uid
+    const days = currentUser?.subscriptionDaysRemaining
+    if (!uid || days == null || days > 7) return
+    if (currentUser.role !== "seller" && currentUser.businessType !== "restaurant") return
+    void notifySubscriptionReminder({
+      userId: uid,
+      daysRemaining: days,
+      link: currentUser.businessType === "restaurant" ? "/dashboard/restaurant" : "/dashboard/seller",
+    })
+  }, [
+    currentUser?.firebaseUser.uid,
+    currentUser?.subscriptionDaysRemaining,
+    currentUser?.role,
+    currentUser?.businessType,
+  ])
 
   const handleLogout = useCallback(async () => {
     try {

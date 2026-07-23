@@ -74,6 +74,7 @@ interface Product {
   isService: boolean
   stock?: number
   sellerId: string
+  serviceSchedule?: import("@/types/service-appointments").ServiceSchedule | null
   createdAt: any
   updatedAt?: any
   couponId?: string | null
