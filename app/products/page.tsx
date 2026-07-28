@@ -16,6 +16,7 @@ import {
   ProductsFiltersPanelHeader,
   type ProductsSortBy,
 } from "@/components/products/products-filters-panel"
+import { useTranslations } from "next-intl"
 
 interface Product {
   id: string
@@ -50,6 +51,7 @@ const productCache = new Map<string, { data: Product[]; timestamp: number; lastD
 const CACHE_DURATION = 5 * 60 * 1000
 
 export default function ProductsPage() {
+  const tp = useTranslations("products")
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -129,7 +131,7 @@ export default function ProductsPage() {
         })
       } catch (err) {
         console.error("Error fetching products:", err)
-        setError("Error al cargar los productos. Intenta de nuevo más tarde.")
+        setError(tp("loadProductsError"))
       }
     },
     [sortBy, lastVisibleDoc, productsPerPage, cacheKey, products]
@@ -165,7 +167,7 @@ export default function ProductsPage() {
         await fetchProducts()
       } catch (err) {
         console.error("Error fetching data:", err)
-        setError("Error al cargar los datos. Intenta de nuevo más tarde.")
+        setError(tp("loadDataError"))
       } finally {
         setLoading(false)
       }
@@ -247,7 +249,7 @@ export default function ProductsPage() {
     const chips: { label: string; onRemove: () => void }[] = []
     if (searchTerm) chips.push({ label: `"${searchTerm}"`, onRemove: () => setSearchTerm("") })
     if (selectedCategory && selectedCategory !== "all") {
-      const name = categories.find((c) => c.id === selectedCategory)?.name || "Categoría"
+      const name = categories.find((c) => c.id === selectedCategory)?.name || tp("category")
       chips.push({ label: name, onRemove: () => setSelectedCategory("all") })
     }
     if (selectedBrand && selectedBrand !== "all") {
@@ -256,8 +258,8 @@ export default function ProductsPage() {
     }
     if (minPrice) chips.push({ label: `Desde $${minPrice}`, onRemove: () => setMinPrice("") })
     if (maxPrice) chips.push({ label: `Hasta $${maxPrice}`, onRemove: () => setMaxPrice("") })
-    if (isServiceFilter === true) chips.push({ label: "Servicios", onRemove: () => setIsServiceFilter("all") })
-    if (isServiceFilter === false) chips.push({ label: "Productos", onRemove: () => setIsServiceFilter("all") })
+    if (isServiceFilter === true) chips.push({ label: tp("servicesChip"), onRemove: () => setIsServiceFilter("all") })
+    if (isServiceFilter === false) chips.push({ label: tp("productsChip"), onRemove: () => setIsServiceFilter("all") })
     return chips
   }, [searchTerm, selectedCategory, selectedBrand, minPrice, maxPrice, isServiceFilter, categories, brands])
 
@@ -295,8 +297,11 @@ export default function ProductsPage() {
 
   const resultLabel =
     filteredProducts.length === 1
-      ? "1 producto encontrado"
-      : `${filteredProducts.length} productos encontrados`
+      ? tp("foundOne")
+      : tp("foundMany", { count: filteredProducts.length })
+
+  const resultsWord =
+    filteredProducts.length === 1 ? tp("result") : tp("results")
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
@@ -313,7 +318,7 @@ export default function ProductsPage() {
             className="w-full rounded-xl border-purple-200 text-purple-800 hover:bg-purple-50"
           >
             <Filter className="mr-2 h-4 w-4" />
-            Filtros y orden
+            {tp("filtersSort")}
             {activeFilterCount > 0 && (
               <span className="ml-2 rounded-full bg-purple-700 px-2 py-0.5 text-xs text-white">
                 {activeFilterCount}
@@ -325,11 +330,11 @@ export default function ProductsPage() {
         <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
           <SheetContent side="left" className="flex w-full max-w-sm flex-col border-r-0 p-0 sm:max-w-md">
             <div className="bg-gradient-to-br from-purple-900 via-purple-800 to-violet-900 px-5 py-5 text-white">
-              <SheetTitle className="text-left text-lg font-bold">Filtros</SheetTitle>
+              <SheetTitle className="text-left text-lg font-bold">{tp("filters")}</SheetTitle>
               <p className="mt-1 text-sm text-purple-200">
                 {loading
-                  ? "Cargando catálogo..."
-                  : `${filteredProducts.length} ${filteredProducts.length === 1 ? "resultado" : "resultados"}`}
+                  ? tp("loadingCatalog")
+                  : `${filteredProducts.length} ${resultsWord}`}
               </p>
             </div>
             <div className="flex-1 overflow-y-auto p-5">
@@ -340,7 +345,7 @@ export default function ProductsPage() {
                 className="w-full rounded-full bg-purple-700 hover:bg-purple-800"
                 onClick={() => setMobileFiltersOpen(false)}
               >
-                Ver {filteredProducts.length} {filteredProducts.length === 1 ? "resultado" : "resultados"}
+                {tp("seeResults", { count: filteredProducts.length, label: resultsWord })}
               </Button>
             </div>
           </SheetContent>
@@ -377,7 +382,7 @@ export default function ProductsPage() {
                     </button>
                   ))}
                 </div>
-                <p className="hidden text-xs text-gray-400 lg:block">Actualización cada 5 min</p>
+                <p className="hidden text-xs text-gray-400 lg:block">{tp("refreshHint")}</p>
               </div>
             )}
 
@@ -404,12 +409,12 @@ export default function ProductsPage() {
             ) : filteredProducts.length === 0 ? (
               <div className="rounded-2xl bg-white py-16 text-center shadow-sm ring-1 ring-gray-100">
                 <Frown className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-                <p className="text-lg text-gray-600">No se encontraron productos con los filtros aplicados.</p>
+                <p className="text-lg text-gray-600">{tp("noResultsFilters")}</p>
                 <Button
                   onClick={handleClearFilters}
                   className="mt-4 rounded-full bg-purple-700 hover:bg-purple-800"
                 >
-                  Limpiar filtros
+                  {tp("clearFilters")}
                 </Button>
               </div>
             ) : (

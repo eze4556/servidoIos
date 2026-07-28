@@ -16,6 +16,7 @@ import { HomeCategoryPills } from "@/components/home/home-category-pills"
 import { HomeBannerCarousel } from "@/components/home/home-banner-carousel"
 import { HomeStoriesSection } from "@/components/stories/home-stories-section"
 import { HomeProductGrid } from "@/components/home/home-product-grid"
+import { useTranslations } from "next-intl"
 
 interface Product {
   id: string
@@ -56,6 +57,7 @@ interface OfferAlert {
 }
 
 export default function HomePage() {
+  const th = useTranslations("home")
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [newProducts, setNewProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<CategoryItem[]>([])
@@ -171,8 +173,8 @@ export default function HomePage() {
       href: `/category/${category.id}`,
     }))
 
-    return [...fromCategories.slice(0, 3), { label: "Servicios", href: "/services" }]
-  }, [categories])
+    return [...fromCategories.slice(0, 3), { label: th("chipServices"), href: "/services" }]
+  }, [categories, th])
 
   const mobileGridProducts = useMemo(() => {
     if (selectedCategoryId === "all") return featuredProducts
@@ -193,7 +195,7 @@ export default function HomePage() {
 
         <div className="space-y-6 px-4 pb-8 pt-5">
           <div>
-            <h2 className="mb-3 text-lg font-bold text-gray-900">Productos</h2>
+            <h2 className="mb-3 text-lg font-bold text-gray-900">{th("products")}</h2>
             <HomeCategoryPills
               categories={categories}
               selectedId={selectedCategoryId}
@@ -205,15 +207,15 @@ export default function HomePage() {
             products={mobileGridProducts}
             loading={loadingData}
             title=""
-            emptyMessage="No hay productos en esta categoría."
+            emptyMessage={th("emptyCategory")}
           />
 
           <HomeSectionShell variant="default">
             <HomeSectionHeader
-              title="Categorías"
-              subtitle="Explorá por rubro"
+              title={th("categories")}
+              subtitle={th("categoriesSubtitle")}
               href="/products"
-              linkText="Ver todas"
+              linkText={th("seeAll")}
               icon={LayoutGrid}
               accent="purple"
             />
@@ -222,8 +224,8 @@ export default function HomePage() {
 
           <HomeSectionShell variant="tinted">
             <HomeSectionHeader
-              title="Nuestras Marcas"
-              subtitle="Las mejores del mercado"
+              title={th("ourBrands")}
+              subtitle={th("brandsSubtitle")}
               icon={Tag}
               accent="purple"
             />
@@ -238,9 +240,9 @@ export default function HomePage() {
 
         <div className="container mx-auto max-w-screen-xl px-4 pt-4 md:px-6">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-800">Historias</h2>
+            <h2 className="text-sm font-semibold text-gray-800">{th("stories")}</h2>
             <a href="/historias" className="text-xs font-medium text-servido-800 hover:underline">
-              Ver todas
+              {th("seeAll")}
             </a>
           </div>
           <HomeStoriesSection />
@@ -252,10 +254,10 @@ export default function HomePage() {
 
         <HomeSectionShell variant="default" className="home-section-delay-1">
           <HomeSectionHeader
-            title="Categorías"
-            subtitle="Explorá por rubro y encontrá lo que necesitás"
+            title={th("categories")}
+            subtitle={th("categoriesSubtitleLong")}
             href="/products"
-            linkText="Ver todas"
+            linkText={th("seeAll")}
             icon={LayoutGrid}
             accent="purple"
           />
@@ -266,10 +268,10 @@ export default function HomePage() {
 
         <HomeSectionShell variant="tinted" className="home-section-delay-2">
           <HomeSectionHeader
-            title="Productos Destacados"
-            subtitle="Los más elegidos de la semana"
+            title={th("featuredProducts")}
+            subtitle={th("featuredSubtitle")}
             href="/products"
-            linkText="Ver destacados"
+            linkText={th("seeFeatured")}
             icon={Star}
             accent="amber"
           />
@@ -277,16 +279,16 @@ export default function HomePage() {
             products={featuredProducts}
             loading={loadingData}
             badge="featured"
-            emptyMessage="No hay productos destacados en este momento."
+            emptyMessage={th("noFeatured")}
           />
         </HomeSectionShell>
 
         <HomeSectionShell variant="elevated" className="home-section-delay-3">
           <HomeSectionHeader
-            title="Productos Nuevos"
-            subtitle="Recién publicados en el marketplace"
+            title={th("newProducts")}
+            subtitle={th("newProductsSubtitle")}
             href="/products"
-            linkText="Ver catálogo"
+            linkText={th("seeCatalog")}
             icon={Sparkles}
             accent="emerald"
           />
@@ -294,15 +296,15 @@ export default function HomePage() {
             products={newProducts}
             loading={loadingData}
             badge="new"
-            emptyMessage="No hay productos nuevos en este momento."
+            emptyMessage={th("noNew")}
           />
         </HomeSectionShell>
 
         {recentlyViewedProducts.length > 0 && (
           <HomeSectionShell variant="default">
             <HomeSectionHeader
-              title="Vistos recientemente"
-              subtitle="Retomá donde lo dejaste"
+              title={th("recentlyViewed")}
+              subtitle={th("recentlyViewedSubtitle")}
               accent="purple"
             />
             <HomeProductCarousel products={recentlyViewedProducts} />
@@ -311,8 +313,8 @@ export default function HomePage() {
 
         <HomeSectionShell variant="tinted">
           <HomeSectionHeader
-            title="Nuestras Marcas"
-            subtitle="Trabajamos con las mejores del mercado"
+            title={th("ourBrands")}
+            subtitle={th("brandsSubtitleLong")}
             icon={Tag}
             accent="purple"
           />
@@ -324,7 +326,7 @@ export default function HomePage() {
         <button
           onClick={handleOpenAlert}
           className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-servido-700 to-servido-950 text-white shadow-lg shadow-servido-700/40 transition-all duration-300 hover:scale-110 hover:shadow-xl lg:bottom-6 lg:right-6"
-          aria-label="Ver alerta"
+          aria-label={th("viewAlert")}
         >
           <AlertCircle className="h-8 w-8 animate-pulse" />
         </button>
@@ -339,7 +341,7 @@ export default function HomePage() {
               onClick={handleCloseAlert}
               className="w-full rounded-xl bg-gradient-to-r from-servido-700 to-servido-950 py-3 font-medium text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:brightness-110"
             >
-              Entendido
+              {th("understood")}
             </button>
           </div>
         </div>

@@ -16,6 +16,7 @@ import {
   Wrench,
   XCircle,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 interface Category {
@@ -58,19 +59,19 @@ interface ProductsFiltersPanelProps {
   resultCount?: number
 }
 
-const PRICE_PRESETS = [
-  { label: "Hasta $10.000", min: "", max: "10000" },
-  { label: "$10k – $50k", min: "10000", max: "50000" },
-  { label: "$50k – $200k", min: "50000", max: "200000" },
-  { label: "+ $200.000", min: "200000", max: "" },
+const PRICE_PRESET_KEYS = [
+  { labelKey: "priceUpTo10k", min: "", max: "10000" },
+  { labelKey: "price10k50k", min: "10000", max: "50000" },
+  { labelKey: "price50k200k", min: "50000", max: "200000" },
+  { labelKey: "priceOver200k", min: "200000", max: "" },
 ] as const
 
-const SORT_OPTIONS: { value: ProductsSortBy; label: string; icon: typeof Clock }[] = [
-  { value: "createdAt_desc", label: "Recientes", icon: Clock },
-  { value: "price_asc", label: "Menor precio", icon: DollarSign },
-  { value: "price_desc", label: "Mayor precio", icon: DollarSign },
-  { value: "name_asc", label: "A → Z", icon: ArrowDownAZ },
-  { value: "name_desc", label: "Z → A", icon: ArrowUpAZ },
+const SORT_OPTION_KEYS: { value: ProductsSortBy; labelKey: string; icon: typeof Clock }[] = [
+  { value: "createdAt_desc", labelKey: "sortRecent", icon: Clock },
+  { value: "price_asc", labelKey: "sortPriceLow", icon: DollarSign },
+  { value: "price_desc", labelKey: "sortPriceHigh", icon: DollarSign },
+  { value: "name_asc", labelKey: "sortNameAsc", icon: ArrowDownAZ },
+  { value: "name_desc", labelKey: "sortNameDesc", icon: ArrowUpAZ },
 ]
 
 function FilterChip({
@@ -142,6 +143,19 @@ export function ProductsFiltersPanel({
   showSort = true,
   resultCount,
 }: ProductsFiltersPanelProps) {
+  const tf = useTranslations("filters")
+  const tp = useTranslations("products")
+
+  const pricePresets = useMemo(
+    () => PRICE_PRESET_KEYS.map((p) => ({ ...p, label: tf(p.labelKey) })),
+    [tf]
+  )
+
+  const sortOptions = useMemo(
+    () => SORT_OPTION_KEYS.map((o) => ({ ...o, label: tf(o.labelKey) })),
+    [tf]
+  )
+
   const activeCount = useMemo(() => {
     let count = 0
     if (searchTerm) count++
@@ -176,7 +190,7 @@ export function ProductsFiltersPanel({
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
           type="text"
-          placeholder="Buscar por nombre..."
+          placeholder={tf("searchByName")}
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
           className="rounded-full border-0 bg-white py-2.5 pl-10 pr-10 shadow-sm ring-1 ring-gray-200 focus-visible:ring-2 focus-visible:ring-purple-300"
@@ -196,12 +210,12 @@ export function ProductsFiltersPanel({
       </div>
 
       {/* Tipo — segmented control */}
-      <FilterSection title="Tipo" icon={Package}>
+      <FilterSection title={tf("type")} icon={Package}>
         <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-white p-1 ring-1 ring-gray-200">
           {[
-            { label: "Todos", value: "all" as const, icon: Sparkles },
-            { label: "Productos", value: false as const, icon: Package },
-            { label: "Servicios", value: true as const, icon: Wrench },
+            { label: tf("typeAll"), value: "all" as const, icon: Sparkles },
+            { label: tp("productsChip"), value: false as const, icon: Package },
+            { label: tp("servicesChip"), value: true as const, icon: Wrench },
           ].map(({ label, value, icon: Icon }) => (
             <button
               key={label}
@@ -223,10 +237,10 @@ export function ProductsFiltersPanel({
 
       {/* Categorías */}
       {categories.length > 0 && (
-        <FilterSection title="Categoría" icon={Tag}>
+        <FilterSection title={tf("category")} icon={Tag}>
           <div className="flex max-h-36 flex-wrap gap-2 overflow-y-auto pr-1">
             <FilterChip
-              label="Todas"
+              label={tf("all")}
               selected={categoryValue === "all"}
               onClick={() => onCategoryChange("all")}
             />
@@ -244,10 +258,10 @@ export function ProductsFiltersPanel({
 
       {/* Marcas */}
       {brands.length > 0 && (
-        <FilterSection title="Marca" icon={Sparkles}>
+        <FilterSection title={tf("brand")} icon={Sparkles}>
           <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto pr-1">
             <FilterChip
-              label="Todas"
+              label={tf("all")}
               selected={brandValue === "all"}
               onClick={() => onBrandChange("all")}
             />
@@ -264,11 +278,11 @@ export function ProductsFiltersPanel({
       )}
 
       {/* Precio */}
-      <FilterSection title="Precio" icon={DollarSign}>
+      <FilterSection title={tf("price")} icon={DollarSign}>
         <div className="mb-3 flex flex-wrap gap-2">
-          {PRICE_PRESETS.map((preset) => (
+          {pricePresets.map((preset) => (
             <FilterChip
-              key={preset.label}
+              key={preset.labelKey}
               label={preset.label}
               selected={isPresetActive(preset.min, preset.max)}
               onClick={() => applyPricePreset(preset.min, preset.max)}
@@ -280,7 +294,7 @@ export function ProductsFiltersPanel({
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">$</span>
             <Input
               type="number"
-              placeholder="Mín."
+              placeholder={tf("priceMin")}
               value={minPrice}
               onChange={(e) => onMinPriceChange(e.target.value)}
               className="rounded-xl border-0 bg-white pl-7 ring-1 ring-gray-200"
@@ -291,7 +305,7 @@ export function ProductsFiltersPanel({
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">$</span>
             <Input
               type="number"
-              placeholder="Máx."
+              placeholder={tf("priceMax")}
               value={maxPrice}
               onChange={(e) => onMaxPriceChange(e.target.value)}
               className="rounded-xl border-0 bg-white pl-7 ring-1 ring-gray-200"
@@ -302,9 +316,9 @@ export function ProductsFiltersPanel({
 
       {/* Ordenar */}
       {showSort && (
-        <FilterSection title="Ordenar por" icon={Clock}>
+        <FilterSection title={tf("sortBy")} icon={Clock}>
           <div className="flex flex-wrap gap-2">
-            {SORT_OPTIONS.map(({ value, label, icon: Icon }) => (
+            {sortOptions.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
                 type="button"
@@ -332,12 +346,15 @@ export function ProductsFiltersPanel({
             className="w-full rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50"
             onClick={onClearFilters}
           >
-            Limpiar {activeCount} filtro{activeCount !== 1 ? "s" : ""}
+            {activeCount === 1
+              ? tf("clearFiltersCount", { count: activeCount })
+              : tf("clearFiltersCountPlural", { count: activeCount })}
           </Button>
         )}
         {typeof resultCount === "number" && (
           <p className="text-center text-xs text-gray-400">
-            {resultCount} {resultCount === 1 ? "resultado" : "resultados"}
+            {resultCount}{" "}
+            {resultCount === 1 ? tp("result") : tp("results")}
           </p>
         )}
       </div>
@@ -346,6 +363,8 @@ export function ProductsFiltersPanel({
 }
 
 export function ProductsFiltersPanelHeader({ activeCount }: { activeCount: number }) {
+  const tf = useTranslations("filters")
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -353,13 +372,15 @@ export function ProductsFiltersPanelHeader({ activeCount }: { activeCount: numbe
           <Tag className="h-4 w-4" />
         </span>
         <div>
-          <h2 className="text-lg font-bold text-purple-900">Filtros</h2>
-          <p className="text-xs text-gray-500">Refiná tu búsqueda</p>
+          <h2 className="text-lg font-bold text-purple-900">{tf("title")}</h2>
+          <p className="text-xs text-gray-500">{tf("refineSearch")}</p>
         </div>
       </div>
       {activeCount > 0 && (
         <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-bold text-purple-800">
-          {activeCount} activo{activeCount !== 1 ? "s" : ""}
+          {activeCount === 1
+            ? tf("activeCount", { count: activeCount })
+            : tf("activeCountPlural", { count: activeCount })}
         </span>
       )}
     </div>

@@ -1,6 +1,8 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { NextIntlClientProvider } from "next-intl"
+import { getLocale, getMessages } from "next-intl/server"
 import "./globals.css"
 import { CartProvider } from "@/contexts/cart-context"
 import { FoodCartProvider } from "@/contexts/food-cart-context"
@@ -50,26 +52,31 @@ export const metadata: Metadata = {
   }
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
-    <html lang="es" className="h-full">
+    <html lang={locale === "pt-BR" ? "pt-BR" : "es"} className="h-full">
       <body className={`${inter.className} flex min-h-full flex-col`}>
-        <NProgressProvider>
-          <CacheProvider>
-            <AuthProvider>
-              <LocationProvider>
-                <CartProvider>
-                  <FoodCartProvider>
-                    <SafeArea>
-                      <AppChrome>{children}</AppChrome>
-                      <Toaster />
-                    </SafeArea>
-                  </FoodCartProvider>
-                </CartProvider>
-              </LocationProvider>
-            </AuthProvider>
-          </CacheProvider>
-        </NProgressProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <NProgressProvider>
+            <CacheProvider>
+              <AuthProvider>
+                <LocationProvider>
+                  <CartProvider>
+                    <FoodCartProvider>
+                      <SafeArea>
+                        <AppChrome>{children}</AppChrome>
+                        <Toaster />
+                      </SafeArea>
+                    </FoodCartProvider>
+                  </CartProvider>
+                </LocationProvider>
+              </AuthProvider>
+            </CacheProvider>
+          </NProgressProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

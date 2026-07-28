@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 function getUserFirstName(displayName?: string | null, email?: string | null) {
   if (displayName?.trim()) {
@@ -10,7 +11,7 @@ function getUserFirstName(displayName?: string | null, email?: string | null) {
   if (email?.trim()) {
     return email.split("@")[0]
   }
-  return "Usuario"
+  return null
 }
 
 interface UserGreetingProps {
@@ -20,20 +21,23 @@ interface UserGreetingProps {
 
 export function UserGreeting({ variant = "desktop", className }: UserGreetingProps) {
   const { currentUser, authLoading } = useAuth()
+  const t = useTranslations("greeting")
+  const tc = useTranslations("common")
 
   if (authLoading || !currentUser) {
     return null
   }
 
-  const firstName = getUserFirstName(
-    currentUser.firebaseUser.displayName,
-    currentUser.firebaseUser.email
-  )
+  const firstName =
+    getUserFirstName(currentUser.firebaseUser.displayName, currentUser.firebaseUser.email) ||
+    tc("user")
+
+  const text = t("hello", { name: firstName })
 
   if (variant === "mobile") {
     return (
       <p className={cn("truncate text-xs font-medium text-purple-100/95", className)}>
-        Hola, {firstName}{" "}
+        {text}{" "}
         <span className="inline-block origin-bottom-right animate-[wave_1.8s_ease-in-out_infinite]" aria-hidden>
           👋
         </span>
@@ -48,10 +52,10 @@ export function UserGreeting({ variant = "desktop", className }: UserGreetingPro
         className
       )}
     >
-      Hola, {firstName}{" "}
-        <span className="inline-block origin-bottom-right animate-[wave_1.8s_ease-in-out_infinite]" aria-hidden>
-          👋
-        </span>
+      {text}{" "}
+      <span className="inline-block origin-bottom-right animate-[wave_1.8s_ease-in-out_infinite]" aria-hidden>
+        👋
+      </span>
     </p>
   )
 }

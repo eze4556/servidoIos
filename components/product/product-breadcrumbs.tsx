@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import { ChevronRight, Home } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface ProductBreadcrumbsProps {
   category?: { id: string; name: string } | null
@@ -7,6 +10,8 @@ interface ProductBreadcrumbsProps {
 }
 
 export function ProductBreadcrumbs({ category, productName }: ProductBreadcrumbsProps) {
+  const tp = useTranslations("product")
+
   return (
     <nav className="mb-6 flex flex-wrap items-center gap-1.5 text-sm text-gray-500">
       <Link
@@ -14,14 +19,14 @@ export function ProductBreadcrumbs({ category, productName }: ProductBreadcrumbs
         className="inline-flex items-center gap-1 rounded-lg px-2 py-1 transition-colors hover:bg-purple-50 hover:text-purple-800"
       >
         <Home className="h-3.5 w-3.5" />
-        Inicio
+        {tp("home")}
       </Link>
       <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-300" />
       <Link
         href="/products"
         className="rounded-lg px-2 py-1 transition-colors hover:bg-purple-50 hover:text-purple-800"
       >
-        Productos
+        {tp("products")}
       </Link>
       {category && (
         <>

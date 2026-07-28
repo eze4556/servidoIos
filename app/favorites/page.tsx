@@ -14,6 +14,7 @@ import { collection, deleteDoc, doc, getDoc, getDocs, query, where } from "fireb
 import { formatPrice } from "@/lib/utils"
 import { getProductThumbnail } from "@/lib/image-utils"
 import { useToast } from "@/components/ui/use-toast"
+import { useTranslations } from "next-intl"
 import type { ProductMedia } from "@/types/product"
 
 interface FavoriteProduct {
@@ -83,6 +84,10 @@ function mapFavoriteFromDoc(
 }
 
 export default function FavoritesPage() {
+  const tf = useTranslations("favorites")
+  const tc = useTranslations("cart")
+  const tr = useTranslations("roles")
+  const ts = useTranslations("servicesPage")
   const { currentUser, authLoading } = useAuth()
   const { addItem } = useCart()
   const { toast } = useToast()
@@ -134,7 +139,7 @@ export default function FavoritesPage() {
       if (requestId !== fetchRequestRef.current) return
 
       console.error("Error fetching favorites:", err)
-      setError("Error al cargar tus favoritos. Intenta de nuevo más tarde.")
+      setError(tf("loadError"))
       setFavorites([])
     }
   }, [])
@@ -191,7 +196,7 @@ export default function FavoritesPage() {
       setFavorites((prev) => prev.filter((fav) => fav.favoriteId !== favoriteId))
 
       toast({
-        title: "Favorito eliminado",
+        title: tf("removed"),
         description: `${productName} se eliminó de tus favoritos`,
         duration: 3000,
       })
@@ -199,7 +204,7 @@ export default function FavoritesPage() {
       console.error("Error removing favorite:", removeError)
       toast({
         title: "Error",
-        description: "No se pudo eliminar el favorito",
+        description: tf("removeError"),
         variant: "destructive",
       })
     }
@@ -209,7 +214,7 @@ export default function FavoritesPage() {
     if (!currentUser) {
       toast({
         title: "Error",
-        description: "Debes iniciar sesión para agregar productos al carrito",
+        description: tf("loginForCart"),
         variant: "destructive",
       })
       return
@@ -233,7 +238,7 @@ export default function FavoritesPage() {
       })
 
       toast({
-        title: "Agregado al carrito",
+        title: tf("addedToCart"),
         description: `${product.name} se agregó a tu carrito`,
         duration: 3000,
       })
@@ -241,7 +246,7 @@ export default function FavoritesPage() {
       console.error("Error adding to cart:", cartError)
       toast({
         title: "Error",
-        description: "No se pudo agregar al carrito",
+        description: tf("addToCartError"),
         variant: "destructive",
       })
     }
@@ -253,7 +258,7 @@ export default function FavoritesPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-purple-600" />
-            <p className="mt-4 text-gray-600">Cargando tus favoritos...</p>
+            <p className="mt-4 text-gray-600">{tf("loading")}</p>
           </div>
         </div>
       </div>
@@ -266,17 +271,15 @@ export default function FavoritesPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="mx-auto max-w-md text-center">
             <Heart className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-            <h1 className="mb-4 text-2xl font-bold text-gray-900">Mis Favoritos</h1>
-            <p className="mb-6 text-gray-600">
-              Inicia sesión para ver y gestionar tus productos favoritos
-            </p>
+            <h1 className="mb-4 text-2xl font-bold text-gray-900">{tf("title")}</h1>
+            <p className="mb-6 text-gray-600">{tf("loginHint")}</p>
             <div className="space-y-3">
               <Link href="/login">
-                <Button className="w-full">Iniciar Sesión</Button>
+                <Button className="w-full">{tf("login")}</Button>
               </Link>
               <Link href="/signup">
                 <Button variant="outline" className="w-full">
-                  Crear Cuenta
+                  {tf("createAccount")}
                 </Button>
               </Link>
             </div>
@@ -292,7 +295,7 @@ export default function FavoritesPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <p className="mb-4 text-red-600">{error}</p>
-            <Button onClick={() => void retryFetch()}>Intentar de nuevo</Button>
+            <Button onClick={() => void retryFetch()}>{tf("retry")}</Button>
           </div>
         </div>
       </div>
@@ -305,10 +308,8 @@ export default function FavoritesPage() {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <Heart className="mx-auto mb-4 h-12 w-12 text-purple-200" />
-            <h1 className="mb-4 text-4xl font-bold">Mis Favoritos</h1>
-            <p className="mx-auto max-w-2xl text-xl text-purple-200">
-              Tus productos y servicios favoritos guardados para acceder fácilmente
-            </p>
+            <h1 className="mb-4 text-4xl font-bold">{tf("title")}</h1>
+            <p className="mx-auto max-w-2xl text-xl text-purple-200">{tf("subtitle")}</p>
           </div>
         </div>
       </div>
@@ -318,7 +319,9 @@ export default function FavoritesPage() {
           <>
             <div className="mb-6">
               <h2 className="text-2xl font-semibold text-gray-900">
-                {favorites.length} favorito{favorites.length !== 1 ? "s" : ""}
+                {favorites.length === 1
+                  ? tf("count", { count: favorites.length })
+                  : tf("countPlural", { count: favorites.length })}
               </h2>
             </div>
 
@@ -335,13 +338,13 @@ export default function FavoritesPage() {
                     />
                     <div className="absolute left-2 top-2">
                       <Badge className="bg-purple-600 text-white">
-                        {product.isService ? "Servicio" : "Producto"}
+                        {product.isService ? tf("service") : tf("product")}
                       </Badge>
                     </div>
                     {product.condition && (
                       <div className="absolute right-10 top-2">
                         <Badge variant={product.condition === "nuevo" ? "default" : "secondary"}>
-                          {product.condition === "nuevo" ? "Nuevo" : "Usado"}
+                          {product.condition === "nuevo" ? tc("conditionNew") : tc("conditionUsed")}
                         </Badge>
                       </div>
                     )}
@@ -352,7 +355,7 @@ export default function FavoritesPage() {
                         void removeFromFavorites(product.favoriteId, product.name)
                       }}
                       className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white transition-colors hover:bg-red-600"
-                      title="Eliminar de favoritos"
+                      title={tf("removeTitle")}
                     >
                       <Heart className="h-4 w-4 fill-current" />
                     </button>
@@ -370,7 +373,7 @@ export default function FavoritesPage() {
 
                     <div className="mb-3 flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{product.sellerName || "Vendedor"}</span>
+                      <span className="text-sm text-gray-600">{product.sellerName || tr("seller")}</span>
                     </div>
 
                     {product.sellerLocation && (
@@ -393,7 +396,7 @@ export default function FavoritesPage() {
                       <span className="text-xl font-bold text-purple-600">{formatPrice(product.price)}</span>
                       <div className="flex items-center gap-1 text-sm text-gray-500">
                         <Clock className="h-4 w-4" />
-                        <span>Disponible</span>
+                        <span>{ts("available")}</span>
                       </div>
                     </div>
 
@@ -408,11 +411,11 @@ export default function FavoritesPage() {
                         size="sm"
                       >
                         <ShoppingCart className="mr-2 h-4 w-4" />
-                        Agregar
+                        {tf("add")}
                       </Button>
                       <Link href={`/product/${product.id}`} className="flex-1">
                         <Button variant="outline" className="w-full" size="sm">
-                          Ver
+                          {tf("view")}
                         </Button>
                       </Link>
                     </div>
@@ -424,12 +427,10 @@ export default function FavoritesPage() {
         ) : (
           <div className="py-16 text-center">
             <Heart className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-            <h2 className="mb-2 text-2xl font-semibold text-gray-900">No hay favoritos</h2>
-            <p className="mx-auto mb-8 max-w-md text-gray-600">
-              Todavía no agregaste ningún producto. Explorá el catálogo y guardá los que más te gusten.
-            </p>
+            <h2 className="mb-2 text-2xl font-semibold text-gray-900">{tf("emptyTitle")}</h2>
+            <p className="mx-auto mb-8 max-w-md text-gray-600">{tf("emptyHint")}</p>
             <Link href="/products">
-              <Button size="lg">Ir a productos</Button>
+              <Button size="lg">{tf("goProducts")}</Button>
             </Link>
           </div>
         )}

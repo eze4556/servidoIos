@@ -33,6 +33,8 @@ import { getSearchResultImage } from "@/lib/image-utils"
 import { formatPrice } from "@/lib/utils"
 import { UserGreeting } from "@/components/layout/user-greeting"
 import { NotificationBell } from "@/components/notifications/notification-bell"
+import { LocaleFlagToggle } from "@/components/layout/locale-flag-toggle"
+import { useTranslations } from "next-intl"
 
 interface SearchProduct {
   id: string
@@ -48,14 +50,19 @@ interface MobileAppHeaderProps {
 }
 
 function useRoleBadge(pathname: string, role?: string) {
-  if (pathname.startsWith("/dashboard/seller")) return "Vendedor"
-  if (pathname.startsWith("/dashboard/buyer")) return "Comprador"
-  if (pathname.startsWith("/admin")) return "Admin"
-  if (role === "seller" && pathname.startsWith(`/seller/`)) return "Vendedor"
+  const tr = useTranslations("roles")
+  if (pathname.startsWith("/dashboard/seller")) return tr("seller")
+  if (pathname.startsWith("/dashboard/buyer")) return tr("buyer")
+  if (pathname.startsWith("/admin")) return tr("admin")
+  if (role === "seller" && pathname.startsWith(`/seller/`)) return tr("seller")
   return null
 }
 
 export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
+  const t = useTranslations("header")
+  const tm = useTranslations("mobileMenu")
+  const tc = useTranslations("common")
+  const tr = useTranslations("roles")
   const router = useRouter()
   const pathname = usePathname()
   const { currentUser, authLoading, handleLogout, getDashboardLink } = useAuth()
@@ -126,8 +133,8 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
   }
 
   const locationText = loadingLocation
-    ? "Detectando..."
-    : shortLocation || userLocation || "Elegí tu ubicación"
+    ? tc("detecting")
+    : shortLocation || userLocation || tc("chooseLocation")
 
   const closeMenu = () => setMenuOpen(false)
 
@@ -161,6 +168,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
           </Link>
 
           <div className="flex shrink-0 items-center gap-0.5">
+            <LocaleFlagToggle variant="dark" className="mr-0.5" />
             <NotificationBell className="h-10 w-10 text-white/90 hover:bg-white/10" />
             <div className="[&_button]:text-white [&_button]:hover:bg-white/10">
               <CartDrawer />
@@ -172,7 +180,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                 size="icon"
                 onClick={() => setMenuOpen(true)}
                 className="h-10 w-10 rounded-full text-white hover:bg-white/10"
-                aria-label="Abrir menú"
+                aria-label={tc("openMenu")}
               >
                 <Menu className="h-5 w-5" />
               </Button>
@@ -189,7 +197,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
               setQuery(e.target.value)
               runSearch(e.target.value)
             }}
-            placeholder="¿Qué necesitas hoy?"
+            placeholder={t("searchPlaceholder")}
             className="h-11 rounded-2xl border-0 bg-white pl-11 pr-4 text-sm shadow-lg placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-servido-gold/50"
           />
           {showSearchResults && query.trim() && (
@@ -197,7 +205,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
               {isSearching ? (
                 <div className="flex items-center justify-center gap-2 p-4 text-gray-500">
                   <Loader2 className="h-5 w-5 animate-spin text-servido-700" />
-                  Buscando...
+                  {tc("searching")}
                 </div>
               ) : searchResults.length > 0 ? (
                 <div className="divide-y divide-gray-50 py-1">
@@ -224,7 +232,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                   ))}
                 </div>
               ) : (
-                <p className="p-4 text-center text-sm text-gray-500">Sin resultados</p>
+                <p className="p-4 text-center text-sm text-gray-500">{tc("noResults")}</p>
               )}
             </div>
           )}
@@ -237,10 +245,10 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
         >
           <MapPin className="h-3.5 w-3.5 shrink-0 text-servido-gold" />
           <span className="min-w-0 flex-1 truncate">
-            <span className="font-semibold text-purple-200/90">Enviar a:</span> {locationText}
+            <span className="font-semibold text-purple-200/90">{tc("sendTo")}:</span> {locationText}
           </span>
           <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-purple-100 ring-1 ring-white/15">
-            Cambiar
+            {tc("change")}
           </span>
         </button>
       </div>
@@ -251,8 +259,8 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetContent side="right" className="w-full max-w-sm border-none p-0">
             <div className="bg-gradient-to-br from-servido-950 via-servido-800 to-servido-700 px-5 py-6 text-white">
-              <SheetTitle className="text-left text-xl font-bold">Menú</SheetTitle>
-              <p className="mt-1 text-sm text-purple-200">Explorá Servido</p>
+              <SheetTitle className="text-left text-xl font-bold">{tm("menu")}</SheetTitle>
+              <p className="mt-1 text-sm text-purple-200">{tm("explore")}</p>
             </div>
 
             <div className="space-y-4 overflow-y-auto p-5 pb-8">
@@ -266,10 +274,10 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-gray-900">
-                      {currentUser.firebaseUser.displayName || "Usuario"}
+                      {currentUser.firebaseUser.displayName || tc("user")}
                     </p>
                     <p className="text-xs capitalize text-servido-700">
-                      {currentUser.role === "seller" ? "Vendedor" : "Comprador"}
+                      {currentUser.role === "seller" ? tr("seller") : tr("buyer")}
                     </p>
                   </div>
                 </div>
@@ -277,27 +285,27 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
 
               <nav className="grid gap-1">
                 {[
-                  { href: "/", label: "Inicio", icon: Home },
-                  { href: "/products", label: "Productos", icon: Package },
-                  { href: "/restaurantes", label: "Restaurantes", icon: UtensilsCrossed },
-                  { href: "/services", label: "Servicios", icon: Sparkles },
-                  { href: "/mensajes", label: "Chat", icon: MessageCircle },
-                  { href: "/favorites", label: "Favoritos", icon: Heart },
+                  { href: "/", label: tm("home"), icon: Home },
+                  { href: "/products", label: tm("products"), icon: Package },
+                  { href: "/restaurantes", label: tm("restaurants"), icon: UtensilsCrossed },
+                  { href: "/services", label: tm("services"), icon: Sparkles },
+                  { href: "/mensajes", label: t("chat"), icon: MessageCircle },
+                  { href: "/favorites", label: tm("favorites"), icon: Heart },
                   {
                     href: getDashboardLink(),
-                    label: currentUser?.role === "seller" ? "Panel vendedor" : "Panel comprador",
+                    label: currentUser?.role === "seller" ? tm("sellerPanel") : tm("buyerPanel"),
                     icon: User,
                   },
                   ...(currentUser?.role === "seller"
                     ? [
                         {
                           href: `/seller/${currentUser.firebaseUser.uid}`,
-                          label: "Mi tienda",
+                          label: tm("myStore"),
                           icon: Store,
                         },
                       ]
                     : []),
-                  { href: "/acerca-de-nosotros", label: "Quiénes somos", icon: Users },
+                  { href: "/acerca-de-nosotros", label: tm("whoWeAre"), icon: Users },
                 ].map(({ href, label, icon: Icon }) => (
                   <Link
                     key={href + label}
@@ -321,7 +329,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
                 >
                   <LogOut className="h-4 w-4" />
-                  Cerrar sesión
+                  {tm("logout")}
                 </button>
               ) : (
                 <div className="flex gap-2 pt-2">
@@ -330,14 +338,14 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                     onClick={closeMenu}
                     className="flex flex-1 items-center justify-center rounded-full border border-gray-200 py-2.5 text-sm font-medium text-gray-700"
                   >
-                    Ingresar
+                    {tm("login")}
                   </Link>
                   <Link
                     href="/signup"
                     onClick={closeMenu}
                     className="flex flex-1 items-center justify-center rounded-full bg-servido-800 py-2.5 text-sm font-semibold text-white"
                   >
-                    Registrarse
+                    {tm("register")}
                   </Link>
                 </div>
               )}

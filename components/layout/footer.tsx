@@ -16,31 +16,34 @@ import {
   Users,
   UtensilsCrossed,
 } from "lucide-react"
-
-const partnerLinks = [
-  { href: "/signup/restaurante", label: "Soy restaurante", icon: UtensilsCrossed },
-  { href: "/signup/cadete", label: "Trabajá como cadete", icon: Users },
-]
-
-const quickLinks = [
-  { href: "/", label: "Inicio", icon: Home },
-  { href: "/products", label: "Productos", icon: Package },
-  { href: "/restaurantes", label: "Restaurantes", icon: UtensilsCrossed },
-  { href: "/historias", label: "Historias", icon: Sparkles },
-  { href: "/mensajes", label: "Mensajes", icon: Mail },
-  { href: "/services", label: "Servicios", icon: Sparkles },
-  { href: "/favorites", label: "Favoritos", icon: Heart },
-]
-
-const legalLinks = [
-  { href: "/terminos-y-condiciones", label: "Términos y condiciones" },
-  { href: "/politicas-de-privacidad", label: "Políticas de privacidad" },
-  { href: "/acerca-de-nosotros", label: "Quiénes somos" },
-  { href: "/trabaja-con-nosotros", label: "Trabajá con nosotros" },
-]
+import { useTranslations } from "next-intl"
 
 export function Footer() {
+  const t = useTranslations("footer")
+  const tc = useTranslations("common")
   const currentYear = new Date().getFullYear()
+
+  const partnerLinks = [
+    { href: "/signup/restaurante", label: t("partnerRestaurant"), icon: UtensilsCrossed },
+    { href: "/signup/cadete", label: t("partnerCadete"), icon: Users },
+  ]
+
+  const quickLinks = [
+    { href: "/", label: t("home"), icon: Home },
+    { href: "/products", label: t("products"), icon: Package },
+    { href: "/restaurantes", label: t("restaurants"), icon: UtensilsCrossed },
+    { href: "/historias", label: t("stories"), icon: Sparkles },
+    { href: "/mensajes", label: t("messages"), icon: Mail },
+    { href: "/services", label: t("services"), icon: Sparkles },
+    { href: "/favorites", label: t("favorites"), icon: Heart },
+  ]
+
+  const legalLinks = [
+    { href: "/terminos-y-condiciones", label: t("terms") },
+    { href: "/politicas-de-privacidad", label: t("privacy") },
+    { href: "/acerca-de-nosotros", label: t("about") },
+    { href: "/trabaja-con-nosotros", label: t("careers") },
+  ]
 
   return (
     <footer className="relative mt-auto shrink-0 overflow-hidden pb-16 lg:pb-0">
@@ -51,26 +54,22 @@ export function Footer() {
 
       <div className="container relative mx-auto px-4 py-12 md:px-6 md:py-14">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
-          {/* Brand */}
           <div className="space-y-5 lg:col-span-4">
             <Link href="/" className="group inline-flex flex-col">
               <h3 className="text-xl font-bold tracking-tight text-white transition-colors group-hover:text-purple-100">
-                Servido
+                {tc("brand")}
               </h3>
-              <p className="text-xs font-medium text-purple-200">Marketplace</p>
+              <p className="text-xs font-medium text-purple-200">{tc("marketplace")}</p>
             </Link>
-            <p className="max-w-sm text-sm leading-relaxed text-purple-100/90">
-              Estamos trabajando para ofrecerte la mejor experiencia. Muy pronto podrás encontrar miles de
-              productos, servicios y comercios.
-            </p>
+            <p className="max-w-sm text-sm leading-relaxed text-purple-100/90">{tc("footerBlurb")}</p>
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-purple-100 ring-1 ring-white/10">
                 <Shield className="h-3.5 w-3.5" />
-                Compra protegida
+                {tc("protectedPurchase")}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-purple-100 ring-1 ring-white/10">
                 <Scale className="h-3.5 w-3.5" />
-                Vendedores verificados
+                {tc("verifiedSellers")}
               </span>
             </div>
             <div className="flex gap-2">
@@ -95,11 +94,10 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Partners */}
           <div className="lg:col-span-2">
             <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
               <span className="h-1.5 w-1.5 rounded-full bg-servido-gold" />
-              Partners
+              {t("partners")}
             </h4>
             <ul className="space-y-1">
               {partnerLinks.map(({ href, label, icon: Icon }) => (
@@ -118,11 +116,10 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Quick links */}
           <div className="lg:col-span-3">
             <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
               <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-              Enlaces rápidos
+              {t("quickLinks")}
             </h4>
             <ul className="space-y-1">
               {quickLinks.map(({ href, label, icon: Icon }) => (
@@ -141,13 +138,12 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Legal + about */}
           <div className="sm:col-span-2 lg:col-span-3">
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-1">
               <div>
                 <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
                   <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-                  Legal
+                  {t("legal")}
                 </h4>
                 <ul className="space-y-1">
                   {legalLinks.map(({ href, label }) => (
@@ -166,14 +162,14 @@ export function Footer() {
               <div>
                 <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-200">
                   <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
-                  Empresa
+                  {t("company")}
                 </h4>
                 <Link
                   href="/acerca-de-nosotros"
                   className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-purple-100/90 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   <Users className="h-4 w-4 shrink-0" />
-                  Conocé más sobre Servido
+                  {t("learnMore")}
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
@@ -181,7 +177,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Contacto — ancho completo para que el email nunca se corte */}
         <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-5">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
@@ -189,8 +184,8 @@ export function Footer() {
                 <Mail className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-white">Contacto</p>
-                <p className="text-xs text-purple-200">Consultas, soporte y postulaciones</p>
+                <p className="text-sm font-semibold text-white">{t("contact")}</p>
+                <p className="text-xs text-purple-200">{t("contactSubtitle")}</p>
               </div>
             </div>
             <a
@@ -203,12 +198,9 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-10 border-t border-white/10 pt-8">
-          <p className="text-center text-sm text-purple-200/80">
-            © {currentYear} Servido. Todos los derechos reservados.
-          </p>
-        </div>
+        <p className="mt-8 text-center text-xs text-purple-300/80">
+          {t("copyright", { year: currentYear })}
+        </p>
       </div>
     </footer>
   )

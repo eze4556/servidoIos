@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { Search, Filter, Grid, List } from "lucide-react"
+import { Search, Grid, List } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,31 +12,35 @@ import { db } from "@/lib/firebase"
 import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
 import { formatPrice } from "@/lib/utils"
-
-interface Product {
-  id: string
-  name: string
-  price: number
-  imageUrl?: string
-  media?: any[]
-  category?: string
-  description?: string
-  sellerName?: string
-}
+import { useTranslations } from "next-intl"
 
 export default function SearchPage() {
+  const ts = useTranslations("search")
+  const th = useTranslations("header")
+  const tc = useTranslations("common")
   const searchParams = useSearchParams()
-  const queryParam = searchParams.get('q') || ''
-  
-  const [products, setProducts] = useState<Product[]>([])
+  const queryParam = searchParams.get("q") || ""
+
+  const [products, setProducts] = useState<
+    {
+      id: string
+      name: string
+      price: number
+      imageUrl?: string
+      media?: unknown[]
+      category?: string
+      description?: string
+      sellerName?: string
+    }[]
+  >([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [searchTerm, setSearchTerm] = useState(queryParam)
 
   useEffect(() => {
     if (queryParam) {
       setSearchTerm(queryParam)
-      searchProducts(queryParam)
+      void searchProducts(queryParam)
     }
   }, [queryParam])
 
@@ -49,7 +53,6 @@ export default function SearchPage() {
 
     setLoading(true)
     try {
-      // Búsqueda por nombre del producto
       const productsQuery = query(
         collection(db, "products"),
         where("name", ">=", term.toLowerCase()),
@@ -57,14 +60,13 @@ export default function SearchPage() {
         orderBy("name"),
         limit(50)
       )
-      
-      const productsSnapshot = await getDocs(productsQuery)
-      let foundProducts = productsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Product[]
 
-      // Si no hay resultados exactos, buscar por palabras clave
+      const productsSnapshot = await getDocs(productsQuery)
+      let foundProducts = productsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as typeof products
+
       if (foundProducts.length === 0) {
         const keywordsQuery = query(
           collection(db, "products"),
@@ -72,10 +74,10 @@ export default function SearchPage() {
           limit(50)
         )
         const keywordsSnapshot = await getDocs(keywordsQuery)
-        foundProducts = keywordsSnapshot.docs.map(doc => ({
+        foundProducts = keywordsSnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
-        })) as Product[]
+          ...doc.data(),
+        })) as typeof products
       }
 
       setProducts(foundProducts)
@@ -91,61 +93,57 @@ export default function SearchPage() {
     e.preventDefault()
     if (searchTerm.trim()) {
       const url = new URL(window.location.href)
-      url.searchParams.set('q', searchTerm.trim())
-      window.history.pushState({}, '', url.toString())
-      searchProducts(searchTerm.trim())
+      url.searchParams.set("q", searchTerm.trim())
+      window.history.pushState({}, "", url.toString())
+      void searchProducts(searchTerm.trim())
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header de búsqueda */}
-      <div className="bg-white border-b">
+      <div className="border-b bg-white">
         <div className="container mx-auto px-4 py-6">
-          <div className="max-w-2xl mx-auto">
+          <div className="mx-auto max-w-2xl">
             <form onSubmit={handleSearch} className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <Input
                 type="search"
-                placeholder="¿Qué necesitas hoy?"
+                placeholder={th("searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 border-gray-200 focus:ring-2 focus:ring-purple-400"
+                className="w-full rounded-lg border-gray-200 bg-gray-50 py-3 pl-10 pr-4 focus:ring-2 focus:ring-purple-400"
               />
             </form>
           </div>
         </div>
       </div>
 
-      {/* Contenido principal */}
       <div className="container mx-auto px-4 py-8">
-        {/* Header de resultados */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Resultados de búsqueda
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">{ts("resultsTitle")}</h1>
             {queryParam && (
-              <p className="text-gray-600 mt-1">
-                {loading ? 'Buscando...' : `${products.length} productos encontrados para "${queryParam}"`}
+              <p className="mt-1 text-gray-600">
+                {loading
+                  ? tc("searching")
+                  : ts("searchingFor", { count: products.length, query: queryParam })}
               </p>
             )}
           </div>
-          
-          {/* Controles de vista */}
+
           <div className="flex items-center gap-2">
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              variant={viewMode === "grid" ? "default" : "outline"}
               size="sm"
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
               className="bg-purple-600 hover:bg-purple-700"
             >
               <Grid className="h-4 w-4" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
+              variant={viewMode === "list" ? "default" : "outline"}
               size="sm"
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
               className="bg-purple-600 hover:bg-purple-700"
             >
               <List className="h-4 w-4" />
@@ -153,37 +151,37 @@ export default function SearchPage() {
           </div>
         </div>
 
-        {/* Resultados */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-            <p className="text-gray-600 mt-4">Buscando productos...</p>
+          <div className="py-12 text-center">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-purple-600" />
+            <p className="mt-4 text-gray-600">{ts("searchingProducts")}</p>
           </div>
         ) : products.length > 0 ? (
-          <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-            : "space-y-4"
-          }>
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                : "space-y-4"
+            }
+          >
             {products.map((product) => (
-              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <Card key={product.id} className="overflow-hidden transition-shadow hover:shadow-lg">
                 <Link href={`/product/${product.id}`}>
-                  <div className={viewMode === 'grid' ? "aspect-square relative" : "h-32 relative"}>
+                  <div className={viewMode === "grid" ? "relative aspect-square" : "relative h-32"}>
                     <Image
-                      src={getSearchResultImage(product.media, product.imageUrl, product.name)}
+                      src={getSearchResultImage(product.media as never, product.imageUrl, product.name)}
                       alt={product.name}
-                      layout="fill"
-                      objectFit="cover"
+                      fill
+                      className="object-cover"
                     />
                   </div>
-                  <CardContent className={`p-4 ${viewMode === 'list' ? 'flex items-center gap-4' : ''}`}>
+                  <CardContent className={`p-4 ${viewMode === "list" ? "flex items-center gap-4" : ""}`}>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
-                      <p className="text-2xl font-bold text-purple-600 mb-2">{formatPrice(product.price)}</p>
-                      {product.category && (
-                        <p className="text-sm text-gray-500 mb-2">{product.category}</p>
-                      )}
+                      <h3 className="mb-2 line-clamp-2 text-lg font-semibold">{product.name}</h3>
+                      <p className="mb-2 text-2xl font-bold text-purple-600">{formatPrice(product.price)}</p>
+                      {product.category && <p className="mb-2 text-sm text-gray-500">{product.category}</p>}
                       {product.description && (
-                        <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+                        <p className="line-clamp-2 text-sm text-gray-600">{product.description}</p>
                       )}
                     </div>
                   </CardContent>
@@ -192,32 +190,30 @@ export default function SearchPage() {
             ))}
           </div>
         ) : queryParam ? (
-          <div className="text-center py-12">
-            <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No se encontraron productos</h2>
-            <p className="text-gray-600 mb-6">
-              No encontramos productos que coincidan con "{queryParam}"
-            </p>
+          <div className="py-12 text-center">
+            <Search className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+            <h2 className="mb-2 text-xl font-semibold text-gray-900">{ts("noResultsTitle")}</h2>
+            <p className="mb-6 text-gray-600">{ts("noResultsDesc", { query: queryParam })}</p>
             <div className="space-y-2">
-              <p className="text-sm text-gray-500">Sugerencias:</p>
-              <ul className="text-sm text-gray-500 space-y-1">
-                <li>• Verifica que las palabras estén escritas correctamente</li>
-                <li>• Intenta con términos más generales</li>
-                <li>• Usa menos palabras clave</li>
+              <p className="text-sm text-gray-500">{ts("suggestions")}</p>
+              <ul className="space-y-1 text-sm text-gray-500">
+                <li>• {ts("tipSpelling")}</li>
+                <li>• {ts("tipGeneral")}</li>
+                <li>• {ts("tipFewer")}</li>
               </ul>
             </div>
             <Button asChild className="mt-6 bg-purple-600 hover:bg-purple-700">
-              <Link href="/products">Explorar todos los productos</Link>
+              <Link href="/products">{ts("exploreAll")}</Link>
             </Button>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Busca productos</h2>
-            <p className="text-gray-600">Ingresa un término de búsqueda para encontrar productos</p>
+          <div className="py-12 text-center">
+            <Search className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+            <h2 className="mb-2 text-xl font-semibold text-gray-900">{ts("searchProductsTitle")}</h2>
+            <p className="text-gray-600">{ts("searchProductsHint")}</p>
           </div>
         )}
       </div>
     </div>
   )
-} 
+}

@@ -2,8 +2,12 @@
 
 import Link from "next/link"
 import { ArrowRight, Store, Wrench, Shield } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 export function HomeAnimatedPromo() {
+  const th = useTranslations("home")
+  const tc = useTranslations("common")
+
   return (
     <section className="home-section home-section-delay-2 px-4 py-6 md:px-6">
       <div className="container mx-auto max-w-screen-xl">
@@ -26,27 +30,25 @@ export function HomeAnimatedPromo() {
 
           <div className="relative z-10 flex flex-col items-center px-6 py-14 text-center sm:py-16 md:py-20">
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-purple-200">
-              Próximamente en Servido
+              {th("promoSoon")}
             </p>
             <h2 className="max-w-xl text-2xl font-bold text-white sm:text-3xl md:text-4xl">
-              Estamos trabajando para ofrecerte la mejor experiencia.
+              {tc("workingMessage")}
             </h2>
-            <p className="mt-4 max-w-lg text-sm text-purple-100 sm:text-base">
-              Muy pronto podrás encontrar miles de productos, servicios y comercios.
-            </p>
+            <p className="mt-4 max-w-lg text-sm text-purple-100 sm:text-base">{tc("comingSoonMessage")}</p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-purple-100">
               <span className="flex items-center gap-2 text-sm">
                 <Shield className="h-4 w-4" />
-                Compra segura
+                {th("securePurchase")}
               </span>
               <span className="flex items-center gap-2 text-sm">
                 <Store className="h-4 w-4" />
-                Vendedores verificados
+                {tc("verifiedSellers")}
               </span>
               <span className="flex items-center gap-2 text-sm">
                 <Wrench className="h-4 w-4" />
-                Servicios locales
+                {th("localServices")}
               </span>
             </div>
 
@@ -55,14 +57,14 @@ export function HomeAnimatedPromo() {
                 href="/products"
                 className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-purple-900 shadow-lg transition-all hover:gap-3 hover:shadow-xl"
               >
-                Explorar productos
+                {th("exploreProducts")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/signup?role=seller"
                 className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20"
               >
-                Empezá a vender
+                {th("startSelling")}
               </Link>
             </div>
           </div>

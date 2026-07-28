@@ -1,7 +1,11 @@
+"use client"
+
 import type { ReactNode } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, Shield, Store, Truck } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { LocaleFlagToggle } from "@/components/layout/locale-flag-toggle"
 
 interface AuthPageShellProps {
   title: string
@@ -10,12 +14,6 @@ interface AuthPageShellProps {
   footer?: ReactNode
   wide?: boolean
 }
-
-const highlights = [
-  { icon: Shield, text: "Compra protegida" },
-  { icon: Truck, text: "Envíos seguros" },
-  { icon: Store, text: "Vendedores verificados" },
-]
 
 function AuthLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const sizes = {
@@ -41,27 +39,35 @@ function AuthLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
 }
 
 export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthPageShellProps) {
+  const tc = useTranslations("common")
+
+  const highlights = [
+    { icon: Shield, text: tc("protectedPurchase") },
+    { icon: Truck, text: tc("secureShipping") },
+    { icon: Store, text: tc("verifiedSellers") },
+  ]
+
   return (
     <div className="min-h-dvh min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/40">
       <div className="grid min-h-dvh min-h-screen lg:grid-cols-2">
-        {/* Panel marca — desktop */}
         <div className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between">
           <div className="absolute inset-0 bg-gradient-to-br from-servido-950 via-servido-800 to-servido-700" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_20%_20%,rgba(76,29,149,0.3),transparent_50%)]" />
           <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-servido-800/25 blur-3xl" />
 
           <div className="relative z-10 flex flex-1 flex-col justify-center px-10 py-12 xl:px-16">
-            <Link href="/" className="mb-10 inline-flex items-center gap-4">
-              <AuthLogo size="lg" />
-              <span className="text-2xl font-bold text-white">Servido</span>
-            </Link>
+            <div className="mb-10 flex items-start justify-between gap-4">
+              <Link href="/" className="inline-flex items-center gap-4">
+                <AuthLogo size="lg" />
+                <span className="text-2xl font-bold text-white">{tc("brand")}</span>
+              </Link>
+              <LocaleFlagToggle variant="dark" />
+            </div>
 
             <h1 className="max-w-md text-3xl font-bold tracking-tight text-white xl:text-4xl">
-              Estamos trabajando para ofrecerte la mejor experiencia.
+              {tc("workingMessage")}
             </h1>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-purple-100/90">
-              Muy pronto podrás encontrar miles de productos, servicios y comercios.
-            </p>
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-purple-100/90">{tc("comingSoonMessage")}</p>
 
             <ul className="mt-8 space-y-3">
               {highlights.map(({ icon: Icon, text }) => (
@@ -76,13 +82,11 @@ export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthP
           </div>
 
           <p className="relative z-10 px-10 py-6 text-xs text-purple-300/80 xl:px-16">
-            © {new Date().getFullYear()} Servido · Todos los derechos reservados
+            © {new Date().getFullYear()} {tc("brand")} · {tc("allRights")}
           </p>
         </div>
 
-        {/* Formulario */}
         <div className="flex min-h-dvh min-h-screen flex-col lg:min-h-0 lg:justify-center">
-          {/* Franja marca — mobile */}
           <div className="relative overflow-hidden px-4 py-6 sm:px-6 lg:hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-servido-950 via-servido-800 to-servido-700" />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_100%_at_50%_0%,rgba(76,29,149,0.22),transparent_60%)]" />
@@ -93,34 +97,37 @@ export function AuthPageShell({ title, subtitle, children, footer, wide }: AuthP
                   className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Volver
+                  {tc("back")}
                 </Link>
-                <Link href="/" className="shrink-0" aria-label="Servido">
-                  <AuthLogo size="sm" />
-                </Link>
+                <div className="flex items-center gap-2">
+                  <LocaleFlagToggle variant="dark" />
+                  <Link href="/" className="shrink-0" aria-label="Servido">
+                    <AuthLogo size="sm" />
+                  </Link>
+                </div>
               </div>
-              <p className="text-sm leading-relaxed text-purple-50/95">
-                Estamos trabajando para ofrecerte la mejor experiencia. Muy pronto podrás encontrar miles de
-                productos, servicios y comercios.
-              </p>
+              <p className="text-sm leading-relaxed text-purple-50/95">{tc("comingSoonMessage")}</p>
             </div>
           </div>
 
           <div className="flex flex-1 flex-col justify-center px-4 pb-8 pt-2 sm:px-6 sm:pb-10 lg:px-10 lg:py-12 xl:px-16">
-          <div
-            className={`mx-auto w-full rounded-2xl bg-white p-5 shadow-xl shadow-purple-900/5 ring-1 ring-gray-100 sm:rounded-3xl sm:p-8 ${
-              wide ? "max-w-xl" : "max-w-md"
-            }`}
-          >
-            <div className="mb-5 sm:mb-6">
-              <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">{title}</h2>
-              <p className="mt-1.5 text-sm text-gray-500">{subtitle}</p>
+            <div className="mb-4 hidden justify-end lg:flex">
+              <LocaleFlagToggle />
             </div>
+            <div
+              className={`mx-auto w-full rounded-2xl bg-white p-5 shadow-xl shadow-purple-900/5 ring-1 ring-gray-100 sm:rounded-3xl sm:p-8 ${
+                wide ? "max-w-xl" : "max-w-md"
+              }`}
+            >
+              <div className="mb-5 sm:mb-6">
+                <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">{title}</h2>
+                <p className="mt-1.5 text-sm text-gray-500">{subtitle}</p>
+              </div>
 
-            {children}
+              {children}
 
-            {footer && <div className="mt-5 border-t border-gray-100 pt-5 sm:mt-6 sm:pt-6">{footer}</div>}
-          </div>
+              {footer && <div className="mt-5 border-t border-gray-100 pt-5 sm:mt-6 sm:pt-6">{footer}</div>}
+            </div>
           </div>
         </div>
       </div>

@@ -19,12 +19,14 @@ import { formatPrice, formatPriceNumber } from "@/lib/utils"
 import { ShippingForm, type ShippingAddress } from "@/components/cart/shipping-form"
 import { CouponInput } from "@/components/ui/coupon-input"
 import { saveCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
+import { useTranslations } from "next-intl"
 
 interface GroupedItems {
   [sellerId: string]: CartItem[]
 }
 
 export function CartDrawer() {
+  const t = useTranslations("cart")
   const { 
     items, 
     removeFromCart, 
@@ -63,8 +65,8 @@ export function CartDrawer() {
   const handleBuyIndividualItem = (item: CartItem) => {
     if (!currentUser) {
       toast({
-        title: "Error",
-        description: "Debes iniciar sesión para realizar la compra",
+        title: t("error"),
+        description: t("loginRequired"),
         variant: "destructive"
       })
       return
@@ -97,7 +99,7 @@ export function CartDrawer() {
       }
 
       if (!response.data?.init_point) {
-        throw new Error("No se recibió el punto de inicio del pago")
+        throw new Error(t("paymentStartMissing"))
       }
 
       // Remover el item del carrito después de crear la compra
@@ -114,8 +116,8 @@ export function CartDrawer() {
     } catch (error) {
       console.error("Error al procesar el pago:", error)
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al procesar el pago",
+        title: t("error"),
+        description: error instanceof Error ? error.message : t("paymentError"),
         variant: "destructive"
       })
     } finally {
@@ -134,8 +136,8 @@ export function CartDrawer() {
   const handleBuyVendorItems = (sellerItems: CartItem[], sellerId: string) => {
     if (!currentUser) {
       toast({
-        title: "Error",
-        description: "Debes iniciar sesión para realizar la compra",
+        title: t("error"),
+        description: t("loginRequired"),
         variant: "destructive"
       })
       return
@@ -181,7 +183,7 @@ export function CartDrawer() {
       }
 
       if (!response.data?.init_point) {
-        throw new Error("No se recibió el punto de inicio del pago")
+        throw new Error(t("paymentStartMissing"))
       }
 
       // Remover los items del carrito
@@ -200,8 +202,8 @@ export function CartDrawer() {
     } catch (error) {
       console.error("Error al procesar el pago:", error)
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al procesar el pago",
+        title: t("error"),
+        description: error instanceof Error ? error.message : t("paymentError"),
         variant: "destructive"
       })
     } finally {
@@ -216,8 +218,8 @@ export function CartDrawer() {
   const handleBuyAllItems = () => {
     if (!currentUser) {
       toast({
-        title: "Error",
-        description: "Debes iniciar sesión para realizar la compra",
+        title: t("error"),
+        description: t("loginRequired"),
         variant: "destructive"
       })
       return
@@ -254,7 +256,7 @@ export function CartDrawer() {
       const vendorCount = getVendorCount()
       if (vendorCount > 1) {
         toast({
-          title: "Pagos por vendedor",
+          title: t("paymentsBySeller"),
           description: `Tu compra tiene ${vendorCount} vendedores. Vas a realizar ${vendorCount} pagos.`,
           duration: 5000,
         })
@@ -273,7 +275,7 @@ export function CartDrawer() {
       }
 
       if (!response.data?.init_point) {
-        throw new Error("No se recibió el punto de inicio del pago")
+        throw new Error(t("paymentStartMissing"))
       }
 
       if (response.data.mode === "multi_seller" && response.data.sessionId) {
@@ -286,7 +288,7 @@ export function CartDrawer() {
       const totalAmount = response.data.totals?.final ?? items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
       toast({
-        title: response.data.mode === "multi_seller" ? "Pago 1 iniciado" : "Compra creada",
+        title: response.data.mode === "multi_seller" ? t("paymentStarted") : t("purchaseCreated"),
         description:
           response.data.mode === "multi_seller"
             ? `${vendorCount} pagos · primero ${formatPriceNumber(response.data.nextPayment?.amount || totalAmount)}`
@@ -298,8 +300,8 @@ export function CartDrawer() {
     } catch (error) {
       console.error("Error al procesar el pago:", error)
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al procesar el pago",
+        title: t("error"),
+        description: error instanceof Error ? error.message : t("paymentError"),
         variant: "destructive"
       })
     } finally {
@@ -337,7 +339,7 @@ export function CartDrawer() {
           variant="ghost"
           size="icon"
           className="relative h-10 w-10 rounded-full text-gray-700 hover:bg-purple-50 hover:text-purple-800"
-          aria-label="Abrir carrito"
+          aria-label={t("openCart")}
         >
           <ShoppingCart className="h-5 w-5" />
           {items.length > 0 && (
@@ -356,9 +358,10 @@ export function CartDrawer() {
                 <ShoppingCart className="h-5 w-5 text-purple-700" />
               </div>
               <div className="min-w-0">
-                <h2 className="font-semibold text-lg leading-none">Carrito de compras</h2>
+                <h2 className="font-semibold text-lg leading-none">{t("drawerTitle")}</h2>
                 <p className="text-sm text-gray-500 mt-1 truncate">
-                  {cartItemCount} {cartItemCount === 1 ? "unidad" : "unidades"} · {getVendorCount()} {getVendorCount() === 1 ? "vendedor" : "vendedores"}
+                  {cartItemCount} {cartItemCount === 1 ? t("unit") : t("units")} · {getVendorCount()}{" "}
+                  {getVendorCount() === 1 ? t("vendor") : t("vendors")}
                 </p>
               </div>
             </div>
@@ -367,7 +370,7 @@ export function CartDrawer() {
                 variant="ghost"
                 size="icon"
                 className="rounded-full text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                aria-label="Cerrar carrito"
+                aria-label={t("closeCart")}
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -387,7 +390,7 @@ export function CartDrawer() {
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
-                  <h3 className="font-semibold">Información de Envío</h3>
+                  <h3 className="font-semibold">{t("shippingInfo")}</h3>
                 </div>
                 <ShippingForm
                   onSubmit={handleShippingFormSubmit}
@@ -423,10 +426,11 @@ export function CartDrawer() {
                         <div className="flex items-center justify-between gap-3 pb-2 border-b border-gray-200">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-purple-500 rounded-full" />
-                            <span className="text-sm font-semibold text-gray-700">Vendedor</span>
+                            <span className="text-sm font-semibold text-gray-700">{t("seller")}</span>
                           </div>
                           <span className="text-xs text-gray-500">
-                            {sellerItems.length} {sellerItems.length === 1 ? "producto" : "productos"}
+                            {sellerItems.length}{" "}
+                            {sellerItems.length === 1 ? t("product") : t("products")}
                           </span>
                         </div>
                         
@@ -456,7 +460,7 @@ export function CartDrawer() {
                                       {item.name}
                                     </h3>
                                     <p className="text-xs text-gray-500 mt-1">
-                                      Cantidad: {item.quantity}
+                                      {t("quantity", { count: item.quantity })}
                                     </p>
                                   </div>
                                   
@@ -465,17 +469,17 @@ export function CartDrawer() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => {
-                                      if (confirm(`¿Estás seguro de que quieres eliminar "${item.name}" del carrito?`)) {
+                                      if (confirm(t("removeConfirm", { name: item.name }))) {
                                         removeFromCart(item.id)
                                         toast({
-                                          title: "Producto eliminado",
-                                          description: `${item.name} ha sido eliminado del carrito`,
+                                          title: t("itemRemoved"),
+                                          description: t("itemRemovedDesc", { name: item.name }),
                                           duration: 2000,
                                         })
                                       }
                                     }}
                                     className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 min-w-[40px] min-h-[40px] rounded-full"
-                                    title="Eliminar del carrito"
+                                    title={t("removeFromCart")}
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -506,25 +510,25 @@ export function CartDrawer() {
                                 <div className="flex flex-wrap items-center gap-2 mt-2">
                                   {item.condition && (
                                     <Badge variant="outline" className="text-xs rounded-full">
-                                      {item.condition === 'nuevo' ? 'Nuevo' : 'Usado'}
+                                      {item.condition === 'nuevo' ? t("conditionNew") : t("conditionUsed")}
                                     </Badge>
                                   )}
                                   {item.freeShipping ? (
                                     <Badge variant="outline" className="text-xs text-green-600 border-green-200 rounded-full">
                                       <Truck className="h-3 w-3 mr-1" />
-                                      Envío gratis
+                                      {t("shippingFree")}
                                     </Badge>
                                   ) : (
                                     <Badge variant="outline" className="text-xs text-gray-600 rounded-full">
                                       <Truck className="h-3 w-3 mr-1" />
-                                      {item.shippingCost !== undefined ? formatPrice(item.shippingCost) : 'Envío'}
+                                      {item.shippingCost !== undefined ? formatPrice(item.shippingCost) : t("shippingGeneric")}
                                     </Badge>
                                   )}
                                 </div>
 
                                 {/* Cantidad */}
                                 <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
-                                  <span className="text-sm font-medium text-slate-700">Cantidad</span>
+                                  <span className="text-sm font-medium text-slate-700">{t("quantityLabel")}</span>
                                   <div className="flex items-center gap-2">
                                     <Button
                                       type="button"
@@ -533,7 +537,7 @@ export function CartDrawer() {
                                       className="h-8 w-8 rounded-full"
                                       onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                                       disabled={item.quantity <= 1}
-                                      aria-label={`Disminuir cantidad de ${item.name}`}
+                                      aria-label={t("decreaseQty", { name: item.name })}
                                     >
                                       <Minus className="h-4 w-4" />
                                     </Button>
@@ -544,7 +548,7 @@ export function CartDrawer() {
                                       size="icon"
                                       className="h-8 w-8 rounded-full"
                                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                      aria-label={`Aumentar cantidad de ${item.name}`}
+                                      aria-label={t("increaseQty", { name: item.name })}
                                     >
                                       <Plus className="h-4 w-4" />
                                     </Button>
@@ -558,7 +562,7 @@ export function CartDrawer() {
                         {/* Subtotal del vendedor */}
                         <div className="bg-gray-100 rounded-xl p-3">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium text-gray-700">Subtotal vendedor:</span>
+                            <span className="text-sm font-medium text-gray-700">{t("subtotalSeller")}</span>
                             <span className="font-bold text-gray-900">{formatPriceNumber(getVendorSubtotal(sellerId))}</span>
                           </div>
                         </div>
@@ -571,12 +575,12 @@ export function CartDrawer() {
                     <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-purple-100 to-purple-50 rounded-full flex items-center justify-center shadow-inner">
                       <ShoppingBag className="h-12 w-12 text-purple-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Tu carrito está vacío</h3>
-                    <p className="text-gray-500 mb-6 max-w-sm mx-auto">Agrega productos o servicios para empezar a comprar.</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t("empty")}</h3>
+                    <p className="text-gray-500 mb-6 max-w-sm mx-auto">{t("emptyHint")}</p>
                     <Link href="/products">
                       <Button className="bg-purple-600 hover:bg-purple-700 cart-button rounded-full px-5">
                         <ShoppingBag className="h-4 w-4 mr-2" />
-                        Ver productos
+                        {t("viewProducts")}
                       </Button>
                     </Link>
                   </div>
@@ -592,32 +596,32 @@ export function CartDrawer() {
               <div className="bg-slate-50 rounded-2xl p-4 space-y-3 border border-slate-200">
                 <h4 className="font-semibold text-gray-900 flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
-                  Resumen de compra
+                  {t("purchaseSummary")}
                 </h4>
                 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Productos ({items.length})</span>
+                    <span className="text-gray-600">{t("productsCount", { count: items.length })}</span>
                     <span className="font-medium">{formatPriceNumber(getSubtotal())}</span>
                   </div>
                   
                   {appliedCoupon && (
                     <div className="flex justify-between text-green-600">
-                      <span>Descuento ({appliedCoupon.discountType === "percentage" ? `${appliedCoupon.discountValue}%` : `$${appliedCoupon.discountValue}`})</span>
+                      <span>{t("discount")} ({appliedCoupon.discountType === "percentage" ? `${appliedCoupon.discountValue}%` : `$${appliedCoupon.discountValue}`})</span>
                       <span className="font-medium">-{formatPriceNumber(getDiscountAmount())}</span>
                     </div>
                   )}
                   
                   {getTotalShipping() > 0 && (
                     <div className="flex justify-between text-blue-600">
-                      <span>Envío</span>
+                      <span>{t("shipping")}</span>
                       <span className="font-medium">{formatPriceNumber(getTotalShipping())}</span>
                     </div>
                   )}
                   
                   <div className="border-t pt-2">
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-lg">Total</span>
+                      <span className="font-semibold text-lg">{t("total")}</span>
                       <span className="font-bold text-2xl text-gray-900">{formatPriceNumber(getTotalWithShipping())}</span>
                     </div>
                   </div>
@@ -634,12 +638,12 @@ export function CartDrawer() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Procesando...
+                      {t("processing")}
                     </>
                   ) : (
                     <>
                       <Shield className="mr-2 h-5 w-5" />
-                      Comprar ahora
+                      {t("buyNow")}
                     </>
                   )}
                 </Button>
@@ -647,22 +651,20 @@ export function CartDrawer() {
                 <div className="rounded-2xl border border-red-200 bg-red-50/70 p-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-red-900">Acción peligrosa</p>
-                      <p className="text-xs text-red-700">
-                        Vacía todo el carrito y elimina el cupón aplicado.
-                      </p>
+                      <p className="text-sm font-medium text-red-900">{t("dangerAction")}</p>
+                      <p className="text-xs text-red-700">{t("clearHint")}</p>
                     </div>
                     <Button
                       variant="outline"
                       onClick={() => {
-                        if (confirm("¿Querés vaciar todo el carrito?")) {
+                        if (confirm(t("clearConfirm"))) {
                           clearCart()
                         }
                       }}
                       className="shrink-0 border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800 rounded-xl"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Limpiar
+                      {t("clear")}
                     </Button>
                   </div>
                 </div>
@@ -672,11 +674,11 @@ export function CartDrawer() {
               <div className="text-xs text-gray-500 space-y-1">
                 <div className="flex items-center gap-2">
                   <Shield className="h-3 w-3 text-green-500" />
-                  <span>Compra segura con MercadoPago</span>
+                  <span>{t("secureMp")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Truck className="h-3 w-3 text-blue-500" />
-                  <span>Envío a todo el país</span>
+                  <span>{t("shippingNationwide")}</span>
                 </div>
               </div>
             </div>

@@ -48,6 +48,7 @@ import { formatPrice, formatPriceNumber } from "@/lib/utils"
 import { ShareButtons } from "@/components/ui/share-buttons"
 import { ApiService } from "@/lib/services/api"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslations } from "next-intl"
 import { getProductThumbnail } from "@/lib/image-utils"
 import { ProductBreadcrumbs } from "@/components/product/product-breadcrumbs"
 import { ProductGallery } from "@/components/product/product-gallery"
@@ -141,6 +142,8 @@ interface Coupon {
 }
 
 export default function ProductDetailPage() {
+  const tp = useTranslations("product")
+  const tc = useTranslations("cart")
   const params = useParams()
   const router = useRouter()
   const { addItem, getItemQuantity } = useCart()
@@ -221,7 +224,7 @@ export default function ProductDetailPage() {
       // Fetch product
       const productDoc = await getDoc(doc(db, "products", productId))
       if (!productDoc.exists()) {
-        setError("Producto no encontrado")
+        setError(tp("notFound"))
         setLoading(false)
         return
       }
@@ -332,7 +335,7 @@ export default function ProductDetailPage() {
       }
     } catch (err) {
       console.error("Error fetching product details:", err)
-      setError("Error al cargar el producto")
+      setError(tp("loadError"))
     } finally {
       setLoading(false)
     }
@@ -657,8 +660,8 @@ export default function ProductDetailPage() {
   const handleBuyNow = async () => {
     if (!currentUser) {
       toast({
-        title: "Error",
-        description: "Debes iniciar sesión para realizar la compra",
+        title: tc("error"),
+        description: tp("loginRequired"),
         variant: "destructive"
       })
       return
@@ -699,7 +702,7 @@ export default function ProductDetailPage() {
       }
 
       if (!response.data?.init_point) {
-        throw new Error("No se recibió el punto de inicio del pago")
+        throw new Error(tc("paymentStartMissing"))
       }
 
       toast({
@@ -713,8 +716,8 @@ export default function ProductDetailPage() {
     } catch (error) {
       console.error("Error al procesar la compra directa:", error)
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Error al procesar la compra",
+        title: tc("error"),
+        description: error instanceof Error ? error.message : tp("purchaseError"),
         variant: "destructive"
       })
     } finally {
@@ -761,10 +764,10 @@ export default function ProductDetailPage() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/30 p-4">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg ring-1 ring-gray-100">
           <AlertCircle className="mx-auto mb-4 h-14 w-14 text-purple-400" />
-          <h1 className="mb-2 text-xl font-bold text-gray-900">Producto no disponible</h1>
-          <p className="mb-6 text-gray-600">{error || "No pudimos cargar este producto."}</p>
+          <h1 className="mb-2 text-xl font-bold text-gray-900">{tp("unavailableTitle")}</h1>
+          <p className="mb-6 text-gray-600">{error || tp("unavailableDesc")}</p>
           <Button asChild className="rounded-full bg-purple-700 hover:bg-purple-800">
-            <Link href="/products">Ver catálogo</Link>
+            <Link href="/products">{tp("seeCatalog")}</Link>
           </Button>
         </div>
       </div>
@@ -783,7 +786,7 @@ export default function ProductDetailPage() {
           reviewsCount: reviews.length,
         }}
         breadcrumbs={[
-          { name: "Inicio", href: "/" },
+          { name: tp("home"), href: "/" },
           ...(category ? [{ name: category.name, href: `/category/${category.id}` }] : []),
           { name: product.name },
         ]}
@@ -863,11 +866,11 @@ export default function ProductDetailPage() {
                         product.condition === "nuevo" ? "bg-emerald-600" : "bg-amber-600"
                       }`}
                     >
-                      {product.condition === "nuevo" ? "Nuevo" : "Usado"}
+                      {product.condition === "nuevo" ? tp("new") : tp("used")}
                     </Badge>
                   )}
                   {product.freeShipping && (
-                    <Badge className="rounded-full bg-green-600 text-white">Envío gratis</Badge>
+                    <Badge className="rounded-full bg-green-600 text-white">{tp("freeShipping")}</Badge>
                   )}
                 </div>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{product.name}</h1>
@@ -881,7 +884,7 @@ export default function ProductDetailPage() {
                     ))}
                   </div>
                   <span className="text-sm text-gray-500">
-                    {averageRating.toFixed(1)} · {reviews.length} reseñas
+                    {tp("reviewsCount", { rating: averageRating.toFixed(1), count: reviews.length })}
                   </span>
                 </div>
               </div>
@@ -903,24 +906,27 @@ export default function ProductDetailPage() {
                 {!product.freeShipping && product.shippingCost !== undefined && (
                   <p className="mt-2 flex items-center gap-2 text-sm text-gray-600">
                     <Truck className="h-4 w-4 text-purple-600" />
-                    Envío: <span className="font-medium">{formatPrice(product.shippingCost)}</span>
+                    {tp("shipping")} <span className="font-medium">{formatPrice(product.shippingCost)}</span>
                   </p>
                 )}
                 {product.stock !== undefined && (
                   <p className="mt-1 text-sm text-gray-500">
-                    Stock: <span className="font-medium text-gray-800">{product.stock} unidades</span>
+                    {tp("stock")}{" "}
+                    <span className="font-medium text-gray-800">
+                      {product.stock} {tp("units")}
+                    </span>
                   </p>
                 )}
                 {currentCartQuantity > 0 && (
                   <p className="mt-2 rounded-lg bg-purple-50 px-3 py-2 text-sm font-medium text-purple-800">
-                    Ya tenés {currentCartQuantity} en el carrito
+                    {tp("inCart", { count: currentCartQuantity })}
                   </p>
                 )}
               </div>
 
               <div className="space-y-4 border-t border-gray-100 pt-4">
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-gray-700">Cantidad</span>
+                  <span className="text-sm font-medium text-gray-700">{tp("quantity")}</span>
                   <div className="flex items-center rounded-full bg-gray-50 p-1 ring-1 ring-gray-200">
                     <Button
                       variant="ghost"
@@ -943,7 +949,7 @@ export default function ProductDetailPage() {
                     </Button>
                   </div>
                   {maxQuantity > 0 && (
-                    <span className="text-xs text-gray-400">Máx. {maxQuantity}</span>
+                    <span className="text-xs text-gray-400">{tp("max", { count: maxQuantity })}</span>
                   )}
                 </div>
 
@@ -954,7 +960,7 @@ export default function ProductDetailPage() {
                   className="h-12 w-full rounded-full bg-purple-700 text-base font-semibold shadow-lg shadow-purple-200 hover:bg-purple-800"
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
-                  {maxQuantity <= 0 ? "Sin stock" : "Agregar al carrito"}
+                  {maxQuantity <= 0 ? tp("outOfStock") : tp("addToCart")}
                 </Button>
               </div>
 
@@ -969,13 +975,13 @@ export default function ProductDetailPage() {
                         <Link href={`/seller/${seller.id}`} className="font-semibold text-gray-900 hover:text-purple-800">
                           {seller.name}
                         </Link>
-                        <p className="text-xs text-gray-500">Vendedor verificado</p>
+                        <p className="text-xs text-gray-500">{tp("verifiedSeller")}</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <Link href={`/seller/${seller.id}`}>
                         <Button variant="outline" size="sm" className="rounded-full border-purple-200">
-                          Ver tienda
+                          {tp("viewStore")}
                         </Button>
                       </Link>
                       {currentUser?.firebaseUser.uid !== seller.id && (
@@ -986,7 +992,7 @@ export default function ProductDetailPage() {
                           className="rounded-full border-purple-200"
                         >
                           <MessageSquare className="mr-1 h-4 w-4" />
-                          Contactar
+                          {tp("contact")}
                         </Button>
                       )}
                     </div>
@@ -1018,7 +1024,7 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="space-y-8">
-          <ProductDetailSection title="Descripción" icon={FileText}>
+          <ProductDetailSection title={tp("description")} icon={FileText}>
             <p className="leading-relaxed text-gray-700">
               {product.description || "Este producto no tiene descripción disponible."}
             </p>

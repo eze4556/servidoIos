@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
+import { useTranslations } from "next-intl"
 import {
   Search,
   ChevronDown,
@@ -40,6 +41,7 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
 import { formatPrice } from "@/lib/utils"
 import { UserGreeting } from "@/components/layout/user-greeting"
+import { LocaleFlagToggle } from "@/components/layout/locale-flag-toggle"
 
 interface CategoryItem {
   id: string
@@ -59,6 +61,8 @@ interface SearchProduct {
 }
 
 export function Header() {
+  const t = useTranslations("header")
+  const tc = useTranslations("common")
   const { currentUser, authLoading, handleLogout, getDashboardLink, getVenderLink } = useAuth()
   const { userLocation, shortLocation, loadingLocation, openLocationPicker } = useLocation()
   const { unreadCount } = useChatUnread()
@@ -177,7 +181,7 @@ export function Header() {
         {isSearching ? (
           <div className="flex items-center justify-center gap-2 p-4 text-gray-500">
             <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
-            Buscando...
+            {tc("searching")}
           </div>
         ) : searchResults.length > 0 ? (
           <div className="divide-y divide-gray-50 py-1">
@@ -207,7 +211,7 @@ export function Header() {
             ))}
           </div>
         ) : (
-          <div className="p-4 text-center text-sm text-gray-500">No se encontraron productos</div>
+          <div className="p-4 text-center text-sm text-gray-500">{tc("noProductsFound")}</div>
         )}
       </div>
     )
@@ -243,15 +247,15 @@ export function Header() {
                     className="h-11 shrink-0 gap-2 rounded-full border-purple-200 bg-purple-50 px-4 font-semibold text-purple-800 shadow-sm hover:border-purple-300 hover:bg-purple-100 hover:text-purple-900"
                   >
                     <Menu className="h-4 w-4" />
-                    Categorías
+                    {t("categories")}
                     <ChevronDown className="h-4 w-4 opacity-60" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56 rounded-2xl border-0 p-2 shadow-xl">
                   {loadingCategories ? (
-                    <DropdownMenuItem disabled>Cargando categorías...</DropdownMenuItem>
+                    <DropdownMenuItem disabled>{tc("loadingCategories")}</DropdownMenuItem>
                   ) : categories.length === 0 ? (
-                    <DropdownMenuItem disabled>No hay categorías disponibles.</DropdownMenuItem>
+                    <DropdownMenuItem disabled>{tc("noCategories")}</DropdownMenuItem>
                   ) : (
                     categories.map((category) => (
                       <DropdownMenuItem key={category.id} asChild className="rounded-xl">
@@ -267,7 +271,7 @@ export function Header() {
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   <Input
                     type="text"
-                    placeholder="¿Qué necesitas hoy?"
+                    placeholder={t("searchPlaceholder")}
                     value={searchTerm}
                     onChange={handleSearchChange}
                     className={searchInputClass}
@@ -285,12 +289,13 @@ export function Header() {
 
             {/* Acciones */}
             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+              <LocaleFlagToggle />
               {currentUser ? (
                 <div className="hidden items-center gap-2 lg:flex">
                   <Avatar className="h-9 w-9 border-2 border-purple-100 ring-2 ring-purple-50">
                     <AvatarImage
                       src={currentUser.firebaseUser.photoURL || undefined}
-                      alt={currentUser.firebaseUser.displayName || "Usuario"}
+                      alt={currentUser.firebaseUser.displayName || tc("user")}
                       className="object-cover"
                     />
                     <AvatarFallback className="bg-purple-700 text-sm font-medium text-white">
@@ -305,18 +310,18 @@ export function Header() {
                     </p>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
                       <Link href="/dashboard/buyer" className="hover:text-purple-700">
-                        Mi Panel
+                        {t("myPanel")}
                       </Link>
                       {currentUser.role === "seller" && (
                         <Link
                           href={`/seller/${currentUser.firebaseUser.uid}`}
                           className="hover:text-purple-700"
                         >
-                          Mi Tienda
+                          {t("myStore")}
                         </Link>
                       )}
                       <button onClick={handleLogout} className="hover:text-purple-700">
-                        Salir
+                        {t("logout")}
                       </button>
                     </div>
                   </div>
@@ -327,13 +332,13 @@ export function Header() {
                     href="/login"
                     className="rounded-full px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-purple-800"
                   >
-                    Ingresar
+                    {t("login")}
                   </Link>
                   <Link
                     href="/signup"
                     className="rounded-full bg-purple-700 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-purple-200 transition-all hover:bg-purple-800 hover:shadow-lg"
                   >
-                    Crear cuenta
+                    {t("signup")}
                   </Link>
                 </div>
               )}
@@ -356,7 +361,7 @@ export function Header() {
                   }`}
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Chat
+                  {t("chat")}
                   {unreadCount > 0 && (
                     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
                       {unreadCount > 9 ? "9+" : unreadCount}
@@ -391,21 +396,21 @@ export function Header() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-purple-200/90">
-                      Enviar a
+                      {tc("sendTo")}
                     </span>
                     {loadingLocation ? (
                       <span className="flex items-center gap-2 text-sm font-medium text-white">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Detectando...
+                        {tc("detecting")}
                       </span>
                     ) : (
                       <span className="block truncate text-sm font-semibold text-white">
-                        {shortLocation || userLocation || "Elegí tu ubicación"}
+                        {shortLocation || userLocation || tc("chooseLocation")}
                       </span>
                     )}
                   </div>
                   <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-purple-100 ring-1 ring-white/10">
-                    Cambiar
+                    {tc("change")}
                   </span>
                 </button>
               </TooltipTrigger>
@@ -413,10 +418,10 @@ export function Header() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-purple-600" />
-                    <span className="font-medium">Tu ubicación</span>
+                    <span className="font-medium">{tc("yourLocation")}</span>
                   </div>
-                  <p className="text-sm">{userLocation || "Todavía no elegiste una ubicación"}</p>
-                  <p className="text-xs text-gray-500">Tocá para buscar ciudad o usar el GPS</p>
+                  <p className="text-sm">{userLocation || tc("noLocationYet")}</p>
+                  <p className="text-xs text-gray-500">{tc("locationHint")}</p>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -424,11 +429,11 @@ export function Header() {
 
           <nav className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-sm">
             {[
-              { href: "/siguiendo", icon: UserPlus, label: "Seguir" },
-              { href: "/mensajes", icon: MessageCircle, label: "Chat" },
-              { href: "/restaurantes", icon: UtensilsCrossed, label: "Restaurantes" },
-              { href: "/services", icon: Package, label: "Servicios" },
-              { href: "/favorites", icon: Heart, label: "Favoritos" },
+              { href: "/siguiendo", icon: UserPlus, label: t("navFollow") },
+              { href: "/mensajes", icon: MessageCircle, label: t("chat") },
+              { href: "/restaurantes", icon: UtensilsCrossed, label: t("navRestaurants") },
+              { href: "/services", icon: Package, label: t("navServices") },
+              { href: "/favorites", icon: Heart, label: t("navFavorites") },
             ].map(({ href, icon: Icon, label }) => {
               const isActive =
                 href === "/mensajes"

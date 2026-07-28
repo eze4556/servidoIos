@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Search, Sparkles } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { useTranslations } from "next-intl"
 
 interface SearchChip {
   label: string
@@ -15,16 +16,20 @@ interface HomeSearchHeroProps {
   chips?: SearchChip[]
 }
 
-const defaultChips: SearchChip[] = [
-  { label: "Electrónica", href: "/search?q=electronica" },
-  { label: "Hogar", href: "/search?q=hogar" },
-  { label: "Servicios", href: "/services" },
-  { label: "Ofertas", href: "/products" },
-]
-
-export function HomeSearchHero({ chips = defaultChips }: HomeSearchHeroProps) {
+export function HomeSearchHero({ chips }: HomeSearchHeroProps) {
+  const th = useTranslations("home")
+  const tHeader = useTranslations("header")
   const router = useRouter()
   const [query, setQuery] = useState("")
+
+  const defaultChips: SearchChip[] = [
+    { label: "Electrónica", href: "/search?q=electronica" },
+    { label: "Hogar", href: "/search?q=hogar" },
+    { label: th("chipServices"), href: "/services" },
+    { label: "Ofertas", href: "/products" },
+  ]
+
+  const displayChips = chips ?? defaultChips
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,15 +50,13 @@ export function HomeSearchHero({ chips = defaultChips }: HomeSearchHeroProps) {
           <div className="relative z-10 mx-auto max-w-2xl text-center">
             <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-purple-100 backdrop-blur-sm">
               <Sparkles className="h-3.5 w-3.5" />
-              Servido Marketplace
+              {th("heroBadge")}
             </span>
 
             <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
-              ¿Qué estás buscando hoy?
+              {th("heroTitle")}
             </h1>
-            <p className="mt-3 text-sm text-purple-100 sm:text-base md:text-lg">
-              Productos, servicios y ofertas de vendedores de confianza
-            </p>
+            <p className="mt-3 text-sm text-purple-100 sm:text-base md:text-lg">{th("heroSubtitle")}</p>
 
             <form onSubmit={handleSearch} className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="relative flex-1">
@@ -62,7 +65,7 @@ export function HomeSearchHero({ chips = defaultChips }: HomeSearchHeroProps) {
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="¿Qué necesitas hoy?"
+                  placeholder={tHeader("searchPlaceholder")}
                   className="h-12 rounded-2xl border-0 bg-white pl-12 pr-4 text-base shadow-lg placeholder:text-gray-400 focus-visible:ring-2 focus-visible:ring-purple-300 sm:h-14"
                 />
               </div>
@@ -71,12 +74,12 @@ export function HomeSearchHero({ chips = defaultChips }: HomeSearchHeroProps) {
                 size="lg"
                 className="h-12 rounded-2xl bg-white px-8 font-semibold text-purple-900 shadow-lg transition-all hover:bg-purple-50 hover:shadow-xl sm:h-14"
               >
-                Buscar
+                {th("search")}
               </Button>
             </form>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-              {chips.map((chip) => (
+              {displayChips.map((chip) => (
                 <button
                   key={chip.label}
                   type="button"

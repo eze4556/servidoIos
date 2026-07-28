@@ -15,8 +15,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, Mail, Phone, ShoppingBag, Store, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AuthPageShell, authInputClass, authLabelClass } from "@/components/auth/auth-page-shell"
+import { useTranslations } from "next-intl"
 
 export default function SignupPage() {
+  const t = useTranslations("auth")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
@@ -43,27 +45,27 @@ export default function SignupPage() {
     setError(null)
 
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.")
+      setError(t("passwordMismatch"))
       return
     }
     if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.")
+      setError(t("passwordMin"))
       return
     }
     if (!name.trim()) {
-      setError("Por favor, ingresa tu nombre.")
+      setError(t("nameRequired"))
       return
     }
     if (!email.trim()) {
-      setError("Por favor, ingresa tu correo electrónico.")
+      setError(t("emailRequired"))
       return
     }
     if (!phone.trim()) {
-      setError("Por favor, ingresa tu número de teléfono.")
+      setError(t("phoneRequired"))
       return
     }
     if (!acceptTerms) {
-      setError("Debes aceptar los términos y condiciones para continuar.")
+      setError(t("termsRequired"))
       return
     }
 
@@ -118,11 +120,11 @@ export default function SignupPage() {
       }
     } catch (err: any) {
       if (err.code === "auth/email-already-in-use") {
-        setError("Este correo electrónico ya está en uso.")
+        setError(t("emailInUseLong"))
       } else if (err.code === "auth/weak-password") {
-        setError("La contraseña es demasiado débil.")
+        setError(t("weakPassword"))
       } else {
-        setError("Error al crear la cuenta. Por favor, inténtalo de nuevo.")
+        setError(t("signupErrorLong"))
         console.error("Signup error:", err)
       }
     } finally {
@@ -133,26 +135,26 @@ export default function SignupPage() {
   return (
     <AuthPageShell
       wide
-      title="Crear cuenta"
-      subtitle="Elegí tu tipo de cuenta y completá tus datos"
+      title={t("signupPageTitle")}
+      subtitle={t("signupPageSubtitle")}
       footer={
         <div className="space-y-3 text-center text-sm text-gray-600">
           <p>
-            ¿Tenés un restaurante?{" "}
+            {t("restaurantPrompt")}{" "}
             <Link href="/signup/restaurante" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
-              Registrate acá
+              {t("restaurantLink")}
             </Link>
           </p>
           <p>
-            ¿Querés ser cadete?{" "}
+            {t("cadetePrompt")}{" "}
             <Link href="/signup/cadete" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
-              Postulate acá
+              {t("cadeteLink")}
             </Link>
           </p>
           <p>
-            ¿Ya tenés cuenta?{" "}
+            {t("hasAccount")}{" "}
             <Link href="/login" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
-              Iniciá sesión
+              {t("loginLink")}
             </Link>
           </p>
         </div>
@@ -160,11 +162,11 @@ export default function SignupPage() {
     >
       <form onSubmit={handleSignup} className="space-y-5">
         <div>
-          <Label className={`${authLabelClass} mb-3 block`}>Tipo de cuenta</Label>
+          <Label className={`${authLabelClass} mb-3 block`}>{t("accountType")}</Label>
           <div className="grid grid-cols-2 gap-2 rounded-2xl bg-gray-50 p-1.5 ring-1 ring-gray-200">
             {[
-              { value: "buyer" as const, label: "Comprar", icon: ShoppingBag },
-              { value: "seller" as const, label: "Vender", icon: Store },
+              { value: "buyer" as const, label: t("wantBuy"), icon: ShoppingBag },
+              { value: "seller" as const, label: t("wantSell"), icon: Store },
             ].map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
@@ -178,7 +180,7 @@ export default function SignupPage() {
                 )}
               >
                 <Icon className="h-5 w-5" />
-                Quiero {label}
+                {t("wantTo", { action: label })}
               </button>
             ))}
           </div>
@@ -186,7 +188,7 @@ export default function SignupPage() {
 
         <div className="space-y-2">
           <Label htmlFor="name" className={authLabelClass}>
-            Nombre completo
+            {t("displayName")}
           </Label>
           <div className="relative">
             <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -205,7 +207,7 @@ export default function SignupPage() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="email" className={authLabelClass}>
-              Correo electrónico
+              {t("email")}
             </Label>
             <div className="relative">
               <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -223,7 +225,7 @@ export default function SignupPage() {
 
           <div className="space-y-2">
             <Label htmlFor="phone" className={authLabelClass}>
-              Teléfono
+              {t("phone")}
             </Label>
             <div className="relative">
               <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -243,7 +245,7 @@ export default function SignupPage() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="password" className={authLabelClass}>
-              Contraseña
+              {t("password")}
             </Label>
             <Input
               id="password"
@@ -258,7 +260,7 @@ export default function SignupPage() {
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword" className={authLabelClass}>
-              Confirmar contraseña
+              {t("confirmPassword")}
             </Label>
             <Input
               id="confirmPassword"
@@ -281,15 +283,15 @@ export default function SignupPage() {
             required
           />
           <Label htmlFor="terms" className="cursor-pointer text-sm leading-relaxed text-gray-600">
-            Acepto los{" "}
+            {t("acceptTerms")}{" "}
             <Link
               href="/terminos-y-condiciones"
               target="_blank"
               className="font-semibold text-purple-700 hover:underline"
             >
-              términos y condiciones
+              {t("termsLink")}
             </Link>{" "}
-            de Servido
+            Servido
           </Label>
         </div>
 
@@ -305,10 +307,10 @@ export default function SignupPage() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creando cuenta...
+              {t("signingUp")}
             </>
           ) : (
-            "Crear cuenta"
+            t("signupPageTitle")
           )}
         </Button>
       </form>

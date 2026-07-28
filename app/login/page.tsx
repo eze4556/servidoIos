@@ -13,8 +13,10 @@ import { Label } from "@/components/ui/label"
 import { Loader2, Lock, Mail } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { AuthPageShell, authInputClass, authLabelClass } from "@/components/auth/auth-page-shell"
+import { useTranslations } from "next-intl"
 
 export default function LoginPage() {
+  const t = useTranslations("auth")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -36,15 +38,16 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password)
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code
       if (
-        err.code === "auth/user-not-found" ||
-        err.code === "auth/wrong-password" ||
-        err.code === "auth/invalid-credential"
+        code === "auth/user-not-found" ||
+        code === "auth/wrong-password" ||
+        code === "auth/invalid-credential"
       ) {
-        setError("Correo electrónico o contraseña incorrectos.")
+        setError(t("wrongCredentials"))
       } else {
-        setError("Error al iniciar sesión. Por favor, inténtalo de nuevo.")
+        setError(t("loginError"))
         console.error("Login error:", err)
       }
     } finally {
@@ -62,13 +65,13 @@ export default function LoginPage() {
 
   return (
     <AuthPageShell
-      title="Iniciar sesión"
-      subtitle="Bienvenido de nuevo a Servido"
+      title={t("loginTitle")}
+      subtitle={t("loginSubtitle")}
       footer={
         <p className="text-center text-sm text-gray-600">
-          ¿No tenés cuenta?{" "}
+          {t("noAccount")}{" "}
           <Link href="/signup" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
-            Registrate gratis
+            {t("signupFree")}
           </Link>
         </p>
       }
@@ -76,7 +79,7 @@ export default function LoginPage() {
       <form onSubmit={handleLogin} className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="email" className={authLabelClass}>
-            Correo electrónico
+            {t("email")}
           </Label>
           <div className="relative">
             <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -94,7 +97,7 @@ export default function LoginPage() {
 
         <div className="space-y-2">
           <Label htmlFor="password" className={authLabelClass}>
-            Contraseña
+            {t("password")}
           </Label>
           <div className="relative">
             <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -122,10 +125,10 @@ export default function LoginPage() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Ingresando...
+              {t("loggingIn")}
             </>
           ) : (
-            "Iniciar sesión"
+            t("loginButton")
           )}
         </Button>
       </form>

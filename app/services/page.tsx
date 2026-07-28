@@ -14,6 +14,7 @@ import { collection, getDocs, query, orderBy, where } from "firebase/firestore"
 import { formatPrice } from "@/lib/utils"
 import { getProductThumbnail } from "@/lib/image-utils"
 import type { ProductMedia } from "@/types/product"
+import { useTranslations } from "next-intl"
 
 interface Service {
   id: string
@@ -36,6 +37,9 @@ interface Service {
 }
 
 export default function ServicesPage() {
+  const ts = useTranslations("servicesPage")
+  const tc = useTranslations("cart")
+  const tr = useTranslations("roles")
   const [services, setServices] = useState<Service[]>([])
   const [filteredServices, setFilteredServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
@@ -74,7 +78,7 @@ export default function ServicesPage() {
       setFilteredServices(servicesData)
     } catch (err) {
       console.error("Error fetching services:", err)
-      setError("Error al cargar los servicios. Intenta de nuevo más tarde.")
+      setError(ts("loadError"))
     } finally {
       setLoading(false)
     }
@@ -165,7 +169,7 @@ export default function ServicesPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando servicios...</p>
+            <p className="mt-4 text-gray-600">{ts("loading")}</p>
           </div>
         </div>
       </div>
@@ -192,7 +196,7 @@ export default function ServicesPage() {
           <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5 sm:rounded-3xl">
             <Image
               src="/images/bannernuevooficial4.jpeg"
-              alt="Todos los servicios en un solo lugar"
+              alt={ts("bannerAlt")}
               width={1600}
               height={723}
               className="h-auto w-full"
@@ -213,7 +217,7 @@ export default function ServicesPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Buscar servicios..."
+                  placeholder={ts("searchPlaceholder")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -225,10 +229,10 @@ export default function ServicesPage() {
             <div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Categoría" />
+                  <SelectValue placeholder={ts("categoryPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas las categorías</SelectItem>
+                  <SelectItem value="all">{ts("allCategories")}</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -242,14 +246,14 @@ export default function ServicesPage() {
             <div>
               <Select value={priceRange} onValueChange={setPriceRange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Precio" />
+                  <SelectValue placeholder={ts("pricePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los precios</SelectItem>
-                  <SelectItem value="0-1000">Hasta $1,000</SelectItem>
-                  <SelectItem value="1000-5000">$1,000 - $5,000</SelectItem>
-                  <SelectItem value="5000-10000">$5,000 - $10,000</SelectItem>
-                  <SelectItem value="10000+">Más de $10,000</SelectItem>
+                  <SelectItem value="all">{ts("allPrices")}</SelectItem>
+                  <SelectItem value="0-1000">{ts("priceUpTo1k")}</SelectItem>
+                  <SelectItem value="1000-5000">{ts("price1k5k")}</SelectItem>
+                  <SelectItem value="5000-10000">{ts("price5k10k")}</SelectItem>
+                  <SelectItem value="10000+">{ts("priceOver10k")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -258,14 +262,14 @@ export default function ServicesPage() {
             <div>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Ordenar" />
+                  <SelectValue placeholder={ts("sortPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="newest">Más recientes</SelectItem>
-                  <SelectItem value="oldest">Más antiguos</SelectItem>
-                  <SelectItem value="price-low">Precio: menor a mayor</SelectItem>
-                  <SelectItem value="price-high">Precio: mayor a menor</SelectItem>
-                  <SelectItem value="rating">Mejor valorados</SelectItem>
+                  <SelectItem value="newest">{ts("sortNewest")}</SelectItem>
+                  <SelectItem value="oldest">{ts("sortOldest")}</SelectItem>
+                  <SelectItem value="price-low">{ts("sortPriceLow")}</SelectItem>
+                  <SelectItem value="price-high">{ts("sortPriceHigh")}</SelectItem>
+                  <SelectItem value="rating">{ts("sortRating")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -276,7 +280,7 @@ export default function ServicesPage() {
             <div className="mt-4">
               <Button variant="outline" onClick={clearFilters} className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
-                Limpiar filtros
+                {ts("clearFilters")}
               </Button>
             </div>
           )}
@@ -286,7 +290,9 @@ export default function ServicesPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold text-gray-900">
-              {filteredServices.length} servicio{filteredServices.length !== 1 ? 's' : ''} encontrado{filteredServices.length !== 1 ? 's' : ''}
+              {filteredServices.length === 1
+                ? ts("foundOne")
+                : ts("foundMany", { count: filteredServices.length })}
             </h2>
           </div>
         </div>
@@ -306,13 +312,13 @@ export default function ServicesPage() {
                     />
                     <div className="absolute top-2 left-2">
                       <Badge className="bg-purple-600 text-white">
-                        Servicio
+                        {ts("badge")}
                       </Badge>
                     </div>
                     {service.condition && (
                       <div className="absolute top-2 right-2">
                         <Badge variant={service.condition === 'nuevo' ? 'default' : 'secondary'}>
-                          {service.condition === 'nuevo' ? 'Nuevo' : 'Usado'}
+                          {service.condition === 'nuevo' ? tc("conditionNew") : tc("conditionUsed")}
                         </Badge>
                       </div>
                     )}
@@ -331,7 +337,7 @@ export default function ServicesPage() {
                     <div className="flex items-center gap-2 mb-3">
                       <User className="h-4 w-4 text-gray-400" />
                       <span className="text-sm text-gray-600">
-                        {service.sellerName || 'Vendedor'}
+                        {service.sellerName || tr("seller")}
                       </span>
                     </div>
 
@@ -348,7 +354,10 @@ export default function ServicesPage() {
                       <div className="flex items-center gap-2 mb-3">
                         <Star className="h-4 w-4 text-yellow-400 fill-current" />
                         <span className="text-sm text-gray-600">
-                          {service.rating.toFixed(1)} ({service.reviewCount || 0} reseñas)
+                          {ts("reviews", {
+                            rating: service.rating.toFixed(1),
+                            count: service.reviewCount || 0,
+                          })}
                         </span>
                       </div>
                     )}
@@ -359,7 +368,7 @@ export default function ServicesPage() {
                       </span>
                       <div className="flex items-center gap-1 text-sm text-gray-500">
                         <Clock className="h-4 w-4" />
-                        <span>Disponible</span>
+                        <span>{ts("available")}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -372,18 +381,16 @@ export default function ServicesPage() {
             <div className="text-gray-400 mb-4">
               <Package className="h-16 w-16 mx-auto" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No se encontraron servicios
-            </h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{ts("noResultsTitle")}</h3>
             <p className="text-gray-600 mb-6">
               {searchTerm || selectedCategory !== "all" || priceRange !== "all" 
-                ? "Intenta ajustar los filtros de búsqueda"
-                : "No hay servicios disponibles en este momento"
+                ? ts("noResultsFilters")
+                : ts("noResultsEmpty")
               }
             </p>
             {(searchTerm || selectedCategory !== "all" || priceRange !== "all") && (
               <Button onClick={clearFilters}>
-                Limpiar filtros
+                {ts("clearFilters")}
               </Button>
             )}
           </div>

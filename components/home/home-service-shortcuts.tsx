@@ -2,73 +2,76 @@
 
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-
-const serviceShortcuts: {
-  id: string
-  label: string
-  emoji: string
-  href: string
-  circle: string
-  shadow: string
-  iconAnim: string
-}[] = [
-  {
-    id: "productos",
-    label: "Productos",
-    emoji: "🛍️",
-    href: "/products",
-    circle: "bg-gradient-to-br from-violet-500 via-purple-600 to-servido-800",
-    shadow: "shadow-violet-500/40",
-    iconAnim: "home-shortcut-float",
-  },
-  {
-    id: "delivery",
-    label: "Delivery",
-    emoji: "🍔",
-    href: "/restaurantes",
-    circle: "bg-gradient-to-br from-orange-400 via-orange-500 to-red-500",
-    shadow: "shadow-orange-500/40",
-    iconAnim: "home-shortcut-float-delay-1",
-  },
-  {
-    id: "super",
-    label: "Súper",
-    emoji: "🛒",
-    href: "/proximamente?seccion=mercados",
-    circle: "bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600",
-    shadow: "shadow-emerald-500/40",
-    iconAnim: "home-shortcut-float-delay-2",
-  },
-  {
-    id: "farmacia",
-    label: "Farmacia",
-    emoji: "💊",
-    href: "/proximamente?seccion=farmacias",
-    circle: "bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600",
-    shadow: "shadow-blue-500/40",
-    iconAnim: "home-shortcut-float-delay-3",
-  },
-  {
-    id: "envios",
-    label: "Envíos",
-    emoji: "🚚",
-    href: "/proximamente?seccion=envios",
-    circle: "bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600",
-    shadow: "shadow-amber-500/40",
-    iconAnim: "home-shortcut-float-delay-4",
-  },
-  {
-    id: "servicios",
-    label: "Servicios",
-    emoji: "⚡",
-    href: "/services",
-    circle: "bg-gradient-to-br from-fuchsia-500 via-purple-600 to-servido-900",
-    shadow: "shadow-purple-500/40",
-    iconAnim: "home-shortcut-float-delay-1",
-  },
-]
+import { useTranslations } from "next-intl"
 
 export function HomeServiceShortcuts() {
+  const th = useTranslations("home")
+
+  const serviceShortcuts: {
+    id: string
+    label: string
+    emoji: string
+    href: string
+    circle: string
+    shadow: string
+    iconAnim: string
+  }[] = [
+    {
+      id: "productos",
+      label: th("shortcutProducts"),
+      emoji: "🛍️",
+      href: "/products",
+      circle: "bg-gradient-to-br from-violet-500 via-purple-600 to-servido-800",
+      shadow: "shadow-violet-500/40",
+      iconAnim: "home-shortcut-float",
+    },
+    {
+      id: "delivery",
+      label: th("shortcutDelivery"),
+      emoji: "🍔",
+      href: "/restaurantes",
+      circle: "bg-gradient-to-br from-orange-400 via-orange-500 to-red-500",
+      shadow: "shadow-orange-500/40",
+      iconAnim: "home-shortcut-float-delay-1",
+    },
+    {
+      id: "super",
+      label: th("shortcutSuper"),
+      emoji: "🛒",
+      href: "/proximamente?seccion=mercados",
+      circle: "bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600",
+      shadow: "shadow-emerald-500/40",
+      iconAnim: "home-shortcut-float-delay-2",
+    },
+    {
+      id: "farmacia",
+      label: th("shortcutPharmacy"),
+      emoji: "💊",
+      href: "/proximamente?seccion=farmacias",
+      circle: "bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600",
+      shadow: "shadow-blue-500/40",
+      iconAnim: "home-shortcut-float-delay-3",
+    },
+    {
+      id: "envios",
+      label: th("shortcutShipping"),
+      emoji: "🚚",
+      href: "/proximamente?seccion=envios",
+      circle: "bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600",
+      shadow: "shadow-amber-500/40",
+      iconAnim: "home-shortcut-float-delay-4",
+    },
+    {
+      id: "servicios",
+      label: th("shortcutServices"),
+      emoji: "⚡",
+      href: "/services",
+      circle: "bg-gradient-to-br from-fuchsia-500 via-purple-600 to-servido-900",
+      shadow: "shadow-purple-500/40",
+      iconAnim: "home-shortcut-float-delay-1",
+    },
+  ]
+
   return (
     <div className="pb-2 pt-3">
       <div className="mx-4 rounded-3xl bg-white py-3 shadow-md shadow-black/[0.08] ring-1 ring-black/[0.04] sm:py-4">
