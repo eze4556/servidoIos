@@ -15,14 +15,15 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, ArrowLeft, MapPin, Plus, UtensilsCrossed } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { MenuCategory, MenuItem, MenuPromotion, Restaurant } from "@/types/restaurant"
 import {
-  DELIVERY_MODE_LABELS,
   getMenuItemPrimaryImage,
   getRestaurantCoverUrl,
   getRestaurantLogoUrl,
   menuItemHasOptions,
 } from "@/types/restaurant"
+import { getDeliveryModeLabel } from "@/lib/i18n/restaurant-labels"
 import {
   groupMenuItemsByCategory,
   mapMenuCategoryDoc,
@@ -34,6 +35,7 @@ import { formatPriceNumber } from "@/lib/utils"
 
 export default function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const t = useTranslations("restaurants")
   const { addItem } = useFoodCart()
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   const [categories, setCategories] = useState<MenuCategory[]>([])
@@ -126,9 +128,9 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
   if (!restaurant) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <p className="text-gray-600">Restaurante no encontrado</p>
+        <p className="text-gray-600">{t("notFound")}</p>
         <Button asChild className="mt-4 rounded-full">
-          <Link href="/restaurantes">Volver</Link>
+          <Link href="/restaurantes">{t("back")}</Link>
         </Button>
       </div>
     )
@@ -152,7 +154,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
               className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm text-white backdrop-blur-sm"
             >
               <ArrowLeft className="h-4 w-4" />
-              Restaurantes
+              {t("backToList")}
             </Link>
           </div>
         </div>
@@ -181,15 +183,15 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                 {restaurant.zone || restaurant.address}
               </Badge>
               <Badge className="bg-orange-50 text-orange-800 hover:bg-orange-50">
-                {DELIVERY_MODE_LABELS[restaurant.deliveryMode]}
+                {getDeliveryModeLabel(t, restaurant.deliveryMode)}
               </Badge>
               {restaurant.deliveryMode !== "retiro_en_local" && (
                 <Badge className="bg-orange-50 text-orange-800 hover:bg-orange-50">
-                  Envío{" "}
+                  {t("shippingLabel")}{" "}
                   {Number(restaurant.deliveryFee) > 0
                     ? `$${formatPriceNumber(restaurant.deliveryFee || 0)}`
                     : Number(restaurant.deliveryFee) === 0
-                      ? "gratis"
+                      ? t("shippingFree")
                       : "$300"}
                 </Badge>
               )}
@@ -210,19 +212,17 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
       <div className="container mx-auto space-y-8 px-4 py-6">
         {!canOrder && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
-            <p className="font-semibold">Este local no está recibiendo pedidos ahora</p>
-            <p className="mt-1 text-sm text-amber-800">
-              El restaurante necesita una suscripción activa en Servido para operar.
-            </p>
+            <p className="font-semibold">{t("closedTitle")}</p>
+            <p className="mt-1 text-sm text-amber-800">{t("closedBody")}</p>
             <Button asChild variant="outline" className="mt-4 rounded-full">
-              <Link href="/restaurantes">Ver otros restaurantes</Link>
+              <Link href="/restaurantes">{t("seeOthers")}</Link>
             </Button>
           </div>
         )}
 
         {promotions.length > 0 && (
           <section>
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Combos</h2>
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">{t("combos")}</h2>
             <div className="space-y-3">
               {promotions.map((promo) => (
                 <div
@@ -252,7 +252,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                         unoptimized
                       />
                     ) : (
-                      "Combo"
+                      t("combo")
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -275,7 +275,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                     }}
                   >
                     <Plus className="mr-1 h-4 w-4" />
-                    Agregar
+                    {t("add")}
                   </Button>
                 </div>
               ))}
@@ -285,13 +285,13 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
 
         {menuItems.length === 0 && promotions.length === 0 ? (
           <div className="rounded-2xl bg-white p-8 text-center text-gray-500 ring-1 ring-gray-100">
-            Este restaurante todavía no cargó su menú.
+            {t("emptyMenu")}
           </div>
         ) : (
           groups.map((group) => (
             <section key={group.category?.id || "sin-categoria"}>
               <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                {group.category?.name || "Sin categoría"}
+                {group.category?.name || t("noCategory")}
               </h2>
               <div className="space-y-3">
                 {group.items.map((item) => {
@@ -346,7 +346,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                         }}
                       >
                         <Plus className="mr-1 h-4 w-4" />
-                        Agregar
+                        {t("add")}
                       </Button>
                     </div>
                   )

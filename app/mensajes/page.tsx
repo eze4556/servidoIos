@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { subscribeUserChats, type ChatListItem } from "@/lib/story-chat"
 import { isChatUnread, useChatUnread } from "@/components/chat/chat-unread-context"
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Loader2, MessageCircle, Search } from "lucide-react"
 
 export default function MensajesPage() {
+  const t = useTranslations("chat")
   const { currentUser, authLoading } = useAuth()
   const router = useRouter()
   const { unreadByChatId } = useChatUnread()
@@ -36,7 +38,7 @@ export default function MensajesPage() {
         setLoading(false)
       },
       () => {
-        setError("No se pudieron cargar los mensajes. Recargá la página.")
+        setError(t("loadError"))
         setLoading(false)
       }
     )
@@ -70,8 +72,8 @@ export default function MensajesPage() {
             <MessageCircle className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl font-bold text-gray-900">Chats</h1>
-            <p className="text-xs text-gray-500">Respuestas a historias y mensajes</p>
+            <h1 className="text-xl font-bold text-gray-900">{t("listTitle")}</h1>
+            <p className="text-xs text-gray-500">{t("listSubtitle")}</p>
           </div>
         </div>
         <div className="relative mt-3">
@@ -79,7 +81,7 @@ export default function MensajesPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar chat"
+            placeholder={t("searchPlaceholder")}
             className="h-10 w-full rounded-full bg-gray-100 pl-9 pr-4 text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-servido-700/20"
           />
         </div>
@@ -90,7 +92,7 @@ export default function MensajesPage() {
           <div className="m-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {error}{" "}
             <button type="button" className="font-semibold underline" onClick={() => window.location.reload()}>
-              Recargar
+              {t("reload")}
             </button>
           </div>
         )}
@@ -105,16 +107,14 @@ export default function MensajesPage() {
               <MessageCircle className="h-8 w-8" />
             </span>
             <p className="font-semibold text-gray-900">
-              {chats.length === 0 ? "Todavía no tenés chats" : "Sin resultados"}
+              {chats.length === 0 ? t("emptyNoChats") : t("emptyNoResults")}
             </p>
             <p className="mt-1 text-sm text-gray-500">
-              {chats.length === 0
-                ? "Respondé una historia para empezar a chatear."
-                : "Probá con otro nombre."}
+              {chats.length === 0 ? t("emptyHintStories") : t("emptyHintSearch")}
             </p>
             {chats.length === 0 && (
               <Button asChild className="mt-5 rounded-full bg-servido-800">
-                <Link href="/historias">Ver historias</Link>
+                <Link href="/historias">{t("viewStories")}</Link>
               </Button>
             )}
           </div>
@@ -172,7 +172,7 @@ export default function MensajesPage() {
                             unread ? "font-semibold text-gray-800" : "text-gray-500"
                           }`}
                         >
-                          {chat.lastMessage || (chat.type === "story" ? "Chat de historia" : "Chat")}
+                          {chat.lastMessage || (chat.type === "story" ? t("storyChat") : t("genericChat"))}
                         </p>
                         {unread && (
                           <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-servido-800 px-1.5 text-[11px] font-bold text-white">

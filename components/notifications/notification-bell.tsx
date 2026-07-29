@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Bell } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { subscribeUnreadNotificationCount } from "@/lib/notifications"
 import { cn } from "@/lib/utils"
@@ -15,6 +16,7 @@ type NotificationBellProps = {
 }
 
 export function NotificationBell({ className, iconClassName, showLabel = false }: NotificationBellProps) {
+  const t = useTranslations("notifications")
   const { currentUser } = useAuth()
   const [unread, setUnread] = useState(0)
   const uid = currentUser?.firebaseUser?.uid
@@ -33,7 +35,7 @@ export function NotificationBell({ className, iconClassName, showLabel = false }
     <Link
       href="/notifications"
       className={cn("inline-flex items-center justify-center gap-2 rounded-full transition", className)}
-      aria-label={unread > 0 ? `Notificaciones (${unread} sin leer)` : "Notificaciones"}
+      aria-label={unread > 0 ? t("bellUnread", { count: unread }) : t("bellLabel")}
     >
       <span className="relative inline-flex">
         <Bell className={cn("h-5 w-5", iconClassName)} />
@@ -43,7 +45,7 @@ export function NotificationBell({ className, iconClassName, showLabel = false }
           </span>
         )}
       </span>
-      {showLabel && <span className="text-sm font-semibold">Avisos</span>}
+      {showLabel && <span className="text-sm font-semibold">{t("bellShort")}</span>}
     </Link>
   )
 }

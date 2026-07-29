@@ -1,4 +1,7 @@
+"use client"
+
 import React, { useState } from "react"
+import { useTranslations } from "next-intl"
 import { SimpleImage } from '@/components/ui/simple-image'
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -86,6 +89,9 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
   submittingAnswer,
   hasUserReviewed = false,
 }) => {
+  const tProduct = useTranslations("product")
+  const tr = useTranslations("reviews")
+  const ts = useTranslations("serviceDetail")
   const mainImage = service.media && service.media.length > 0 ? service.media[0].url : (service.imageUrl || "/placeholder.svg")
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewComment, setReviewComment] = useState("")
@@ -128,7 +134,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild href="/">
-              <Link href="/">Inicio</Link>
+              <Link href="/">{tProduct("home")}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -159,16 +165,16 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
             size="icon"
             className={isFavorite ? "bg-red-100 hover:bg-red-200 text-red-600" : "bg-white/80 hover:bg-white"}
             onClick={onToggleFavorite}
-            aria-label="Favorito"
+            aria-label={ts("favoriteAria")}
           >
             <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
           </Button>
-          <Button variant="secondary" size="icon" className="bg-white/80 hover:bg-white" onClick={handleShare} aria-label="Compartir">
+          <Button variant="secondary" size="icon" className="bg-white/80 hover:bg-white" onClick={handleShare} aria-label={ts("shareAria")}>
             <Share2 className="h-5 w-5" />
           </Button>
         </div>
         {shareCopied && (
-          <span className="absolute top-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded shadow">¡Enlace copiado!</span>
+          <span className="absolute top-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded shadow">{ts("linkCopied")}</span>
         )}
       </div>
 
@@ -179,12 +185,12 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
           <span className="flex items-center gap-1 bg-gray-100 rounded px-2 py-1"><Layers className="h-4 w-4" />{service.categoryName}</span>
         )}
         {service.brand && (
-          <span className="flex items-center gap-1 bg-gray-100 rounded px-2 py-1"><Tag className="h-4 w-4" />Marca: {service.brand}</span>
+          <span className="flex items-center gap-1 bg-gray-100 rounded px-2 py-1"><Tag className="h-4 w-4" />{ts("brandLabel", { brand: service.brand })}</span>
         )}
       </div>
       <p className="text-gray-700 text-base whitespace-pre-line border-l-2 border-blue-200 pl-3">{service.description}</p>
       <div className="text-lg font-semibold text-blue-700">
-        {service.price ? formatPrice(service.price) : "Precio a convenir"}
+        {service.price ? formatPrice(service.price) : ts("priceOnRequest")}
       </div>
 
       <ServiceBookingCard
@@ -196,37 +202,37 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
 
       <div className="flex flex-col gap-2 mt-2">
         <Button onClick={onContactSeller} className="w-full flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" /> Contactar al vendedor
+          <MessageSquare className="h-5 w-5" /> {ts("contactSeller")}
         </Button>
       </div>
 
       {/* User Reviews */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Reseñas de Usuarios ({reviews.length})</CardTitle>
+          <CardTitle>{tr("userReviewsTitle", { count: reviews.length })}</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           {reviewError && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>{tr("errorTitle")}</AlertTitle>
               <AlertDescription>{reviewError}</AlertDescription>
             </Alert>
           )}
           {reviewSuccess && (
             <Alert className="mb-4 bg-green-50 border-green-300 text-green-700 dark:bg-green-900 dark:text-green-300 dark:border-green-700">
               <AlertCircle className="h-4 w-4 text-green-600" />
-              <AlertTitle>Éxito</AlertTitle>
+              <AlertTitle>{tr("successTitle")}</AlertTitle>
               <AlertDescription>{reviewSuccess}</AlertDescription>
             </Alert>
           )}
 
           {currentUser && !hasUserReviewed && (
             <form onSubmit={handleSubmitReview} className="mb-8 p-4 border rounded-lg bg-gray-50">
-              <h3 className="text-lg font-medium mb-3">Escribe tu reseña</h3>
+              <h3 className="text-lg font-medium mb-3">{tr("writeReview")}</h3>
               <div className="mb-4">
                 <Label htmlFor="rating" className="block text-sm font-medium text-gray-700 mb-1">
-                  Calificación
+                  {tr("rating")}
                 </Label>
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -242,13 +248,13 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
               </div>
               <div className="mb-4">
                 <Label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-1">
-                  Comentario
+                  {tr("comment")}
                 </Label>
                 <Textarea
                   id="comment"
                   value={reviewComment}
                   onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="Comparte tu experiencia con el servicio..."
+                  placeholder={tr("commentPlaceholderService")}
                   rows={4}
                   required
                 />
@@ -256,17 +262,17 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
               <Button type="submit" disabled={submittingReview}>
                 {submittingReview ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tr("sending")}
                   </>
                 ) : (
-                  "Enviar Reseña"
+                  tr("submitReview")
                 )}
               </Button>
             </form>
           )}
 
           {reviews.length === 0 ? (
-            <p className="text-gray-600">Sé el primero en dejar una reseña para este servicio.</p>
+            <p className="text-gray-600">{tr("firstReview")}</p>
           ) : (
             <div className="space-y-6">
               {reviews.map((review) => (
@@ -282,7 +288,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
                     <span className="text-xs text-gray-500">
                       {review.createdAt?.toDate
                         ? review.createdAt.toDate().toLocaleDateString()
-                        : "Fecha desconocida"}
+                        : tr("unknownDate")}
                     </span>
                   </div>
                   <p className="text-gray-700 leading-relaxed">{review.comment}</p>
@@ -296,36 +302,36 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
       {/* Questions and Answers */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Preguntas y Respuestas ({questions.length})</CardTitle>
+          <CardTitle>{tr("qaTitle", { count: questions.length })}</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           {questionError && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>{tr("errorTitle")}</AlertTitle>
               <AlertDescription>{questionError}</AlertDescription>
             </Alert>
           )}
           {questionSuccess && (
             <Alert className="mb-4 bg-green-50 border-green-300 text-green-700 dark:bg-green-900 dark:text-green-300 dark:border-green-700">
               <AlertCircle className="h-4 w-4 text-green-600" />
-              <AlertTitle>Éxito</AlertTitle>
+              <AlertTitle>{tr("successTitle")}</AlertTitle>
               <AlertDescription>{questionSuccess}</AlertDescription>
             </Alert>
           )}
 
           {currentUser && currentUser.firebaseUser.uid !== service.sellerId && (
             <form onSubmit={handleSubmitQuestion} className="mb-8 p-4 border rounded-lg bg-gray-50">
-              <h3 className="text-lg font-medium mb-3">Hacer una pregunta</h3>
+              <h3 className="text-lg font-medium mb-3">{tr("askQuestion")}</h3>
               <div className="mb-4">
                 <Label htmlFor="question" className="block text-sm font-medium text-gray-700 mb-1">
-                  Tu pregunta
+                  {tr("yourQuestion")}
                 </Label>
                 <Textarea
                   id="question"
                   value={questionText}
                   onChange={(e) => setQuestionText(e.target.value)}
-                  placeholder="¿Qué te gustaría saber sobre este servicio?"
+                  placeholder={tr("questionPlaceholder")}
                   rows={3}
                   required
                 />
@@ -333,29 +339,29 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
               <Button type="submit" disabled={submittingQuestion}>
                 {submittingQuestion ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tr("sending")}
                   </>
                 ) : (
-                  "Enviar Pregunta"
+                  tr("submitQuestion")
                 )}
               </Button>
             </form>
           )}
 
           {questions.length === 0 ? (
-            <p className="text-gray-600">Sé el primero en hacer una pregunta sobre este servicio.</p>
+            <p className="text-gray-600">{tr("firstQuestion")}</p>
           ) : (
             <div className="space-y-6">
               {questions.map((question) => (
                 <div key={question.id} className="border-b pb-4 last:border-b-0 last:pb-0">
                   <div className="mb-2">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-blue-600">Pregunta:</span>
+                      <span className="text-sm font-medium text-blue-600">{tr("questionLabel")}</span>
                       <span className="text-sm text-gray-500">{question.userName}</span>
                       <span className="text-xs text-gray-400">
                         {question.createdAt?.toDate
                           ? question.createdAt.toDate().toLocaleDateString()
-                          : "Fecha desconocida"}
+                          : tr("unknownDate")}
                       </span>
                     </div>
                     <p className="text-gray-700 leading-relaxed">{question.question}</p>
@@ -364,12 +370,12 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
                   {question.answer ? (
                     <div className="ml-4 p-3 bg-blue-50 rounded-lg">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-green-600">Respuesta:</span>
+                        <span className="text-sm font-medium text-green-600">{tr("answerLabel")}</span>
                         <span className="text-sm text-gray-500">{question.answeredBy}</span>
                         <span className="text-xs text-gray-400">
                           {question.answeredAt?.toDate
                             ? question.answeredAt.toDate().toLocaleDateString()
-                            : "Fecha desconocida"}
+                            : tr("unknownDate")}
                         </span>
                       </div>
                       <p className="text-gray-700 leading-relaxed">{question.answer}</p>
@@ -381,7 +387,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
                           <Textarea
                             value={answerText}
                             onChange={(e) => setAnswerText && setAnswerText(e.target.value)}
-                            placeholder="Escribe tu respuesta..."
+                            placeholder={tr("answerPlaceholder")}
                             rows={2}
                             className="mb-2"
                           />
@@ -393,10 +399,10 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
                             >
                               {submittingAnswer ? (
                                 <>
-                                  <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Enviando...
+                                  <Loader2 className="mr-1 h-3 w-3 animate-spin" /> {tr("sending")}
                                 </>
                               ) : (
-                                "Responder"
+                                tr("respond")
                               )}
                             </Button>
                             <Button
@@ -407,18 +413,18 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
                                 setAnswerText && setAnswerText("")
                               }}
                             >
-                              Cancelar
+                              {tr("cancel")}
                             </Button>
                           </div>
                         </div>
                       ) : (
                         <Button size="sm" variant="outline" onClick={() => setAnsweringQuestionId && setAnsweringQuestionId(question.id)}>
-                          Responder
+                          {tr("respond")}
                         </Button>
                       )}
                     </div>
                   ) : (
-                    <div className="ml-4 text-sm text-gray-500 italic">Esperando respuesta del vendedor...</div>
+                    <div className="ml-4 text-sm text-gray-500 italic">{tr("waitingSeller")}</div>
                   )}
                 </div>
               ))}

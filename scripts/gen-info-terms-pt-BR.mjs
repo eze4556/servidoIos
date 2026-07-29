@@ -1,0 +1,267 @@
+import fs from "fs"
+import path from "path"
+import { fileURLToPath } from "url"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const outPath = path.join(__dirname, "../messages/legal/infoTerms.es.json")
+
+const data = {
+  infoTerms: {
+    badge: "Legal",
+    title: "Términos y condiciones de uso",
+    subtitle:
+      "Al utilizar Servido aceptás las condiciones que rigen el uso de la plataforma, la relación entre compradores, vendedores y prestadores de servicios.",
+    lastUpdated: "4 de julio de 2026",
+    sectionOrder: [
+      "rol",
+      "independencia",
+      "responsabilidad",
+      "evaluaciones",
+      "reembolsos",
+      "seguros",
+      "reportes",
+      "relacion",
+      "tarifas",
+      "conducta",
+      "sanciones",
+      "indemnidad",
+      "contacto",
+      "aceptacion",
+    ],
+    sections: {
+      rol: {
+        title: "Rol de la Plataforma",
+        blocks: [
+          {
+            type: "p",
+            text: 'Servido (en adelante, "la Plataforma") actúa exclusivamente como un medio de vinculación entre personas que ofrecen servicios o productos (en adelante, "Prestadores") y personas interesadas en contratarlos o adquirirlos (en adelante, "Clientes").',
+          },
+          {
+            type: "p",
+            text: "La Plataforma no forma parte del contrato que eventualmente se celebre entre el Prestador y el Cliente.",
+          },
+          {
+            type: "p",
+            text: "Nuestra función es brindar un espacio virtual para la promoción, visibilidad y contacto, sin intervenir en la calidad, condiciones, ejecución o resultado de los servicios contratados.",
+          },
+        ],
+      },
+      independencia: {
+        title: "Independencia de las partes",
+        blocks: [
+          {
+            type: "p",
+            text: "Cada Prestador registrado en la plataforma actúa en ejercicio de su autonomía profesional y comercial, sin que exista entre ellos y Servido relación laboral, societaria o de representación alguna.",
+          },
+          {
+            type: "p",
+            text: "Servido no emplea, dirige ni controla las actividades de los Prestadores, sino que actúa como un canal que facilita el vínculo entre estos y los Usuarios.",
+          },
+          {
+            type: "p",
+            text: "En ese marco, cada Prestador es plenamente responsable de cumplir con las disposiciones legales, fiscales y laborales que rijan su actividad, mientras que Servido se reserva el derecho de verificar que los compromisos asumidos por los Prestadores en la plataforma sean efectivamente cumplidos.",
+          },
+        ],
+      },
+      responsabilidad: {
+        title: "Exclusión de Responsabilidad",
+        blocks: [
+          {
+            type: "p",
+            text: "Servido no asume responsabilidad alguna por daños, perjuicios, pérdidas, negligencias, accidentes, conflictos o incumplimientos que deriven de la relación entre Prestadores y Clientes.",
+          },
+          { type: "p", text: "Esto incluye (pero no se limita a):" },
+          {
+            type: "ul",
+            items: [
+              "Mala praxis o servicios defectuosos.",
+              "Incumplimiento de tiempos, condiciones o precios pactados.",
+              "Accidentes en el lugar del servicio.",
+              "Daños materiales o personales ocasionados por el Prestador.",
+              "Estafas, robos o cualquier hecho derivado del vínculo entre usuarios en esta plataforma.",
+            ],
+          },
+        ],
+      },
+      evaluaciones: {
+        title: "Evaluaciones y calificaciones",
+        blocks: [
+          {
+            type: "p",
+            text: "La plataforma permite que los Clientes califiquen a los Prestadores luego de una operación.",
+          },
+          {
+            type: "p",
+            text: "Este sistema busca brindar mayor seguridad al resto de los usuarios, pero no implica garantía sobre la calidad, legalidad o idoneidad del servicio ofrecido.",
+          },
+          {
+            type: "p",
+            text: "Es responsabilidad del Cliente evaluar con criterio antes de contratar.",
+          },
+        ],
+      },
+      reembolsos: {
+        title: "Reembolsos e intervención de la plataforma",
+        blocks: [
+          {
+            type: "p",
+            text: "En caso de surgir un reclamo fundado por parte de un Cliente, y si se presentan pruebas suficientes, Servido podrá intimar al Prestador a ofrecer una solución o reembolso.",
+          },
+          {
+            type: "p",
+            text: "Esta medida es excepcional, queda a criterio exclusivo de la plataforma y no implica responsabilidad legal directa.",
+          },
+        ],
+      },
+      seguros: {
+        title: "Seguros y coberturas",
+        blocks: [
+          {
+            type: "p",
+            text: "La plataforma no ofrece seguros ni coberturas ante incidentes. Se recomienda que tanto Prestadores como Clientes cuenten con seguros propios o acuerdos previos para respaldar su actividad en caso de imprevistos.",
+          },
+        ],
+      },
+      reportes: {
+        title: "Reporte de incidentes",
+        blocks: [
+          { type: "p", text: "Los usuarios pueden reportar situaciones dentro de la app." },
+          {
+            type: "p",
+            text: "Servido podrá analizar internamente los casos reportados, aplicar sanciones si corresponde, y suspender cuentas con denuncias reiteradas y teniendo el poder absoluto de tomar las medidas necesarias dentro de la plataforma.",
+          },
+          {
+            type: "p",
+            text: "Esto no implica obligación legal de intervención o resolución de conflictos privados.",
+          },
+        ],
+      },
+      relacion: {
+        title: "Relación entre Usuarios",
+        blocks: [
+          {
+            type: "p",
+            text: "Cualquier vínculo, trato o acuerdo que se genere entre Usuarios de la plataforma, ya sea de tipo comercial, asociativo o colaborativo, será exclusivamente responsabilidad de quienes lo celebren.",
+          },
+          {
+            type: "p",
+            text: "Servido no forma parte de dichas relaciones ni interviene en su negociación, desarrollo o cumplimiento, y por lo tanto no se hace responsable por los efectos o consecuencias que de ellas se deriven.",
+          },
+          {
+            type: "p",
+            text: "La función de Servido se limita a facilitar el contacto inicial entre partes, dentro del marco de uso de la plataforma.",
+          },
+        ],
+      },
+      tarifas: {
+        title: "Tarifas",
+        blocks: [
+          {
+            type: "p",
+            text: "Algunos servicios de Servido pueden requerir el pago de una tarifa (por ejemplo, suscripciones mensuales para publicar servicios).",
+          },
+          {
+            type: "p",
+            text: "Estas tarifas serán informadas claramente antes de cada contratación.",
+          },
+          { type: "p", text: "Servido se reserva el derecho de actualizarlas con previo aviso." },
+        ],
+      },
+      conducta: {
+        title: "Normas de conducta y contenido",
+        blocks: [
+          {
+            type: "p",
+            text: "Los Usuarios deberán utilizar la Plataforma con respeto, responsabilidad y conforme a la normativa vigente. Está estrictamente prohibido:",
+          },
+          {
+            type: "ul",
+            items: [
+              "Ofrecer, publicar o solicitar productos o servicios que sean ilícitos, engañosos, falsificados o que infrinjan derechos de terceros.",
+              "Crear perfiles con identidades falsas, usurpar datos ajenos o brindar información incorrecta.",
+              "Manipular valoraciones, reseñas o sistemas de reputación mediante el uso de cuentas múltiples u otras prácticas desleales.",
+              "Compartir contenido ofensivo, amenazante, discriminatorio, fraudulento o que promueva la violencia o el odio.",
+              "Promocionar, solicitar u ofrecer servicios de índole sexual, así como compartir material sexual o erótico, incluso en imágenes.",
+              "Publicar imágenes de menores de edad salvo en contextos familiares, educativos o institucionales debidamente justificados y autorizados legalmente.",
+            ],
+          },
+          {
+            type: "p",
+            text: "El incumplimiento de estas disposiciones podrá resultar en la suspensión temporal o eliminación permanente de la cuenta del Usuario, sin necesidad de previo aviso.",
+          },
+          {
+            type: "p",
+            text: "Asimismo, en caso de que un producto recibido por el Usuario no se corresponda con lo acordado (ya sea por estar dañado, ser erróneo o por error del proveedor), podrá solicitar un reembolso, el cual será gestionado por Servido sin costo adicional para el Usuario.",
+          },
+        ],
+      },
+      sanciones: {
+        title: "Sanciones",
+        blocks: [
+          {
+            type: "p",
+            text: "El incumplimiento de estos términos podrá derivar en advertencias, suspensión o eliminación definitiva de la cuenta del usuario, sin necesidad de previo aviso ni derecho a ningún tipo de reclamos legales.",
+          },
+        ],
+      },
+      indemnidad: {
+        title: "Indemnidad",
+        blocks: [
+          {
+            type: "p",
+            text: "El Usuario se compromete a mantener indemne y a liberar de toda responsabilidad a Servido, así como a sus directivos, empleados, representantes y colaboradores, frente a cualquier reclamo, demanda, daño, perjuicio, sanción, multa, gasto (incluidos los honorarios legales) o responsabilidad de cualquier tipo, iniciado por terceros como consecuencia de su actividad en la Plataforma, el contenido que publique, los servicios que ofrezca o contrate, o cualquier incumplimiento de estos Términos y Condiciones o de las leyes aplicables.",
+          },
+          {
+            type: "p",
+            text: "Una vez realizada la compra, Servido retendrá el dinero hasta que el producto llegue a manos de quien lo solicitó, o en su defecto, pedir la devolución del dinero correspondiente. Es por eso que frente a esto, Servido será el encargado de evaluar y distribuir los servicios anunciados sean concretados, y los productos solicitados sean entregados de manera correcta.",
+          },
+        ],
+      },
+      contacto: {
+        title: "Medios de Contacto Oficiales",
+        blocks: [
+          {
+            type: "p",
+            text: "La única vía oficial de comunicación y contacto con Servido es a través de los canales habilitados dentro de nuestra plataforma o los que se encuentren expresamente publicados en ella.",
+          },
+          {
+            type: "p",
+            text: "Servido cuenta con un equipo de trabajo identificado debidamente con credenciales y perfiles oficiales que incluyen distintivos verificables de la plataforma.",
+          },
+          {
+            type: "p",
+            text: "Ante cualquier situación irregular, sospechosa o que genere dudas, el Usuario deberá comunicarse exclusivamente con los puntos de contacto indicados en la Plataforma. Cualquier interacción por fuera de estos medios no será considerada oficial, y Servido no se responsabiliza por daños, perjuicios o fraudes derivados de comunicaciones realizadas a través de canales no autorizados.",
+          },
+        ],
+      },
+      aceptacion: {
+        title: "Aceptación",
+        blocks: [
+          {
+            type: "p",
+            text: "El uso de la Plataforma implica la aceptación expresa de estos Términos y Condiciones por parte de todos los usuarios (Prestadores y Clientes), quienes declaran haber leído, comprendido y aceptado lo aquí expuesto.",
+          },
+          {
+            type: "pWithLink",
+            before: "Al registrarte en Servido confirmás que aceptás estos términos. Podés revisar también nuestras ",
+            linkLabel: "políticas de privacidad",
+            after: ".",
+            href: "/politicas-de-privacidad",
+          },
+        ],
+      },
+    },
+    cta: {
+      title: "¿Tenés dudas?",
+      description:
+        "Si necesitás más información sobre el uso de la plataforma, contactanos por los canales oficiales o conocé más sobre Servido.",
+      primaryLabel: "Quiénes somos",
+      primaryHref: "/acerca-de-nosotros",
+      secondaryLabel: "Crear cuenta",
+      secondaryHref: "/signup",
+    },
+  },
+}
+
+fs.writeFileSync(outPath, JSON.stringify(data, null, 2))
+console.log("Wrote", outPath)

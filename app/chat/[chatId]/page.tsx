@@ -3,6 +3,7 @@
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -20,7 +21,7 @@ import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
 import { hideChatForUser } from "@/lib/story-chat"
 import {
-  formatLastSeen,
+  formatLastSeenLocalized,
   getOtherLastReadMs,
   isMessageSeen,
   isUserOnline,
@@ -63,6 +64,8 @@ interface Message {
 }
 
 export default function ChatPage() {
+  const t = useTranslations("chat")
+  const locale = useLocale()
   const params = useParams()
   const router = useRouter()
   const { currentUser, authLoading } = useAuth()
@@ -146,7 +149,7 @@ export default function ChatPage() {
       (chatSnap) => {
         if (cancelled) return
         if (!chatSnap.exists()) {
-          setError("Chat no encontrado.")
+          setError(t("notFound"))
           setLoading(false)
           return
         }
@@ -155,13 +158,13 @@ export default function ChatPage() {
         const uid = currentUser.firebaseUser.uid
 
         if (uid !== chatData.buyerId && uid !== chatData.sellerId) {
-          setError("No tenés permiso para ver este chat.")
+          setError(t("noPermission"))
           setLoading(false)
           return
         }
 
         if (Array.isArray(chatData.deletedBy) && chatData.deletedBy.includes(uid)) {
-          setError("Este chat fue eliminado.")
+          setError(t("deleted"))
           setLoading(false)
           return
         }
@@ -236,7 +239,7 @@ export default function ChatPage() {
             (err) => {
               console.error(err)
               if (!cancelled) {
-                setError("Error al cargar los mensajes.")
+                setError(t("loadMessagesError"))
                 setLoading(false)
               }
             }
@@ -246,7 +249,7 @@ export default function ChatPage() {
       (err) => {
         console.error(err)
         if (!cancelled) {
-          setError("Error al cargar el chat.")
+          setError(t("loadChatError"))
           setLoading(false)
         }
       }
@@ -257,7 +260,7 @@ export default function ChatPage() {
       unsubscribeMessages?.()
       unsubscribeChat()
     }
-  }, [chatId, currentUser])
+  }, [chatId, currentUser, t])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -277,7 +280,7 @@ export default function ChatPage() {
           currentUser.name ||
           currentUser.firebaseUser.displayName ||
           currentUser.firebaseUser.email?.split("@")[0] ||
-          "Usuario",
+          t("defaultUser"),
         text,
         timestamp: serverTimestamp(),
       })
@@ -290,7 +293,7 @@ export default function ChatPage() {
       inputRef.current?.focus()
     } catch (err) {
       console.error(err)
-      setError("Error al enviar el mensaje.")
+      setError(t("sendError"))
     } finally {
       setSending(false)
     }
@@ -298,14 +301,14 @@ export default function ChatPage() {
 
   const handleDeleteChat = async () => {
     if (!currentUser || !chat) return
-    if (!window.confirm("¿Eliminar este chat de tu bandeja?")) return
+    if (!window.confirm(t("deleteConfirm"))) return
     setDeleting(true)
     try {
       await hideChatForUser(chat.id, currentUser.firebaseUser.uid)
       router.push("/mensajes")
     } catch (err) {
       console.error(err)
-      setError("No se pudo eliminar el chat.")
+      setError(t("deleteError"))
       setDeleting(false)
     }
   }
@@ -323,11 +326,11 @@ export default function ChatPage() {
       <div className="flex h-[100dvh] flex-col items-center justify-center bg-[#f0f2f5] p-4">
         <Alert variant="destructive" className="max-w-md">
           <Info className="h-4 w-4" />
-          <AlertTitle>Chat</AlertTitle>
-          <AlertDescription>{error || "Chat no disponible."}</AlertDescription>
+          <AlertTitle>{t("alertTitle")}</AlertTitle>
+          <AlertDescription>{error || t("unavailable")}</AlertDescription>
         </Alert>
         <Button asChild className="mt-4 rounded-full">
-          <Link href="/mensajes">Volver a mensajes</Link>
+          <Link href="/mensajes">{t("backToMessages")}</Link>
         </Button>
       </div>
     )
@@ -341,7 +344,7 @@ export default function ChatPage() {
   const otherPhoto = uid === chat.buyerId ? chat.sellerPhotoURL : chat.buyerPhotoURL
   const isStory = chat.type === "story"
   const online = isUserOnline(otherLastSeen, nowTick)
-  const presenceLabel = formatLastSeen(otherLastSeen, nowTick)
+  const presenceLabel = formatLastSeenLocalized(otherLastSeen, t, locale, nowTick)
   const otherLastReadMs = getOtherLastReadMs(chat.lastReadAt, otherId)
 
   return (
@@ -351,7 +354,7 @@ export default function ChatPage() {
           type="button"
           onClick={() => router.push("/mensajes")}
           className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10"
-          aria-label="Volver"
+          aria-label={t("backAria")}
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
@@ -382,7 +385,7 @@ export default function ChatPage() {
           disabled={deleting}
           onClick={() => void handleDeleteChat()}
           className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10 disabled:opacity-50"
-          aria-label="Eliminar chat"
+          aria-label={t("deleteChatAria")}
         >
           {deleting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -395,7 +398,7 @@ export default function ChatPage() {
       <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
         {isStory && (
           <p className="mx-auto mb-3 max-w-[85%] rounded-lg bg-black/5 px-3 py-2 text-center text-[11px] text-gray-600">
-            Conversación iniciada desde una historia
+            {t("storyBanner")}
           </p>
         )}
         {messages.map((message) => {
@@ -422,12 +425,12 @@ export default function ChatPage() {
                   </span>
                   {mine &&
                     (seen ? (
-                      <span className="inline-flex items-center gap-0.5 text-[#53bdeb]" title="Visto">
+                      <span className="inline-flex items-center gap-0.5 text-[#53bdeb]" title={t("seen")}>
                         <CheckCheck className="h-3.5 w-3.5" />
-                        <span className="sr-only">Visto</span>
+                        <span className="sr-only">{t("seen")}</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center text-gray-400" title="Enviado">
+                      <span className="inline-flex items-center text-gray-400" title={t("sent")}>
                         <Check className="h-3.5 w-3.5" />
                       </span>
                     ))}
@@ -450,7 +453,7 @@ export default function ChatPage() {
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Mensaje"
+          placeholder={t("messagePlaceholder")}
           disabled={sending}
           className="min-h-11 min-w-0 flex-1 rounded-full border-0 bg-white px-4 text-[15px] text-gray-900 shadow-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-servido-700/30"
           enterKeyHint="send"

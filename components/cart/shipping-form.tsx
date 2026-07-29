@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,6 +27,7 @@ interface ShippingFormProps {
 }
 
 export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFormProps) {
+  const t = useTranslations("shippingForm")
   const [formData, setFormData] = useState<ShippingAddress>({
     fullName: "",
     phone: "",
@@ -43,35 +45,35 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
     const newErrors: Partial<ShippingAddress> = {}
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = "El nombre completo es requerido"
+      newErrors.fullName = t("errors.fullNameRequired")
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = "El número de teléfono es requerido"
+      newErrors.phone = t("errors.phoneRequired")
     } else if (!/^[\d\s\-\+\(\)]+$/.test(formData.phone)) {
-      newErrors.phone = "Ingresa un número de teléfono válido"
+      newErrors.phone = t("errors.phoneInvalid")
     }
 
     if (!formData.dni.trim()) {
-      newErrors.dni = "El DNI es requerido"
+      newErrors.dni = t("errors.dniRequired")
     } else if (!/^\d{7,8}$/.test(formData.dni.replace(/\D/g, ''))) {
-      newErrors.dni = "Ingresa un DNI válido (7 u 8 dígitos)"
+      newErrors.dni = t("errors.dniInvalid")
     }
 
     if (!formData.address.trim()) {
-      newErrors.address = "La dirección es requerida"
+      newErrors.address = t("errors.addressRequired")
     }
 
     if (!formData.city.trim()) {
-      newErrors.city = "La ciudad es requerida"
+      newErrors.city = t("errors.cityRequired")
     }
 
     if (!formData.state.trim()) {
-      newErrors.state = "La provincia/estado es requerido"
+      newErrors.state = t("errors.stateRequired")
     }
 
     if (!formData.zipCode.trim()) {
-      newErrors.zipCode = "El código postal es requerido"
+      newErrors.zipCode = t("errors.zipRequired")
     }
 
     setErrors(newErrors)
@@ -98,10 +100,10 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-blue-600" />
-          Información de Envío
+          {t("title")}
         </CardTitle>
         <CardDescription>
-          Ingresa tu dirección y datos de contacto para el envío
+          {t("description")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -110,13 +112,13 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
           <div className="space-y-2">
             <Label htmlFor="fullName" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              Nombre completo *
+              {t("fullName")}
             </Label>
             <Input
               id="fullName"
               value={formData.fullName}
               onChange={(e) => handleInputChange("fullName", e.target.value)}
-              placeholder="Tu nombre completo"
+              placeholder={t("fullNamePlaceholder")}
               className={errors.fullName ? "border-red-500" : ""}
             />
             {errors.fullName && (
@@ -128,13 +130,13 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
           <div className="space-y-2">
             <Label htmlFor="phone" className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
-              Número de teléfono *
+              {t("phone")}
             </Label>
             <Input
               id="phone"
               value={formData.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="+54 9 11 1234-5678"
+              placeholder={t("phonePlaceholder")}
               className={errors.phone ? "border-red-500" : ""}
             />
             {errors.phone && (
@@ -146,13 +148,13 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
           <div className="space-y-2">
             <Label htmlFor="dni" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              DNI *
+              {t("dni")}
             </Label>
             <Input
               id="dni"
               value={formData.dni}
               onChange={(e) => handleInputChange("dni", e.target.value)}
-              placeholder="12345678"
+              placeholder={t("dniPlaceholder")}
               className={errors.dni ? "border-red-500" : ""}
             />
             {errors.dni && (
@@ -164,13 +166,13 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
           <div className="space-y-2">
             <Label htmlFor="address" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
-              Dirección *
+              {t("address")}
             </Label>
             <Textarea
               id="address"
               value={formData.address}
               onChange={(e) => handleInputChange("address", e.target.value)}
-              placeholder="Calle, número, piso, departamento"
+              placeholder={t("addressPlaceholder")}
               className={errors.address ? "border-red-500" : ""}
               rows={3}
             />
@@ -182,12 +184,12 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
           {/* Ciudad y Provincia */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="city">Ciudad *</Label>
+              <Label htmlFor="city">{t("city")}</Label>
               <Input
                 id="city"
                 value={formData.city}
                 onChange={(e) => handleInputChange("city", e.target.value)}
-                placeholder="Ciudad"
+                placeholder={t("cityPlaceholder")}
                 className={errors.city ? "border-red-500" : ""}
               />
               {errors.city && (
@@ -195,12 +197,12 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state">Provincia *</Label>
+              <Label htmlFor="state">{t("state")}</Label>
               <Input
                 id="state"
                 value={formData.state}
                 onChange={(e) => handleInputChange("state", e.target.value)}
-                placeholder="Provincia"
+                placeholder={t("statePlaceholder")}
                 className={errors.state ? "border-red-500" : ""}
               />
               {errors.state && (
@@ -211,12 +213,12 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
 
           {/* Código Postal */}
           <div className="space-y-2">
-            <Label htmlFor="zipCode">Código Postal *</Label>
+            <Label htmlFor="zipCode">{t("zipCode")}</Label>
             <Input
               id="zipCode"
               value={formData.zipCode}
               onChange={(e) => handleInputChange("zipCode", e.target.value)}
-              placeholder="1234"
+              placeholder={t("zipPlaceholder")}
               className={errors.zipCode ? "border-red-500" : ""}
             />
             {errors.zipCode && (
@@ -226,12 +228,12 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
 
           {/* Información adicional */}
           <div className="space-y-2">
-            <Label htmlFor="additionalInfo">Información adicional (opcional)</Label>
+            <Label htmlFor="additionalInfo">{t("additionalInfo")}</Label>
             <Textarea
               id="additionalInfo"
               value={formData.additionalInfo}
               onChange={(e) => handleInputChange("additionalInfo", e.target.value)}
-              placeholder="Referencias, horarios de entrega, etc."
+              placeholder={t("additionalPlaceholder")}
               rows={2}
             />
           </div>
@@ -245,14 +247,14 @@ export function ShippingForm({ onSubmit, onCancel, loading = false }: ShippingFo
               className="flex-1"
               disabled={loading}
             >
-              Cancelar
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
               className="flex-1"
               disabled={loading}
             >
-              {loading ? "Procesando..." : "Continuar al Pago"}
+              {loading ? t("processing") : t("submit")}
             </Button>
           </div>
         </form>

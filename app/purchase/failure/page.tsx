@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { XCircle, Home, RefreshCw, HelpCircle } from "lucide-react"
@@ -9,6 +10,7 @@ import Link from "next/link"
 import { MultiSellerCheckoutContinue, readCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
 
 export default function PurchaseFailurePage() {
+  const t = useTranslations("purchase")
   const searchParams = useSearchParams()
   const [failureData, setFailureData] = useState<{
     paymentId?: string
@@ -44,10 +46,10 @@ export default function PurchaseFailurePage() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">¡Ups! Algo salió mal</h1>
-            <p className="text-xl text-gray-600 mb-6">Este pago no pudo ser procesado.</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">{t("failureTitle")}</h1>
+            <p className="text-xl text-gray-600 mb-6">{t("failureSubtitle")}</p>
             <p className="text-gray-500 mb-8 leading-relaxed">
-              Si tu compra tiene varios vendedores, los pagos ya aprobados siguen válidos.
+              {t("failureBody")}
             </p>
 
             <MultiSellerCheckoutContinue sessionId={checkoutSessionId} variant="failure" />
@@ -55,16 +57,16 @@ export default function PurchaseFailurePage() {
             {failureData.paymentId && (
               <div className="bg-red-50 rounded-lg p-4 mb-6 border border-red-200">
                 <p className="text-sm text-red-700">
-                  <span className="font-semibold">ID de Pago:</span> {failureData.paymentId}
+                  <span className="font-semibold">{t("paymentId")}</span> {failureData.paymentId}
                 </p>
                 {failureData.orderId && (
                   <p className="text-sm text-red-700">
-                    <span className="font-semibold">Orden:</span> {failureData.orderId}
+                    <span className="font-semibold">{t("order")}</span> {failureData.orderId}
                   </p>
                 )}
                 {failureData.errorMessage && (
                   <p className="text-sm text-red-700 mt-2">
-                    <span className="font-semibold">Error:</span> {failureData.errorMessage}
+                    <span className="font-semibold">{t("error")}</span> {failureData.errorMessage}
                   </p>
                 )}
               </div>
@@ -74,21 +76,21 @@ export default function PurchaseFailurePage() {
               <Button asChild className="w-full bg-red-600 hover:bg-red-700">
                 <Link href="/">
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Volver a intentar desde el inicio
+                  {t("retryFromHome")}
                 </Link>
               </Button>
 
               <Button asChild variant="outline" className="w-full">
                 <Link href="/">
                   <Home className="w-4 h-4 mr-2" />
-                  Volver al inicio
+                  {t("backHome")}
                 </Link>
               </Button>
 
               <Button asChild variant="ghost" className="w-full">
                 <Link href="/contact">
                   <HelpCircle className="w-4 h-4 mr-2" />
-                  Necesito ayuda
+                  {t("needHelp")}
                 </Link>
               </Button>
             </div>

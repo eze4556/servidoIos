@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { useFoodCart } from "@/contexts/food-cart-context"
 import { ApiService } from "@/lib/services/api"
+import { getRestaurantPaymentMethodLabel } from "@/lib/i18n/restaurant-labels"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,7 +26,6 @@ import type {
   RestaurantPaymentMethod,
   RestaurantTransferInfo,
 } from "@/types/restaurant"
-import { RESTAURANT_PAYMENT_METHOD_LABELS } from "@/types/restaurant"
 
 interface FoodCartDrawerProps {
   deliveryMode: DeliveryMode
@@ -40,6 +41,8 @@ export function FoodCartDrawer({
   paymentMethods = ["cash", "transfer"],
   transferInfo,
 }: FoodCartDrawerProps) {
+  const t = useTranslations("foodCart")
+  const tRestaurants = useTranslations("restaurants")
   const { currentUser } = useAuth()
   const router = useRouter()
   const { items, restaurantName, itemCount, subtotal, updateQuantity, removeItem, clearCart, restaurantId } =
@@ -77,11 +80,11 @@ export function FoodCartDrawer({
     }
     if (!restaurantId || items.length === 0) return
     if (deliveryMode !== "retiro_en_local" && !address.trim()) {
-      setError("Ingresá tu dirección de entrega")
+      setError(t("errorAddress"))
       return
     }
     if (!paymentMethod) {
-      setError("Elegí cómo vas a pagar")
+      setError(t("errorPayment"))
       return
     }
 
@@ -116,7 +119,7 @@ export function FoodCartDrawer({
 
       if (paymentMethod === "mercadopago") {
         if (!response.data?.init_point) {
-          throw new Error("No se pudo iniciar el pago con Mercado Pago")
+          throw new Error(t("errorMpInit"))
         }
         clearCart()
         window.location.href = response.data.init_point
@@ -128,25 +131,25 @@ export function FoodCartDrawer({
         const info = response.data?.transferInfo || transferInfo
         setSuccessMsg(
           [
-            "Pedido creado. Transferí el total y el restaurante va a confirmar el cobro.",
-            info?.alias ? `Alias: ${info.alias}` : null,
-            info?.cbu ? `CBU/CVU: ${info.cbu}` : null,
-            info?.holderName ? `Titular: ${info.holderName}` : null,
-            info?.bankName ? `Banco: ${info.bankName}` : null,
+            t("successTransferIntro"),
+            info?.alias ? t("transferAlias", { alias: info.alias }) : null,
+            info?.cbu ? t("transferCbu", { cbu: info.cbu }) : null,
+            info?.holderName ? t("transferHolder", { name: info.holderName }) : null,
+            info?.bankName ? t("transferBank", { bank: info.bankName }) : null,
             info?.instructions || null,
           ]
             .filter(Boolean)
             .join("\n")
         )
       } else {
-        setSuccessMsg("Pedido creado. Vas a pagar en efectivo al recibir o retirar.")
+        setSuccessMsg(t("successCash"))
       }
       setTimeout(() => {
         setOpen(false)
         router.push("/pedidos/comida")
       }, 2500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al procesar el pedido")
+      setError(err instanceof Error ? err.message : t("errorCheckout"))
     } finally {
       setLoading(false)
     }
@@ -156,19 +159,19 @@ export function FoodCartDrawer({
 
   const ctaLabel =
     paymentMethod === "mercadopago"
-      ? "Pagar con Mercado Pago"
+      ? t("ctaMercadopago")
       : paymentMethod === "transfer"
-        ? "Confirmar pedido (transferencia)"
+        ? t("ctaTransfer")
         : paymentMethod === "cash"
-          ? "Confirmar pedido (efectivo)"
-          : "Confirmar pedido"
+          ? t("ctaCash")
+          : t("ctaDefault")
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button className="fixed bottom-20 right-4 z-40 h-14 rounded-full bg-servido-800 px-6 shadow-lg hover:bg-servido-900 lg:bottom-8">
           <ShoppingBag className="mr-2 h-5 w-5" />
-          Ver pedido ({itemCount})
+          {t("viewOrder", { count: itemCount })}
         </Button>
       </SheetTrigger>
       <SheetContent className="flex w-full flex-col sm:max-w-md">
@@ -213,26 +216,24 @@ export function FoodCartDrawer({
           {deliveryMode !== "retiro_en_local" && (
             <div className="space-y-3 pt-2">
               <div className="space-y-2">
-                <Label>Dirección de entrega</Label>
-                <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Calle, número, piso" />
+                <Label>{t("deliveryAddress")}</Label>
+                <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("addressPlaceholder")} />
               </div>
               <div className="space-y-2">
-                <Label>Teléfono</Label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+54 9..." />
+                <Label>{t("phone")}</Label>
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t("phonePlaceholder")} />
               </div>
             </div>
           )}
           <div className="space-y-2">
-            <Label>Notas (opcional)</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Sin cebolla, timbre roto..." />
+            <Label>{t("notesOptional")}</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("notesPlaceholder")} />
           </div>
 
           <div className="space-y-2 pt-2">
-            <Label>Forma de pago</Label>
+            <Label>{t("paymentMethod")}</Label>
             {enabledMethods.length === 0 ? (
-              <p className="text-sm text-amber-700">
-                Este restaurante todavía no configuró cómo cobrar. Probá más tarde.
-              </p>
+              <p className="text-sm text-amber-700">{t("noPaymentConfigured")}</p>
             ) : (
               <div className="grid gap-2">
                 {enabledMethods.map((method) => (
@@ -246,10 +247,12 @@ export function FoodCartDrawer({
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    {RESTAURANT_PAYMENT_METHOD_LABELS[method]}
+                    {getRestaurantPaymentMethodLabel(tRestaurants, method)}
                     {method === "transfer" && (transferInfo?.alias || transferInfo?.cbu) && (
                       <span className="mt-1 block text-xs font-normal text-gray-500">
-                        {transferInfo.alias ? `Alias ${transferInfo.alias}` : `CBU ${transferInfo.cbu}`}
+                        {transferInfo.alias
+                          ? t("aliasPrefix", { alias: transferInfo.alias })
+                          : t("cbuPrefix", { cbu: transferInfo.cbu! })}
                       </span>
                     )}
                   </button>
@@ -261,24 +264,24 @@ export function FoodCartDrawer({
 
         <div className="border-t pt-4">
           <div className="mb-2 flex justify-between text-sm text-gray-600">
-            <span>Subtotal</span>
+            <span>{t("subtotal")}</span>
             <span>${formatPriceNumber(subtotal)}</span>
           </div>
           {deliveryFee > 0 && (
             <div className="mb-2 flex justify-between text-sm text-gray-600">
-              <span>Envío</span>
+              <span>{t("deliveryFee")}</span>
               <span>${formatPriceNumber(deliveryFee)}</span>
             </div>
           )}
           <div className="mb-4 flex justify-between font-bold text-gray-900">
-            <span>Total</span>
+            <span>{t("total")}</span>
             <span>${formatPriceNumber(total)}</span>
           </div>
           {error && <p className="mb-3 whitespace-pre-line text-sm text-red-600">{error}</p>}
           {successMsg && <p className="mb-3 whitespace-pre-line text-sm text-emerald-700">{successMsg}</p>}
           {!currentUser ? (
             <Button asChild className="w-full rounded-full bg-servido-800">
-              <Link href="/login">Iniciá sesión para pedir</Link>
+              <Link href="/login">{t("loginToOrder")}</Link>
             </Button>
           ) : (
             <Button

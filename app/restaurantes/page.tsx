@@ -9,6 +9,7 @@ import { RestaurantCard } from "@/components/restaurants/restaurant-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, Search, SlidersHorizontal, UtensilsCrossed } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { Restaurant } from "@/types/restaurant"
 
 type RestaurantMenuMeta = {
@@ -25,11 +26,12 @@ function isRestaurantOperative(restaurant: Restaurant) {
 }
 
 export default function RestaurantesPage() {
+  const t = useTranslations("restaurants")
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [menuMeta, setMenuMeta] = useState<Record<string, RestaurantMenuMeta>>({})
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("Todas")
+  const [selectedCategory, setSelectedCategory] = useState("")
   const [maxPrice, setMaxPrice] = useState("")
   const [sortBy, setSortBy] = useState<RestaurantSort>("recommended")
 
@@ -116,12 +118,9 @@ export default function RestaurantesPage() {
         counts.set(category, (counts.get(category) || 0) + 1)
       })
     })
-    return [
-      "Todas",
-      ...Array.from(counts.entries())
+    return Array.from(counts.entries())
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "es"))
-        .map(([category]) => category),
-    ]
+        .map(([category]) => category)
   }, [menuMeta])
 
   const filteredRestaurants = useMemo(() => {
@@ -142,7 +141,7 @@ export default function RestaurantesPage() {
 
       if (normalizedSearch && !searchable.includes(normalizedSearch)) return false
       if (
-        selectedCategory !== "Todas" &&
+        selectedCategory &&
         !meta?.categories.some(
           (category) =>
             category.toLocaleLowerCase("es") === selectedCategory.toLocaleLowerCase("es")
@@ -177,7 +176,7 @@ export default function RestaurantesPage() {
           <div className="mx-auto max-w-[1014px] overflow-hidden rounded-2xl shadow-md">
             <Image
               src="/images/bannerrestaurante.jpg"
-              alt="Los mejores sabores, directo a tu mesa"
+              alt={t("bannerAlt")}
               width={1600}
               height={759}
               className="h-auto w-full"
@@ -196,13 +195,25 @@ export default function RestaurantesPage() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar restaurante o comida"
+              placeholder={t("searchPlaceholder")}
               className="h-11 rounded-xl bg-white pl-10 shadow-sm"
             />
           </div>
 
           <div className="-mx-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex w-max gap-2">
+              <button
+                key="all"
+                type="button"
+                onClick={() => setSelectedCategory("")}
+                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
+                  selectedCategory === ""
+                    ? "bg-servido-800 text-white shadow-sm"
+                    : "bg-white text-gray-700 ring-1 ring-gray-200"
+                }`}
+              >
+                {t("allCategories")}
+              </button>
               {categories.map((category) => (
                 <button
                   key={category}
@@ -222,16 +233,16 @@ export default function RestaurantesPage() {
 
           <div className="grid grid-cols-[1fr_1fr] gap-2 sm:flex sm:items-center">
             <label className="relative">
-              <span className="sr-only">Ordenar restaurantes</span>
+              <span className="sr-only">{t("sortAria")}</span>
               <SlidersHorizontal className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <select
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value as RestaurantSort)}
                 className="h-10 w-full appearance-none rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-700 shadow-sm"
               >
-                <option value="recommended">Recomendados</option>
-                <option value="price-asc">Menor precio</option>
-                <option value="delivery-asc">Menor envío</option>
+                <option value="recommended">{t("sortRecommended")}</option>
+                <option value="price-asc">{t("sortPriceAsc")}</option>
+                <option value="delivery-asc">{t("sortDeliveryAsc")}</option>
               </select>
             </label>
             <div className="relative sm:w-44">
@@ -243,7 +254,7 @@ export default function RestaurantesPage() {
                 min="0"
                 value={maxPrice}
                 onChange={(event) => setMaxPrice(event.target.value)}
-                placeholder="Precio máximo"
+                placeholder={t("maxPricePlaceholder")}
                 className="h-10 rounded-xl bg-white pl-7 text-sm shadow-sm"
               />
             </div>
@@ -257,29 +268,27 @@ export default function RestaurantesPage() {
         ) : restaurants.length === 0 ? (
           <div className="rounded-3xl bg-white p-10 text-center shadow-md ring-1 ring-gray-100">
             <UtensilsCrossed className="mx-auto mb-4 h-12 w-12 text-orange-400" />
-            <h2 className="text-lg font-semibold text-gray-900">Próximamente más restaurantes</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Estamos sumando locales a la plataforma. ¿Tenés un restaurante?
-            </p>
+            <h2 className="text-lg font-semibold text-gray-900">{t("emptySoonTitle")}</h2>
+            <p className="mt-2 text-sm text-gray-600">{t("emptySoonBody")}</p>
             <Button asChild className="mt-6 rounded-full bg-servido-800">
-              <Link href="/signup/restaurante">Registrar mi restaurante</Link>
+              <Link href="/signup/restaurante">{t("registerRestaurant")}</Link>
             </Button>
           </div>
         ) : filteredRestaurants.length === 0 ? (
           <div className="rounded-2xl bg-white p-8 text-center ring-1 ring-gray-100">
-            <p className="font-medium text-gray-900">No encontramos restaurantes</p>
-            <p className="mt-1 text-sm text-gray-500">Probá otra comida o cambiá el precio.</p>
+            <p className="font-medium text-gray-900">{t("noResultsTitle")}</p>
+            <p className="mt-1 text-sm text-gray-500">{t("noResultsBody")}</p>
             <Button
               variant="outline"
               className="mt-4 rounded-full"
               onClick={() => {
                 setSearch("")
-                setSelectedCategory("Todas")
+                setSelectedCategory("")
                 setMaxPrice("")
                 setSortBy("recommended")
               }}
             >
-              Limpiar filtros
+              {t("clearFilters")}
             </Button>
           </div>
         ) : (

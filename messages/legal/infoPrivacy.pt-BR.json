@@ -1,0 +1,125 @@
+{
+  "infoPrivacy": {
+    "badge": "Legal",
+    "title": "Política de Privacidade – ServiDo",
+    "subtitle": "No ServiDo, comprometemo-nos a proteger a privacidade dos nossos usuários e a tratar os dados pessoais com transparência e segurança. Esta política descreve quais informações coletamos, como as utilizamos e quais medidas adotamos para protegê-las.",
+    "lastUpdated": "4 de agosto de 2025",
+    "sectionOrder": [
+      "informacion",
+      "cuenta",
+      "ubicacion",
+      "publicidad",
+      "terceros",
+      "seguridad",
+      "contacto",
+      "cambios"
+    ],
+    "sections": {
+      "informacion": {
+        "title": "Informações que coletamos",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Ao se cadastrar e utilizar o ServiDo, podemos coletar as seguintes informações pessoais:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              "Nome e sobrenome",
+              "Endereço de e-mail",
+              "Número de telefone",
+              "Localização geográfica (para coordenar entregas e mostrar serviços próximos)"
+            ]
+          }
+        ]
+      },
+      "cuenta": {
+        "title": "Criação de conta",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Para utilizar o ServiDo, o usuário deve criar uma conta acessando a opção \"Cadastrar-se\" na plataforma e preenchendo os dados solicitados."
+          }
+        ]
+      },
+      "ubicacion": {
+        "title": "Uso da localização",
+        "blocks": [
+          { "type": "p", "text": "O ServiDo utiliza a localização do usuário para:" },
+          {
+            "type": "ul",
+            "items": [
+              "Coordenar entregas ou envios de produtos e serviços.",
+              "Mostrar resultados relevantes próximos à localização do usuário."
+            ]
+          },
+          {
+            "type": "p",
+            "text": "O usuário pode gerenciar as permissões de localização nas configurações do dispositivo."
+          }
+        ]
+      },
+      "publicidad": {
+        "title": "Publicidade",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "O ServiDo exibe anúncios dentro do aplicativo. Esses anúncios podem ser próprios ou de terceiros, mas não implicam o compartilhamento de dados pessoais do usuário com anunciantes."
+          }
+        ]
+      },
+      "terceros": {
+        "title": "Compartilhamento de informações com terceiros",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "O ServiDo não compartilha dados pessoais nem informações dos usuários com terceiros, salvo por obrigação legal."
+          }
+        ]
+      },
+      "seguridad": {
+        "title": "Segurança dos dados",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "No ServiDo, implementamos medidas técnicas e organizacionais para proteger as informações dos nossos usuários:"
+          },
+          {
+            "type": "ul",
+            "items": [
+              "Criptografia: utilizamos criptografia para proteger os dados em trânsito e em repouso.",
+              "Servidores seguros: as operações são executadas em servidores robustos, protegidos com firewalls e sistemas de detecção de intrusão, em ambientes controlados com acesso restrito."
+            ]
+          }
+        ]
+      },
+      "contacto": {
+        "title": "Contato",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Para dúvidas ou solicitações relacionadas à privacidade, entre em contato conosco em:"
+          },
+          { "type": "p", "text": "servidoarg@gmail.com" }
+        ]
+      },
+      "cambios": {
+        "title": "Alterações nesta política",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Podemos atualizar esta política de privacidade ocasionalmente. Qualquer alteração será publicada nesta mesma seção com a data da última atualização."
+          }
+        ]
+      }
+    },
+    "cta": {
+      "title": "Dúvidas sobre privacidade?",
+      "description": "Escreva para nós por e-mail ou consulte os termos e condições de uso da plataforma.",
+      "primaryLabel": "Contato por e-mail",
+      "primaryHref": "mailto:servidoarg@gmail.com",
+      "secondaryLabel": "Ver termos e condições",
+      "secondaryHref": "/terminos-y-condiciones"
+    }
+  }
+}

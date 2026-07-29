@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
@@ -9,22 +10,25 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2, UtensilsCrossed } from "lucide-react"
 import type { FoodOrder } from "@/types/restaurant"
-import { FOOD_ORDER_STATUS_LABELS, formatOrderItemSelections } from "@/types/restaurant"
+import { formatOrderItemSelections } from "@/types/restaurant"
 import { formatPriceNumber } from "@/lib/utils"
+import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
 
 export default function FoodOrdersPage() {
+  const t = useTranslations("foodOrders")
   const { currentUser, authLoading } = useAuth()
   const [orders, setOrders] = useState<FoodOrder[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (authLoading) return
     if (!currentUser) {
+      setOrders([])
       setLoading(false)
       return
     }
 
-    async function loadOrders() {
+    async function load() {
+      setLoading(true)
       try {
         const snap = await getDocs(
           query(
@@ -39,11 +43,12 @@ export default function FoodOrdersPage() {
           query(collection(db, "foodOrders"), where("buyerId", "==", currentUser!.firebaseUser.uid))
         )
         setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FoodOrder)))
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
-    void loadOrders()
-  }, [currentUser, authLoading])
+    void load()
+  }, [currentUser])
 
   if (authLoading || loading) {
     return (
@@ -56,9 +61,9 @@ export default function FoodOrdersPage() {
   if (!currentUser) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <p className="text-gray-600">Iniciá sesión para ver tus pedidos de comida</p>
+        <p className="text-gray-600">{t("loginRequired")}</p>
         <Button asChild className="mt-4 rounded-full bg-servido-800">
-          <Link href="/login">Iniciar sesión</Link>
+          <Link href="/login">{t("login")}</Link>
         </Button>
       </div>
     )
@@ -72,16 +77,16 @@ export default function FoodOrdersPage() {
             <UtensilsCrossed className="h-5 w-5" />
           </span>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Mis pedidos de comida</h1>
-            <p className="text-sm text-gray-500">Seguimiento de tus pedidos en restaurantes</p>
+            <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
+            <p className="text-sm text-gray-500">{t("subtitle")}</p>
           </div>
         </div>
 
         {orders.length === 0 ? (
           <div className="rounded-2xl bg-white p-8 text-center ring-1 ring-gray-100">
-            <p className="text-gray-600">Todavía no hiciste pedidos de comida</p>
+            <p className="text-gray-600">{t("empty")}</p>
             <Button asChild className="mt-4 rounded-full bg-servido-800">
-              <Link href="/restaurantes">Explorar restaurantes</Link>
+              <Link href="/restaurantes">{t("exploreRestaurants")}</Link>
             </Button>
           </div>
         ) : (
@@ -94,19 +99,17 @@ export default function FoodOrdersPage() {
                     <p className="text-xs text-gray-500">#{order.id.slice(-8)}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Badge variant="secondary">{FOOD_ORDER_STATUS_LABELS[order.status]}</Badge>
+                    <Badge variant="secondary">{getFoodOrderStatusLabel(t, order.status)}</Badge>
                     <Badge variant="outline">{order.paymentStatus}</Badge>
                   </div>
                 </div>
                 <ul className="mt-3 space-y-1 text-sm text-gray-700">
-                  {order.items.map((item, i) => {
+                  {order.items.map((item, idx) => {
                     const details = formatOrderItemSelections(item)
                     return (
-                      <li key={i}>
-                        <span>
-                          {item.quantity}x {item.name}
-                        </span>
-                        {details && !item.name.includes(details) && (
+                      <li key={`${item.menuItemId}-${idx}`}>
+                        {item.quantity}x {item.name}
+                        {details && (
                           <span className="mt-0.5 block text-xs text-gray-500">{details}</span>
                         )}
                       </li>

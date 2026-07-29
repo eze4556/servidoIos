@@ -1,4 +1,7 @@
+"use client"
+
 import { CheckCircle, Clock, Package, Truck, XCircle } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 export function getShippingIcon(status: string) {
@@ -35,23 +38,6 @@ export function getShippingBadgeClass(status: string) {
   }
 }
 
-export function getShippingStatusText(status: string) {
-  switch (status) {
-    case "pendiente":
-      return "Pendiente"
-    case "preparacion":
-      return "En preparación"
-    case "enviado":
-      return "Enviado"
-    case "entregado":
-      return "Entregado"
-    case "cancelado":
-      return "Cancelado"
-    default:
-      return "Desconocido"
-  }
-}
-
 export function getPaymentBadgeClass(status: string) {
   switch (status) {
     case "pagado":
@@ -71,29 +57,6 @@ export function getPaymentBadgeClass(status: string) {
   }
 }
 
-export function getPaymentStatusText(status: string) {
-  switch (status) {
-    case "pagado":
-      return "Pagado"
-    case "pendiente":
-      return "Pendiente"
-    case "rechazado":
-      return "Rechazado"
-    case "cancelado":
-      return "Cancelado"
-    case "approved":
-      return "Aprobado"
-    case "pending":
-      return "Pendiente"
-    case "rejected":
-      return "Rechazado"
-    case "cancelled":
-      return "Cancelado"
-    default:
-      return status
-  }
-}
-
 interface StatusBadgeProps {
   status: string
   type?: "payment" | "shipping"
@@ -101,8 +64,14 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, type = "payment", className }: StatusBadgeProps) {
+  const t = useTranslations("buyerDashboard")
   const badgeClass = type === "shipping" ? getShippingBadgeClass(status) : getPaymentBadgeClass(status)
-  const label = type === "shipping" ? getShippingStatusText(status) : getPaymentStatusText(status)
+  const label =
+    type === "shipping"
+      ? (t.has(`shipping.${status}` as "shipping.pendiente") ? t(`shipping.${status}` as "shipping.pendiente") : t("shipping.unknown"))
+      : t.has(`payment.${status}` as "payment.pagado")
+        ? t(`payment.${status}` as "payment.pagado")
+        : status
 
   return (
     <span

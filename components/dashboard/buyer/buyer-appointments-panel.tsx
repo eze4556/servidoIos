@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { CalendarDays, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
@@ -13,13 +14,13 @@ import {
   updateAppointmentStatus,
 } from "@/lib/service-appointments"
 import type { ServiceAppointment } from "@/types/service-appointments"
-import { APPOINTMENT_STATUS_LABELS } from "@/types/service-appointments"
 
 type BuyerAppointmentsPanelProps = {
   buyerId: string
 }
 
 export function BuyerAppointmentsPanel({ buyerId }: BuyerAppointmentsPanelProps) {
+  const t = useTranslations("buyerDashboard")
   const [items, setItems] = useState<ServiceAppointment[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -53,26 +54,26 @@ export function BuyerAppointmentsPanel({ buyerId }: BuyerAppointmentsPanelProps)
         actorId: buyerId,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo cancelar.")
+      setError(err instanceof Error ? err.message : t("cancelError"))
     } finally {
       setBusyId(null)
     }
   }
 
   return (
-    <BuyerPanel title="Mis turnos" description="Reservas de servicios que pediste">
+    <BuyerPanel title={t("pages.appointments.title")} description={t("pages.appointments.subtitle")}>
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Cargando turnos...
+          <Loader2 className="h-4 w-4 animate-spin" /> {t("appointmentsLoading")}
         </div>
       ) : items.length === 0 ? (
         <div className="space-y-3 text-sm text-muted-foreground">
           <div className="flex items-start gap-2">
             <CalendarDays className="mt-0.5 h-5 w-5 shrink-0" />
-            Todavía no pediste turnos.
+            {t("appointmentsEmpty")}
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link href="/services">Ver servicios</Link>
+            <Link href="/services">{t("viewServices")}</Link>
           </Button>
         </div>
       ) : (
@@ -86,12 +87,12 @@ export function BuyerAppointmentsPanel({ buyerId }: BuyerAppointmentsPanelProps)
                   <p className="text-sm text-muted-foreground">{formatAppointmentWhen(appt)}</p>
                 </div>
                 <Badge variant={appt.status === "confirmed" ? "default" : "secondary"}>
-                  {APPOINTMENT_STATUS_LABELS[appt.status]}
+                  {t(`appointmentStatus.${appt.status}`)}
                 </Badge>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/product/${appt.serviceId}`}>Ver servicio</Link>
+                  <Link href={`/product/${appt.serviceId}`}>{t("viewService")}</Link>
                 </Button>
                 {(appt.status === "pending" || appt.status === "confirmed") && (
                   <Button
@@ -100,7 +101,7 @@ export function BuyerAppointmentsPanel({ buyerId }: BuyerAppointmentsPanelProps)
                     disabled={busyId === appt.id}
                     onClick={() => void handleCancel(appt.id)}
                   >
-                    Cancelar turno
+                    {t("cancelAppointment")}
                   </Button>
                 )}
               </div>

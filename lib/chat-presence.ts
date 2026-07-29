@@ -31,6 +31,44 @@ export function formatLastSeen(lastSeenAt: unknown, now = Date.now()): string {
   })}`
 }
 
+export type ChatLastSeenTranslate = (
+  key:
+    | "lastSeenUnknown"
+    | "online"
+    | "lastSeenJustNow"
+    | "lastSeenMinutes"
+    | "lastSeenHours"
+    | "lastSeenYesterday"
+    | "lastSeenDays"
+    | "lastSeenOnDate",
+  values?: Record<string, string | number>
+) => string
+
+export function formatLastSeenLocalized(
+  lastSeenAt: unknown,
+  t: ChatLastSeenTranslate,
+  locale: string,
+  now = Date.now()
+): string {
+  const ms = toMillis(lastSeenAt)
+  if (!ms) return t("lastSeenUnknown")
+  const diff = Math.max(0, now - ms)
+  if (diff < ONLINE_MS) return t("online")
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return t("lastSeenJustNow")
+  if (mins < 60) return t("lastSeenMinutes", { count: mins })
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return t("lastSeenHours", { count: hours })
+  const days = Math.floor(hours / 24)
+  if (days === 1) return t("lastSeenYesterday")
+  if (days < 7) return t("lastSeenDays", { count: days })
+  const dateStr = new Date(ms).toLocaleDateString(locale === "pt-BR" ? "pt-BR" : "es-AR", {
+    day: "numeric",
+    month: "short",
+  })
+  return t("lastSeenOnDate", { date: dateStr })
+}
+
 export function isUserOnline(lastSeenAt: unknown, now = Date.now()): boolean {
   const ms = toMillis(lastSeenAt)
   return ms > 0 && now - ms < ONLINE_MS

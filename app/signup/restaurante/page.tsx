@@ -4,6 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import {
   Loader2,
   Mail,
@@ -29,12 +30,17 @@ import {
 } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
 import { signupRestaurant } from "@/lib/auth/signup-partner"
+import { getDeliveryModeLabel } from "@/lib/i18n/restaurant-labels"
 import type { DeliveryMode } from "@/types/restaurant"
-import { DELIVERY_MODE_LABELS } from "@/types/restaurant"
 import { cn } from "@/lib/utils"
+
+const DELIVERY_MODES: DeliveryMode[] = ["delivery_propio", "retiro_en_local", "ambos"]
 
 export default function RestaurantSignupPage() {
   const router = useRouter()
+  const t = useTranslations("signupRestaurant")
+  const tAuth = useTranslations("auth")
+  const tRestaurants = useTranslations("restaurants")
   const { currentUser, authLoading, getDashboardLink, handleLogout } = useAuth()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -60,24 +66,36 @@ export default function RestaurantSignupPage() {
     }
   }, [authLoading, isRestaurantSeller, router])
 
+  const heroProps = {
+    variant: "restaurant" as const,
+    icon: UtensilsCrossed,
+    heroTitle: t("heroTitle"),
+    heroSubtitle: t("heroSubtitle"),
+    highlights: [
+      { icon: ClipboardList, text: t("highlightOrders") },
+      { icon: TrendingUp, text: t("highlightVisibility") },
+      { icon: Store, text: t("highlightMenu") },
+    ],
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.")
+      setError(tAuth("passwordMismatch"))
       return
     }
     if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.")
+      setError(tAuth("passwordMin"))
       return
     }
     if (!acceptTerms) {
-      setError("Debes aceptar los términos y condiciones para continuar.")
+      setError(tAuth("termsRequired"))
       return
     }
     if (!restaurantName.trim() || !address.trim()) {
-      setError("Completá el nombre del local y la dirección.")
+      setError(t("errorVenue"))
       return
     }
 
@@ -96,11 +114,11 @@ export default function RestaurantSignupPage() {
     } catch (err: unknown) {
       const firebaseErr = err as { code?: string }
       if (firebaseErr.code === "auth/email-already-in-use") {
-        setError("Este correo electrónico ya está en uso.")
+        setError(tAuth("emailInUseLong"))
       } else if (firebaseErr.code === "auth/weak-password") {
-        setError("La contraseña es demasiado débil.")
+        setError(tAuth("weakPassword"))
       } else {
-        setError("Error al crear la cuenta. Por favor, inténtalo de nuevo.")
+        setError(tAuth("signupErrorLong"))
         console.error("Restaurant signup error:", err)
       }
     } finally {
@@ -117,30 +135,15 @@ export default function RestaurantSignupPage() {
   }
 
   if (currentUser) {
-    const title = isStoreSeller
-      ? "Ya tenés una cuenta de vendedor"
-      : "Ya iniciaste sesión"
-    const description = isStoreSeller
-      ? "Esta cuenta es de tienda/vendedor. No se puede convertir a restaurante desde acá. Si querés registrar un restaurante, cerrá sesión y usá otro correo, o contactá a soporte."
-      : "Para registrar un restaurante nuevo tenés que cerrar sesión primero."
-
     return (
       <PartnerSignupShell
-        variant="restaurant"
-        icon={UtensilsCrossed}
-        heroTitle="Sumá tu restaurante a Servido"
-        heroSubtitle="Recibí pedidos online, gestioná tu menú y llegá a más clientes en tu zona."
-        highlights={[
-          { icon: ClipboardList, text: "Panel de pedidos en tiempo real" },
-          { icon: TrendingUp, text: "Mayor visibilidad en tu zona" },
-          { icon: Store, text: "Menú digital fácil de actualizar" },
-        ]}
-        formTitle={title}
-        formSubtitle={description}
+        {...heroProps}
+        formTitle={isStoreSeller ? t("sellerAccountTitle") : t("loggedInTitle")}
+        formSubtitle={isStoreSeller ? t("sellerAccountBody") : t("logoutToRegister")}
       >
         <div className="space-y-3">
           <Button asChild className="h-11 w-full rounded-full bg-servido-800 hover:bg-servido-900">
-            <Link href={getDashboardLink()}>Ir a mi panel</Link>
+            <Link href={getDashboardLink()}>{t("goToPanel")}</Link>
           </Button>
           <Button
             type="button"
@@ -148,10 +151,10 @@ export default function RestaurantSignupPage() {
             className="h-11 w-full rounded-full"
             onClick={() => void handleLogout()}
           >
-            Cerrar sesión
+            {t("logout")}
           </Button>
           <Button asChild variant="ghost" className="h-11 w-full rounded-full">
-            <Link href="/">Volver al inicio</Link>
+            <Link href="/">{t("backHome")}</Link>
           </Button>
         </div>
       </PartnerSignupShell>
@@ -160,39 +163,31 @@ export default function RestaurantSignupPage() {
 
   return (
     <PartnerSignupShell
-      variant="restaurant"
-      icon={UtensilsCrossed}
-      heroTitle="Sumá tu restaurante a Servido"
-      heroSubtitle="Recibí pedidos online, gestioná tu menú y llegá a más clientes en tu zona."
-      highlights={[
-        { icon: ClipboardList, text: "Panel de pedidos en tiempo real" },
-        { icon: TrendingUp, text: "Mayor visibilidad en tu zona" },
-        { icon: Store, text: "Menú digital fácil de actualizar" },
-      ]}
-      formTitle="Registro de restaurante"
-      formSubtitle="Creá tu cuenta y empezá a recibir pedidos"
+      {...heroProps}
+      formTitle={t("formTitle")}
+      formSubtitle={t("formSubtitle")}
       footer={
         <p className="text-center text-sm text-gray-600">
-          ¿Ya tenés cuenta?{" "}
+          {tAuth("hasAccount")}{" "}
           <Link href="/login" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
-            Iniciá sesión
+            {tAuth("loginLink")}
           </Link>
         </p>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="rounded-2xl bg-servido-gold/10 p-4 ring-1 ring-servido-gold/20">
-          <p className="text-xs font-semibold uppercase tracking-wider text-servido-800">Datos del local</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-servido-800">{t("sectionTitle")}</p>
           <div className="mt-3 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="restaurantName" className={authLabelClass}>
-                Nombre del restaurante
+                {t("restaurantNameLabel")}
               </Label>
               <div className="relative">
                 <Store className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   id="restaurantName"
-                  placeholder="Mi Restaurante"
+                  placeholder={t("restaurantNamePlaceholder")}
                   value={restaurantName}
                   onChange={(e) => setRestaurantName(e.target.value)}
                   className={cn(authInputClass, "pl-10")}
@@ -202,13 +197,13 @@ export default function RestaurantSignupPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="address" className={authLabelClass}>
-                Dirección
+                {t("addressLabel")}
               </Label>
               <div className="relative">
                 <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   id="address"
-                  placeholder="Calle, número, ciudad"
+                  placeholder={t("addressPlaceholder")}
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   className={cn(authInputClass, "pl-10")}
@@ -217,15 +212,15 @@ export default function RestaurantSignupPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className={authLabelClass}>Modalidad de entrega</Label>
+              <Label className={authLabelClass}>{t("deliveryModeLabel")}</Label>
               <Select value={deliveryMode} onValueChange={(v) => setDeliveryMode(v as DeliveryMode)}>
                 <SelectTrigger className={authInputClass}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(DELIVERY_MODE_LABELS) as DeliveryMode[]).map((mode) => (
+                  {DELIVERY_MODES.map((mode) => (
                     <SelectItem key={mode} value={mode}>
-                      {DELIVERY_MODE_LABELS[mode]}
+                      {getDeliveryModeLabel(tRestaurants, mode)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -236,13 +231,13 @@ export default function RestaurantSignupPage() {
 
         <div className="space-y-2">
           <Label htmlFor="name" className={authLabelClass}>
-            Nombre del responsable
+            {t("ownerNameLabel")}
           </Label>
           <div className="relative">
             <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               id="name"
-              placeholder="Juan Pérez"
+              placeholder={tAuth("namePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={cn(authInputClass, "pl-10")}
@@ -254,14 +249,14 @@ export default function RestaurantSignupPage() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="email" className={authLabelClass}>
-              Correo electrónico
+              {tAuth("email")}
             </Label>
             <div className="relative">
               <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="tu@email.com"
+                placeholder={tAuth("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={cn(authInputClass, "pl-10")}
@@ -271,14 +266,14 @@ export default function RestaurantSignupPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone" className={authLabelClass}>
-              Teléfono
+              {tAuth("phone")}
             </Label>
             <div className="relative">
               <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 id="phone"
                 type="tel"
-                placeholder="+54 9 11 1234-5678"
+                placeholder={tAuth("phonePlaceholder")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className={cn(authInputClass, "pl-10")}
@@ -291,12 +286,12 @@ export default function RestaurantSignupPage() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="password" className={authLabelClass}>
-              Contraseña
+              {tAuth("password")}
             </Label>
             <Input
               id="password"
               type="password"
-              placeholder="Mínimo 6 caracteres"
+              placeholder={tAuth("passwordPlaceholderMin")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={authInputClass}
@@ -305,12 +300,12 @@ export default function RestaurantSignupPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword" className={authLabelClass}>
-              Confirmar contraseña
+              {tAuth("confirmPassword")}
             </Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Repetí tu contraseña"
+              placeholder={tAuth("passwordPlaceholderConfirm")}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={authInputClass}
@@ -328,11 +323,11 @@ export default function RestaurantSignupPage() {
             required
           />
           <Label htmlFor="terms" className="cursor-pointer text-sm leading-relaxed text-gray-600">
-            Acepto los{" "}
+            {tAuth("acceptTerms")}{" "}
             <Link href="/terminos-y-condiciones" target="_blank" className="font-semibold text-purple-700 hover:underline">
-              términos y condiciones
+              {tAuth("termsLink")}
             </Link>{" "}
-            de Servido
+            {tAuth("termsOfServido")}
           </Label>
         </div>
 
@@ -348,10 +343,10 @@ export default function RestaurantSignupPage() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creando cuenta...
+              {t("submitting")}
             </>
           ) : (
-            "Registrar mi restaurante"
+            t("submit")
           )}
         </Button>
       </form>

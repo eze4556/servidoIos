@@ -1,0 +1,133 @@
+{
+  "infoCareers": {
+    "badge": "Carreiras",
+    "title": "Construa o marketplace do futuro conosco",
+    "subtitle": "No Servido conectamos compradores e vendedores em toda a Argentina. Buscamos pessoas curiosas, proativas e com vontade de deixar marca em um produto digital em expansão.",
+    "highlights": {
+      "modality": { "label": "Modalidade", "value": "Remoto / híbrido" },
+      "location": { "label": "Localização", "value": "Argentina" },
+      "team": { "label": "Equipe", "value": "Em crescimento" }
+    },
+    "whyTitle": "Por que se juntar ao Servido?",
+    "whyP1": "Somos uma equipe que constrói tecnologia com impacto real: cada melhoria na plataforma ajuda mais pessoas a comprar, vender e confiar no comércio digital.",
+    "whyP2": "Buscamos pessoas que gostem de resolver problemas, trabalhar em equipe e propor ideias. Se você quer crescer em um ambiente ágil e com propósito, queremos te conhecer.",
+    "quote": "Acreditamos que o melhor trabalho surge quando há desafio, autonomia e uma equipe que te apoia.",
+    "quoteAuthor": "— Cultura Servido",
+    "culturePillars": [
+      "Inovação com propósito",
+      "Respeito e transparência",
+      "Ownership do que você constrói",
+      "Melhoria contínua"
+    ],
+    "benefitsTitle": "Benefícios de trabalhar aqui",
+    "benefitsSubtitle": "O que oferecemos a quem se junta",
+    "benefitOrder": ["growth", "flexible", "stack", "team", "learning", "impact"],
+    "benefits": {
+      "growth": {
+        "title": "Crescimento profissional",
+        "description": "Desenvolvimento real em um produto que escala com milhares de usuários."
+      },
+      "flexible": {
+        "title": "Ambiente flexível",
+        "description": "Trabalho colaborativo, dinâmico e orientado a resultados."
+      },
+      "stack": {
+        "title": "Stack moderna",
+        "description": "Next.js, Firebase, TypeScript e ferramentas de última geração."
+      },
+      "team": {
+        "title": "Equipe próxima",
+        "description": "Decisões ágeis, feedback direto e celebração de conquistas."
+      },
+      "learning": {
+        "title": "Aprendizado contínuo",
+        "description": "Espaço para testar ideias, errar e melhorar rápido."
+      },
+      "impact": {
+        "title": "Impacto visível",
+        "description": "O que você constrói chega a compradores e vendedores reais."
+      }
+    },
+    "areasTitle": "Áreas onde buscamos talento",
+    "areasSubtitle": "Sempre abertos a perfis com vontade de contribuir",
+    "areaOrder": ["dev", "design", "ops", "marketing"],
+    "areas": {
+      "dev": {
+        "title": "Desenvolvimento web e mobile",
+        "description": "Frontend, backend, integrações e performance."
+      },
+      "design": {
+        "title": "Design de produto e UX",
+        "description": "Interfaces, research e experiência do usuário."
+      },
+      "ops": {
+        "title": "Operações e suporte",
+        "description": "Processos, atendimento ao usuário e melhoria contínua."
+      },
+      "marketing": {
+        "title": "Marketing e comunidade",
+        "description": "Conteúdo, redes e crescimento da plataforma."
+      }
+    },
+    "processTitle": "Como é o processo",
+    "processSubtitle": "Simples, transparente e direto",
+    "processOrder": ["apply", "meet", "join"],
+    "process": {
+      "apply": {
+        "step": "01",
+        "title": "Envie sua candidatura",
+        "description": "Mande seu CV e uma carta breve contando por que quer se juntar."
+      },
+      "meet": {
+        "step": "02",
+        "title": "Vamos nos conhecer",
+        "description": "Conversamos sobre sua experiência, interesses e como você pode contribuir."
+      },
+      "join": {
+        "step": "03",
+        "title": "Entre para a equipe",
+        "description": "Se houver match, te acompanhamos na integração e nos primeiros projetos."
+      }
+    },
+    "applyTitle": "Envie sua candidatura",
+    "applyBody": "Escreva para nós com seu CV e conte o que te motiva no Servido. Revisamos cada mensagem com atenção.",
+    "applyCta": "Candidatar-me agora",
+    "applyMailSubject": "Candidatura Servido - [Nome e área]",
+    "checklistTitle": "Inclua no seu e-mail:",
+    "checklist": [
+      "CV atualizado (PDF ou link)",
+      "Função ou área de interesse",
+      "Portfólio, GitHub ou trabalhos anteriores (se aplicável)",
+      "Disponibilidade e modalidade preferida"
+    ],
+    "faqTitle": "Perguntas frequentes",
+    "faqSubtitle": "Dúvidas comuns sobre trabalhar no Servido",
+    "faqOrder": ["marketplace", "remote", "email", "open"],
+    "faqs": {
+      "marketplace": {
+        "question": "Preciso de experiência prévia em marketplaces?",
+        "answer": "Não é obrigatório. Valorizamos atitude, capacidade de aprender e vontade de construir produto. Se você tem experiência em e-commerce ou fintech, é um diferencial."
+      },
+      "remote": {
+        "question": "Vocês trabalham remotamente?",
+        "answer": "Sim, consideramos modalidade remota e híbrida conforme a função. O importante é a comunicação e o compromisso com a equipe."
+      },
+      "email": {
+        "question": "O que devo incluir no e-mail de candidatura?",
+        "answer": "Seu CV, a área de interesse, uma breve apresentação e links para portfólio ou projetos. Quanto mais contexto, melhor podemos te conhecer."
+      },
+      "open": {
+        "question": "Há vagas abertas fixas?",
+        "answer": "Estamos sempre abertos a conhecer talentos. Mesmo sem uma busca ativa para o seu perfil, guardamos candidaturas para oportunidades futuras."
+      }
+    },
+    "cta": {
+      "title": "Conheça mais sobre o Servido",
+      "description": "Descubra nossa missão, visão e os valores que guiam cada decisão na plataforma.",
+      "primaryLabel": "Quem somos",
+      "primaryHref": "/acerca-de-nosotros",
+      "secondaryLabel": "Ver termos",
+      "secondaryHref": "/terminos-y-condiciones"
+    }
+  }
+}

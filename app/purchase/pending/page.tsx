@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Clock, Home, Package, RefreshCw } from "lucide-react"
@@ -9,6 +10,7 @@ import Link from "next/link"
 import { MultiSellerCheckoutContinue, readCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
 
 export default function PurchasePendingPage() {
+  const t = useTranslations("purchase")
   const searchParams = useSearchParams()
   const [pendingData, setPendingData] = useState<{
     paymentId?: string
@@ -44,10 +46,10 @@ export default function PurchasePendingPage() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Pago en proceso</h1>
-            <p className="text-xl text-gray-600 mb-6">Tu pago está siendo procesado.</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">{t("pendingTitle")}</h1>
+            <p className="text-xl text-gray-600 mb-6">{t("pendingSubtitle")}</p>
             <p className="text-gray-500 mb-8 leading-relaxed">
-              Estamos verificando tu pago. Esto puede tomar unos minutos.
+              {t("pendingBody")}
             </p>
 
             <MultiSellerCheckoutContinue sessionId={checkoutSessionId} variant="pending" />
@@ -55,16 +57,16 @@ export default function PurchasePendingPage() {
             {pendingData.paymentId && (
               <div className="bg-yellow-50 rounded-lg p-4 mb-6 border border-yellow-200">
                 <p className="text-sm text-yellow-800">
-                  <span className="font-semibold">ID de Pago:</span> {pendingData.paymentId}
+                  <span className="font-semibold">{t("paymentId")}</span> {pendingData.paymentId}
                 </p>
                 {pendingData.orderId && (
                   <p className="text-sm text-yellow-800">
-                    <span className="font-semibold">Orden:</span> {pendingData.orderId}
+                    <span className="font-semibold">{t("order")}</span> {pendingData.orderId}
                   </p>
                 )}
                 {pendingData.amount && (
                   <p className="text-sm text-yellow-800">
-                    <span className="font-semibold">Monto:</span> ${pendingData.amount}
+                    <span className="font-semibold">{t("amount")}</span> ${pendingData.amount}
                   </p>
                 )}
               </div>
@@ -74,27 +76,27 @@ export default function PurchasePendingPage() {
               <Button asChild className="w-full bg-yellow-600 hover:bg-yellow-700">
                 <Link href="/dashboard/buyer">
                   <Package className="w-4 h-4 mr-2" />
-                  Ver mis compras
+                  {t("viewPurchases")}
                 </Link>
               </Button>
 
               <Button asChild variant="outline" className="w-full">
                 <Link href="/">
                   <Home className="w-4 h-4 mr-2" />
-                  Volver al inicio
+                  {t("backHome")}
                 </Link>
               </Button>
 
               <Button asChild variant="ghost" className="w-full">
                 <Link href="/dashboard/buyer">
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Actualizar estado
+                  {t("refreshStatus")}
                 </Link>
               </Button>
             </div>
 
             <p className="text-xs text-gray-400 mt-6">
-              Si el pago no se procesa en 24 horas, contacta a nuestro soporte.
+              {t("pendingSupport")}
             </p>
           </CardContent>
         </Card>

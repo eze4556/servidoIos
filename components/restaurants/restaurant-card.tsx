@@ -2,9 +2,11 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import { MapPin, UtensilsCrossed } from "lucide-react"
 import type { Restaurant } from "@/types/restaurant"
-import { DELIVERY_MODE_LABELS, getRestaurantCoverUrl, getRestaurantLogoUrl } from "@/types/restaurant"
+import { getRestaurantCoverUrl, getRestaurantLogoUrl } from "@/types/restaurant"
+import { getDeliveryModeLabel } from "@/lib/i18n/restaurant-labels"
 import { formatPriceNumber } from "@/lib/utils"
 
 interface RestaurantCardProps {
@@ -14,6 +16,7 @@ interface RestaurantCardProps {
 }
 
 export function RestaurantCard({ restaurant, categories = [], minPrice }: RestaurantCardProps) {
+  const t = useTranslations("restaurants")
   const coverUrl = getRestaurantCoverUrl(restaurant)
   const logoUrl = getRestaurantLogoUrl(restaurant)
 
@@ -57,12 +60,12 @@ export function RestaurantCard({ restaurant, categories = [], minPrice }: Restau
             <span className="truncate">{restaurant.zone || restaurant.address}</span>
           </span>
           <span className="rounded-full bg-orange-50 px-2 py-0.5 text-orange-700">
-            {DELIVERY_MODE_LABELS[restaurant.deliveryMode]}
+            {getDeliveryModeLabel(t, restaurant.deliveryMode)}
           </span>
         </div>
         {typeof minPrice === "number" && (
           <p className="text-xs font-semibold text-servido-800">
-            Desde ${formatPriceNumber(minPrice)}
+            {t("fromPrice", { price: `$${formatPriceNumber(minPrice)}` })}
           </p>
         )}
       </div>

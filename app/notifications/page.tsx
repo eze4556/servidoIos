@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
+import { useLocale, useTranslations } from "next-intl"
 import {
   collection,
   limit,
@@ -34,16 +35,21 @@ import {
 import { syncAppointmentNotificationsForUser } from "@/lib/service-appointments"
 import type { AppNotification } from "@/types/notifications"
 
-function formatTime(timestamp: any): string {
+function formatNotificationTime(
+  timestamp: unknown,
+  t: (key: string, values?: Record<string, string | number | Date>) => string,
+  locale: string
+): string {
   if (!timestamp) return ""
-  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+  const ts = timestamp as { toDate?: () => Date; seconds?: number }
+  const date = ts.toDate ? ts.toDate() : new Date(timestamp as string | number)
   if (Number.isNaN(date.getTime())) return ""
   const now = new Date()
   const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-  if (diffInHours < 1) return "Hace menos de una hora"
-  if (diffInHours < 24) return `Hace ${diffInHours} horas`
-  if (diffInHours < 48) return "Ayer"
-  return date.toLocaleDateString("es-AR")
+  if (diffInHours < 1) return t("timeLessThanHour")
+  if (diffInHours < 24) return t("timeHoursAgo", { count: diffInHours })
+  if (diffInHours < 48) return t("timeYesterday")
+  return date.toLocaleDateString(locale === "pt-BR" ? "pt-BR" : "es-AR")
 }
 
 function iconFor(type: string, shippingStatus?: string) {
@@ -71,6 +77,9 @@ function iconFor(type: string, shippingStatus?: string) {
 }
 
 export default function NotificationsPage() {
+  const t = useTranslations("notifications")
+  const tAuth = useTranslations("auth")
+  const locale = useLocale()
   const { currentUser } = useAuth()
   const [items, setItems] = useState<AppNotification[]>([])
   const [loading, setLoading] = useState(true)
@@ -137,10 +146,10 @@ export default function NotificationsPage() {
   if (!uid) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <h1 className="mb-4 text-3xl font-bold">Notificaciones</h1>
-        <p className="text-muted-foreground">Iniciá sesión para ver tus avisos.</p>
+        <h1 className="mb-4 text-3xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("loginHint")}</p>
         <Button asChild className="mt-4">
-          <Link href="/login">Iniciar sesión</Link>
+          <Link href="/login">{tAuth("loginButton")}</Link>
         </Button>
       </div>
     )
@@ -150,24 +159,24 @@ export default function NotificationsPage() {
     <div className="container mx-auto px-4 py-8 md:px-6 lg:py-12">
       <div className="mx-auto mb-6 flex max-w-2xl items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Notificaciones</h1>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
           {unreadCount > 0 && (
             <p className="mt-1 text-sm text-muted-foreground">
-              {unreadCount} sin leer
+              {t("unreadCount", { count: unreadCount })}
             </p>
           )}
         </div>
         {unreadCount > 0 && (
           <Button variant="outline" size="sm" disabled={markingAll} onClick={() => void handleMarkAll()}>
-            Marcar todas leídas
+            {t("markAllRead")}
           </Button>
         )}
       </div>
 
       {loading ? (
-        <p className="text-center text-muted-foreground">Cargando notificaciones...</p>
+        <p className="text-center text-muted-foreground">{t("loading")}</p>
       ) : items.length === 0 ? (
-        <p className="text-center text-muted-foreground">No tenés notificaciones todavía.</p>
+        <p className="text-center text-muted-foreground">{t("empty")}</p>
       ) : (
         <div className="mx-auto grid max-w-2xl gap-3">
           {items.map((n) => {
@@ -193,13 +202,15 @@ export default function NotificationsPage() {
                       {unread && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-servido-600" />}
                     </div>
                     {body && <p className="mt-1 text-sm text-muted-foreground">{body}</p>}
-                    <p className="mt-1 text-xs text-muted-foreground">{formatTime(n.createdAt)}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatNotificationTime(n.createdAt, t, locale)}
+                    </p>
                     <Link
                       href={href}
                       className="mt-2 inline-block text-sm font-medium text-servido-700 hover:underline"
                       onClick={() => void handleOpen(n)}
                     >
-                      Ver detalle
+                      {t("viewDetail")}
                     </Link>
                   </div>
                 </CardContent>

@@ -4,6 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import {
   Bike,
   FileText,
@@ -30,17 +31,24 @@ import {
 import { signupCadete } from "@/lib/auth/signup-partner"
 import { cn } from "@/lib/utils"
 
-const vehicleOptions = ["Bicicleta", "Moto", "Auto", "A pie"]
+const VEHICLE_OPTIONS = [
+  { id: "bicycle", stored: "Bicicleta" },
+  { id: "motorcycle", stored: "Moto" },
+  { id: "car", stored: "Auto" },
+  { id: "on_foot", stored: "A pie" },
+] as const
 
 export default function CadeteSignupPage() {
   const router = useRouter()
+  const t = useTranslations("signupCadete")
+  const tAuth = useTranslations("auth")
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [zone, setZone] = useState("")
-  const [vehicle, setVehicle] = useState("Moto")
+  const [vehicle, setVehicle] = useState(VEHICLE_OPTIONS[1].stored)
   const [documentId, setDocumentId] = useState("")
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,19 +59,19 @@ export default function CadeteSignupPage() {
     setError(null)
 
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.")
+      setError(tAuth("passwordMismatch"))
       return
     }
     if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.")
+      setError(tAuth("passwordMin"))
       return
     }
     if (!acceptTerms) {
-      setError("Debes aceptar los términos y condiciones para continuar.")
+      setError(tAuth("termsRequired"))
       return
     }
     if (!zone.trim() || !documentId.trim()) {
-      setError("Completá tu zona y documento.")
+      setError(t("errorZoneDocument"))
       return
     }
 
@@ -74,11 +82,11 @@ export default function CadeteSignupPage() {
     } catch (err: unknown) {
       const firebaseErr = err as { code?: string }
       if (firebaseErr.code === "auth/email-already-in-use") {
-        setError("Este correo electrónico ya está en uso.")
+        setError(tAuth("emailInUseLong"))
       } else if (firebaseErr.code === "auth/weak-password") {
-        setError("La contraseña es demasiado débil.")
+        setError(tAuth("weakPassword"))
       } else {
-        setError("Error al crear la cuenta. Por favor, inténtalo de nuevo.")
+        setError(tAuth("signupErrorLong"))
         console.error("Cadete signup error:", err)
       }
     } finally {
@@ -90,37 +98,37 @@ export default function CadeteSignupPage() {
     <PartnerSignupShell
       variant="cadete"
       icon={Bike}
-      heroTitle="Trabajá como cadete en Servido"
-      heroSubtitle="Sumate a la red de delivery, elegí tu zona y empezá a generar ingresos con flexibilidad."
+      heroTitle={t("heroTitle")}
+      heroSubtitle={t("heroSubtitle")}
       highlights={[
-        { icon: Navigation, text: "Pedidos asignados en tu zona" },
-        { icon: Clock, text: "Horarios flexibles" },
-        { icon: Bike, text: "Panel móvil para gestionar entregas" },
+        { icon: Navigation, text: t("highlightOrders") },
+        { icon: Clock, text: t("highlightSchedule") },
+        { icon: Bike, text: t("highlightPanel") },
       ]}
-      formTitle="Registro de cadete"
-      formSubtitle="Completá tus datos para postularte"
+      formTitle={t("formTitle")}
+      formSubtitle={t("formSubtitle")}
       footer={
         <p className="text-center text-sm text-gray-600">
-          ¿Ya tenés cuenta?{" "}
+          {tAuth("hasAccount")}{" "}
           <Link href="/login" className="font-semibold text-purple-700 hover:text-purple-900 hover:underline">
-            Iniciá sesión
+            {tAuth("loginLink")}
           </Link>
         </p>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="rounded-2xl bg-sky-50 p-4 ring-1 ring-sky-100">
-          <p className="text-xs font-semibold uppercase tracking-wider text-sky-800">Datos de cadete</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-sky-800">{t("sectionTitle")}</p>
           <div className="mt-3 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="zone" className={authLabelClass}>
-                Zona de trabajo
+                {t("zoneLabel")}
               </Label>
               <div className="relative">
                 <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   id="zone"
-                  placeholder="Ej: Centro, Norte, Zona sur"
+                  placeholder={t("zonePlaceholder")}
                   value={zone}
                   onChange={(e) => setZone(e.target.value)}
                   className={cn(authInputClass, "pl-10")}
@@ -129,15 +137,15 @@ export default function CadeteSignupPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className={authLabelClass}>Vehículo</Label>
+              <Label className={authLabelClass}>{t("vehicleLabel")}</Label>
               <Select value={vehicle} onValueChange={setVehicle}>
                 <SelectTrigger className={authInputClass}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {vehicleOptions.map((v) => (
-                    <SelectItem key={v} value={v}>
-                      {v}
+                  {VEHICLE_OPTIONS.map(({ id, stored }) => (
+                    <SelectItem key={id} value={stored}>
+                      {t(`vehicles.${id}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -145,13 +153,13 @@ export default function CadeteSignupPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="documentId" className={authLabelClass}>
-                DNI / Documento
+                {t("documentLabel")}
               </Label>
               <div className="relative">
                 <FileText className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   id="documentId"
-                  placeholder="12345678"
+                  placeholder={t("documentPlaceholder")}
                   value={documentId}
                   onChange={(e) => setDocumentId(e.target.value)}
                   className={cn(authInputClass, "pl-10")}
@@ -164,13 +172,13 @@ export default function CadeteSignupPage() {
 
         <div className="space-y-2">
           <Label htmlFor="name" className={authLabelClass}>
-            Nombre completo
+            {t("fullNameLabel")}
           </Label>
           <div className="relative">
             <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
               id="name"
-              placeholder="Juan Pérez"
+              placeholder={tAuth("namePlaceholder")}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={cn(authInputClass, "pl-10")}
@@ -182,14 +190,14 @@ export default function CadeteSignupPage() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="email" className={authLabelClass}>
-              Correo electrónico
+              {tAuth("email")}
             </Label>
             <div className="relative">
               <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 id="email"
                 type="email"
-                placeholder="tu@email.com"
+                placeholder={tAuth("emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={cn(authInputClass, "pl-10")}
@@ -199,14 +207,14 @@ export default function CadeteSignupPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone" className={authLabelClass}>
-              Teléfono
+              {tAuth("phone")}
             </Label>
             <div className="relative">
               <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 id="phone"
                 type="tel"
-                placeholder="+54 9 11 1234-5678"
+                placeholder={tAuth("phonePlaceholder")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className={cn(authInputClass, "pl-10")}
@@ -219,12 +227,12 @@ export default function CadeteSignupPage() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="password" className={authLabelClass}>
-              Contraseña
+              {tAuth("password")}
             </Label>
             <Input
               id="password"
               type="password"
-              placeholder="Mínimo 6 caracteres"
+              placeholder={tAuth("passwordPlaceholderMin")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={authInputClass}
@@ -233,12 +241,12 @@ export default function CadeteSignupPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword" className={authLabelClass}>
-              Confirmar contraseña
+              {tAuth("confirmPassword")}
             </Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Repetí tu contraseña"
+              placeholder={tAuth("passwordPlaceholderConfirm")}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={authInputClass}
@@ -256,11 +264,11 @@ export default function CadeteSignupPage() {
             required
           />
           <Label htmlFor="terms" className="cursor-pointer text-sm leading-relaxed text-gray-600">
-            Acepto los{" "}
+            {tAuth("acceptTerms")}{" "}
             <Link href="/terminos-y-condiciones" target="_blank" className="font-semibold text-purple-700 hover:underline">
-              términos y condiciones
+              {tAuth("termsLink")}
             </Link>{" "}
-            de Servido
+            {tAuth("termsOfServido")}
           </Label>
         </div>
 
@@ -276,10 +284,10 @@ export default function CadeteSignupPage() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Enviando postulación...
+              {t("submitting")}
             </>
           ) : (
-            "Postularme como cadete"
+            t("submit")
           )}
         </Button>
       </form>

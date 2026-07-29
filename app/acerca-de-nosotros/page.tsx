@@ -8,51 +8,33 @@ import {
   Target,
   Users,
 } from "lucide-react"
+import { getTranslations } from "next-intl/server"
 import { InfoCtaCard } from "@/components/info/info-cta-card"
 import { InfoPageShell } from "@/components/info/info-page-shell"
 import { InfoSection } from "@/components/info/info-section"
 
-const values = [
-  {
-    icon: Shield,
-    title: "Confianza",
-    description: "Relaciones sólidas basadas en transparencia, seguridad y honestidad en cada transacción.",
-  },
-  {
-    icon: Lightbulb,
-    title: "Innovación",
-    description: "Mejoramos la plataforma constantemente para ofrecer una experiencia cada vez más simple.",
-  },
-  {
-    icon: Users,
-    title: "Comunidad",
-    description: "Conectamos compradores y vendedores en un entorno de apoyo y colaboración.",
-  },
-  {
-    icon: Handshake,
-    title: "Integridad",
-    description: "Operamos con ética y responsabilidad en todo lo que hacemos.",
-  },
-  {
-    icon: Target,
-    title: "Excelencia",
-    description: "Nos esforzamos por brindar un servicio de calidad en cada detalle.",
-  },
-]
+const valueIcons = [Shield, Lightbulb, Users, Handshake, Target] as const
 
-const highlights = [
-  { label: "Marketplace", value: "Productos y servicios" },
-  { label: "Comunidad", value: "Compradores y vendedores" },
-  { label: "Seguridad", value: "Compra protegida" },
-]
+export default async function AcercaDeNosotrosPage() {
+  const t = await getTranslations("infoAbout")
+  const values = valueIcons.map((icon, i) => ({
+    icon,
+    title: t(`values.${i}.title`),
+    description: t(`values.${i}.description`),
+  }))
 
-export default function AcercaDeNosotrosPage() {
+  const highlights = [
+    { label: t("highlights.marketplace.label"), value: t("highlights.marketplace.value") },
+    { label: t("highlights.community.label"), value: t("highlights.community.value") },
+    { label: t("highlights.security.label"), value: t("highlights.security.value") },
+  ]
+
   return (
     <InfoPageShell
-      badge="Quiénes somos"
+      badge={t("badge")}
       badgeIcon={Users}
-      title="Conectamos personas, productos y servicios"
-      subtitle="Servido es el marketplace argentino donde compradores y vendedores se encuentran en un espacio seguro, moderno y fácil de usar."
+      title={t("title")}
+      subtitle={t("subtitle")}
     >
       <div className="mb-10 grid gap-4 sm:grid-cols-3">
         {highlights.map((item) => (
@@ -67,20 +49,12 @@ export default function AcercaDeNosotrosPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <InfoSection title="Nuestra misión">
-          <p>
-            Conectar a personas que buscan productos y servicios con quienes los ofrecen, creando una comunidad
-            vibrante y un mercado eficiente. Facilitamos transacciones justas y seguras, empoderando a individuos y
-            pequeñas empresas para crecer en la economía digital.
-          </p>
+        <InfoSection title={t("missionTitle")}>
+          <p>{t("missionBody")}</p>
         </InfoSection>
 
-        <InfoSection title="Nuestra visión">
-          <p>
-            Ser la plataforma de referencia para comprar y vender productos y servicios, reconocida por la facilidad
-            de uso, la seguridad y la confianza que generamos. Innovamos para ofrecer la mejor experiencia a nuestra
-            comunidad.
-          </p>
+        <InfoSection title={t("visionTitle")}>
+          <p>{t("visionBody")}</p>
         </InfoSection>
       </div>
 
@@ -89,7 +63,7 @@ export default function AcercaDeNosotrosPage() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-100 text-purple-900">
             <Heart className="h-4 w-4" />
           </span>
-          <h2 className="text-xl font-semibold text-gray-900">Nuestros valores</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{t("valuesTitle")}</h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {values.map(({ icon: Icon, title, description }) => (
@@ -108,16 +82,12 @@ export default function AcercaDeNosotrosPage() {
       </section>
 
       <div className="mt-10 space-y-6">
-        <InfoSection title="Nuestro equipo">
+        <InfoSection title={t("teamTitle")}>
+          <p>{t("teamBody")}</p>
           <p>
-            Somos un equipo apasionado y dedicado, comprometido con una plataforma que realmente satisfaga las
-            necesidades de nuestros usuarios. Valoramos la diversidad, la creatividad y el trabajo en equipo para
-            alcanzar nuestros objetivos.
-          </p>
-          <p>
-            ¿Querés sumarte?{" "}
+            {t("teamJoin")}{" "}
             <Link href="/trabaja-con-nosotros" className="font-medium text-purple-900 underline-offset-2 hover:underline">
-              Conocé las oportunidades para trabajar con nosotros
+              {t("teamLink")}
             </Link>
             .
           </p>
@@ -125,11 +95,11 @@ export default function AcercaDeNosotrosPage() {
 
         <InfoCtaCard
           icon={Store}
-          title="¿Listo para empezar?"
-          description="Explorá el catálogo, encontrá lo que necesitás o abrí tu tienda y empezá a vender en Servido."
-          primaryLabel="Ver productos"
+          title={t("ctaTitle")}
+          description={t("ctaBody")}
+          primaryLabel={t("ctaProducts")}
           primaryHref="/products"
-          secondaryLabel="Vender en Servido"
+          secondaryLabel={t("ctaSell")}
           secondaryHref="/signup?role=seller"
         />
       </div>

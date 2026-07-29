@@ -15,6 +15,7 @@ import { doc, collection, query, where, getDocs, deleteDoc, updateDoc, getDoc, s
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import { updateProfile, getAuth } from "firebase/auth"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import type { PurchaseWithShipping } from "@/types/shipping"
 import { getBuyerPurchases } from "@/lib/centralized-payments-api"
@@ -92,6 +93,7 @@ interface CompraProductoBuyer {
 }
 
 export default function BuyerDashboardPage() {
+  const td = useTranslations("buyerDashboard")
   const { currentUser, authLoading, handleLogout, refreshUserProfile } = useAuth() // Use useAuth hook
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -234,9 +236,9 @@ export default function BuyerDashboardPage() {
     } catch (err) {
       console.error("Error fetching buyer data:", err)
       if (err instanceof Error) {
-        setError(`Error al cargar tus compras: ${err.message}`)
+        setError(td("loadPurchasesErrorDetail", { message: err.message }))
       } else {
-      setError("Error al cargar tus compras.")
+      setError(td("loadPurchasesError"))
       }
     } finally {
       setLoadingData(false)
@@ -244,31 +246,31 @@ export default function BuyerDashboardPage() {
   }
 
   const handleRemoveFavorite = async (favoriteId: string) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este producto de tus favoritos?")) {
+    if (!window.confirm(td("removeFavoriteConfirm"))) {
       return
     }
     try {
       await deleteDoc(doc(db, "favorites", favoriteId))
       setFavorites((prevFavorites) => prevFavorites.filter((fav) => fav.id !== favoriteId))
-      setSuccessMessage("Producto eliminado de favoritos.")
+      setSuccessMessage(td("favoriteRemoved"))
     } catch (err) {
       console.error("Error removing favorite:", err)
-      setError("Error al eliminar el producto de favoritos.")
+      setError(td("favoriteRemoveError"))
     }
   }
 
   const handleChatWithSeller = async (_purchase: CompraProductoBuyer) => {
-    alert("Funcionalidad de chat temporalmente deshabilitada")
+    alert(td("chatDisabled"))
   }
 
   // Confirmar entrega del producto
   const handleConfirmDelivery = async (purchase: CompraProductoBuyer) => {
     if (!currentUser) {
-      setError("Debes iniciar sesión para confirmar la entrega.")
+      setError(td("deliveryLoginRequired"))
       return
     }
 
-    if (!window.confirm("¿Confirmas que has recibido el producto en perfectas condiciones?")) {
+    if (!window.confirm(td("deliveryConfirm"))) {
       return
     }
 
@@ -281,7 +283,7 @@ export default function BuyerDashboardPage() {
       const purchaseDoc = await getDoc(purchaseRef)
 
       if (!purchaseDoc.exists()) {
-        setError("No se encontró la compra especificada.")
+        setError(td("purchaseNotFound"))
         return
       }
 
@@ -317,19 +319,19 @@ export default function BuyerDashboardPage() {
             )
           )
 
-          setSuccessMessage("¡Entrega confirmada exitosamente! El vendedor ha sido notificado.")
+          setSuccessMessage(td("deliverySuccess"))
         } else {
-          setError("No se encontró el producto en la compra.")
+          setError(td("productNotInPurchase"))
         }
       } else {
-        setError("Estructura de compra inválida.")
+        setError(td("invalidPurchaseStructure"))
       }
     } catch (err) {
       console.error("Error confirming delivery:", err)
       if (err instanceof Error) {
-        setError(`Error al confirmar la entrega: ${err.message}`)
+        setError(td("deliveryErrorDetail", { message: err.message }))
       } else {
-        setError("Error al confirmar la entrega. Inténtalo de nuevo.")
+        setError(td("deliveryError"))
       }
     } finally {
       setLoadingData(false)
@@ -350,11 +352,11 @@ export default function BuyerDashboardPage() {
   // 🆕 NUEVA FUNCIÓN: Confirmar entrega para compras centralizadas
   const handleConfirmDeliveryCentralized = async (purchaseId: string, item: PurchaseItem) => {
     if (!currentUser) {
-      setError("Debes iniciar sesión para confirmar la entrega.")
+      setError(td("deliveryLoginRequired"))
       return
     }
 
-    if (!window.confirm("¿Confirmas que has recibido el producto en perfectas condiciones?")) {
+    if (!window.confirm(td("deliveryConfirm"))) {
       return
     }
 
@@ -367,7 +369,7 @@ export default function BuyerDashboardPage() {
       const purchaseDoc = await getDoc(purchaseRef)
 
       if (!purchaseDoc.exists()) {
-        setError("No se encontró la compra centralizada especificada.")
+        setError(td("centralizedNotFound"))
         return
       }
 
@@ -404,14 +406,14 @@ export default function BuyerDashboardPage() {
 
         setSuccessMessage("¡Entrega confirmada exitosamente! El vendedor ha sido notificado.")
       } else {
-        setError("No se encontró el producto en la compra centralizada.")
+        setError(td("productNotInCentralized"))
       }
     } catch (err) {
       console.error("Error confirming delivery centralized:", err)
       if (err instanceof Error) {
-        setError(`Error al confirmar la entrega: ${err.message}`)
+        setError(td("deliveryErrorDetail", { message: err.message }))
       } else {
-        setError("Error al confirmar la entrega. Inténtalo de nuevo.")
+        setError(td("deliveryError"))
       }
     } finally {
       setLoadingData(false)
@@ -481,7 +483,7 @@ export default function BuyerDashboardPage() {
       return
     }
 
-    if (!window.confirm("¿Estás seguro de que quieres eliminar tu foto de perfil?")) {
+    if (!window.confirm(td("removePhotoConfirm"))) {
       return
     }
 

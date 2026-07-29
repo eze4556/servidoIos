@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ApiService } from "@/lib/services/api"
 import { formatPriceNumber } from "@/lib/utils"
@@ -43,6 +44,7 @@ export function MultiSellerCheckoutContinue({
   currentPurchaseId,
   variant = "success",
 }: Props) {
+  const t = useTranslations("checkoutMultiSeller")
   const [loading, setLoading] = useState(Boolean(sessionId))
   const [error, setError] = useState<string | null>(null)
   const [completedCount, setCompletedCount] = useState(0)
@@ -66,7 +68,7 @@ export function MultiSellerCheckoutContinue({
         setLoading(true)
         const response = await ApiService.getCheckoutSession(sessionId)
         if (response.error || !response.data) {
-          throw new Error(response.error || "No se pudo cargar el checkout")
+          throw new Error(response.error || t("loadError"))
         }
 
         if (cancelled) return
@@ -96,7 +98,7 @@ export function MultiSellerCheckoutContinue({
 
         if (next?.init_point) {
           setNextPayment({
-            sellerName: next.sellerName || "vendedor",
+            sellerName: next.sellerName || t("defaultSeller"),
             amount: next.amount || 0,
             init_point: next.init_point,
           })
@@ -112,7 +114,7 @@ export function MultiSellerCheckoutContinue({
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Error al continuar el checkout")
+          setError(err instanceof Error ? err.message : t("continueError"))
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -130,7 +132,7 @@ export function MultiSellerCheckoutContinue({
     return (
       <div className="mb-6 flex items-center justify-center gap-2 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
         <Loader2 className="h-4 w-4 animate-spin" />
-        Revisando pagos de tu compra...
+        {t("checking")}
       </div>
     )
   }
@@ -146,7 +148,7 @@ export function MultiSellerCheckoutContinue({
   if (allDone) {
     return (
       <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-        Completaste los {totalCount} pagos de esta compra.
+        {t("allDone", { count: totalCount })}
       </div>
     )
   }
@@ -155,11 +157,8 @@ export function MultiSellerCheckoutContinue({
     if (variant === "failure") {
       return (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-left text-sm text-red-800">
-          <p className="font-medium">Este pago no se completó.</p>
-          <p className="mt-1">
-            Los pagos de otros vendedores que ya aprobaste siguen válidos. Podés reintentar este
-            pago desde el carrito o más tarde.
-          </p>
+          <p className="font-medium">{t("failureIncomplete")}</p>
+          <p className="mt-1">{t("failureHint")}</p>
         </div>
       )
     }
@@ -168,18 +167,15 @@ export function MultiSellerCheckoutContinue({
 
   return (
     <div className="mb-6 rounded-lg border border-sky-200 bg-sky-50 p-4 text-left text-sm text-sky-900">
-      <p className="font-semibold">
-        Tu compra tiene {totalCount} vendedor{totalCount === 1 ? "" : "es"}. Vas a realizar{" "}
-        {totalCount} pago{totalCount === 1 ? "" : "s"}.
-      </p>
+      <p className="font-semibold">{t("intro", { total: totalCount })}</p>
       <p className="mt-1 text-sky-800">
-        Progreso: {completedCount} de {totalCount} pagados.
-        {variant === "success" ? " Este pago quedó registrado." : null}
-        {variant === "pending" ? " Este pago quedó pendiente." : null}
-        {variant === "failure" ? " Este pago no se completó; podés continuar con el siguiente o reintentar." : null}
+        {t("progress", { completed: completedCount, total: totalCount })}
+        {variant === "success" ? t("registeredSuccess") : null}
+        {variant === "pending" ? t("registeredPending") : null}
+        {variant === "failure" ? t("registeredFailure") : null}
       </p>
       <p className="mt-3 text-sky-800">
-        Siguiente: <strong>{nextPayment.sellerName}</strong> —{" "}
+        {t("nextLabel")} <strong>{nextPayment.sellerName}</strong> —{" "}
         {formatPriceNumber(nextPayment.amount)}
       </p>
       <Button
@@ -189,7 +185,7 @@ export function MultiSellerCheckoutContinue({
         }}
       >
         <CreditCard className="mr-2 h-4 w-4" />
-        Continuar con el siguiente pago
+        {t("continueNext")}
       </Button>
     </div>
   )

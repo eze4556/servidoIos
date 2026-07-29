@@ -1,6 +1,9 @@
+"use client"
+
+import Link from "next/link"
+import { useTranslations } from "next-intl"
 import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
-import Link from "next/link"
 import { ArrowLeft, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -23,6 +26,8 @@ export function InfoPageShell({
   children,
   className,
 }: InfoPageShellProps) {
+  const t = useTranslations("infoCommon")
+
   return (
     <div className={cn("min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30", className)}>
       <div className="container mx-auto px-4 pb-16 pt-6 md:px-6 md:pb-20 md:pt-8">
@@ -31,29 +36,27 @@ export function InfoPageShell({
           className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-100 bg-white px-4 py-2 text-sm font-medium text-purple-900 shadow-sm transition-colors hover:bg-purple-50"
         >
           <ArrowLeft className="h-4 w-4" />
-          Volver al inicio
+          {t("backHome")}
         </Link>
 
         <section className="relative mb-10 overflow-hidden rounded-3xl bg-gradient-to-br from-servido-950 via-servido-900 to-servido-800 px-6 py-10 shadow-xl shadow-servido-950/30 sm:px-8 sm:py-12">
           <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-purple-400/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-violet-300/15 blur-3xl" />
 
-          <div className="relative z-10 max-w-3xl">
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-purple-100 backdrop-blur-sm">
+          <div className="relative">
+            <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-purple-100 ring-1 ring-white/20">
               <BadgeIcon className="h-3.5 w-3.5" />
               {badge}
             </span>
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">{title}</h1>
-            {subtitle && (
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-purple-100 sm:text-base">{subtitle}</p>
-            )}
+            <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl">{title}</h1>
+            {subtitle && <p className="mt-4 max-w-2xl text-base leading-relaxed text-purple-100/90 sm:text-lg">{subtitle}</p>}
             {lastUpdated && (
-              <p className="mt-4 text-xs font-medium text-purple-200/90">Última actualización: {lastUpdated}</p>
+              <p className="mt-4 text-sm text-purple-200/80">{t("lastUpdated", { date: lastUpdated })}</p>
             )}
           </div>
         </section>
 
-        {children}
+        <div className="mx-auto max-w-4xl">{children}</div>
       </div>
     </div>
   )

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { Plus } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { FoodOrderItemSelection, MenuItem, MenuPromotion } from "@/types/restaurant"
 import { getMenuItemImages, menuItemHasOptions } from "@/types/restaurant"
 import {
@@ -50,6 +51,7 @@ export function MenuItemDetailDialog({
   canOrder,
   onAdd,
 }: MenuItemDetailDialogProps) {
+  const t = useTranslations("menuItemDialog")
   const images = item ? getMenuItemImages(item) : []
   const [activeIndex, setActiveIndex] = useState(0)
   const [selections, setSelections] = useState<SelectionInput[]>([])
@@ -128,7 +130,7 @@ export function MenuItemDetailDialog({
       })
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Revisá las opciones")
+      setError(err instanceof Error ? err.message : t("optionsError"))
     }
   }
 
@@ -147,7 +149,7 @@ export function MenuItemDetailDialog({
           </div>
         ) : !promotion ? (
           <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-orange-100 to-red-100 text-sm text-orange-800">
-            Sin imagen
+            {t("noImage")}
           </div>
         ) : promotion?.imageUrl ? (
           <div className="relative aspect-[4/3] w-full bg-gray-100">
@@ -159,13 +161,13 @@ export function MenuItemDetailDialog({
               unoptimized
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-4 pb-4 pt-12 text-white">
-              <p className="text-sm font-medium uppercase tracking-wide text-orange-100">Combo</p>
+              <p className="text-sm font-medium uppercase tracking-wide text-orange-100">{t("combo")}</p>
               <p className="mt-1 text-2xl font-bold">{title}</p>
             </div>
           </div>
         ) : (
           <div className="bg-gradient-to-br from-orange-500 to-red-600 px-4 py-8 text-white">
-            <p className="text-sm font-medium uppercase tracking-wide text-orange-100">Combo</p>
+            <p className="text-sm font-medium uppercase tracking-wide text-orange-100">{t("combo")}</p>
             <p className="mt-1 text-2xl font-bold">{title}</p>
           </div>
         )}
@@ -216,7 +218,7 @@ export function MenuItemDetailDialog({
                       {group.required ? (
                         <span className="ml-1 text-red-500">*</span>
                       ) : (
-                        <span className="ml-1 font-normal text-gray-400">(opcional)</span>
+                        <span className="ml-1 font-normal text-gray-400">{t("optional")}</span>
                       )}
                     </p>
                     <div className="space-y-2">
@@ -257,7 +259,7 @@ export function MenuItemDetailDialog({
                                   ? `+$${formatPriceNumber(option.priceDelta)}`
                                   : option.priceDelta < 0
                                     ? `-$${formatPriceNumber(Math.abs(option.priceDelta))}`
-                                    : "Incluido"}
+                                    : t("included")}
                               </span>
                             </label>
                           )
@@ -278,7 +280,7 @@ export function MenuItemDetailDialog({
             onClick={handleAdd}
           >
             <Plus className="mr-1 h-4 w-4" />
-            Agregar · ${formatPriceNumber(livePrice)}
+            {t("addLabel", { price: `$${formatPriceNumber(livePrice)}` })}
           </Button>
         </div>
       </DialogContent>

@@ -144,6 +144,7 @@ interface Coupon {
 export default function ProductDetailPage() {
   const tp = useTranslations("product")
   const tc = useTranslations("cart")
+  const tr = useTranslations("reviews")
   const params = useParams()
   const router = useRouter()
   const { addItem, getItemQuantity } = useCart()
@@ -379,7 +380,7 @@ export default function ProductDetailPage() {
 
   const handleToggleFavorite = async () => {
     if (!currentUser) {
-      alert("Debes iniciar sesión para añadir a favoritos.")
+      alert(tp("favoriteLoginRequired"))
       router.push("/login")
       return
     }
@@ -390,7 +391,7 @@ export default function ProductDetailPage() {
         await deleteDoc(doc(db, "favorites", favoriteId))
         setIsFavorite(false)
         setFavoriteId(null)
-        setReviewSuccess("Producto eliminado de favoritos.")
+        setReviewSuccess(tp("favoriteRemoved"))
       } else {
         const firstImage = productMedia.find((m) => m.type === "image")
         const docRef = await addDoc(collection(db, "favorites"), {
@@ -403,30 +404,30 @@ export default function ProductDetailPage() {
         })
         setIsFavorite(true)
         setFavoriteId(docRef.id)
-        setReviewSuccess("Producto añadido a favoritos.")
+        setReviewSuccess(tp("favoriteAdded"))
       }
     } catch (err) {
       console.error("Error toggling favorite:", err)
-      setReviewError("Error al gestionar favoritos.")
+      setReviewError(tp("favoriteError"))
     }
   }
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!currentUser) {
-      setReviewError("Debes iniciar sesión para enviar una reseña.")
+      setReviewError(tp("reviewLoginRequired"))
       return
     }
     if (!product) {
-      setReviewError("No se puede enviar reseña sin producto.")
+      setReviewError(tp("reviewNoProduct"))
       return
     }
     if (reviewRating === 0) {
-      setReviewError("Por favor, selecciona una calificación.")
+      setReviewError(tp("reviewRatingRequired"))
       return
     }
     if (reviewComment.trim().length < 10) {
-      setReviewError("El comentario debe tener al menos 10 caracteres.")
+      setReviewError(tp("reviewCommentMin"))
       return
     }
 
@@ -442,7 +443,7 @@ export default function ProductDetailPage() {
     }
 
     if (containsPhoneNumber(reviewComment.trim())) {
-      setReviewError("No se permiten números de teléfono en los comentarios por seguridad.")
+      setReviewError(tp("reviewNoPhone"))
       return
     }
 
@@ -464,10 +465,10 @@ export default function ProductDetailPage() {
       setReviews((prev) => [{ id: docRef.id, ...reviewData, createdAt: new Date() } as Review, ...prev])
       setReviewRating(0)
       setReviewComment("")
-      setReviewSuccess("Reseña enviada exitosamente. ¡Gracias por tu opinión!")
+      setReviewSuccess(tp("reviewSuccess"))
     } catch (err) {
       console.error("Error submitting review:", err)
-      setReviewError("Error al enviar la reseña. Inténtalo de nuevo.")
+      setReviewError(tp("reviewSubmitError"))
     } finally {
       setSubmittingReview(false)
     }
@@ -479,15 +480,15 @@ export default function ProductDetailPage() {
   const handleSubmitQuestion = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!currentUser) {
-      setQuestionError("Debes iniciar sesión para hacer una pregunta.")
+      setQuestionError(tp("questionLoginRequired"))
       return
     }
     if (!product) {
-      setQuestionError("No se puede enviar pregunta sin producto.")
+      setQuestionError(tp("questionNoProduct"))
       return
     }
     if (newQuestion.trim().length < 10) {
-      setQuestionError("La pregunta debe tener al menos 10 caracteres.")
+      setQuestionError(tp("questionMin"))
       return
     }
 
@@ -503,7 +504,7 @@ export default function ProductDetailPage() {
     }
 
     if (containsPhoneNumber(newQuestion.trim())) {
-      setQuestionError("No se permiten números de teléfono en las preguntas por seguridad.")
+      setQuestionError(tp("questionNoPhone"))
       return
     }
 
@@ -523,10 +524,10 @@ export default function ProductDetailPage() {
       // Actualizar el estado local inmediatamente para productos y servicios
       setQuestions((prev) => [{ id: docRef.id, ...questionData, createdAt: new Date() } as Question, ...prev])
       setNewQuestion("")
-      setQuestionSuccess("Pregunta enviada exitosamente. ¡Gracias por tu consulta!")
+      setQuestionSuccess(tp("questionSuccess"))
     } catch (err) {
       console.error("Error submitting question:", err)
-      setQuestionError("Error al enviar la pregunta. Inténtalo de nuevo.")
+      setQuestionError(tp("questionSubmitError"))
     } finally {
       setSubmittingQuestion(false)
     }
@@ -534,15 +535,15 @@ export default function ProductDetailPage() {
 
   const handleSubmitAnswer = async (questionId: string) => {
     if (!currentUser) {
-      setQuestionError("Debes iniciar sesión para responder.")
+      setQuestionError(tp("answerLoginRequired"))
       return
     }
     if (!product || currentUser.firebaseUser.uid !== product.sellerId) {
-      setQuestionError("Solo el vendedor puede responder preguntas.")
+      setQuestionError(tp("answerSellerOnly"))
       return
     }
     if (answerText.trim().length < 5) {
-      setQuestionError("La respuesta debe tener al menos 5 caracteres.")
+      setQuestionError(tp("answerMin"))
       return
     }
 
@@ -558,7 +559,7 @@ export default function ProductDetailPage() {
     }
 
     if (containsPhoneNumber(answerText.trim())) {
-      setQuestionError("No se permiten números de teléfono en las respuestas por seguridad.")
+      setQuestionError(tp("answerNoPhone"))
       return
     }
 
@@ -588,10 +589,10 @@ export default function ProductDetailPage() {
 
       setAnswerText("")
       setAnsweringQuestionId(null)
-      setQuestionSuccess("Respuesta enviada exitosamente.")
+      setQuestionSuccess(tp("answerSuccess"))
     } catch (err) {
       console.error("Error submitting answer:", err)
-      setQuestionError("Error al enviar la respuesta. Inténtalo de nuevo.")
+      setQuestionError(tp("answerSubmitError"))
     } finally {
       setSubmittingAnswer(false)
     }
@@ -653,7 +654,7 @@ export default function ProductDetailPage() {
   // }
 
   const handleContactSeller = async () => {
-    alert("Funcionalidad de chat temporalmente deshabilitada")
+    alert(tp("chatDisabled"))
   }
 
   // Función para manejar la compra directa
@@ -1026,31 +1027,31 @@ export default function ProductDetailPage() {
         <div className="space-y-8">
           <ProductDetailSection title={tp("description")} icon={FileText}>
             <p className="leading-relaxed text-gray-700">
-              {product.description || "Este producto no tiene descripción disponible."}
+              {product.description || tp("noDescription")}
             </p>
           </ProductDetailSection>
-          <ProductDetailSection title="Reseñas" icon={Star} count={reviews.length}>
+          <ProductDetailSection title={tp("reviewsTitle")} icon={Star} count={reviews.length}>
             {reviewError && (
               <Alert variant="destructive" className="mb-4 rounded-xl">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>{tr("errorTitle")}</AlertTitle>
                 <AlertDescription>{reviewError}</AlertDescription>
               </Alert>
             )}
             {reviewSuccess && (
               <Alert className="mb-4 rounded-xl border-emerald-200 bg-emerald-50 text-emerald-800">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Éxito</AlertTitle>
+                <AlertTitle>{tr("successTitle")}</AlertTitle>
                 <AlertDescription>{reviewSuccess}</AlertDescription>
               </Alert>
             )}
 
             {currentUser && !hasUserReviewed && (
               <form onSubmit={handleSubmitReview} className="mb-8 rounded-2xl bg-purple-50/60 p-5 ring-1 ring-purple-100">
-                <h3 className="mb-3 font-semibold text-gray-900">Escribí tu reseña</h3>
+                <h3 className="mb-3 font-semibold text-gray-900">{tr("writeReviewProduct")}</h3>
                 <div className="mb-4">
                   <Label htmlFor="rating" className="mb-2 block text-sm font-medium text-gray-700">
-                    Calificación
+                    {tr("rating")}
                   </Label>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -1066,13 +1067,13 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="mb-4">
                   <Label htmlFor="comment" className="mb-2 block text-sm font-medium text-gray-700">
-                    Comentario
+                    {tr("comment")}
                   </Label>
                   <Textarea
                     id="comment"
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
-                    placeholder="Compartí tu experiencia con el producto..."
+                    placeholder={tr("commentPlaceholderProduct")}
                     rows={4}
                     className="rounded-xl border-0 bg-white ring-1 ring-gray-200"
                     required
@@ -1081,17 +1082,17 @@ export default function ProductDetailPage() {
                 <Button type="submit" disabled={submittingReview} className="rounded-full bg-purple-700 hover:bg-purple-800">
                   {submittingReview ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tr("sending")}
                     </>
                   ) : (
-                    "Enviar reseña"
+                    tr("submitReviewLower")
                   )}
                 </Button>
               </form>
             )}
 
             {reviews.length === 0 ? (
-              <p className="text-gray-500">Sé el primero en dejar una reseña.</p>
+              <p className="text-gray-500">{tr("firstReviewProduct")}</p>
             ) : (
               <div className="space-y-5">
                 {reviews.map((review) => (
@@ -1109,7 +1110,7 @@ export default function ProductDetailPage() {
                       <span className="text-xs text-gray-400">
                         {review.createdAt?.toDate
                           ? review.createdAt.toDate().toLocaleDateString()
-                          : "Fecha desconocida"}
+                          : tr("unknownDate")}
                       </span>
                     </div>
                     <p className="leading-relaxed text-gray-700">
@@ -1136,34 +1137,34 @@ export default function ProductDetailPage() {
             )}
           </ProductDetailSection>
 
-          <ProductDetailSection title="Preguntas y respuestas" icon={HelpCircle} count={questions.length}>
+          <ProductDetailSection title={tr("qaTitleProduct")} icon={HelpCircle} count={questions.length}>
             {questionError && (
               <Alert variant="destructive" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
+                <AlertTitle>{tr("errorTitle")}</AlertTitle>
                 <AlertDescription>{questionError}</AlertDescription>
               </Alert>
             )}
             {questionSuccess && (
               <Alert className="mb-4 bg-green-50 border-green-300 text-green-700 dark:bg-green-900 dark:text-green-300 dark:border-green-700">
                 <AlertCircle className="h-4 w-4 text-green-600" />
-                <AlertTitle>Éxito</AlertTitle>
+                <AlertTitle>{tr("successTitle")}</AlertTitle>
                 <AlertDescription>{questionSuccess}</AlertDescription>
               </Alert>
             )}
 
             {currentUser && currentUser.firebaseUser.uid !== product.sellerId && (
               <form onSubmit={handleSubmitQuestion} className="mb-8 rounded-2xl bg-purple-50/60 p-5 ring-1 ring-purple-100">
-                <h3 className="mb-3 font-semibold text-gray-900">Hacé una pregunta</h3>
+                <h3 className="mb-3 font-semibold text-gray-900">{tr("askQuestionProduct")}</h3>
                 <div className="mb-4">
                   <Label htmlFor="question" className="mb-2 block text-sm font-medium text-gray-700">
-                    Tu pregunta
+                    {tr("yourQuestion")}
                   </Label>
                   <Textarea
                     id="question"
                     value={newQuestion}
                     onChange={(e) => setNewQuestion(e.target.value)}
-                    placeholder="¿Qué te gustaría saber sobre este producto?"
+                    placeholder={tr("questionPlaceholderProduct")}
                     rows={3}
                     className="rounded-xl border-0 bg-white ring-1 ring-gray-200"
                     required
@@ -1172,17 +1173,17 @@ export default function ProductDetailPage() {
                 <Button type="submit" disabled={submittingQuestion} className="rounded-full bg-purple-700 hover:bg-purple-800">
                   {submittingQuestion ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tr("sending")}
                     </>
                   ) : (
-                    "Enviar Pregunta"
+                    tr("submitQuestion")
                   )}
                 </Button>
               </form>
             )}
 
             {questions.length === 0 ? (
-              <p className="text-gray-600">Sé el primero en hacer una pregunta sobre este producto.</p>
+              <p className="text-gray-600">{tr("firstQuestionProduct")}</p>
             ) : (
               <div className="space-y-6">
                 {questions.map((question) => (
@@ -1190,13 +1191,13 @@ export default function ProductDetailPage() {
                     <div className="mb-3">
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-800">
-                          Pregunta
+                          {tr("questionBadge")}
                         </span>
                         <span className="text-sm text-gray-500">{question.userName}</span>
                         <span className="text-xs text-gray-400">
                           {question.createdAt?.toDate
                             ? question.createdAt.toDate().toLocaleDateString()
-                            : "Fecha desconocida"}
+                            : tr("unknownDate")}
                         </span>
                       </div>
                       <p className="text-gray-700 leading-relaxed">
@@ -1223,13 +1224,13 @@ export default function ProductDetailPage() {
                       <div className="ml-0 rounded-xl bg-purple-50 p-4 ring-1 ring-purple-100 sm:ml-4">
                         <div className="mb-1 flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                            Respuesta
+                            {tr("answerBadge")}
                           </span>
                           <span className="text-sm text-gray-500">{question.answeredBy}</span>
                           <span className="text-xs text-gray-400">
                             {question.answeredAt?.toDate
                               ? question.answeredAt.toDate().toLocaleDateString()
-                              : "Fecha desconocida"}
+                              : tr("unknownDate")}
                           </span>
                         </div>
                         <p className="text-gray-700 leading-relaxed">
@@ -1258,7 +1259,7 @@ export default function ProductDetailPage() {
                             <Textarea
                               value={answerText}
                               onChange={(e) => setAnswerText(e.target.value)}
-                              placeholder="Escribí tu respuesta..."
+                              placeholder={tr("answerPlaceholder")}
                               rows={2}
                               className="mb-2 rounded-xl border-0 bg-gray-50 ring-1 ring-gray-200"
                             />
@@ -1271,10 +1272,10 @@ export default function ProductDetailPage() {
                               >
                                 {submittingAnswer ? (
                                   <>
-                                    <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Enviando...
+                                    <Loader2 className="mr-1 h-3 w-3 animate-spin" /> {tr("sending")}
                                   </>
                                 ) : (
-                                  "Responder"
+                                  tr("respond")
                                 )}
                               </Button>
                               <Button
@@ -1286,7 +1287,7 @@ export default function ProductDetailPage() {
                                 }}
                                 className="rounded-full"
                               >
-                                Cancelar
+                                {tr("cancel")}
                               </Button>
                             </div>
                           </div>
@@ -1297,7 +1298,7 @@ export default function ProductDetailPage() {
                             onClick={() => setAnsweringQuestionId(question.id)}
                             className="ml-0 rounded-full sm:ml-4"
                           >
-                            Responder
+                            {tr("respond")}
                           </Button>
                         )}
                       </div>
@@ -1315,8 +1316,8 @@ export default function ProductDetailPage() {
           {relatedProducts.length > 0 && (
             <section>
               <HomeSectionHeader
-                title="Productos relacionados"
-                subtitle="Otros artículos que te pueden interesar"
+                title={tp("relatedTitle")}
+                subtitle={tp("relatedSubtitle")}
                 accent="purple"
               />
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">

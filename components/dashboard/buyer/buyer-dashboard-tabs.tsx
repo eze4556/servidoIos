@@ -35,6 +35,7 @@ import { BuyerAppointmentsPanel } from "@/components/dashboard/buyer/buyer-appoi
 import type { CentralizedPurchase, PurchaseItem } from "@/types/centralized-payments"
 import { getDashboardProductImage } from "@/lib/image-utils"
 import { formatPriceNumber } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface CompraProductoBuyer {
   compraId: string
@@ -134,6 +135,8 @@ export function BuyerDashboardTabs({
   onCancelProfileImageSelection,
   buyerId,
 }: BuyerDashboardTabsProps) {
+  const t = useTranslations("buyerDashboard")
+  const tr = useTranslations("reviews")
   const totalSpent =
     productosComprados.filter((p) => p.estadoPago === "pagado").reduce((sum, p) => sum + p.productPrice * p.quantity, 0) +
     centralizedPurchases.reduce((sum, p) => sum + p.total, 0)
@@ -151,20 +154,20 @@ export function BuyerDashboardTabs({
     return (
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <BuyerStatCard title="Compras totales" value={productosComprados.length} icon={ShoppingBag} />
-          <BuyerStatCard title="Total gastado" value={formatPriceNumber(totalSpent)} icon={CreditCard} accent="green" />
-          <BuyerStatCard title="Favoritos" value={favorites.length} icon={Heart} accent="rose" />
-          <BuyerStatCard title="Pagos pendientes" value={pendingPayments} icon={Clock} accent="amber" />
+          <BuyerStatCard title={t("statsTotalPurchases")} value={productosComprados.length} icon={ShoppingBag} />
+          <BuyerStatCard title={t("statsTotalSpent")} value={formatPriceNumber(totalSpent)} icon={CreditCard} accent="green" />
+          <BuyerStatCard title={t("statsFavorites")} value={favorites.length} icon={Heart} accent="rose" />
+          <BuyerStatCard title={t("statsPendingPayments")} value={pendingPayments} icon={Clock} accent="amber" />
         </div>
 
-        <BuyerPanel title="Actividad reciente" description="Tus últimas compras y movimientos">
+        <BuyerPanel title={t("recentActivity")} description={t("recentActivityDesc")}>
           {loadingData ? (
             <LoadingBlock />
           ) : centralizedPurchases.length === 0 && productosComprados.length === 0 ? (
             <BuyerEmptyState
-              title="Aún no tenés compras"
-              description="Explorá el catálogo y encontrá productos o servicios que te interesen."
-              actionLabel="Explorar productos"
+              title={t("noPurchasesYet")}
+              description={t("noPurchasesYetDesc")}
+              actionLabel={t("exploreProducts")}
               actionHref="/products"
               icon={<Sparkles className="h-10 w-10" />}
             />
@@ -181,7 +184,7 @@ export function BuyerDashboardTabs({
                     </span>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-gray-900">
-                        Compra #{purchase.id.slice(-8)}
+                        {t("purchaseLabel", { id: purchase.id.slice(-8) })}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(purchase.fecha).toLocaleDateString()} · {purchase.items.length} producto
@@ -229,7 +232,7 @@ export function BuyerDashboardTabs({
                   className="w-full rounded-full border-purple-200 text-purple-900 hover:bg-purple-50"
                   onClick={() => onTabChange("orders")}
                 >
-                  Ver todas mis compras
+                  {t("seeAllOrders")}
                 </Button>
               )}
             </div>
@@ -242,8 +245,8 @@ export function BuyerDashboardTabs({
   if (activeTab === "orders") {
     return (
       <BuyerPanel
-        title="Mis compras"
-        description="Seguí el estado de tus pedidos, envíos y contactá al vendedor"
+        title={t("pages.orders.title")}
+        description={t("ordersPanelDesc")}
         action={
           productosComprados.length > 0 ? (
             <Button
@@ -253,7 +256,7 @@ export function BuyerDashboardTabs({
               onClick={onExportExcel}
             >
               <Download className="mr-2 h-4 w-4" />
-              Exportar
+              {t("exportExcel")}
             </Button>
           ) : undefined
         }
@@ -262,9 +265,9 @@ export function BuyerDashboardTabs({
           <LoadingBlock />
         ) : paginatedPurchases.length === 0 ? (
           <BuyerEmptyState
-            title="No tenés compras registradas"
-            description="Cuando compres algo en Servido, vas a ver el detalle acá."
-            actionLabel="Ir al catálogo"
+            title={t("noOrders")}
+            description={t("noOrdersDesc")}
+            actionLabel={t("goCatalog")}
             actionHref="/products"
             icon={<Package className="h-10 w-10" />}
           />
@@ -278,10 +281,11 @@ export function BuyerDashboardTabs({
                 <div className="flex flex-col gap-3 border-b border-purple-50 bg-purple-50/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-500">
-                      Compra #
                       {typeof purchase.paymentId === "string"
-                        ? `${purchase.paymentId.slice(0, 6)}…${purchase.paymentId.slice(-4)}`
-                        : "Sin ID"}
+                        ? t("purchaseLabel", {
+                            id: `${purchase.paymentId.slice(0, 6)}…${purchase.paymentId.slice(-4)}`,
+                          })
+                        : t("purchaseLabel", { id: t("noPaymentId") })}
                     </p>
                     <p className="text-sm text-gray-700">{new Date(purchase.fechaCompra).toLocaleDateString()}</p>
                   </div>
@@ -306,7 +310,7 @@ export function BuyerDashboardTabs({
                     <div className="min-w-0 flex-1">
                       <h3 className="font-semibold text-gray-900">{purchase.productName}</h3>
                       <p className="mt-1 text-sm text-gray-500">
-                        {purchase.isService ? "Servicio" : "Producto"} · Vendedor: {purchase.vendedorNombre}
+                        {purchase.isService ? t("service") : t("product")} · {t("seller")} {purchase.vendedorNombre}
                       </p>
                       <p className="mt-2 text-lg font-bold text-purple-900">{formatPriceNumber(purchase.productPrice)}</p>
                     </div>
@@ -320,7 +324,7 @@ export function BuyerDashboardTabs({
                       onClick={() => onChatWithSeller(purchase)}
                     >
                       <MessageSquare className="mr-2 h-4 w-4" />
-                      Chatear con el vendedor
+                      {t("chatWithSeller")}
                     </Button>
 
                     {canConfirmDelivery(purchase) && (
@@ -331,7 +335,7 @@ export function BuyerDashboardTabs({
                         disabled={loadingData}
                       >
                         <PackageCheck className="mr-2 h-4 w-4" />
-                        {loadingData ? "Confirmando…" : "Confirmar entrega"}
+                        {loadingData ? t("confirming") : t("confirmDelivery")}
                       </Button>
                     )}
                   </div>
@@ -339,7 +343,7 @@ export function BuyerDashboardTabs({
                   {purchase.shippingStatus === "entregado" && (
                     <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                       <CheckCircle className="h-4 w-4 shrink-0" />
-                      Entrega confirmada
+                      {t("deliveryConfirmedShort")}
                     </div>
                   )}
                 </div>
@@ -359,7 +363,7 @@ export function BuyerDashboardTabs({
                   Anterior
                 </Button>
                 <span className="text-sm text-gray-500">
-                  Página {page} de {totalPages}
+                  {t("pageOf", { page, total: totalPages })}
                 </span>
                 <Button
                   variant="outline"
@@ -381,14 +385,14 @@ export function BuyerDashboardTabs({
 
   if (activeTab === "favorites") {
     return (
-      <BuyerPanel title="Mis favoritos" description="Productos que guardaste para comprar después">
+      <BuyerPanel title={t("favoritesPanelTitle")} description={t("favoritesPanelDesc")}>
         {loadingData ? (
           <LoadingBlock />
         ) : favorites.length === 0 ? (
           <BuyerEmptyState
-            title="No tenés favoritos"
-            description="Guardá productos que te gusten para encontrarlos rápido más tarde."
-            actionLabel="Explorar productos"
+            title={t("noFavorites")}
+            description={t("noFavoritesDesc")}
+            actionLabel={t("exploreProducts")}
             actionHref="/products"
             icon={<Heart className="h-10 w-10" />}
           />
@@ -420,10 +424,10 @@ export function BuyerDashboardTabs({
                   <p className="mt-1 text-lg font-bold text-purple-900">{formatPriceNumber(product.price)}</p>
                   <div className="mt-4 flex gap-2">
                     <Button asChild variant="outline" size="sm" className="flex-1 rounded-full border-purple-200">
-                      <Link href={`/product/${product.productId}`}>Ver detalle</Link>
+                      <Link href={`/product/${product.productId}`}>{t("viewProduct")}</Link>
                     </Button>
                     <Button asChild size="sm" className="flex-1 rounded-full bg-purple-900 hover:bg-purple-800">
-                      <Link href={`/product/${product.productId}`}>Comprar</Link>
+                      <Link href={`/product/${product.productId}`}>{t("buy")}</Link>
                     </Button>
                   </div>
                 </div>
@@ -437,25 +441,25 @@ export function BuyerDashboardTabs({
 
   if (activeTab === "profile") {
     return (
-      <BuyerPanel title="Mi perfil" description="Información de tu cuenta y foto de perfil">
+      <BuyerPanel title={t("pages.profile.title")} description={t("profilePanelDesc")}>
         <Tabs defaultValue="personal" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2 rounded-full bg-purple-50 p-1">
             <TabsTrigger value="personal" className="rounded-full data-[state=active]:bg-white data-[state=active]:text-purple-900">
-              Datos personales
+              {t("tabPersonal")}
             </TabsTrigger>
             <TabsTrigger value="addresses" className="rounded-full data-[state=active]:bg-white data-[state=active]:text-purple-900">
-              Direcciones
+              {t("tabAddresses")}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal" className="mt-6 space-y-6">
             <div className="grid gap-4 rounded-2xl border border-purple-50 bg-purple-50/20 p-5 sm:grid-cols-2">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Nombre</p>
-                <p className="mt-1 font-medium text-gray-900">{currentUser?.displayName || "No especificado"}</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-gray-500">{t("name")}</p>
+                <p className="mt-1 font-medium text-gray-900">{currentUser?.displayName || t("notSpecified")}</p>
               </div>
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-gray-500">Email</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-gray-500">{t("email")}</p>
                 <p className="mt-1 font-medium text-gray-900">{currentUser?.email}</p>
               </div>
             </div>
@@ -463,11 +467,11 @@ export function BuyerDashboardTabs({
             <Separator />
 
             <div className="space-y-4">
-              <h3 className="text-base font-semibold text-gray-900">Foto de perfil</h3>
+              <h3 className="text-base font-semibold text-gray-900">{t("profilePhoto")}</h3>
               <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
                 <div className="relative h-28 w-28 overflow-hidden rounded-full border-4 border-purple-100 bg-purple-50">
                   {profileImagePreviewUrl ? (
-                    <Image src={profileImagePreviewUrl} alt="Foto de perfil" fill className="object-cover" />
+                    <Image src={profileImagePreviewUrl} alt={t("profilePhotoAlt")} fill className="object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <User className="h-12 w-12 text-purple-300" />
@@ -495,13 +499,13 @@ export function BuyerDashboardTabs({
                           Subiendo…
                         </>
                       ) : (
-                        "Subir foto"
+                        t("uploadPhoto")
                       )}
                     </Button>
                     {profileImageFile && (
                       <Button variant="outline" size="sm" className="rounded-full" onClick={onCancelProfileImageSelection}>
                         <XCircle className="mr-1 h-4 w-4" />
-                        Cancelar
+                        {t("cancel")}
                       </Button>
                     )}
                     {currentUser?.photoURL && (
@@ -512,7 +516,7 @@ export function BuyerDashboardTabs({
                         onClick={onRemoveProfileImage}
                         disabled={uploadingProfileImage}
                       >
-                        Eliminar foto
+                        {t("removePhoto")}
                       </Button>
                     )}
                   </div>
@@ -522,14 +526,14 @@ export function BuyerDashboardTabs({
               {profileUpdateError && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
+                  <AlertTitle>{tr("errorTitle")}</AlertTitle>
                   <AlertDescription>{profileUpdateError}</AlertDescription>
                 </Alert>
               )}
               {profileUpdateSuccess && (
                 <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
                   <CheckCircle className="h-4 w-4" />
-                  <AlertTitle>Éxito</AlertTitle>
+                  <AlertTitle>{tr("successTitle")}</AlertTitle>
                   <AlertDescription>{profileUpdateSuccess}</AlertDescription>
                 </Alert>
               )}
@@ -538,9 +542,9 @@ export function BuyerDashboardTabs({
 
           <TabsContent value="addresses" className="mt-6">
             <BuyerEmptyState
-              title="Direcciones próximamente"
-              description="Pronto vas a poder gestionar tus direcciones de envío desde acá."
-              actionLabel="Seguir comprando"
+              title={t("addressesSoonTitle")}
+              description={t("addressesSoonDesc")}
+              actionLabel={t("keepShopping")}
               actionHref="/products"
             />
           </TabsContent>
@@ -551,14 +555,14 @@ export function BuyerDashboardTabs({
 
   if (activeTab === "purchases") {
     return (
-      <BuyerPanel title="Historial de pagos" description="Detalle de todas tus transacciones realizadas">
+      <BuyerPanel title={t("pages.purchases.title")} description={t("purchasesPanelDesc")}>
         {loadingData ? (
           <LoadingBlock />
         ) : productosComprados.length === 0 && centralizedPurchases.length === 0 ? (
           <BuyerEmptyState
-            title="Sin transacciones"
-            description="Cuando realices un pago, vas a ver el historial completo acá."
-            actionLabel="Explorar productos"
+            title={t("noTransactions")}
+            description={t("noTransactionsDesc")}
+            actionLabel={t("exploreProducts")}
             actionHref="/products"
             icon={<CreditCard className="h-10 w-10" />}
           />
@@ -572,7 +576,7 @@ export function BuyerDashboardTabs({
                       <ShoppingBag className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="font-medium text-gray-900">Compra #{purchase.id.slice(-8)}</p>
+                      <p className="font-medium text-gray-900">{t("purchaseLabel", { id: purchase.id.slice(-8) })}</p>
                       <p className="text-xs text-gray-500">
                         {new Date(purchase.fecha).toLocaleDateString("es-ES", {
                           year: "numeric",
@@ -585,7 +589,7 @@ export function BuyerDashboardTabs({
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-bold text-purple-900">{formatPriceNumber(purchase.total)}</span>
                     <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-800">
-                      Centralizada
+                      {t("centralized")}
                     </span>
                   </div>
                 </div>
@@ -600,7 +604,7 @@ export function BuyerDashboardTabs({
                         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg">
                           <Image
                             src={item.productoImagen || "/placeholder.svg"}
-                            alt={item.productoNombre || "Producto"}
+                            alt={item.productoNombre || t("product")}
                             width={40}
                             height={40}
                             className="h-full w-full object-cover"
@@ -608,7 +612,7 @@ export function BuyerDashboardTabs({
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">{item.productoNombre}</p>
-                          <p className="text-xs text-gray-500">Vendedor: {item.vendedorNombre}</p>
+                          <p className="text-xs text-gray-500">{t("seller")} {item.vendedorNombre}</p>
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -624,13 +628,13 @@ export function BuyerDashboardTabs({
                               disabled={loadingData}
                             >
                               <PackageCheck className="mr-1 h-3 w-3" />
-                              Entregado
+                              {t("delivered")}
                             </Button>
                           )}
                         {item.estadoEnvio === "entregado" && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-800">
                             <CheckCircle className="h-3 w-3" />
-                            Entregado
+                            {t("delivered")}
                           </span>
                         )}
                       </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Home, Package } from "lucide-react"
@@ -9,6 +10,7 @@ import Link from "next/link"
 import { MultiSellerCheckoutContinue, readCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
 
 export default function PurchaseSuccessPage() {
+  const t = useTranslations("purchase")
   const searchParams = useSearchParams()
   const [purchaseData, setPurchaseData] = useState<{
     paymentId?: string
@@ -50,10 +52,10 @@ export default function PurchaseSuccessPage() {
               <div className="text-4xl">🎉</div>
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">¡Felicitaciones!</h1>
-            <p className="text-xl text-gray-600 mb-6">Tu pago fue un éxito.</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">{t("successTitle")}</h1>
+            <p className="text-xl text-gray-600 mb-6">{t("successSubtitle")}</p>
             <p className="text-gray-500 mb-8 leading-relaxed">
-              Ya dimos el primer paso para que tu producto llegue a tus manos.
+              {t("successBody")}
             </p>
 
             <MultiSellerCheckoutContinue
@@ -65,16 +67,16 @@ export default function PurchaseSuccessPage() {
             {purchaseData.paymentId && (
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <p className="text-sm text-gray-600">
-                  <span className="font-semibold">ID de Pago:</span> {purchaseData.paymentId}
+                  <span className="font-semibold">{t("paymentId")}</span> {purchaseData.paymentId}
                 </p>
                 {purchaseData.orderId && (
                   <p className="text-sm text-gray-600">
-                    <span className="font-semibold">Orden:</span> {purchaseData.orderId}
+                    <span className="font-semibold">{t("order")}</span> {purchaseData.orderId}
                   </p>
                 )}
                 {purchaseData.amount && (
                   <p className="text-sm text-gray-600">
-                    <span className="font-semibold">Monto:</span> ${purchaseData.amount}
+                    <span className="font-semibold">{t("amount")}</span> ${purchaseData.amount}
                   </p>
                 )}
               </div>
@@ -84,20 +86,20 @@ export default function PurchaseSuccessPage() {
               <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
                 <Link href="/dashboard/buyer">
                   <Package className="w-4 h-4 mr-2" />
-                  Ver mis compras
+                  {t("viewPurchases")}
                 </Link>
               </Button>
 
               <Button asChild variant="outline" className="w-full">
                 <Link href="/">
                   <Home className="w-4 h-4 mr-2" />
-                  Volver al inicio
+                  {t("backHome")}
                 </Link>
               </Button>
             </div>
 
             <p className="text-xs text-gray-400 mt-6">
-              Recibirás un email de confirmación con los detalles de tu compra.
+              {t("emailConfirm")}
             </p>
           </CardContent>
         </Card>

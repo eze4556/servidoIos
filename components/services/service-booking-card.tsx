@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import type { Locale } from "date-fns"
+import { useLocale, useTranslations } from "next-intl"
 import { addMonths, format, isSameDay, isSameMonth, startOfMonth, startOfWeek } from "date-fns"
-import { es } from "date-fns/locale"
+import { getDateFnsLocale } from "@/lib/i18n/date-locale"
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,7 +30,7 @@ type ServiceBookingCardProps = {
   schedule?: ServiceSchedule | null
 }
 
-const WEEKDAYS = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"]
+const WEEKDAYS_ES = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"]
 
 function dateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
@@ -59,6 +61,11 @@ type MonthGridProps = {
   onNext: () => void
   canPrev: boolean
   canNext: boolean
+  dateLocale: Locale
+  weekdays: string[]
+  prevMonthLabel: string
+  nextMonthLabel: string
+  calendarHint: string
 }
 
 function BookingMonthGrid({
@@ -72,6 +79,11 @@ function BookingMonthGrid({
   onNext,
   canPrev,
   canNext,
+  dateLocale,
+  weekdays,
+  prevMonthLabel,
+  nextMonthLabel,
+  calendarHint,
 }: MonthGridProps) {
   const cells = useMemo(() => buildMonthCells(month), [month])
 
@@ -83,26 +95,26 @@ function BookingMonthGrid({
           onClick={onPrev}
           disabled={!canPrev}
           className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-servido-100 text-servido-800 transition hover:bg-servido-50 disabled:opacity-30"
-          aria-label="Mes anterior"
+          aria-label={prevMonthLabel}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
         <p className="text-sm font-semibold capitalize text-servido-950">
-          {format(month, "MMMM yyyy", { locale: es })}
+          {format(month, "MMMM yyyy", { locale: dateLocale })}
         </p>
         <button
           type="button"
           onClick={onNext}
           disabled={!canNext}
           className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-servido-100 text-servido-800 transition hover:bg-servido-50 disabled:opacity-30"
-          aria-label="Mes siguiente"
+          aria-label={nextMonthLabel}
         >
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 
       <div className="grid grid-cols-7 gap-1.5">
-        {WEEKDAYS.map((d) => (
+        {weekdays.map((d) => (
           <div
             key={d}
             className="py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
@@ -147,7 +159,7 @@ function BookingMonthGrid({
       </div>
 
       <p className="mt-3 text-center text-[11px] text-muted-foreground">
-        Los días en violeta claro tienen turnos disponibles
+        {calendarHint}
       </p>
     </div>
   )
@@ -159,6 +171,11 @@ export function ServiceBookingCard({
   sellerId,
   schedule: scheduleProp,
 }: ServiceBookingCardProps) {
+  const t = useTranslations("serviceBooking")
+  const tReviews = useTranslations("reviews")
+  const locale = useLocale()
+  const dateLocale = getDateFnsLocale(locale)
+  const weekdays = (t.raw("weekdays") as string[] | undefined) ?? WEEKDAYS_ES
   const { currentUser } = useAuth()
   const schedule = useMemo(() => normalizeServiceSchedule(scheduleProp), [scheduleProp])
   const [slots, setSlots] = useState<ServiceSlot[]>([])
@@ -227,7 +244,7 @@ export function ServiceBookingCard({
         // Nunca mostrar "todo libre" si falla la lectura de ocupados
         setSlots([])
         setLoading(false)
-        setLoadError("No pudimos cargar la disponibilidad. Recargá la página.")
+        setLoadError(t("loadError"))
       }
     )
 
@@ -267,15 +284,15 @@ export function ServiceBookingCard({
     setError(null)
     setSuccess(null)
     if (!uid) {
-      setError("Iniciá sesión para pedir un turno.")
+      setError(t("loginRequired"))
       return
     }
     if (isOwner) {
-      setError("No podés reservar tu propio servicio.")
+      setError(t("ownService"))
       return
     }
     if (!selectedSlot) {
-      setError("Elegí un horario.")
+      setError(t("pickSlot"))
       return
     }
     setSubmitting(true)
@@ -291,12 +308,12 @@ export function ServiceBookingCard({
         end: selectedSlot.end,
         notes,
       })
-      setSuccess("Turno pedido. Te avisamos cuando el prestador confirme.")
+      setSuccess(t("success"))
       setSelectedSlot(null)
       setNotes("")
       // El listener en vivo actualiza los horarios libres
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo pedir el turno.")
+      setError(err instanceof Error ? err.message : t("bookError"))
     } finally {
       setSubmitting(false)
     }
@@ -308,11 +325,11 @@ export function ServiceBookingCard({
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <CalendarDays className="h-5 w-5 text-servido-700" />
-            Pedir turno
+            {t("title")}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          El prestador todavía no publicó horarios. Podés contactarlo por chat.
+          {t("disabledHint")}
         </CardContent>
       </Card>
     )
@@ -323,25 +340,23 @@ export function ServiceBookingCard({
       <CardHeader className="border-b bg-gradient-to-r from-servido-50 to-white pb-4">
         <CardTitle className="flex items-center gap-2 text-lg text-servido-950">
           <CalendarDays className="h-5 w-5 text-servido-700" />
-          Pedir turno
+          {t("title")}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Elegí un día y después el horario · turnos de {schedule.durationMinutes} min
+          {t("subtitle", { minutes: schedule.durationMinutes })}
         </p>
       </CardHeader>
 
       <CardContent className="space-y-5 p-4 sm:p-5">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin text-servido-700" /> Cargando agenda...
+            <Loader2 className="h-5 w-5 animate-spin text-servido-700" /> {t("loading")}
           </div>
         ) : loadError ? (
           <p className="py-6 text-center text-sm text-red-600">{loadError}</p>
         ) : availableDayKeys.size === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            {countScheduledDays(schedule) === 0
-              ? "Este servicio no tiene días de atención configurados. Pedile al prestador que guarde horarios en su Agenda."
-              : "No hay turnos libres en las próximas semanas."}
+            {countScheduledDays(schedule) === 0 ? t("noScheduleDays") : t("noFreeSlots")}
           </p>
         ) : (
           <>
@@ -357,18 +372,23 @@ export function ServiceBookingCard({
                 onNext={() => setVisibleMonth((m) => addMonths(m, 1))}
                 canPrev={canPrev}
                 canNext={canNext}
+                dateLocale={dateLocale}
+                weekdays={weekdays}
+                prevMonthLabel={t("prevMonth")}
+                nextMonthLabel={t("nextMonth")}
+                calendarHint={t("calendarHint")}
               />
 
               <div className="flex min-h-[300px] flex-col rounded-2xl border border-servido-100 bg-slate-50/80 p-4">
                 <div className="mb-3 flex items-start justify-between gap-2">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-servido-700">
-                      Horarios
+                      {t("timesTitle")}
                     </p>
                     <p className="text-sm font-medium capitalize text-servido-950">
                       {selectedDate
-                        ? format(selectedDate, "EEEE d 'de' MMMM", { locale: es })
-                        : "Elegí un día"}
+                        ? format(selectedDate, "EEEE d 'de' MMMM", { locale: dateLocale })
+                        : t("pickDay")}
                     </p>
                   </div>
                   <Clock className="mt-0.5 h-4 w-4 text-servido-600" />
@@ -376,7 +396,7 @@ export function ServiceBookingCard({
 
                 {daySlots.length === 0 ? (
                   <p className="my-auto text-center text-sm text-muted-foreground">
-                    Seleccioná un día marcado en el calendario.
+                    {t("pickMarkedDay")}
                   </p>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
@@ -405,7 +425,7 @@ export function ServiceBookingCard({
                               active ? "text-white/80" : "text-muted-foreground"
                             )}
                           >
-                            hasta {format(slot.end, "HH:mm")}
+                            {t("until", { time: format(slot.end, "HH:mm") })}
                           </span>
                         </button>
                       )
@@ -415,9 +435,9 @@ export function ServiceBookingCard({
 
                 {selectedSlot && (
                   <div className="mt-auto rounded-xl border border-servido-200 bg-white px-3 py-2.5 text-sm">
-                    <p className="text-xs text-muted-foreground">Turno seleccionado</p>
+                    <p className="text-xs text-muted-foreground">{t("selectedSlot")}</p>
                     <p className="font-semibold capitalize text-servido-950">
-                      {format(selectedSlot.start, "EEE d MMM · HH:mm", { locale: es })} –{" "}
+                      {format(selectedSlot.start, "EEE d MMM · HH:mm", { locale: dateLocale })} –{" "}
                       {format(selectedSlot.end, "HH:mm")}
                     </p>
                   </div>
@@ -426,14 +446,14 @@ export function ServiceBookingCard({
             </div>
 
             <div>
-              <Label htmlFor="booking-notes">Nota (opcional)</Label>
+              <Label htmlFor="booking-notes">{t("notesLabel")}</Label>
               <Textarea
                 id="booking-notes"
                 className="mt-1.5 rounded-xl"
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Detalle breve del trabajo o consulta"
+                placeholder={t("notesPlaceholder")}
               />
             </div>
           </>
@@ -444,7 +464,7 @@ export function ServiceBookingCard({
 
         {!uid ? (
           <Button asChild className="h-11 w-full rounded-xl bg-servido-800 hover:bg-servido-900">
-            <Link href="/login">Iniciar sesión para reservar</Link>
+            <Link href="/login">{t("loginToBook")}</Link>
           </Button>
         ) : (
           <Button
@@ -454,10 +474,10 @@ export function ServiceBookingCard({
           >
             {submitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {tReviews("sending")}
               </>
             ) : (
-              "Confirmar turno"
+              t("confirmBooking")
             )}
           </Button>
         )}
