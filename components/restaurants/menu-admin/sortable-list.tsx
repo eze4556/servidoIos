@@ -20,6 +20,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { GripVertical } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 interface SortableListProps<T extends { id: string }> {
@@ -82,6 +83,7 @@ function SortableRow({
   id: string
   children: (handle: ReactNode) => ReactNode
 }) {
+  const t = useTranslations("menuAdmin")
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
 
   return (
@@ -97,7 +99,7 @@ function SortableRow({
         <button
           type="button"
           className="touch-none rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-          aria-label="Arrastrar para reordenar"
+          aria-label={t("dragReorderAria")}
           {...attributes}
           {...listeners}
         >

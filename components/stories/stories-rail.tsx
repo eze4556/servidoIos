@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Plus } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import type { StoryAuthorGroup } from "@/types/story"
 import { cn } from "@/lib/utils"
@@ -20,11 +21,13 @@ function YourStoryCircle({
   displayName,
   hasOwnStories,
   onOpenOwn,
+  labels,
 }: {
   photo: string
   displayName: string
   hasOwnStories: boolean
   onOpenOwn?: () => void
+  labels: { yourStory: string; viewYourStory: string; newStory: string }
 }) {
   if (hasOwnStories && onOpenOwn) {
     return (
@@ -34,7 +37,7 @@ function YourStoryCircle({
             type="button"
             onClick={onOpenOwn}
             className="rounded-full bg-gradient-to-tr from-servido-gold via-orange-400 to-servido-700 p-[2.5px]"
-            aria-label="Ver tu historia"
+            aria-label={labels.viewYourStory}
           >
             <span className="relative flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-full bg-white p-[2px]">
               <span className="relative h-full w-full overflow-hidden rounded-full bg-purple-100">
@@ -52,13 +55,13 @@ function YourStoryCircle({
           <Link
             href="/historias/nueva"
             className="absolute -bottom-0.5 -right-0.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-servido-800 text-white ring-2 ring-white"
-            aria-label="Nueva historia"
+            aria-label={labels.newStory}
           >
             <Plus className="h-3 w-3" />
           </Link>
         </div>
         <span className="w-full truncate text-center text-[10px] font-semibold text-gray-700">
-          Tu historia
+          {labels.yourStory}
         </span>
       </div>
     )
@@ -75,7 +78,7 @@ function YourStoryCircle({
           <Plus className="relative z-10 h-6 w-6" />
         </span>
         <span className="w-full truncate text-center text-[10px] font-semibold text-gray-700">
-          Tu historia
+          {labels.yourStory}
         </span>
       </Link>
     </div>
@@ -89,7 +92,13 @@ export function StoriesRail({
   className,
   alwaysShowCreate = true,
 }: StoriesRailProps) {
+  const t = useTranslations("storiesRail")
   const { currentUser } = useAuth()
+  const railLabels = {
+    yourStory: t("yourStory"),
+    viewYourStory: t("viewYourStory"),
+    newStory: t("newStory"),
+  }
   const canPost = currentUser?.role === "seller"
   const myUid = currentUser?.firebaseUser.uid
   const myGroupIndex = myUid ? groups.findIndex((g) => g.authorId === myUid) : -1
@@ -124,7 +133,7 @@ export function StoriesRail({
     currentUser?.name ||
     currentUser?.firebaseUser.displayName ||
     currentUser?.firebaseUser.email?.split("@")[0] ||
-    "Yo"
+    t("defaultMe")
 
   return (
     <div
@@ -139,6 +148,7 @@ export function StoriesRail({
           displayName={displayName}
           hasOwnStories={hasOwnStories}
           onOpenOwn={hasOwnStories ? () => onOpenAuthor(myGroupIndex) : undefined}
+          labels={railLabels}
         />
       )}
 

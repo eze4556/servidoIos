@@ -644,11 +644,15 @@ export function appointmentStartDate(a: ServiceAppointment): Date | null {
   return toDate(a.startAt)
 }
 
-export function formatAppointmentWhen(a: ServiceAppointment): string {
+export function formatAppointmentWhen(
+  a: ServiceAppointment,
+  options?: { locale?: string; noDate?: string }
+): string {
   const start = toDate(a.startAt)
   const end = toDate(a.endAt)
-  if (!start) return "Sin fecha"
-  const day = start.toLocaleDateString("es-AR", {
+  const localeTag = options?.locale === "pt-BR" ? "pt-BR" : "es-AR"
+  if (!start) return options?.noDate ?? "Sin fecha"
+  const day = start.toLocaleDateString(localeTag, {
     weekday: "short",
     day: "numeric",
     month: "short",

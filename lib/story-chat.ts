@@ -16,6 +16,11 @@ import {
 import { db } from "@/lib/firebase"
 import type { Story } from "@/types/story"
 
+export const STORY_REPLY_ERROR = {
+  EMPTY: "STORY_REPLY_EMPTY",
+  SELF: "STORY_REPLY_SELF",
+} as const
+
 export interface ChatListItem {
   id: string
   type?: "product" | "story"
@@ -116,9 +121,9 @@ export async function replyToStory(params: {
   senderName: string
 }): Promise<string> {
   const text = params.text.trim()
-  if (!text) throw new Error("Escribí un mensaje")
+  if (!text) throw new Error(STORY_REPLY_ERROR.EMPTY)
   if (params.senderId === params.story.authorId) {
-    throw new Error("No podés responderte a vos mismo")
+    throw new Error(STORY_REPLY_ERROR.SELF)
   }
 
   const chatId = `story_${params.story.id}_${params.senderId}`

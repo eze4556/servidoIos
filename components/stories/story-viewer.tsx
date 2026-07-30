@@ -5,9 +5,10 @@ import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Check, ExternalLink, Eye, Loader2, Send, Trash2, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { recordStoryView, softDeleteStory } from "@/lib/stories"
-import { replyToStory } from "@/lib/story-chat"
+import { replyToStory, STORY_REPLY_ERROR } from "@/lib/story-chat"
 import { formatStoryRelativeTime } from "@/lib/story-time"
 import { FollowButton } from "@/components/follows/follow-button"
 import { STORY_VIEW_MS, type StoryAuthorGroup } from "@/types/story"
@@ -27,6 +28,8 @@ export function StoryViewer({
   onClose,
   onStoryDeleted,
 }: StoryViewerProps) {
+  const t = useTranslations("storyViewer")
+  const tTime = useTranslations("storyViewer.relativeTime")
   const router = useRouter()
   const { currentUser } = useAuth()
   const [authorIndex, setAuthorIndex] = useState(initialAuthorIndex)
@@ -255,7 +258,13 @@ export function StoryViewer({
       }, 2800)
     } catch (err) {
       console.error(err)
-      setReplyError(err instanceof Error ? err.message : "No se pudo enviar")
+      if (err instanceof Error && err.message === STORY_REPLY_ERROR.EMPTY) {
+        setReplyError(t("errors.emptyMessage"))
+      } else if (err instanceof Error && err.message === STORY_REPLY_ERROR.SELF) {
+        setReplyError(t("errors.selfReply"))
+      } else {
+        setReplyError(err instanceof Error ? err.message : t("replySendError"))
+      }
     } finally {
       setReplySending(false)
     }
@@ -295,7 +304,7 @@ export function StoryViewer({
       onStoryDeleted?.(deletedId)
     } catch (error) {
       console.error(error)
-      setDeleteError("No se pudo borrar. Probá de nuevo.")
+      setDeleteError(t("deleteFailed"))
       setDeleting(false)
     }
   }
@@ -442,9 +451,11 @@ export function StoryViewer({
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-white drop-shadow">{group.authorName}</p>
             <p className="text-[10px] text-white/75">
-              {formatStoryRelativeTime(story.createdAt)}
+              {formatStoryRelativeTime(story.createdAt, {
+                t: (key, values) => tTime(key, values),
+              })}
               <span className="mx-1 opacity-50">·</span>
-              {group.authorType === "restaurant" ? "Restaurante" : "Tienda"}
+              {group.authorType === "restaurant" ? t("authorType.restaurant") : t("authorType.store")}
             </p>
           </div>
           {!isAuthor && (
@@ -467,7 +478,7 @@ export function StoryViewer({
                 onClick={openDeleteConfirm}
                 disabled={deleting || navigatingOffer || deleteOpen}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white disabled:opacity-50"
-                aria-label="Borrar historia"
+                aria-label={t("deleteStory")}
               >
                 {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               </button>
@@ -478,7 +489,7 @@ export function StoryViewer({
             onClick={onClose}
             disabled={navigatingOffer || deleting || deleteOpen}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white disabled:opacity-50"
-            aria-label="Cerrar"
+            aria-label={t("close")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -492,18 +503,18 @@ export function StoryViewer({
           onPointerCancel={handleResume}
           onPointerLeave={handleResume}
         >
-          <Image src={story.imageUrl} alt={story.caption || "Historia"} fill className="object-contain" priority />
+          <Image src={story.imageUrl} alt={story.caption || t("storyAlt")} fill className="object-contain" priority />
 
           <button
             type="button"
             className="absolute inset-y-0 left-0 z-10 w-1/3"
-            aria-label="Anterior"
+            aria-label={t("previous")}
             onClick={goPrev}
           />
           <button
             type="button"
             className="absolute inset-y-0 right-0 z-10 w-1/3"
-            aria-label="Siguiente"
+            aria-label={t("next")}
             onClick={goNext}
           />
         </div>
@@ -531,11 +542,11 @@ export function StoryViewer({
                 {navigatingOffer ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Abriendo oferta…
+                    {t("openingOffer")}
                   </>
                 ) : (
                   <>
-                    Ver oferta
+                    {t("viewOffer")}
                     <ExternalLink className="h-4 w-4" />
                   </>
                 )}
@@ -548,14 +559,14 @@ export function StoryViewer({
                   <div className="flex items-center justify-between gap-2 rounded-full bg-white/15 px-4 py-2.5 text-sm text-white backdrop-blur-sm">
                     <span className="inline-flex items-center gap-2">
                       <Check className="h-4 w-4 text-emerald-300" />
-                      Enviado
+                      {t("replySent")}
                     </span>
                     <Link
                       href={`/chat/${replySentChatId}`}
                       className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-servido-900"
                       onClick={onClose}
                     >
-                      Ver chat
+                      {t("viewChat")}
                     </Link>
                   </div>
                 ) : (
@@ -571,7 +582,7 @@ export function StoryViewer({
                       onFocus={focusReply}
                       onBlur={blurReply}
                       disabled={replySending}
-                      placeholder={`Enviar mensaje a ${group.authorName}…`}
+                      placeholder={t("replyPlaceholder", { name: group.authorName })}
                       className="h-11 min-w-0 flex-1 rounded-full border border-white/40 bg-black/25 px-4 text-sm text-white placeholder:text-white/55 outline-none backdrop-blur-sm focus:border-white/70"
                       enterKeyHint="send"
                       autoComplete="off"
@@ -581,7 +592,7 @@ export function StoryViewer({
                       disabled={replySending || !replyText.trim()}
                       onMouseDown={(e) => e.preventDefault()}
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-servido-900 disabled:opacity-40"
-                      aria-label="Enviar mensaje"
+                      aria-label={t("sendMessage")}
                     >
                       {replySending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -596,7 +607,7 @@ export function StoryViewer({
                 )}
                 {!currentUser && (
                   <p className="mt-2 text-center text-[11px] text-white/60">
-                    Iniciá sesión para responder
+                    {t("loginToReply")}
                   </p>
                 )}
               </div>
@@ -607,7 +618,7 @@ export function StoryViewer({
         {holdHint && (
           <div className="pointer-events-none absolute inset-x-0 top-1/3 z-30 flex justify-center px-6">
             <span className="rounded-full bg-black/70 px-4 py-2 text-xs font-medium text-white shadow-lg">
-              Mantené para pausar
+              {t("holdToPause")}
             </span>
           </div>
         )}
@@ -625,10 +636,10 @@ export function StoryViewer({
                 <Trash2 className="h-6 w-6" />
               </div>
               <h2 id="delete-story-title" className="text-center text-lg font-semibold text-gray-900">
-                ¿Borrar esta historia?
+                {t("deleteTitle")}
               </h2>
               <p id="delete-story-desc" className="mt-2 text-center text-sm text-gray-600">
-                Dejará de verse para todos. Esta acción no se puede deshacer.
+                {t("deleteDescription")}
               </p>
               {deleteError && (
                 <p className="mt-3 rounded-2xl bg-red-50 px-3 py-2 text-center text-xs text-red-700">
@@ -645,10 +656,10 @@ export function StoryViewer({
                   {deleting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Borrando…
+                      {t("deleting")}
                     </>
                   ) : (
-                    "Sí, borrar"
+                    t("deleteConfirm")
                   )}
                 </button>
                 <button
@@ -657,7 +668,7 @@ export function StoryViewer({
                   onClick={closeDeleteConfirm}
                   className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-800 hover:bg-gray-200 disabled:opacity-70"
                 >
-                  Cancelar
+                  {t("cancel")}
                 </button>
               </div>
             </div>
@@ -668,7 +679,7 @@ export function StoryViewer({
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-3 bg-black/70 backdrop-blur-[2px]">
             <Loader2 className="h-10 w-10 animate-spin text-white" />
             <p className="text-sm font-medium text-white">
-              {deleting ? "Borrando…" : "Abriendo oferta…"}
+              {deleting ? t("deleting") : t("openingOffer")}
             </p>
           </div>
         )}

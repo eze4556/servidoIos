@@ -66,6 +66,8 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import { Loader2 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useTranslations, useLocale } from "next-intl"
+import { getDateFnsLocale } from "@/lib/i18n/date-locale"
 import { useAuth } from "@/contexts/auth-context"
 // import { ChatList } from "@/components/chat-list"
 import { hasWhiteBackground, isValidVideoFile, getVideoDuration } from "@/lib/image-validation"
@@ -287,69 +289,86 @@ function getFechaCompra(compra: any): string {
 }
 
 export default function SellerDashboardPage() {
+  const t = useTranslations("sellerDashboard")
+  const locale = useLocale()
+  const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
+  const dateFnsLocale = getDateFnsLocale(locale)
   const { currentUser, authLoading, handleLogout, refreshUserProfile } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const searchParams = useSearchParams()
   const hasActiveSubscription = currentUser?.subscriptionStatus === "active"
   const cancelAtPeriodEnd = Boolean(currentUser?.subscriptionCancelAtPeriodEnd)
-  const subscriptionRequiredMessage = "Suscripción mensual requerida para publicar productos y servicios"
+  const subscriptionRequiredMessage = t("subscription.requiredPublish")
   const subscriptionActiveMessage = cancelAtPeriodEnd
-    ? "Suscripción activa hasta el fin del período (sin renovación)"
-    : "Suscripción activa — se renueva automáticamente cada mes"
-  const subscriptionBlockedMessage = "Debes activar tu suscripción mensual para publicar productos y servicios."
+    ? t("subscription.activeUntilPeriodEnd")
+    : t("subscription.activeAutoRenew")
+  const subscriptionBlockedMessage = t("subscription.blockedPublish")
 
   const subscriptionEndsAt = currentUser?.subscriptionEndsAt ?? null
   const subscriptionDaysRemaining = currentUser?.subscriptionDaysRemaining ?? null
   const subscriptionStatusSummary = useMemo(() => {
     if (hasActiveSubscription) {
       if (cancelAtPeriodEnd && subscriptionEndsAt) {
-        return `Cancelaste la renovación. Seguí operando hasta el ${format(subscriptionEndsAt, "dd/MM/yyyy")}.`
+        return t("subscription.cancelledUntil", {
+          date: subscriptionEndsAt.toLocaleDateString(dateLocale),
+        })
       }
 
       if (subscriptionEndsAt && format(subscriptionEndsAt, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")) {
-        return "Próximo cobro hoy (renovación automática)"
+        return t("subscription.chargeToday")
       }
 
       if (typeof subscriptionDaysRemaining === "number") {
         if (subscriptionDaysRemaining <= 0) {
-          return "Próximo cobro hoy (renovación automática)"
+          return t("subscription.chargeToday")
         }
 
         if (subscriptionDaysRemaining === 1) {
-          return "Próximo cobro en 1 día"
+          return t("subscription.chargeInOneDay")
         }
 
-        return `Próximo cobro estimado en ${subscriptionDaysRemaining} días`
+        return t("subscription.chargeInDays", { days: subscriptionDaysRemaining })
       }
 
-      return "Suscripción activa con renovación automática"
+      return t("subscription.activeWithRenewal")
     }
 
     if (subscriptionEndsAt) {
-      return "Tu suscripción venció o el cobro falló. Reactivala para volver a publicar."
+      return t("subscription.expiredReactivate")
     }
 
-    return "Activá la suscripción mensual automática para publicar productos y servicios"
-  }, [hasActiveSubscription, cancelAtPeriodEnd, subscriptionEndsAt?.getTime(), subscriptionDaysRemaining])
-  const subscriptionActionLabel = subscriptionEndsAt && !hasActiveSubscription ? "Reactivar suscripción" : "Activar suscripción mensual"
+    return t("subscription.activateMonthlyPrompt")
+  }, [hasActiveSubscription, cancelAtPeriodEnd, subscriptionEndsAt, subscriptionDaysRemaining, t, dateLocale])
+  const subscriptionActionLabel =
+    subscriptionEndsAt && !hasActiveSubscription
+      ? t("subscription.actionReactivate")
+      : t("subscription.actionActivate")
 
   const mercadoPagoStatus = currentUser?.mercadoPagoStatus ?? "not_connected"
   const mercadoPagoConnected = mercadoPagoStatus === "connected"
   const mercadoPagoTokenExpired = mercadoPagoStatus === "token_expired"
   const mercadoPagoConnectionSummary = useMemo(() => {
     if (mercadoPagoConnected) {
-      return "Tu cuenta de Mercado Pago está conectada. Cobrás el 92% de cada venta (8% comisión Servido)."
+      return t("mercadoPago.summaryConnected")
     }
 
     if (mercadoPagoTokenExpired) {
-      return "La conexión de Mercado Pago venció. Reconecta para volver a cobrar."
+      return t("mercadoPago.summaryExpired")
     }
 
-    return "Debes conectar tu cuenta de Mercado Pago para cobrar ventas."
-  }, [mercadoPagoConnected, mercadoPagoTokenExpired])
-  const mercadoPagoActionLabel = mercadoPagoConnected ? "Conectado" : mercadoPagoTokenExpired ? "Reconectar Mercado Pago" : "Conectar Mercado Pago"
-  const mercadoPagoStatusLabel = mercadoPagoConnected ? "Conectado" : mercadoPagoTokenExpired ? "Token vencido" : "No conectado"
+    return t("mercadoPago.summaryNotConnected")
+  }, [mercadoPagoConnected, mercadoPagoTokenExpired, t])
+  const mercadoPagoActionLabel = mercadoPagoConnected
+    ? t("mercadoPago.connected")
+    : mercadoPagoTokenExpired
+      ? t("mercadoPago.reconnectAction")
+      : t("mercadoPago.connectAction")
+  const mercadoPagoStatusLabel = mercadoPagoConnected
+    ? t("mercadoPago.statusConnected")
+    : mercadoPagoTokenExpired
+      ? t("mercadoPago.statusTokenExpired")
+      : t("mercadoPago.statusNotConnected")
   const mercadoPagoBadgeVariant = mercadoPagoConnected ? "default" : mercadoPagoTokenExpired ? "destructive" : "secondary"
 
   const renderSubscriptionGate = (showActionButton = true) => (
@@ -681,8 +700,8 @@ export default function SellerDashboardPage() {
 
     if (mercadoPagoStatus === 'connected') {
       toast({
-        title: "Mercado Pago conectado",
-        description: "Tu cuenta quedó vinculada correctamente.",
+        title: t("mercadoPago.toastConnectedTitle"),
+        description: t("mercadoPago.toastConnectedDescription"),
       })
       const newUrl = new URL(window.location.href)
       newUrl.searchParams.delete('mercadopago')
@@ -690,8 +709,8 @@ export default function SellerDashboardPage() {
       window.history.replaceState({}, '', newUrl.toString())
     } else if (mercadoPagoStatus === 'error') {
       toast({
-        title: "No se pudo conectar Mercado Pago",
-        description: mercadoPagoReason || "Revisa la autorización e inténtalo de nuevo.",
+        title: t("mercadoPago.toastConnectErrorTitle"),
+        description: mercadoPagoReason || t("mercadoPago.toastConnectErrorDefault"),
         variant: "destructive",
       })
       const newUrl = new URL(window.location.href)
@@ -700,14 +719,14 @@ export default function SellerDashboardPage() {
       window.history.replaceState({}, '', newUrl.toString())
     } else if (mercadoPagoStatus === 'disconnected') {
       toast({
-        title: "Mercado Pago desconectado",
-        description: "La cuenta fue desvinculada correctamente.",
+        title: t("mercadoPago.toastDisconnectedTitle"),
+        description: t("mercadoPago.toastDisconnectedDescription"),
       })
       const newUrl = new URL(window.location.href)
       newUrl.searchParams.delete('mercadopago')
       window.history.replaceState({}, '', newUrl.toString())
     }
-  }, [searchParams])
+  }, [searchParams, t])
 
   // Mostrar todas las ventas del vendedor sin filtros
   const filteredSales = sales;
@@ -774,8 +793,8 @@ export default function SellerDashboardPage() {
     } catch (error) {
       console.error("Error fetching shipments:", error)
       toast({
-        title: "Error",
-        description: "No se pudieron cargar los envíos",
+        title: t("alerts.errorTitle"),
+        description: t("shipping.toastLoadError"),
         variant: "destructive",
       })
     } finally {
@@ -809,39 +828,35 @@ export default function SellerDashboardPage() {
       )
 
       if (result.success) {
-        const statusMessages = {
-          pending: "Estado cambiado a pendiente",
-          preparing: "Producto en preparación",
-          shipped: "Producto enviado",
-          delivered: "Producto entregado",
-          cancelled: "Envío cancelado"
-        }
-        
+        const statusKey = newStatus as "pending" | "preparing" | "shipped" | "delivered" | "cancelled"
         toast({
-          title: "Envío actualizado",
-          description: statusMessages[newStatus] || "Estado de envío actualizado correctamente",
+          title: t("shipping.toastUpdatedTitle"),
+          description: t(`shipping.toastStatus.${statusKey}`) || t("shipping.toastUpdatedDefault"),
         })
         
         if (trackingNumber && newStatus === "shipped") {
           toast({
-            title: "Número de seguimiento",
-            description: `Tracking: ${trackingNumber}${carrierName ? ` - ${carrierName}` : ''}`,
+            title: t("shipping.toastTrackingTitle"),
+            description: t("shipping.toastTrackingDescription", {
+              tracking: trackingNumber,
+              carrier: carrierName ? t("shipping.toastTrackingCarrierSuffix", { carrier: carrierName }) : "",
+            }),
           })
         }
         
         await fetchShipments() // Recargar datos
       } else {
         toast({
-          title: "Error",
-          description: result.error || "No se pudo actualizar el estado de envío",
+          title: t("alerts.errorTitle"),
+          description: result.error || t("shipping.toastUpdateError"),
           variant: "destructive",
           })
         }
       } catch (error) {
       console.error("Error updating centralized shipping status:", error)
         toast({
-          title: "Error",
-        description: "Error al actualizar el estado de envío centralizado",
+          title: t("alerts.errorTitle"),
+        description: t("shipping.toastUpdateErrorCentralized"),
         variant: "destructive",
         })
       } finally {
@@ -872,41 +887,35 @@ export default function SellerDashboardPage() {
       )
 
       if (result.success) {
-        // Mensaje de éxito personalizado según el estado
-        const statusMessages = {
-          pending: "Estado cambiado a pendiente",
-          preparing: "Producto en preparación",
-          shipped: "Producto enviado",
-          delivered: "Producto entregado",
-          cancelled: "Envío cancelado"
-        }
-        
+        const statusKey = newStatus as "pending" | "preparing" | "shipped" | "delivered" | "cancelled"
         toast({
-          title: "Envío actualizado",
-          description: statusMessages[newStatus] || "Estado de envío actualizado correctamente",
+          title: t("shipping.toastUpdatedTitle"),
+          description: t(`shipping.toastStatus.${statusKey}`) || t("shipping.toastUpdatedDefault"),
         })
         
-        // Mostrar información adicional si se agregó tracking
         if (trackingNumber && newStatus === "shipped") {
           toast({
-            title: "Número de seguimiento",
-            description: `Tracking: ${trackingNumber}${carrierName ? ` - ${carrierName}` : ''}`,
+            title: t("shipping.toastTrackingTitle"),
+            description: t("shipping.toastTrackingDescription", {
+              tracking: trackingNumber,
+              carrier: carrierName ? t("shipping.toastTrackingCarrierSuffix", { carrier: carrierName }) : "",
+            }),
           })
         }
         
         await fetchShipments() // Recargar datos
       } else {
         toast({
-          title: "Error",
-          description: result.error || "No se pudo actualizar el estado de envío",
+          title: t("alerts.errorTitle"),
+          description: result.error || t("shipping.toastUpdateError"),
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error("Error updating shipping status:", error)
       toast({
-        title: "Error",
-        description: "Error al actualizar el estado de envío",
+        title: t("alerts.errorTitle"),
+        description: t("shipping.toastUpdateErrorGeneric"),
         variant: "destructive",
       })
     } finally {
@@ -949,20 +958,11 @@ export default function SellerDashboardPage() {
   }
 
   const getShippingStatusText = (status: ShippingStatus) => {
-    switch (status) {
-      case "pending":
-        return "Pendiente"
-      case "preparing":
-        return "En preparación"
-      case "shipped":
-        return "Enviado"
-      case "delivered":
-        return "Entregado"
-      case "cancelled":
-        return "Cancelado"
-      default:
-        return "Desconocido"
+    const key = status as "pending" | "preparing" | "shipped" | "delivered" | "cancelled"
+    if (key === "pending" || key === "preparing" || key === "shipped" || key === "delivered" || key === "cancelled") {
+      return t(`shipping.status.${key}`)
     }
+    return t("shipping.statusUnknown")
   }
 
   const getFilteredShipments = () => {
@@ -1357,8 +1357,8 @@ export default function SellerDashboardPage() {
     } catch (error) {
       console.error("Error fetching my coupons:", error)
       toast({
-        title: "Error",
-        description: "No se pudieron cargar tus cupones.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.loadError"),
         variant: "destructive",
       })
     }
@@ -1369,24 +1369,24 @@ export default function SellerDashboardPage() {
 
     if (newCouponCode.trim() === "") {
       toast({
-        title: "Error",
-        description: "El código del cupón no puede estar vacío.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.codeEmpty"),
         variant: "destructive",
       })
       return
     }
     if (newCouponName.trim() === "") {
       toast({
-        title: "Error",
-        description: "El nombre del cupón no puede estar vacío.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.nameEmpty"),
         variant: "destructive",
       })
       return
     }
     if (!newCouponDiscountValue || parseFloat(newCouponDiscountValue) <= 0) {
       toast({
-        title: "Error",
-        description: "El valor del descuento debe ser mayor a 0.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.valueInvalid"),
         variant: "destructive",
       })
       return
@@ -1433,14 +1433,14 @@ export default function SellerDashboardPage() {
       setNewCouponEndDate(undefined)
 
       toast({
-        title: "Éxito",
-        description: "Cupón creado correctamente.",
+        title: t("alerts.successTitle"),
+        description: t("coupons.createdSuccess"),
       })
     } catch (error) {
       console.error("Error creating coupon:", error)
       toast({
-        title: "Error",
-        description: "No se pudo crear el cupón. Inténtalo de nuevo.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.createError"),
         variant: "destructive",
       })
     } finally {
@@ -1459,35 +1459,35 @@ export default function SellerDashboardPage() {
         coupon.id === couponId ? { ...coupon, isActive: !currentStatus } : coupon
       ))
       toast({
-        title: "Éxito",
-        description: `Cupón ${!currentStatus ? 'activado' : 'desactivado'} correctamente.`,
+        title: t("alerts.successTitle"),
+        description: !currentStatus ? t("coupons.toggledActive") : t("coupons.toggledInactive"),
       })
     } catch (error) {
       console.error("Error updating coupon status:", error)
       toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado del cupón.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.updateError"),
         variant: "destructive",
       })
     }
   }
 
   const handleDeleteMyCoupon = async (couponId: string, couponName: string) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar el cupón "${couponName}"?`)) {
+    if (!window.confirm(t("coupons.deleteConfirm", { name: couponName }))) {
       return
     }
     try {
       await deleteDoc(doc(db, "coupons", couponId))
       setMyCoupons(prev => prev.filter(coupon => coupon.id !== couponId))
       toast({
-        title: "Éxito",
-        description: "Cupón eliminado correctamente.",
+        title: t("alerts.successTitle"),
+        description: t("coupons.deletedSuccess"),
       })
     } catch (error) {
       console.error("Error deleting coupon:", error)
       toast({
-        title: "Error",
-        description: "No se pudo eliminar el cupón.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.deleteError"),
         variant: "destructive",
       })
     }
@@ -1707,7 +1707,7 @@ export default function SellerDashboardPage() {
   }
 
   const handleDeleteProduct = async (productId: string) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.")) {
+    if (!window.confirm(t("products.deleteConfirm"))) {
       return
     }
     try {
@@ -1719,24 +1719,28 @@ export default function SellerDashboardPage() {
       }
       await deleteDoc(doc(db, "products", productId))
       setMyProducts((prevProducts) => prevProducts.filter((p) => p.id !== productId))
-      setSuccessMessage("Producto eliminado exitosamente.")
+      setSuccessMessage(t("products.deletedSuccess"))
     } catch (err) {
       console.error("Error deleting product:", err)
-      setError("Error al eliminar el producto.")
+      setError(t("products.deleteError"))
     }
   }
 
   // Nueva función de validación para productos
   const validateProductForm = () => {
     const errors: {[key:string]:string} = {}
-    if (!productName.trim()) errors.name = "El nombre es obligatorio"
-    if (!productDescription.trim()) errors.description = "La descripción es obligatoria"
-    if (!productPrice || isNaN(Number(productPrice)) || Number(productPrice) <= 0) errors.price = "El precio es obligatorio y debe ser mayor a 0"
-    if (!productCategory) errors.category = "La categoría es obligatoria"
-    if (!productIsService && (!productStock || isNaN(Number(productStock)) || Number(productStock) < 0)) errors.stock = "El stock es obligatorio y debe ser 0 o mayor"
-    if (mediaFiles.length === 0 && currentProductMedia.length === 0) errors.media = "Debes subir al menos una imagen o video"
-    if (!productCondition) errors.condition = "La condición es obligatoria"
-    if (!freeShipping && (!shippingCost || isNaN(Number(shippingCost)) || Number(shippingCost) < 0)) errors.shippingCost = "El costo de envío es obligatorio o selecciona envío gratis"
+    if (!productName.trim()) errors.name = t("forms.validation.nameRequired")
+    if (!productDescription.trim()) errors.description = t("forms.validation.descriptionRequired")
+    if (!productPrice || isNaN(Number(productPrice)) || Number(productPrice) <= 0)
+      errors.price = t("forms.validation.priceRequired")
+    if (!productCategory) errors.category = t("forms.validation.categoryRequired")
+    if (!productIsService && (!productStock || isNaN(Number(productStock)) || Number(productStock) < 0))
+      errors.stock = t("forms.validation.stockRequired")
+    if (mediaFiles.length === 0 && currentProductMedia.length === 0)
+      errors.media = t("forms.validation.mediaRequired")
+    if (!productCondition) errors.condition = t("forms.validation.conditionRequired")
+    if (!freeShipping && (!shippingCost || isNaN(Number(shippingCost)) || Number(shippingCost) < 0))
+      errors.shippingCost = t("forms.validation.shippingCostRequired")
     return errors
   }
 
@@ -1752,17 +1756,17 @@ export default function SellerDashboardPage() {
     const errors = validateProductForm()
     setProductFormErrors(errors)
     if (Object.keys(errors).length > 0) {
-      setError("Por favor, corrige los errores antes de continuar.")
+      setError(t("forms.fixErrors"))
       return
     }
 
     if (!productName || !productPrice || !productCategory || !currentUser) {
-      setError("Nombre, precio y categoría son obligatorios.")
+      setError(t("forms.namePriceCategoryRequired"))
       return
     }
 
     if (mediaFiles.length === 0 && currentProductMedia.length === 0) {
-      setError("Debes subir al menos una imagen o video del producto.")
+      setError(t("productForm.needMedia"))
       return
     }
 
@@ -1820,7 +1824,7 @@ export default function SellerDashboardPage() {
         setMyProducts((prevProducts) =>
           prevProducts.map((p) => (p.id === editingProductId ? { ...p, ...productData, updatedAt: new Date() } : p)),
         )
-        setSuccessMessage("Producto actualizado exitosamente.")
+        setSuccessMessage(t("productForm.updatedSuccess"))
       } else {
         const productDataWithTimestamp = { ...productData, createdAt: serverTimestamp() }
         const docRef = await addDoc(collection(db, "products"), productDataWithTimestamp)
@@ -1828,7 +1832,7 @@ export default function SellerDashboardPage() {
           { id: docRef.id, ...productDataWithTimestamp, createdAt: new Date(), updatedAt: new Date() } as Product,
           ...prevProducts,
         ])
-        setSuccessMessage("Producto añadido exitosamente.")
+        setSuccessMessage(t("productForm.addedSuccess"))
       }
       resetForm()
       setActiveTab("products")
@@ -1881,7 +1885,7 @@ export default function SellerDashboardPage() {
 
   const handleSaveProfileImage = async () => {
     if (!currentUser || !profileImageFile) {
-      setError("Por favor, selecciona una imagen para subir.")
+      setError(t("profile.selectImageRequired"))
       return
     }
 
@@ -1906,11 +1910,15 @@ export default function SellerDashboardPage() {
 
       await refreshUserProfile()
 
-      setSuccessMessage("Imagen de perfil actualizada exitosamente.")
+      setSuccessMessage(t("profile.photoUpdatedSuccess"))
       setProfileImageFile(null)
     } catch (err) {
       console.error("Error saving profile image:", err)
-      setError(`Error al actualizar la imagen de perfil. ${err instanceof Error ? err.message : ""}`)
+      setError(
+        t("profile.photoUpdateError", {
+          message: err instanceof Error ? err.message : "",
+        })
+      )
     } finally {
       setUploadingProfileImage(false)
     }
@@ -1918,11 +1926,11 @@ export default function SellerDashboardPage() {
 
   const handleRemoveCurrentProfileImage = async () => {
     if (!currentUser) {
-      setError("No hay usuario autenticado.")
+      setError(t("subscription.noAuth"))
       return
     }
     if (!currentUser.photoPath) {
-      setError("No hay imagen de perfil para eliminar.")
+      setError(t("profile.noPhotoToRemove"))
       return
     }
 
@@ -1943,12 +1951,16 @@ export default function SellerDashboardPage() {
 
       await refreshUserProfile()
 
-      setSuccessMessage("Imagen de perfil eliminada exitosamente.")
+      setSuccessMessage(t("profile.photoRemovedSuccess"))
       setProfileImageFile(null)
       setProfileImagePreviewUrl(null)
     } catch (err) {
       console.error("Error removing profile image:", err)
-      setError(`Error al eliminar la imagen de perfil. ${err instanceof Error ? err.message : String(err)}`)
+      setError(
+        t("profile.photoRemoveError", {
+          message: err instanceof Error ? err.message : String(err),
+        })
+      )
     } finally {
       setUploadingProfileImage(false)
     }
@@ -1964,7 +1976,7 @@ export default function SellerDashboardPage() {
     console.log("[handleSubscribe] Click en Suscribirse");
     if (!currentUser) {
       console.error("[handleSubscribe] No hay usuario autenticado (contexto)");
-      toast({ title: 'Error', description: 'No hay usuario autenticado', variant: 'destructive' });
+      toast({ title: t("alerts.errorTitle"), description: t("subscription.noAuth"), variant: 'destructive' });
       return;
     }
     setSubscribing(true);
@@ -1985,11 +1997,11 @@ export default function SellerDashboardPage() {
       if (response.data?.init_point) {
         window.location.href = response.data.init_point;
       } else {
-        toast({ title: 'Error', description: 'No se recibió un punto de inicio de suscripción', variant: 'destructive' });
+        toast({ title: t("alerts.errorTitle"), description: t("subscription.noInitPoint"), variant: 'destructive' });
       }
     } catch (err) {
       console.error("[handleSubscribe] Error en la suscripción:", err);
-      toast({ title: 'Error', description: err instanceof Error ? err.message : String(err), variant: 'destructive' });
+      toast({ title: t("alerts.errorTitle"), description: err instanceof Error ? err.message : String(err), variant: 'destructive' });
     } finally {
       setSubscribing(false);
     }
@@ -1997,13 +2009,11 @@ export default function SellerDashboardPage() {
 
   const handleCancelSubscription = async () => {
     if (!currentUser) {
-      toast({ title: "Error", description: "No hay usuario autenticado", variant: "destructive" })
+      toast({ title: t("alerts.errorTitle"), description: t("subscription.noAuth"), variant: "destructive" })
       return
     }
 
-    const confirmed = window.confirm(
-      "¿Cancelar la suscripción?\n\nSe corta la renovación automática. Si todavía te queda tiempo del mes ya pagado, seguís operando hasta esa fecha."
-    )
+    const confirmed = window.confirm(t("subscription.cancelConfirm"))
     if (!confirmed) return
 
     setCancellingSubscription(true)
@@ -2015,22 +2025,27 @@ export default function SellerDashboardPage() {
 
       if (response.data?.immediate) {
         toast({
-          title: "Suscripción cancelada",
-          description: "Ya no tenés acceso para publicar. Podés reactivar cuando quieras.",
+          title: t("subscription.cancelImmediateTitle"),
+          description: t("subscription.cancelImmediateDescription"),
         })
       } else if (response.data?.accessUntil) {
         toast({
-          title: "Renovación cancelada",
-          description: `Seguís operando hasta el ${format(new Date(response.data.accessUntil), "dd/MM/yyyy")}. Después se suspende el acceso.`,
+          title: t("subscription.cancelUntilTitle"),
+          description: t("subscription.cancelUntilDescription", {
+            date: format(new Date(response.data.accessUntil), "dd/MM/yyyy"),
+          }),
           duration: 6000,
         })
       } else {
-        toast({ title: "Suscripción cancelada", description: "No se renovará el próximo mes." })
+        toast({
+          title: t("subscription.cancelImmediateTitle"),
+          description: t("subscription.cancelDefaultDescription"),
+        })
       }
     } catch (err) {
       toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "No se pudo cancelar la suscripción",
+        title: t("alerts.errorTitle"),
+        description: err instanceof Error ? err.message : t("subscription.cancelError"),
         variant: "destructive",
       })
     } finally {
@@ -2040,7 +2055,7 @@ export default function SellerDashboardPage() {
 
   const handleConnectMercadoPago = async () => {
     if (!currentUser) {
-      toast({ title: "Error", description: "No hay usuario autenticado", variant: "destructive" })
+      toast({ title: t("alerts.errorTitle"), description: t("subscription.noAuth"), variant: "destructive" })
       return
     }
 
@@ -2052,13 +2067,13 @@ export default function SellerDashboardPage() {
       }
 
       if (!response.data?.authorizationUrl) {
-        throw new Error("No se recibió la URL de autorización de Mercado Pago")
+        throw new Error(t("mercadoPago.noAuthUrl"))
       }
 
       window.location.href = response.data.authorizationUrl
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      toast({ title: "Error", description: message, variant: "destructive" })
+      toast({ title: t("alerts.errorTitle"), description: message, variant: "destructive" })
     } finally {
       setConnectingMercadoPago(false)
     }
@@ -2066,11 +2081,11 @@ export default function SellerDashboardPage() {
 
   const handleDisconnectMercadoPago = async () => {
     if (!currentUser) {
-      toast({ title: "Error", description: "No hay usuario autenticado", variant: "destructive" })
+      toast({ title: t("alerts.errorTitle"), description: t("subscription.noAuth"), variant: "destructive" })
       return
     }
 
-    const shouldDisconnect = window.confirm("¿Quieres desconectar tu cuenta de Mercado Pago?")
+    const shouldDisconnect = window.confirm(t("mercadoPago.disconnectConfirm"))
     if (!shouldDisconnect) {
       return
     }
@@ -2083,10 +2098,13 @@ export default function SellerDashboardPage() {
       }
 
       await refreshUserProfile()
-      toast({ title: "Mercado Pago desconectado", description: "Tu cuenta fue desvinculada correctamente." })
+      toast({
+        title: t("mercadoPago.toastDisconnectedTitle"),
+        description: t("mercadoPago.toastDisconnectedDescription"),
+      })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      toast({ title: "Error", description: message, variant: "destructive" })
+      toast({ title: t("alerts.errorTitle"), description: message, variant: "destructive" })
     } finally {
       setDisconnectingMercadoPago(false)
     }
@@ -2104,11 +2122,13 @@ export default function SellerDashboardPage() {
   // Nueva función de validación para servicios
   const validateServiceForm = () => {
     const errors: {[key:string]:string} = {}
-    if (!productName.trim()) errors.name = "El nombre es obligatorio"
-    if (!productDescription.trim()) errors.description = "La descripción es obligatoria"
-    if (!productPrice || isNaN(Number(productPrice)) || Number(productPrice) <= 0) errors.price = "El precio es obligatorio y debe ser mayor a 0"
-    if (!productCategory) errors.category = "La categoría es obligatoria"
-    if (mediaFiles.length === 0 && currentProductMedia.length === 0) errors.media = "Debes subir al menos una imagen o video"
+    if (!productName.trim()) errors.name = t("forms.validation.nameRequired")
+    if (!productDescription.trim()) errors.description = t("forms.validation.descriptionRequired")
+    if (!productPrice || isNaN(Number(productPrice)) || Number(productPrice) <= 0)
+      errors.price = t("forms.validation.priceRequired")
+    if (!productCategory) errors.category = t("forms.validation.categoryRequired")
+    if (mediaFiles.length === 0 && currentProductMedia.length === 0)
+      errors.media = t("forms.validation.mediaRequired")
     return errors
   }
 
@@ -2124,17 +2144,17 @@ export default function SellerDashboardPage() {
     const errors = validateServiceForm()
     setServiceFormErrors(errors)
     if (Object.keys(errors).length > 0) {
-      setError("Por favor, corrige los errores antes de continuar.")
+      setError(t("forms.fixErrors"))
       return
     }
 
     if (!productName || !productPrice || !productCategory || !currentUser) {
-      setError("Nombre, precio y categoría son obligatorios.")
+      setError(t("forms.namePriceCategoryRequired"))
       return
     }
 
     if (mediaFiles.length === 0 && currentProductMedia.length === 0) {
-      setError("Debes subir al menos una imagen o video del servicio.")
+      setError(t("serviceForm.needMedia"))
       return
     }
 
@@ -2184,7 +2204,7 @@ export default function SellerDashboardPage() {
         setMyProducts((prevProducts) =>
           prevProducts.map((p) => (p.id === editingProductId ? { ...p, ...serviceData, updatedAt: new Date() } : p)),
         )
-        setSuccessMessage("Servicio actualizado exitosamente.")
+        setSuccessMessage(t("serviceForm.updatedSuccess"))
       } else {
         const serviceDataWithTimestamp = { ...serviceData, createdAt: serverTimestamp() }
         const docRef = await addDoc(collection(db, "products"), serviceDataWithTimestamp)
@@ -2192,7 +2212,7 @@ export default function SellerDashboardPage() {
           { id: docRef.id, ...serviceDataWithTimestamp, createdAt: new Date(), updatedAt: new Date() } as Product,
           ...prevProducts,
         ])
-        setSuccessMessage("Servicio añadido exitosamente.")
+        setSuccessMessage(t("serviceForm.addedSuccess"))
       }
       resetForm()
       setActiveTab("products")
@@ -2222,7 +2242,7 @@ export default function SellerDashboardPage() {
       
     } catch (err) {
       console.error("Error fetching seller earnings:", err)
-      setError("Error al cargar los datos de ganancias")
+      setError(t("earnings.loadError"))
     } finally {
       setLoadingEarnings(false)
     }
@@ -2253,17 +2273,17 @@ export default function SellerDashboardPage() {
 
     if (typeof value === "object" && value._seconds) {
       const date = new Date(value._seconds * 1000)
-      return isNaN(date.getTime()) ? "—" : date.toLocaleDateString()
+      return isNaN(date.getTime()) ? "—" : date.toLocaleDateString(dateLocale)
     }
 
     if (typeof value === "number") {
       const date = new Date(value)
-      return isNaN(date.getTime()) ? "—" : date.toLocaleDateString()
+      return isNaN(date.getTime()) ? "—" : date.toLocaleDateString(dateLocale)
     }
 
     if (typeof value === "string") {
       const date = new Date(value)
-      return isNaN(date.getTime()) ? value : date.toLocaleDateString()
+      return isNaN(date.getTime()) ? value : date.toLocaleDateString(dateLocale)
     }
 
     return "—"
@@ -2284,7 +2304,15 @@ export default function SellerDashboardPage() {
       
       // Crear y descargar archivo CSV
       const csvContent = [
-        ['Fecha', 'Compra ID', 'Productos', 'Subtotal', 'Comisión', 'Neto', 'Estado'],
+        [
+          t("earnings.csvHeaders.date"),
+          t("earnings.csvHeaders.purchaseId"),
+          t("earnings.csvHeaders.products"),
+          t("earnings.csvHeaders.subtotal"),
+          t("earnings.csvHeaders.commission"),
+          t("earnings.csvHeaders.net"),
+          t("earnings.csvHeaders.status"),
+        ],
         ...filteredSales.map(sale => [
           sale.fechaCompra,
           sale.compraId,
@@ -2309,8 +2337,15 @@ export default function SellerDashboardPage() {
       
     } catch (err) {
       console.error("Error generating invoice:", err)
-      setError("Error al generar la factura")
+      setError(t("earnings.invoiceError"))
     }
+  }
+
+  const paymentStatusLabel = (estado: string) => {
+    if (estado === "pendiente" || estado === "pagado") {
+      return t(`earnings.paymentStatus.${estado}`)
+    }
+    return estado
   }
 
   if (authLoading || (!currentUser && !authLoading)) {
@@ -2367,8 +2402,8 @@ export default function SellerDashboardPage() {
       if (!compraSnap.exists()) {
         console.error('Compra no encontrada:', venta.compraId);
         toast({
-          title: 'Error',
-          description: 'No se encontró la compra especificada.',
+          title: t("alerts.errorTitle"),
+          description: t("shipping.toastPurchaseNotFound"),
           variant: 'destructive',
         });
         return;
@@ -2386,8 +2421,8 @@ export default function SellerDashboardPage() {
       if (idx === -1) {
         console.error('Producto no encontrado en la compra:', venta.productId);
         toast({
-          title: 'Error',
-          description: 'No se encontró el producto en la compra.',
+          title: t("alerts.errorTitle"),
+          description: t("shipping.toastProductNotFound"),
           variant: 'destructive',
         });
         return;
@@ -2406,8 +2441,8 @@ export default function SellerDashboardPage() {
       await updateDoc(compraRef, { products });
       
       toast({
-        title: 'Estado de envío actualizado',
-        description: `El estado del envío para "${venta.productName}" se guardó correctamente.`,
+        title: t("shipping.toastSavedTitle"),
+        description: t("shipping.toastSavedDescription", { name: venta.productName }),
         variant: 'default',
       });
       
@@ -2419,8 +2454,10 @@ export default function SellerDashboardPage() {
     } catch (err) {
       console.error('Error actualizando estado de envío:', err);
       toast({
-        title: 'Error al actualizar el estado',
-        description: `No se pudo guardar el estado de envío: ${err instanceof Error ? err.message : 'Error desconocido'}`,
+        title: t("shipping.toastSaveErrorTitle"),
+        description: t("shipping.toastSaveErrorDescription", {
+          message: err instanceof Error ? err.message : t("shipping.statusUnknown"),
+        }),
         variant: 'destructive',
       });
     }
@@ -2456,14 +2493,14 @@ export default function SellerDashboardPage() {
           {error && (
             <Alert variant="destructive" className="mb-4 rounded-2xl">
               <AlertCircle className="h-5 w-5" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>{t("alerts.errorTitle")}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
           {successMessage && (
             <Alert className="mb-4 rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
               <CheckCircle className="h-4 w-4" />
-              <AlertTitle>Éxito</AlertTitle>
+              <AlertTitle>{t("alerts.successTitle")}</AlertTitle>
               <AlertDescription>{successMessage}</AlertDescription>
             </Alert>
           )}
@@ -2477,7 +2514,7 @@ export default function SellerDashboardPage() {
                 >
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle>
-                    {mercadoPagoTokenExpired ? "Reconecta Mercado Pago" : "Conecta Mercado Pago"}
+                    {mercadoPagoTokenExpired ? t("mercadoPago.reconnectTitle") : t("mercadoPago.connectTitle")}
                   </AlertTitle>
                   <AlertDescription className="flex flex-col gap-3">
                     <span>{mercadoPagoConnectionSummary}</span>
@@ -2489,7 +2526,7 @@ export default function SellerDashboardPage() {
                         size="sm"
                         className="rounded-full bg-purple-900 text-white hover:bg-purple-800"
                       >
-                        {connectingMercadoPago ? "Conectando…" : mercadoPagoActionLabel}
+                        {connectingMercadoPago ? t("mercadoPago.connecting") : mercadoPagoActionLabel}
                       </Button>
                     </div>
                   </AlertDescription>
@@ -2497,29 +2534,29 @@ export default function SellerDashboardPage() {
               )}
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <BuyerStatCard title="Productos publicados" value={myProducts.length} icon={ShoppingBag} />
+                <BuyerStatCard title={t("overview.publishedProducts")} value={myProducts.length} icon={ShoppingBag} />
                 <BuyerStatCard
-                  title="Valor en catálogo"
+                  title={t("overview.catalogValue")}
                   value={formatPriceNumber(totalProductsValue)}
                   icon={ListFilter}
                   accent="green"
                 />
-                <BuyerStatCard title="Envíos totales" value={shippingStats.total} icon={Truck} accent="amber" />
+                <BuyerStatCard title={t("overview.totalShipments")} value={shippingStats.total} icon={Truck} accent="amber" />
               </div>
 
-              <BuyerPanel title="Detalle de envíos" description="Estado actual de tus pedidos">
+              <BuyerPanel title={t("overview.shippingDetailTitle")} description={t("overview.shippingDetailDesc")}>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 text-center">
                     <p className="text-2xl font-bold text-gray-900">{shippingStats.pending}</p>
-                    <p className="text-sm text-gray-500">Pendientes</p>
+                    <p className="text-sm text-gray-500">{t("overview.pending")}</p>
                   </div>
                   <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4 text-center">
                     <p className="text-2xl font-bold text-gray-900">{shippingStats.shipped}</p>
-                    <p className="text-sm text-gray-500">Enviados</p>
+                    <p className="text-sm text-gray-500">{t("overview.shipped")}</p>
                   </div>
                   <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 text-center">
                     <p className="text-2xl font-bold text-emerald-700">{shippingStats.delivered}</p>
-                    <p className="text-sm text-gray-500">Entregados</p>
+                    <p className="text-sm text-gray-500">{t("overview.delivered")}</p>
                   </div>
                 </div>
               </BuyerPanel>
@@ -2530,8 +2567,8 @@ export default function SellerDashboardPage() {
           {activeTab === "products" && (
             <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
-                <CardTitle>Mis Productos y Servicios</CardTitle>
-                <CardDescription>Gestiona los ítems que tienes a la venta.</CardDescription>
+                <CardTitle>{t("products.title")}</CardTitle>
+                <CardDescription>{t("products.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {loadingData ? (
@@ -2540,14 +2577,14 @@ export default function SellerDashboardPage() {
                   </div>
                 ) : myProducts.length === 0 ? (
                   <div className="text-center py-10">
-                    <p className="text-lg text-muted-foreground mb-6">Aún no tienes productos publicados.</p>
+                    <p className="text-lg text-muted-foreground mb-6">{t("products.empty")}</p>
                     <Button
                       onClick={() => {
                         resetForm()
                         setActiveTab("addProduct")
                       }}
                     >
-                      <PlusCircle className="mr-2 h-4 w-4" /> Publicar mi primer producto
+                      <PlusCircle className="mr-2 h-4 w-4" /> {t("products.publishFirst")}
                     </Button>
                   </div>
                 ) : (
@@ -2556,12 +2593,12 @@ export default function SellerDashboardPage() {
                       <Table className="min-w-full">
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-[80px]">Media</TableHead>
-                            <TableHead>Nombre</TableHead>
-                            <TableHead>Precio</TableHead>
-                            <TableHead>Tipo</TableHead>
-                            <TableHead className="hidden md:table-cell">Stock</TableHead>
-                            <TableHead className="hidden md:table-cell">Acciones</TableHead>
+                            <TableHead className="w-[80px]">{t("products.colMedia")}</TableHead>
+                            <TableHead>{t("products.colName")}</TableHead>
+                            <TableHead>{t("products.colPrice")}</TableHead>
+                            <TableHead>{t("products.colType")}</TableHead>
+                            <TableHead className="hidden md:table-cell">{t("products.colStock")}</TableHead>
+                            <TableHead className="hidden md:table-cell">{t("products.colActions")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2601,8 +2638,8 @@ export default function SellerDashboardPage() {
                               </TableCell>
                               <TableCell className="font-medium">{prod.name}</TableCell>
                               <TableCell>{formatPrice(prod.price)}</TableCell>
-                              <TableCell>{prod.isService ? "Servicio" : "Producto"}</TableCell>
-                              <TableCell className="text-center hidden md:table-cell">{prod.isService ? "N/A" : (prod.stock ?? 0)}</TableCell>
+                              <TableCell>{prod.isService ? t("products.typeService") : t("products.typeProduct")}</TableCell>
+                              <TableCell className="text-center hidden md:table-cell">{prod.isService ? t("products.stockNa") : (prod.stock ?? 0)}</TableCell>
                               <TableCell className="space-x-1 hidden md:table-cell">
                                 <div className="flex gap-1">
                                   <Button
@@ -2617,7 +2654,7 @@ export default function SellerDashboardPage() {
                                     variant="outline"
                                     size="icon"
                                     className="h-7 w-7 sm:h-8 sm:w-8"
-                                    title="Publicar historia"
+                                    title={t("products.storyTitle")}
                                     asChild
                                   >
                                     <Link href={`/historias/nueva?product=${prod.id}`}>
@@ -2649,8 +2686,10 @@ export default function SellerDashboardPage() {
           {activeTab === "addProduct" && (
             <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
-                <CardTitle>Añadir Nuevo Producto</CardTitle>
-                <CardDescription>Completa los detalles para agregar un ítem.</CardDescription>
+                <CardTitle>{isEditing ? t("productForm.editTitle") : t("productForm.addTitle")}</CardTitle>
+                <CardDescription>
+                  {isEditing ? t("productForm.editDescription") : t("productForm.addDescription")}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {renderSubscriptionGate()}
@@ -2658,7 +2697,7 @@ export default function SellerDashboardPage() {
                 {productFormTouched && Object.keys(productFormErrors).length > 0 && (
                   <Alert variant="destructive" className="mb-4">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Faltan campos obligatorios</AlertTitle>
+                    <AlertTitle>{t("forms.missingRequiredTitle")}</AlertTitle>
                     <AlertDescription>
                       <ul className="list-disc list-inside space-y-1 mt-2">
                         {Object.values(productFormErrors).map((err, idx) => <li key={idx}>{err}</li>)}
@@ -2671,18 +2710,18 @@ export default function SellerDashboardPage() {
                   {/* Media Upload Section */}
                   <div>
                     <Label htmlFor="productMedia" className="text-base">
-                      Imágenes y Videos del Producto
+                      {t("media.productLabel")}
                     </Label>
                     <div className="mt-2 space-y-4">
                       {/* Validation Requirements */}
                       <Alert className="bg-blue-50 border-blue-200">
                         <AlertTriangle className="h-4 w-4 text-blue-600" />
-                        <AlertTitle className="text-blue-800">Requisitos importantes:</AlertTitle>
+                        <AlertTitle className="text-blue-800">{t("forms.requirementsTitle")}</AlertTitle>
                         <AlertDescription className="text-blue-700">
                           <ul className="list-disc list-inside space-y-1 mt-2">
-                              <li><strong>Imágenes:</strong> Se recomienda usar imágenes de alta calidad con fondo blanco para mejores ventas</li>
-                              <li><strong>Videos:</strong> Máximo 60 segundos y 50MB de tamaño</li>
-                            <li>Formatos soportados: JPG, PNG, WebP para imágenes | MP4, WebM para videos</li>
+                              <li><strong>{t("media.reqImages")}</strong></li>
+                              <li><strong>{t("media.reqVideos")}</strong></li>
+                            <li>{t("media.reqFormats")}</li>
                           </ul>
                         </AlertDescription>
                       </Alert>
@@ -2691,7 +2730,7 @@ export default function SellerDashboardPage() {
                       {mediaValidationErrors.length > 0 && (
                         <Alert variant="destructive">
                           <AlertCircle className="h-4 w-4" />
-                          <AlertTitle>Errores de validación:</AlertTitle>
+                          <AlertTitle>{t("forms.validationErrorsTitle")}</AlertTitle>
                           <AlertDescription>
                             <ul className="list-disc list-inside space-y-1 mt-2">
                               {mediaValidationErrors.map((error, index) => (
@@ -2722,7 +2761,7 @@ export default function SellerDashboardPage() {
                         {/* Preview */}
                       {mediaPreviewUrls.length > 0 && (
                         <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-2 block">Nuevos archivos seleccionados:</Label>
+                            <Label className="text-sm font-medium text-gray-700 mb-2 block">{t("media.newFiles")}</Label>
                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                             {mediaPreviewUrls.map((url, index) => (
                               <div key={index} className="relative group">
@@ -2738,7 +2777,7 @@ export default function SellerDashboardPage() {
                                     <div className="w-full h-full flex items-center justify-center bg-gray-200">
                                       <div className="text-center">
                                         <Video className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-                                        <span className="text-xs text-gray-600">Video</span>
+                                        <span className="text-xs text-gray-600">{t("media.video")}</span>
                                       </div>
                                     </div>
                                   )}
@@ -2753,7 +2792,7 @@ export default function SellerDashboardPage() {
                                   <XCircle className="h-4 w-4" />
                                 </Button>
                                 <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs">
-                                  {mediaFiles[index].type.startsWith("image/") ? "imagen" : "video"}
+                                  {mediaFiles[index].type.startsWith("image/") ? t("media.imageBadge") : t("media.videoBadge")}
                                 </Badge>
                               </div>
                             ))}
@@ -2765,7 +2804,7 @@ export default function SellerDashboardPage() {
                         {validatingImages && (
                         <div className="flex items-center gap-2 text-purple-700">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm">Validando archivos...</span>
+                            <span className="text-sm">{t("media.validating")}</span>
                         </div>
                       )}
                         {/* Error de media */}
@@ -2776,7 +2815,7 @@ export default function SellerDashboardPage() {
                   </div>
 
                   <div>
-                      <Label htmlFor="productName" className="text-base">Nombre</Label>
+                      <Label htmlFor="productName" className="text-base">{t("productForm.name")}</Label>
                     <Input
                       id="productName"
                       value={productName}
@@ -2789,7 +2828,7 @@ export default function SellerDashboardPage() {
                       )}
                   </div>
                   <div>
-                      <Label htmlFor="productDescription" className="text-base">Descripción</Label>
+                      <Label htmlFor="productDescription" className="text-base">{t("productForm.description")}</Label>
                     <Textarea
                       id="productDescription"
                       value={productDescription}
@@ -2803,7 +2842,7 @@ export default function SellerDashboardPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <Label htmlFor="productPrice" className="text-base">Precio (ARS)</Label>
+                        <Label htmlFor="productPrice" className="text-base">{t("productForm.price")}</Label>
                       <Input
                         id="productPrice"
                         type="number"
@@ -2819,7 +2858,7 @@ export default function SellerDashboardPage() {
                     </div>
                     {!productIsService && (
                       <div>
-                          <Label htmlFor="productStock" className="text-base">Stock (Unidades)</Label>
+                          <Label htmlFor="productStock" className="text-base">{t("productForm.stock")}</Label>
                         <Input
                           id="productStock"
                           type="number"
@@ -2835,10 +2874,10 @@ export default function SellerDashboardPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <Label htmlFor="productCategory" className="text-base">Categoría</Label>
+                        <Label htmlFor="productCategory" className="text-base">{t("productForm.category")}</Label>
                       <Select value={productCategory} onValueChange={setProductCategory} required>
                           <SelectTrigger className={productFormTouched && productFormErrors.category ? 'border-red-500' : ''}>
-                          <SelectValue placeholder="Selecciona una categoría" />
+                          <SelectValue placeholder={t("productForm.categoryPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((cat) => (
@@ -2852,11 +2891,11 @@ export default function SellerDashboardPage() {
                     </div>
                     <div>
                       <Label htmlFor="productBrand" className="text-base">
-                        Marca (Opcional)
+                        {t("productForm.brandOptional")}
                       </Label>
                       <Select value={productBrand} onValueChange={setProductBrand}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecciona una marca" />
+                          <SelectValue placeholder={t("productForm.brandPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
                           {brands.map((brand) => (
@@ -2869,14 +2908,14 @@ export default function SellerDashboardPage() {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="productCondition" className="text-base">Condición</Label>
+                    <Label htmlFor="productCondition" className="text-base">{t("productForm.condition")}</Label>
                     <Select value={productCondition} onValueChange={v => setProductCondition(v as 'nuevo' | 'usado')} required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona condición" />
+                        <SelectValue placeholder={t("productForm.conditionPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="nuevo">Nuevo</SelectItem>
-                        <SelectItem value="usado">Usado</SelectItem>
+                        <SelectItem value="nuevo">{t("productForm.conditionNew")}</SelectItem>
+                        <SelectItem value="usado">{t("productForm.conditionUsed")}</SelectItem>
                       </SelectContent>
                     </Select>
                     {productFormTouched && productFormErrors.condition && (
@@ -2884,7 +2923,7 @@ export default function SellerDashboardPage() {
                     )}
                   </div>
                   <div>
-                    <Label className="text-base">Envío</Label>
+                    <Label className="text-base">{t("productForm.shipping")}</Label>
                     <div className="flex items-center gap-3 mb-2">
                       <input
                         type="checkbox"
@@ -2893,7 +2932,7 @@ export default function SellerDashboardPage() {
                         onChange={e => setFreeShipping(e.target.checked)}
                         className="mr-2"
                       />
-                      <Label htmlFor="freeShipping" className="text-sm">Envío gratis</Label>
+                      <Label htmlFor="freeShipping" className="text-sm">{t("productForm.freeShipping")}</Label>
                     </div>
                     {!freeShipping && (
                       <div>
@@ -2903,7 +2942,7 @@ export default function SellerDashboardPage() {
                           step="0.01"
                           value={shippingCost}
                           onChange={e => setShippingCost(e.target.value)}
-                          placeholder="Costo de envío (ARS)"
+                          placeholder={t("productForm.shippingCostPlaceholder")}
                           className={productFormTouched && productFormErrors.shippingCost ? 'border-red-500' : ''}
                         />
                         {productFormTouched && productFormErrors.shippingCost && (
@@ -2917,16 +2956,16 @@ export default function SellerDashboardPage() {
                       {submittingProduct ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Guardando...
+                          {t("productForm.saving")}
                         </>
                       ) : isEditing ? (
-                        "Actualizar Producto"
+                        t("productForm.submitUpdate")
                       ) : (
-                        "Añadir Producto"
+                        t("productForm.submitAdd")
                       )}
                     </Button>
                     <Button type="button" variant="ghost" onClick={resetForm} disabled={submittingProduct}>
-                      Cancelar
+                      {t("productForm.cancel")}
                     </Button>
                   </div>
                   </fieldset>
@@ -2939,8 +2978,10 @@ export default function SellerDashboardPage() {
           {activeTab === "addService" && (
             <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
-                <CardTitle>Añadir Nuevo Servicio</CardTitle>
-                <CardDescription>Completa los detalles para agregar un servicio.</CardDescription>
+                <CardTitle>{isEditing ? t("serviceForm.editTitle") : t("serviceForm.addTitle")}</CardTitle>
+                <CardDescription>
+                  {isEditing ? t("serviceForm.editDescription") : t("serviceForm.addDescription")}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Notificación de suscripción */}
@@ -2949,7 +2990,7 @@ export default function SellerDashboardPage() {
                 {serviceFormTouched && Object.keys(serviceFormErrors).length > 0 && (
                   <Alert variant="destructive" className="mb-4">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Faltan campos obligatorios</AlertTitle>
+                    <AlertTitle>{t("forms.missingRequiredTitle")}</AlertTitle>
                     <AlertDescription>
                       <ul className="list-disc list-inside space-y-1 mt-2">
                         {Object.values(serviceFormErrors).map((err, idx) => <li key={idx}>{err}</li>)}
@@ -2961,21 +3002,17 @@ export default function SellerDashboardPage() {
                   <fieldset disabled={!hasActiveSubscription} style={{ opacity: hasActiveSubscription ? 1 : 0.5 }}>
                     {/* Media Upload Section */}
                     <div>
-                      <Label htmlFor="serviceMedia" className="text-base">Imágenes y Videos del Servicio</Label>
+                      <Label htmlFor="serviceMedia" className="text-base">{t("media.serviceLabel")}</Label>
                       <div className="mt-2 space-y-4">
                         {/* Validation Requirements */}
                         <Alert className="bg-blue-50 border-blue-200">
                           <AlertTriangle className="h-4 w-4 text-blue-600" />
-                          <AlertTitle className="text-blue-800">Requisitos importantes:</AlertTitle>
+                          <AlertTitle className="text-blue-800">{t("forms.requirementsTitle")}</AlertTitle>
                           <AlertDescription className="text-blue-700">
                             <ul className="list-disc list-inside space-y-1 mt-2">
-                              <li>
-                                <strong>Imágenes:</strong> Se recomienda usar imágenes de alta calidad con fondo blanco para mejores ventas
-                              </li>
-                              <li>
-                                <strong>Videos:</strong> Máximo 60 segundos y 50MB de tamaño
-                              </li>
-                              <li>Formatos soportados: JPG, PNG, WebP para imágenes | MP4, WebM para videos</li>
+                              <li><strong>{t("media.reqImages")}</strong></li>
+                              <li><strong>{t("media.reqVideos")}</strong></li>
+                              <li>{t("media.reqFormats")}</li>
                             </ul>
                           </AlertDescription>
                         </Alert>
@@ -2984,7 +3021,7 @@ export default function SellerDashboardPage() {
                         {mediaValidationErrors.length > 0 && (
                           <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Errores de validación:</AlertTitle>
+                            <AlertTitle>{t("forms.validationErrorsTitle")}</AlertTitle>
                             <AlertDescription>
                               <ul className="list-disc list-inside space-y-1 mt-2">
                                 {mediaValidationErrors.map((error, index) => (
@@ -3011,9 +3048,9 @@ export default function SellerDashboardPage() {
                               <Video className="h-12 w-12 text-gray-400" />
                             </div>
                             <p className="text-lg font-medium text-gray-700 mb-2">
-                              {isDraggingOver ? "¡Suelta los archivos aquí!" : "Arrastra imágenes y videos aquí"}
+                              {isDraggingOver ? t("media.dropHere") : t("media.dragHere")}
                             </p>
-                            <p className="text-sm text-gray-500 mb-4">o haz clic para seleccionar archivos</p>
+                            <p className="text-sm text-gray-500 mb-4">{t("media.orClick")}</p>
                           </div>
 
                           <Input
@@ -3035,7 +3072,7 @@ export default function SellerDashboardPage() {
                           {validatingImages && (
                             <div className="flex items-center gap-2 text-purple-700">
                               <Loader2 className="h-4 w-4 animate-spin" />
-                              <span className="text-sm">Validando archivos...</span>
+                              <span className="text-sm">{t("media.validating")}</span>
                             </div>
                           )}
                           {/* Error de media */}
@@ -3047,7 +3084,7 @@ export default function SellerDashboardPage() {
                         {/* Current Media Preview */}
                         {currentProductMedia.length > 0 && (
                           <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-2 block">Media actual:</Label>
+                            <Label className="text-sm font-medium text-gray-700 mb-2 block">{t("media.currentMedia")}</Label>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                               {currentProductMedia.map((media, index) => (
                                 <div key={index} className="relative group">
@@ -3063,7 +3100,7 @@ export default function SellerDashboardPage() {
                                       <div className="w-full h-full flex items-center justify-center bg-gray-200">
                                         <div className="text-center">
                                           <Video className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-                                          <span className="text-xs text-gray-600">Video</span>
+                                          <span className="text-xs text-gray-600">{t("media.video")}</span>
                                         </div>
                                       </div>
                                     )}
@@ -3090,7 +3127,7 @@ export default function SellerDashboardPage() {
                         {mediaPreviewUrls.length > 0 && (
                     <div>
                             <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                              Nuevos archivos seleccionados:
+                              {t("media.newFiles")}
                       </Label>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                               {mediaPreviewUrls.map((url, index) => (
@@ -3107,7 +3144,7 @@ export default function SellerDashboardPage() {
                                       <div className="w-full h-full flex items-center justify-center bg-gray-200">
                                         <div className="text-center">
                                           <Video className="h-8 w-8 text-gray-600 mx-auto mb-2" />
-                                          <span className="text-xs text-gray-600">Video</span>
+                                          <span className="text-xs text-gray-600">{t("media.video")}</span>
                                         </div>
                                       </div>
                                     )}
@@ -3122,7 +3159,7 @@ export default function SellerDashboardPage() {
                                     <XCircle className="h-4 w-4" />
                                   </Button>
                                   <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs">
-                                    {mediaFiles[index].type.startsWith("image/") ? "imagen" : "video"}
+                                    {mediaFiles[index].type.startsWith("image/") ? t("media.imageBadge") : t("media.videoBadge")}
                                   </Badge>
                                 </div>
                               ))}
@@ -3133,14 +3170,14 @@ export default function SellerDashboardPage() {
                         {uploadingMedia && (
                           <div className="flex items-center gap-2 text-purple-700">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="text-sm">Subiendo archivos...</span>
+                            <span className="text-sm">{t("media.uploading")}</span>
                           </div>
                         )}
                       </div>
                     </div>
 
                     <div>
-                      <Label htmlFor="serviceName" className="text-base">Nombre del Servicio</Label>
+                      <Label htmlFor="serviceName" className="text-base">{t("serviceForm.name")}</Label>
                       <Input
                         id="serviceName"
                         value={productName}
@@ -3153,7 +3190,7 @@ export default function SellerDashboardPage() {
                       )}
                     </div>
                     <div>
-                      <Label htmlFor="serviceDescription" className="text-base">Descripción</Label>
+                      <Label htmlFor="serviceDescription" className="text-base">{t("serviceForm.description")}</Label>
                     <Textarea
                       id="serviceDescription"
                       value={productDescription}
@@ -3167,7 +3204,7 @@ export default function SellerDashboardPage() {
                       )}
                   </div>
                   <div>
-                      <Label htmlFor="servicePrice" className="text-base">Precio</Label>
+                      <Label htmlFor="servicePrice" className="text-base">{t("serviceForm.price")}</Label>
                     <Input
                       id="servicePrice"
                       type="number"
@@ -3182,14 +3219,14 @@ export default function SellerDashboardPage() {
                       )}
                   </div>
                   <div>
-                      <Label htmlFor="serviceCategory" className="text-base">Categoría</Label>
+                      <Label htmlFor="serviceCategory" className="text-base">{t("serviceForm.category")}</Label>
                     <Select
                       value={productCategory}
                       onValueChange={setProductCategory}
                       required
                     >
                         <SelectTrigger className={serviceFormTouched && serviceFormErrors.category ? 'border-red-500' : ''}>
-                        <SelectValue placeholder="Selecciona una categoría" />
+                        <SelectValue placeholder={t("serviceForm.categoryPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((category) => (
@@ -3203,14 +3240,14 @@ export default function SellerDashboardPage() {
                   </div>
                   <div>
                     <Label htmlFor="serviceBrand" className="text-base">
-                      Marca (Opcional)
+                      {t("serviceForm.brandOptional")}
                     </Label>
                     <Select
                       value={productBrand}
                       onValueChange={setProductBrand}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una marca" />
+                        <SelectValue placeholder={t("serviceForm.brandPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         {brands.map((brand) => (
@@ -3222,7 +3259,11 @@ export default function SellerDashboardPage() {
                     </Select>
                   </div>
                   <Button type="submit" className="w-full" disabled={submittingProduct || validatingImages || uploadingMedia || !hasActiveSubscription}>
-                    {submittingProduct ? "Guardando..." : isEditing ? "Actualizar Servicio" : "Añadir Servicio"}
+                    {submittingProduct
+                      ? t("serviceForm.saving")
+                      : isEditing
+                        ? t("serviceForm.submitUpdate")
+                        : t("serviceForm.submitAdd")}
                   </Button>
                 </fieldset>
                 </form>
@@ -3251,15 +3292,15 @@ export default function SellerDashboardPage() {
           {activeTab === "profile" && (
             <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
-                <CardTitle>Configuración</CardTitle>
-                <CardDescription>Gestiona tu perfil y configuración de cuenta.</CardDescription>
+                <CardTitle>{t("profile.cardTitle")}</CardTitle>
+                <CardDescription>{t("profile.cardDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="profile" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="profile">Mi Perfil</TabsTrigger>
-                    <TabsTrigger value="subscription">Suscripción</TabsTrigger>
-                    <TabsTrigger value="settings">Configuración General</TabsTrigger>
+                    <TabsTrigger value="profile">{t("profile.tabProfile")}</TabsTrigger>
+                    <TabsTrigger value="subscription">{t("profile.tabSubscription")}</TabsTrigger>
+                    <TabsTrigger value="settings">{t("profile.tabSettings")}</TabsTrigger>
                     {/* <TabsTrigger value="mercadopago">MercadoPago</TabsTrigger>  */}
                   </TabsList>
                   
@@ -3268,7 +3309,7 @@ export default function SellerDashboardPage() {
                   <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
                     <Image
                       src={profileImagePreviewUrl || currentUser?.firebaseUser.photoURL || "/placeholder-user.jpg"}
-                      alt="Foto de perfil"
+                      alt={t("profile.photoAlt")}
                       layout="fill"
                       objectFit="cover"
                     />
@@ -3291,7 +3332,7 @@ export default function SellerDashboardPage() {
                       disabled={!profileImageFile || uploadingProfileImage}
                       className="bg-orange-600 text-white hover:bg-orange-700"
                     >
-                      {uploadingProfileImage ? "Subiendo..." : "Guardar Imagen de Perfil"}
+                      {uploadingProfileImage ? t("profile.uploadingPhoto") : t("profile.savePhoto")}
                     </Button>
                     {currentUser?.firebaseUser.photoURL && (
                       <Button
@@ -3299,17 +3340,17 @@ export default function SellerDashboardPage() {
                         variant="outline"
                         disabled={uploadingProfileImage}
                       >
-                        Eliminar Imagen Actual
+                        {t("profile.removePhoto")}
                       </Button>
                     )}
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="displayName" className="text-base">Nombre de Vendedor</Label>
+                  <Label htmlFor="displayName" className="text-base">{t("profile.displayName")}</Label>
                   <Input id="displayName" value={currentUser?.firebaseUser.displayName || ""} disabled className="mt-1" />
                 </div>
                 <div>
-                  <Label htmlFor="email" className="text-base">Email</Label>
+                  <Label htmlFor="email" className="text-base">{t("profile.email")}</Label>
                   <Input id="email" value={currentUser?.firebaseUser.email || ""} disabled className="mt-1" />
                 </div>
 
@@ -3319,9 +3360,9 @@ export default function SellerDashboardPage() {
                   <CardHeader>
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <CardTitle>Mercado Pago</CardTitle>
+                        <CardTitle>{t("profile.mpTitle")}</CardTitle>
                         <CardDescription>
-                          Conectá tu cuenta para cobrar ventas. En cada venta recibís el 92%; Servido retiene el 8% automáticamente.
+                          {t("mercadoPago.profileDescription")}
                         </CardDescription>
                       </div>
                       <Badge variant={mercadoPagoBadgeVariant as "default" | "secondary" | "destructive"}>
@@ -3348,7 +3389,7 @@ export default function SellerDashboardPage() {
                       </p>
                       {currentUser?.mercadoPagoAccountId && (
                         <p className="mt-1 text-xs text-slate-600">
-                          Cuenta vinculada: {currentUser.mercadoPagoAccountId}
+                          {t("mercadoPago.linkedAccount", { accountId: currentUser.mercadoPagoAccountId })}
                         </p>
                       )}
                     </div>
@@ -3357,12 +3398,12 @@ export default function SellerDashboardPage() {
                       <Alert variant={mercadoPagoTokenExpired ? "destructive" : "default"}>
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>
-                          {mercadoPagoTokenExpired ? "Token vencido" : "Conexión requerida"}
+                          {mercadoPagoTokenExpired ? t("mercadoPago.alertTokenExpiredTitle") : t("mercadoPago.alertConnectionRequiredTitle")}
                         </AlertTitle>
                         <AlertDescription>
                           {mercadoPagoTokenExpired
-                            ? "Reconecta Mercado Pago para volver a cobrar ventas."
-                            : "Debes conectar Mercado Pago antes de cobrar ventas de productos o servicios."}
+                            ? t("mercadoPago.alertTokenExpiredDescription")
+                            : t("mercadoPago.alertConnectionRequiredDescription")}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -3375,7 +3416,7 @@ export default function SellerDashboardPage() {
                           disabled={connectingMercadoPago}
                           className="bg-purple-900 hover:bg-purple-800"
                         >
-                          {connectingMercadoPago ? "Conectando..." : mercadoPagoActionLabel}
+                          {connectingMercadoPago ? t("mercadoPago.connecting") : mercadoPagoActionLabel}
                         </Button>
                       )}
                       {mercadoPagoConnected && (
@@ -3385,7 +3426,7 @@ export default function SellerDashboardPage() {
                           onClick={handleDisconnectMercadoPago}
                           disabled={disconnectingMercadoPago}
                         >
-                          {disconnectingMercadoPago ? "Desconectando..." : "Desconectar"}
+                          {disconnectingMercadoPago ? t("mercadoPago.disconnecting") : t("mercadoPago.disconnect")}
                         </Button>
                       )}
                     </div>
@@ -3396,47 +3437,47 @@ export default function SellerDashboardPage() {
                   
                   <TabsContent value="subscription" className="space-y-6 mt-6">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Gestión de Suscripción</h3>
+                      <h3 className="text-lg font-semibold">{t("profile.subscriptionManageTitle")}</h3>
                       
                       {hasActiveSubscription ? (
                         <div className="space-y-4">
                                                      <Alert className="border-green-200 bg-green-50">
                              <CheckCircle className="h-4 w-4 text-green-600" />
-                             <AlertTitle className="text-green-800">Suscripción Activa</AlertTitle>
+                             <AlertTitle className="text-green-800">{t("profile.subscriptionActiveTitle")}</AlertTitle>
                              <AlertDescription className="text-green-700">
                                {cancelAtPeriodEnd
-                                 ? "Cancelaste la renovación automática. Seguí operando hasta el fin del período ya pagado."
-                                 : "Tu suscripción mensual está activa y se renueva automáticamente. Podés crear y vender productos y servicios."}
+                                 ? t("profile.subscriptionActiveDescCancelled")
+                                 : t("profile.subscriptionActiveDescRenewal")}
                              </AlertDescription>
                            </Alert>
                            
                            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                              <CardHeader>
-                               <CardTitle>Estado de tu Suscripción</CardTitle>
+                               <CardTitle>{t("profile.statusCardTitle")}</CardTitle>
                                <CardDescription>
                                  {cancelAtPeriodEnd
-                                   ? "La adhesión en Mercado Pago ya no se renovará."
-                                   : "Tu suscripción para el marketplace está activa y funcionando."}
+                                   ? t("profile.statusCardDescCancelled")
+                                   : t("profile.statusCardDescActive")}
                                </CardDescription>
                              </CardHeader>
                              <CardContent className="space-y-3">
                                <div className="flex items-center gap-2">
                                  <CheckCircle className="h-5 w-5 text-green-600" />
                                  <span className="font-semibold">
-                                   {cancelAtPeriodEnd ? "Activa hasta fin de período" : "Suscripción Activa"}
+                                   {cancelAtPeriodEnd ? t("profile.statusLabelUntilPeriod") : t("profile.statusLabelActive")}
                                  </span>
                                </div>
                                 <div className="rounded-lg border border-green-200 bg-green-50 p-3">
                                   <p className="text-sm font-medium text-green-800">{subscriptionStatusSummary}</p>
                                   <p className="text-xs text-green-700">
-                                    La misma suscripción habilita productos y servicios.
+                                    {t("profile.sameSubscriptionNote")}
                                   </p>
                                 </div>
                                <div className="text-sm text-gray-600">
-                                 <p>• <strong>Productos:</strong> Puedes crear y gestionar productos</p>
-                                 <p>• <strong>Servicios:</strong> Puedes crear y gestionar servicios</p>
-                                 <p>• <strong>Pagos:</strong> Recibe pagos por tus publicaciones</p>
-                                 <p>• <strong>Soporte:</strong> Acceso a soporte prioritario</p>
+                                 <p>• {t("profile.benefitProducts")}</p>
+                                 <p>• {t("profile.benefitServices")}</p>
+                                 <p>• {t("profile.benefitPayments")}</p>
+                                 <p>• {t("profile.benefitSupport")}</p>
                                </div>
                                {!cancelAtPeriodEnd ? (
                                  <Button
@@ -3446,12 +3487,12 @@ export default function SellerDashboardPage() {
                                    disabled={cancellingSubscription}
                                    onClick={() => void handleCancelSubscription()}
                                  >
-                                   {cancellingSubscription ? "Cancelando..." : "Cancelar suscripción"}
+                                   {cancellingSubscription ? t("subscription.cancelling") : t("subscription.cancelButton")}
                                  </Button>
                                ) : (
                                  <div className="space-y-2">
                                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                                     Ya cancelaste la renovación. Cuando termine el período tendrás que reactivar para seguir publicando.
+                                     {t("profile.cancelledPeriodNote")}
                                    </div>
                                    <Button
                                      type="button"
@@ -3459,7 +3500,7 @@ export default function SellerDashboardPage() {
                                      disabled={subscribing}
                                      onClick={handleSubscribe}
                                    >
-                                     {subscribing ? "Redirigiendo..." : "Reactivar renovación"}
+                                     {subscribing ? t("subscription.redirecting") : t("subscription.reactivateRenewal")}
                                    </Button>
                                  </div>
                                )}
@@ -3470,59 +3511,58 @@ export default function SellerDashboardPage() {
                         <div className="space-y-4">
                   <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
-                             <AlertTitle>Suscripción Requerida</AlertTitle>
+                             <AlertTitle>{t("profile.requiredTitle")}</AlertTitle>
                     <AlertDescription>
-                               Tu suscripción venció. Renueva para volver a publicar productos y servicios.
+                               {t("profile.requiredDescription")}
                     </AlertDescription>
                   </Alert>
                            
                 <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                   <CardHeader>
-                               <CardTitle>Suscripción para el Marketplace</CardTitle>
+                               <CardTitle>{t("profile.marketplaceTitle")}</CardTitle>
                     <CardDescription>
-                                 Activá la suscripción mensual automática para crear y ofrecer productos y servicios.
+                                 {t("profile.marketplaceDescription")}
                     </CardDescription>
                   </CardHeader>
                              <CardContent className="space-y-4">
                                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
                                   <p className="text-sm font-medium text-blue-800">{subscriptionStatusSummary}</p>
                                   <p className="text-xs text-blue-700">
-                                    Se debita todos los meses con Mercado Pago. Si el cobro falla, el acceso se suspende hasta regularizar.
+                                    {t("profile.mpDebitNote")}
                                   </p>
                                 </div>
                                <div className="text-sm text-gray-600">
-                                 <p className="font-semibold mb-2">¿Para qué necesitas la suscripción?</p>
+                                 <p className="font-semibold mb-2">{t("profile.whySubscriptionTitle")}</p>
                                  <ul className="space-y-1">
-                                   <li>• <strong>Crear productos:</strong> Publica tus productos físicos</li>
-                                   <li>• <strong>Crear servicios:</strong> Publica tus servicios profesionales</li>
-                                   <li>• <strong>Gestionar ofertas:</strong> Administra tus publicaciones activas</li>
-                                   <li>• <strong>Acceso completo:</strong> Usa todas las herramientas de vendedor</li>
+                                   <li>• {t("profile.whyCreateProducts")}</li>
+                                   <li>• {t("profile.whyCreateServices")}</li>
+                                   <li>• {t("profile.whyManageOffers")}</li>
+                                   <li>• {t("profile.whyFullAccess")}</li>
                                  </ul>
                       </div>
                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                                   <p className="text-sm text-blue-800">
-                                    <strong>Nota:</strong> Si falla el cobro mensual o cancelás la adhesión, se bloquean productos y servicios hasta reactivar.
+                                    {t("profile.blockedNote")}
                                   </p>
                                 </div>
-                      {/* Mostrar precio de suscripción */}
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">Precio mensual:</span>
+                          <span className="text-sm font-medium text-gray-700">{t("profile.monthlyPrice")}</span>
                           <span className="text-lg font-bold text-purple-700">
                             {loadingSubscriptionPrice ? (
                               <span className="flex items-center gap-2">
                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                Cargando...
+                                {t("profile.priceLoading")}
                               </span>
                             ) : subscriptionPrice ? (
                               `ARS ${subscriptionPrice.toFixed(2)}`
                             ) : (
-                              'No disponible'
+                              t("profile.priceUnavailable")
                             )}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          Este precio puede variar según la configuración del administrador
+                          {t("profile.priceAdminNote")}
                         </p>
                       </div>
                       
@@ -3531,7 +3571,7 @@ export default function SellerDashboardPage() {
                         disabled={subscribing}
                                  className="w-full bg-purple-700 text-white hover:bg-purple-800"
                       >
-                                  {subscribing ? "Redirigiendo..." : subscriptionActionLabel}
+                                  {subscribing ? t("subscription.redirecting") : subscriptionActionLabel}
                       </Button>
                              </CardContent>
                            </Card>
@@ -3542,27 +3582,24 @@ export default function SellerDashboardPage() {
                   
                   <TabsContent value="settings" className="space-y-6 mt-6">
                     <div className="space-y-6">
-                      <h3 className="text-lg font-semibold">Configuración General</h3>
+                      <h3 className="text-lg font-semibold">{t("profile.settingsTitle")}</h3>
                       
-                      {/* Configuración de formato de precios */}
                       <PriceFormatToggle 
                         onFormatChange={(useReducedDecimals) => {
-                          // Aquí se puede agregar lógica adicional si es necesario
                           console.log('Formato de precios actualizado:', useReducedDecimals)
                         }}
                       />
                       
-                      {/* Otras configuraciones pueden ir aquí */}
                       <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                         <CardHeader>
-                          <CardTitle>Otras Configuraciones</CardTitle>
+                          <CardTitle>{t("profile.otherSettingsTitle")}</CardTitle>
                           <CardDescription>
-                            Configuraciones adicionales de la aplicación
+                            {t("profile.otherSettingsDescription")}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-gray-600">
-                            Más configuraciones estarán disponibles próximamente.
+                            {t("profile.settingsComingSoon")}
                           </p>
                         </CardContent>
                       </Card>
@@ -3577,8 +3614,8 @@ export default function SellerDashboardPage() {
             <div className="space-y-6">
               <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                 <CardHeader>
-                  <CardTitle>Mis Ventas</CardTitle>
-                  <CardDescription>Revisa tus ventas, el estado del cobro y el neto a recibir.</CardDescription>
+                  <CardTitle>{t("earnings.title")}</CardTitle>
+                  <CardDescription>{t("earnings.description")}</CardDescription>
                 </CardHeader>
               </Card>
 
@@ -3586,44 +3623,38 @@ export default function SellerDashboardPage() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">Total Ganado</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t("earnings.statTotal")}</CardTitle>
                     <DollarSign className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
                       {formatPriceNumber(commissionDistribution?.totalEarned || 0)}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Ingresos brutos de ventas
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("earnings.statTotalHint")}</p>
               </CardContent>
             </Card>
                 <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">Pendiente de Pago</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t("earnings.statPending")}</CardTitle>
                     <Clock className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-yellow-600">
                       {formatPriceNumber(commissionDistribution?.pendingAmount || 0)}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Cantidad por recibir
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("earnings.statPendingHint")}</p>
                   </CardContent>
                 </Card>
                 <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">Ya Pagado</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t("earnings.statPaid")}</CardTitle>
                     <CheckCircle className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-green-600">
                       {formatPriceNumber(commissionDistribution?.paidAmount || 0)}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Pagos recibidos
-                    </p>
+                    <p className="text-xs text-muted-foreground">{t("earnings.statPaidHint")}</p>
                   </CardContent>
                 </Card>
               </div>
@@ -3631,28 +3662,26 @@ export default function SellerDashboardPage() {
               
               <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                 <CardHeader>
-                  <CardTitle>Filtros de Historial</CardTitle>
-                  <CardDescription>
-                    Filtra tu historial de ventas y pagos.
-                  </CardDescription>
+                  <CardTitle>{t("earnings.filtersTitle")}</CardTitle>
+                  <CardDescription>{t("earnings.filtersDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <Label htmlFor="earningsFilter">Estado de Pago</Label>
+                      <Label htmlFor="earningsFilter">{t("earnings.filterPaymentStatus")}</Label>
                       <Select value={earningsFilter} onValueChange={(value: 'all' | 'pendiente' | 'pagado') => setEarningsFilter(value)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Todos" />
+                          <SelectValue placeholder={t("earnings.filterAll")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Todos</SelectItem>
-                          <SelectItem value="pendiente">Pendiente</SelectItem>
-                          <SelectItem value="pagado">Pagado</SelectItem>
+                          <SelectItem value="all">{t("earnings.filterAll")}</SelectItem>
+                          <SelectItem value="pendiente">{t("earnings.filterPending")}</SelectItem>
+                          <SelectItem value="pagado">{t("earnings.filterPaid")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="earningsDateFrom">Desde</Label>
+                      <Label htmlFor="earningsDateFrom">{t("earnings.dateFrom")}</Label>
                       <Input
                         id="earningsDateFrom"
                         type="date"
@@ -3661,7 +3690,7 @@ export default function SellerDashboardPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="earningsDateTo">Hasta</Label>
+                      <Label htmlFor="earningsDateTo">{t("earnings.dateTo")}</Label>
                       <Input
                         id="earningsDateTo"
                         type="date"
@@ -3672,7 +3701,7 @@ export default function SellerDashboardPage() {
                     <div className="flex items-end">
                       <Button onClick={() => downloadInvoice(earningsDateFrom, earningsDateTo)}>
                         <Download className="mr-2 h-4 w-4" />
-                        Descargar Factura
+                        {t("earnings.downloadInvoice")}
                       </Button>
                     </div>
                   </div>
@@ -3681,10 +3710,8 @@ export default function SellerDashboardPage() {
 
               <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                 <CardHeader>
-                  <CardTitle>Ventas y Pagos</CardTitle>
-                  <CardDescription>
-                    Cada venta con su cobro, comisión y fecha de pago.
-                  </CardDescription>
+                  <CardTitle>{t("earnings.salesTableTitle")}</CardTitle>
+                  <CardDescription>{t("earnings.salesTableDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loadingEarnings ? (
@@ -3693,22 +3720,22 @@ export default function SellerDashboardPage() {
                     </div>
                   ) : visibleSellerSales.length === 0 ? (
                     <div className="text-center py-10 text-gray-500">
-                      No hay ventas para mostrar con los filtros actuales.
+                      {t("earnings.emptyFiltered")}
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="min-w-[120px]">Fecha</TableHead>
-                            <TableHead className="min-w-[140px]">Compra</TableHead>
-                            <TableHead className="min-w-[220px]">Productos / Servicios</TableHead>
-                            <TableHead className="min-w-[160px]">Comprador</TableHead>
-                            <TableHead className="min-w-[120px]">Estado Pago</TableHead>
-                            <TableHead className="min-w-[120px]">Bruto</TableHead>
-                            <TableHead className="min-w-[120px]">Comisión</TableHead>
-                            <TableHead className="min-w-[120px]">Neto</TableHead>
-                            <TableHead className="min-w-[120px]">Fecha Pago</TableHead>
+                            <TableHead className="min-w-[120px]">{t("earnings.colDate")}</TableHead>
+                            <TableHead className="min-w-[140px]">{t("earnings.colPurchase")}</TableHead>
+                            <TableHead className="min-w-[220px]">{t("earnings.colProducts")}</TableHead>
+                            <TableHead className="min-w-[160px]">{t("earnings.colBuyer")}</TableHead>
+                            <TableHead className="min-w-[120px]">{t("earnings.colPaymentStatus")}</TableHead>
+                            <TableHead className="min-w-[120px]">{t("earnings.colGross")}</TableHead>
+                            <TableHead className="min-w-[120px]">{t("earnings.colCommission")}</TableHead>
+                            <TableHead className="min-w-[120px]">{t("earnings.colNet")}</TableHead>
+                            <TableHead className="min-w-[120px]">{t("earnings.colPaymentDate")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -3728,7 +3755,7 @@ export default function SellerDashboardPage() {
                               </TableCell>
                               <TableCell>
                                 <div className="space-y-1">
-                                  <div className="font-medium">{sale.compradorNombre || "Comprador"}</div>
+                                  <div className="font-medium">{sale.compradorNombre || t("earnings.buyerDefault")}</div>
                                   <div className="text-xs text-gray-500">{sale.compradorId || "—"}</div>
                                 </div>
                               </TableCell>
@@ -3742,7 +3769,7 @@ export default function SellerDashboardPage() {
                                         : "destructive"
                                   }
                                 >
-                                  {sale.estadoPago}
+                                  {paymentStatusLabel(sale.estadoPago)}
                                 </Badge>
                               </TableCell>
                               <TableCell>{formatPriceNumber(sale.subtotalVendedor || 0)}</TableCell>
@@ -3944,63 +3971,62 @@ export default function SellerDashboardPage() {
           {activeTab === "create-coupons" && (
             <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
-                <CardTitle>Crear Cupones de Descuento</CardTitle>
-                <CardDescription>Crea tus propios cupones para promocionar tus productos y servicios.</CardDescription>
+                <CardTitle>{t("coupons.title")}</CardTitle>
+                <CardDescription>{t("coupons.description")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Formulario para crear cupón */}
                 <div className="border rounded-lg p-6 bg-gray-50">
-                  <h3 className="text-lg font-semibold mb-4">Crear Nuevo Cupón</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t("coupons.formTitle")}</h3>
                   <form onSubmit={(e) => { e.preventDefault(); handleCreateCoupon(); }} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="newCouponCode">Código del Cupón *</Label>
+                        <Label htmlFor="newCouponCode">{t("coupons.codeLabel")}</Label>
                         <Input
                           id="newCouponCode"
                           value={newCouponCode}
                           onChange={(e) => setNewCouponCode(e.target.value.toUpperCase())}
-                          placeholder="DESCUENTO20"
+                          placeholder={t("coupons.codePlaceholder")}
                           required
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newCouponName">Nombre del Cupón *</Label>
+                        <Label htmlFor="newCouponName">{t("coupons.nameLabel")}</Label>
                         <Input
                           id="newCouponName"
                           value={newCouponName}
                           onChange={(e) => setNewCouponName(e.target.value)}
-                          placeholder="Descuento del 20%"
+                          placeholder={t("coupons.namePlaceholder")}
                           required
                         />
                       </div>
                     </div>
                     
                     <div>
-                      <Label htmlFor="newCouponDescription">Descripción (Opcional)</Label>
+                      <Label htmlFor="newCouponDescription">{t("coupons.descriptionLabel")}</Label>
                       <Textarea
                         id="newCouponDescription"
                         value={newCouponDescription}
                         onChange={(e) => setNewCouponDescription(e.target.value)}
-                        placeholder="Descripción del cupón..."
+                        placeholder={t("coupons.descriptionPlaceholder")}
                         rows={3}
                       />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="newCouponDiscountType">Tipo de Descuento *</Label>
+                        <Label htmlFor="newCouponDiscountType">{t("coupons.discountTypeLabel")}</Label>
                         <Select value={newCouponDiscountType} onValueChange={(value: "percentage" | "fixed") => setNewCouponDiscountType(value)}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="percentage">Porcentaje (%)</SelectItem>
-                            <SelectItem value="fixed">Monto Fijo (ARS)</SelectItem>
+                            <SelectItem value="percentage">{t("coupons.discountTypePercentage")}</SelectItem>
+                            <SelectItem value="fixed">{t("coupons.discountTypeFixed")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor="newCouponDiscountValue">Valor del Descuento *</Label>
+                        <Label htmlFor="newCouponDiscountValue">{t("coupons.discountValueLabel")}</Label>
                         <Input
                           id="newCouponDiscountValue"
                           type="number"
@@ -4013,7 +4039,7 @@ export default function SellerDashboardPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newCouponUsageLimit">Límite de Uso (Opcional)</Label>
+                        <Label htmlFor="newCouponUsageLimit">{t("coupons.usageLimitLabel")}</Label>
                         <Input
                           id="newCouponUsageLimit"
                           type="number"
@@ -4027,7 +4053,7 @@ export default function SellerDashboardPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="newCouponMinPurchase">Compra Mínima (Opcional)</Label>
+                        <Label htmlFor="newCouponMinPurchase">{t("coupons.minPurchaseLabel")}</Label>
                         <Input
                           id="newCouponMinPurchase"
                           type="number"
@@ -4039,7 +4065,7 @@ export default function SellerDashboardPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newCouponMaxDiscount">Descuento Máximo (Opcional)</Label>
+                        <Label htmlFor="newCouponMaxDiscount">{t("coupons.maxDiscountLabel")}</Label>
                         <Input
                           id="newCouponMaxDiscount"
                           type="number"
@@ -4054,7 +4080,7 @@ export default function SellerDashboardPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Fecha de Inicio (Opcional)</Label>
+                        <Label>{t("coupons.startDateLabel")}</Label>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
@@ -4062,7 +4088,7 @@ export default function SellerDashboardPage() {
                               className={`w-full justify-start text-left font-normal ${!newCouponStartDate && "text-muted-foreground"}`}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {newCouponStartDate ? format(newCouponStartDate, "PPP") : <span className="text-gray-500">Selecciona una fecha</span>}
+                              {newCouponStartDate ? format(newCouponStartDate, "PPP", { locale: dateFnsLocale }) : <span className="text-gray-500">{t("coupons.pickDate")}</span>}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
@@ -4076,7 +4102,7 @@ export default function SellerDashboardPage() {
                         </Popover>
                       </div>
                       <div className="space-y-2">
-                        <Label>Fecha de Fin (Opcional)</Label>
+                        <Label>{t("coupons.endDateLabel")}</Label>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
@@ -4084,7 +4110,7 @@ export default function SellerDashboardPage() {
                               className={`w-full justify-start text-left font-normal ${!newCouponEndDate && "text-muted-foreground"}`}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {newCouponEndDate ? format(newCouponEndDate, "PPP") : <span className="text-gray-500">Selecciona una fecha</span>}
+                              {newCouponEndDate ? format(newCouponEndDate, "PPP", { locale: dateFnsLocale }) : <span className="text-gray-500">{t("coupons.pickDate")}</span>}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0">
@@ -4107,30 +4133,29 @@ export default function SellerDashboardPage() {
                       {creatingCoupon ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creando Cupón...
+                          {t("coupons.submitCreating")}
                         </>
                       ) : (
-                        "Crear Cupón"
+                        t("coupons.submitCreate")
                       )}
                     </Button>
                   </form>
                 </div>
 
-                {/* Lista de cupones creados */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Mis Cupones Creados</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t("coupons.listTitle")}</h3>
                   {myCoupons.length === 0 ? (
-                    <p className="text-gray-500">Aún no has creado ningún cupón.</p>
+                    <p className="text-gray-500">{t("coupons.listEmpty")}</p>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Código</TableHead>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Descuento</TableHead>
-                          <TableHead>Usos</TableHead>
-                          <TableHead>Estado</TableHead>
-                          <TableHead>Acciones</TableHead>
+                          <TableHead>{t("coupons.colCode")}</TableHead>
+                          <TableHead>{t("coupons.colName")}</TableHead>
+                          <TableHead>{t("coupons.colDiscount")}</TableHead>
+                          <TableHead>{t("coupons.colUses")}</TableHead>
+                          <TableHead>{t("coupons.colStatus")}</TableHead>
+                          <TableHead>{t("coupons.colActions")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -4145,16 +4170,16 @@ export default function SellerDashboardPage() {
                               <div className="font-medium">
                                 {coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatPrice(coupon.discountValue)}
                               </div>
-                              {coupon.minPurchase && <div className="text-xs text-gray-500">Mín: {formatPrice(coupon.minPurchase)}</div>}
-                              {coupon.maxDiscount && <div className="text-xs text-gray-500">Máx: {formatPrice(coupon.maxDiscount)}</div>}
+                              {coupon.minPurchase && <div className="text-xs text-gray-500">{t("coupons.minShort", { amount: formatPrice(coupon.minPurchase) })}</div>}
+                              {coupon.maxDiscount && <div className="text-xs text-gray-500">{t("coupons.maxShort", { amount: formatPrice(coupon.maxDiscount) })}</div>}
                             </TableCell>
                             <TableCell>
-                              <div>{coupon.usedCount || 0} usos</div>
-                              {coupon.usageLimit && <div className="text-xs text-gray-500">de {coupon.usageLimit}</div>}
+                              <div>{t("coupons.usesCount", { count: coupon.usedCount || 0 })}</div>
+                              {coupon.usageLimit && <div className="text-xs text-gray-500">{t("coupons.usesOfLimit", { limit: coupon.usageLimit })}</div>}
                             </TableCell>
                             <TableCell>
                               <Badge variant={coupon.isActive ? "default" : "secondary"}>
-                                {coupon.isActive ? "Activo" : "Inactivo"}
+                                {coupon.isActive ? t("coupons.statusActive") : t("coupons.statusInactive")}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -4164,7 +4189,7 @@ export default function SellerDashboardPage() {
                                   size="sm"
                                   onClick={() => handleToggleMyCouponActive(coupon.id, coupon.isActive)}
                                 >
-                                  {coupon.isActive ? "Desactivar" : "Activar"}
+                                  {coupon.isActive ? t("coupons.deactivate") : t("coupons.activate")}
                                 </Button>
                                 <Button
                                   variant="destructive"
@@ -4207,8 +4232,8 @@ export default function SellerDashboardPage() {
           {activeTab === "shipping" && (
             <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>
-                <CardTitle>Gestión de Envíos</CardTitle>
-                <CardDescription>Administra el estado de envío de tus productos vendidos</CardDescription>
+                <CardTitle>{t("shipping.title")}</CardTitle>
+                <CardDescription>{t("shipping.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {/* Tabla responsive con scroll horizontal */}
@@ -4216,13 +4241,13 @@ export default function SellerDashboardPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="min-w-[150px]">Producto</TableHead>
-                        <TableHead className="min-w-[80px] text-center">Cant.</TableHead>
-                        <TableHead className="min-w-[140px]">Comprador</TableHead>
-                        <TableHead className="min-w-[140px]">Dirección</TableHead>
-                        <TableHead className="min-w-[100px] text-sm">Fecha</TableHead>
-                        <TableHead className="min-w-[140px]">Estado</TableHead>
-                        <TableHead className="min-w-[120px]">Acción</TableHead>
+                        <TableHead className="min-w-[150px]">{t("shipping.colProduct")}</TableHead>
+                        <TableHead className="min-w-[80px] text-center">{t("shipping.colQty")}</TableHead>
+                        <TableHead className="min-w-[140px]">{t("shipping.colBuyer")}</TableHead>
+                        <TableHead className="min-w-[140px]">{t("shipping.colAddress")}</TableHead>
+                        <TableHead className="min-w-[100px] text-sm">{t("shipping.colDate")}</TableHead>
+                        <TableHead className="min-w-[140px]">{t("shipping.colStatus")}</TableHead>
+                        <TableHead className="min-w-[120px]">{t("shipping.colAction")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -4232,7 +4257,7 @@ export default function SellerDashboardPage() {
                           <TableRow key={venta.compraId + '-' + venta.productId}>
                           <TableCell className="max-w-[150px]">
                             <div className="truncate font-medium" title={venta.productName}>
-                              {venta.productName || 'Producto sin nombre'}
+                              {venta.productName || t("shipping.productUntitled")}
                             </div>
                           </TableCell>
                           <TableCell className="text-center">{venta.quantity}</TableCell>
@@ -4258,17 +4283,17 @@ export default function SellerDashboardPage() {
                               // Si es un objeto Timestamp de Firestore
                               if (typeof venta.fechaCompra === 'object' && venta.fechaCompra._seconds) {
                                 const date = new Date(venta.fechaCompra._seconds * 1000);
-                                return date.toLocaleDateString();
+                                return date.toLocaleDateString(dateLocale);
                               }
                               // Si es un string ISO
                               if (typeof venta.fechaCompra === 'string') {
                                 const date = new Date(venta.fechaCompra);
-                                if (!isNaN(date.getTime())) return date.toLocaleDateString();
+                                if (!isNaN(date.getTime())) return date.toLocaleDateString(dateLocale);
                               }
                               // Si es un número (timestamp en ms)
                               if (typeof venta.fechaCompra === 'number') {
                                 const date = new Date(venta.fechaCompra);
-                                if (!isNaN(date.getTime())) return date.toLocaleDateString();
+                                if (!isNaN(date.getTime())) return date.toLocaleDateString(dateLocale);
                               }
                               return '';
                             })()}
@@ -4282,11 +4307,11 @@ export default function SellerDashboardPage() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="pendiente">Pendiente</SelectItem>
-                                <SelectItem value="preparacion">En preparación</SelectItem>
-                                <SelectItem value="enviado">Enviado</SelectItem>
-                                <SelectItem value="entregado">Entregado</SelectItem>
-                                <SelectItem value="cancelado">Cancelado</SelectItem>
+                                <SelectItem value="pendiente">{t("shipping.legacy.pendiente")}</SelectItem>
+                                <SelectItem value="preparacion">{t("shipping.legacy.preparacion")}</SelectItem>
+                                <SelectItem value="enviado">{t("shipping.legacy.enviado")}</SelectItem>
+                                <SelectItem value="entregado">{t("shipping.legacy.entregado")}</SelectItem>
+                                <SelectItem value="cancelado">{t("shipping.legacy.cancelado")}</SelectItem>
                               </SelectContent>
                             </Select>
                           </TableCell>
@@ -4301,7 +4326,7 @@ export default function SellerDashboardPage() {
                                 handleSaveShippingState(venta);
                               }}
                             >
-                              Guardar
+                              {t("shipping.save")}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -4314,7 +4339,7 @@ export default function SellerDashboardPage() {
                 {/* Mensaje cuando no hay ventas */}
                 {filteredSales.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    No hay ventas para mostrar en este momento.
+                    {t("shipping.empty")}
                   </div>
                 )}
               </CardContent>

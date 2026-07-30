@@ -1,6 +1,7 @@
 "use client"
 
 import { Plus, Trash2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import type { MenuOptionGroup, MenuOptionGroupKind } from "@/types/restaurant"
 import { createLocalId } from "@/lib/restaurant-options"
 import { Button } from "@/components/ui/button"
@@ -21,6 +22,8 @@ interface MenuOptionGroupsEditorProps {
 }
 
 export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEditorProps) {
+  const t = useTranslations("menuAdmin")
+
   const updateGroup = (groupId: string, patch: Partial<MenuOptionGroup>) => {
     onChange(groups.map((g) => (g.id === groupId ? { ...g, ...patch } : g)))
   }
@@ -28,7 +31,7 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
   const addGroup = (kind: MenuOptionGroupKind) => {
     const group: MenuOptionGroup = {
       id: createLocalId("group"),
-      name: kind === "variant" ? "Tamaño" : "Extras",
+      name: kind === "variant" ? t("defaultVariantGroup") : t("defaultExtraGroup"),
       kind,
       required: kind === "variant",
       minSelect: kind === "variant" ? 1 : 0,
@@ -37,7 +40,7 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
       options: [
         {
           id: createLocalId("option"),
-          name: kind === "variant" ? "Chico" : "Extra queso",
+          name: kind === "variant" ? t("defaultVariantOption") : t("defaultExtraOption"),
           priceDelta: 0,
           available: true,
           isDefault: kind === "variant",
@@ -111,25 +114,23 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
     <div className="space-y-3 rounded-xl border border-gray-100 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <Label className="text-base">Opciones del producto</Label>
-          <p className="text-xs text-gray-500">
-            Variantes (tamaño, porciones, sabor) y extras con precio adicional.
-          </p>
+          <Label className="text-base">{t("optionsTitle")}</Label>
+          <p className="text-xs text-gray-500">{t("optionsHint")}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={() => addGroup("variant")}>
             <Plus className="mr-1 h-4 w-4" />
-            Variante
+            {t("addVariant")}
           </Button>
           <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={() => addGroup("extra")}>
             <Plus className="mr-1 h-4 w-4" />
-            Extras
+            {t("addExtras")}
           </Button>
         </div>
       </div>
 
       {groups.length === 0 ? (
-        <p className="text-sm text-gray-500">Sin opciones. El producto se vende solo con el precio base.</p>
+        <p className="text-sm text-gray-500">{t("noOptionsHint")}</p>
       ) : (
         <div className="space-y-4">
           {groups.map((group) => (
@@ -137,16 +138,16 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
               <div className="flex items-start justify-between gap-2">
                 <div className="grid flex-1 gap-2 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <Label>Nombre del grupo</Label>
+                    <Label>{t("groupNameLabel")}</Label>
                     <Input
                       value={group.name}
                       onChange={(e) => updateGroup(group.id, { name: e.target.value })}
-                      placeholder="Ej: Tamaño, Porciones, Sabor"
+                      placeholder={t("groupNamePlaceholder")}
                       className="rounded-xl bg-white"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label>Tipo</Label>
+                    <Label>{t("typeLabel")}</Label>
                     <Select
                       value={group.kind}
                       onValueChange={(value: MenuOptionGroupKind) =>
@@ -162,8 +163,8 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="variant">Variante (una opción)</SelectItem>
-                        <SelectItem value="extra">Extras (varias)</SelectItem>
+                        <SelectItem value="variant">{t("typeVariant")}</SelectItem>
+                        <SelectItem value="extra">{t("typeExtra")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -173,7 +174,7 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
                   variant="ghost"
                   size="icon"
                   onClick={() => removeGroup(group.id)}
-                  aria-label="Eliminar grupo"
+                  aria-label={t("deleteGroupAria")}
                 >
                   <Trash2 className="h-4 w-4 text-red-500" />
                 </Button>
@@ -190,11 +191,11 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
                       })
                     }
                   />
-                  Obligatorio
+                  {t("required")}
                 </label>
                 {group.kind === "extra" && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Label className="whitespace-nowrap">Máx.</Label>
+                    <Label className="whitespace-nowrap">{t("maxLabel")}</Label>
                     <Input
                       type="number"
                       min={1}
@@ -214,7 +215,7 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
                     <Input
                       value={option.name}
                       onChange={(e) => updateOption(group.id, option.id, { name: e.target.value })}
-                      placeholder="Nombre opción"
+                      placeholder={t("optionNamePlaceholder")}
                       className="rounded-xl bg-white"
                     />
                     <Input
@@ -223,9 +224,9 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
                       onChange={(e) =>
                         updateOption(group.id, option.id, { priceDelta: Number(e.target.value) || 0 })
                       }
-                      placeholder="+$"
+                      placeholder={t("priceDeltaPlaceholder")}
                       className="rounded-xl bg-white"
-                      title="Precio adicional"
+                      title={t("priceDeltaTitle")}
                     />
                     <label className="flex items-center gap-1 text-xs text-gray-600">
                       <Switch
@@ -234,7 +235,7 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
                           updateOption(group.id, option.id, { isDefault: checked })
                         }
                       />
-                      Def
+                      {t("defaultShort")}
                     </label>
                     <Button
                       type="button"
@@ -254,7 +255,7 @@ export function MenuOptionGroupsEditor({ groups, onChange }: MenuOptionGroupsEdi
                   onClick={() => addOption(group.id)}
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" />
-                  Opción
+                  {t("addOption")}
                 </Button>
               </div>
             </div>

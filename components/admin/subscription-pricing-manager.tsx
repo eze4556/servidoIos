@@ -20,6 +20,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
+import { useLocale, useTranslations } from 'next-intl'
 import type { SubscriptionPricing, SubscriptionPricingHistory } from '@/types/subscription'
 
 interface SubscriptionPricingManagerProps {
@@ -27,6 +28,11 @@ interface SubscriptionPricingManagerProps {
 }
 
 export default function SubscriptionPricingManager({ currentUserId }: SubscriptionPricingManagerProps) {
+  const t = useTranslations('adminDashboard.subscriptionPricing')
+  const tAlerts = useTranslations('adminDashboard.alerts')
+  const tCommon = useTranslations('adminDashboard.common')
+  const locale = useLocale()
+  const dateLocale = locale === 'pt-BR' ? 'pt-BR' : 'es-AR'
   const [currentPricing, setCurrentPricing] = useState<SubscriptionPricing | null>(null)
   const [pricingHistory, setPricingHistory] = useState<SubscriptionPricingHistory[]>([])
   const [isEditing, setIsEditing] = useState(false)
@@ -59,8 +65,8 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
     } catch (error) {
       console.error('Error al cargar precio actual:', error)
       toast({
-        title: 'Error',
-        description: 'No se pudo cargar el precio actual de suscripción',
+        title: tAlerts('errorTitle'),
+        description: t('loadError'),
         variant: 'destructive'
       })
     } finally {
@@ -106,8 +112,8 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
   const handleSave = async () => {
     if (!price || parseFloat(price) <= 0) {
       toast({
-        title: 'Error',
-        description: 'Por favor ingresa un precio válido',
+        title: tAlerts('errorTitle'),
+        description: t('invalidPrice'),
         variant: 'destructive'
       })
       return
@@ -115,8 +121,8 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
 
     if (!currentUserId || currentUserId.trim() === '') {
       toast({
-        title: 'Error',
-        description: 'ID de usuario no válido. Por favor, recarga la página e intenta nuevamente.',
+        title: tAlerts('errorTitle'),
+        description: t('invalidUserId'),
         variant: 'destructive'
       })
       return
@@ -141,15 +147,15 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
 
         if (response.ok) {
           toast({
-            title: 'Éxito',
-            description: 'Nuevo precio de suscripción creado correctamente'
+            title: tAlerts('successTitle'),
+            description: t('createSuccess')
           })
           await fetchCurrentPricing()
           await fetchPricingHistory()
           handleCancel()
         } else {
           const error = await response.json()
-          throw new Error(error.error || 'Error al crear precio')
+          throw new Error(error.error || t('createError'))
         }
       } else if (isEditing && currentPricing) {
         // Actualizar precio existente
@@ -168,22 +174,22 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
 
         if (response.ok) {
           toast({
-            title: 'Éxito',
-            description: 'Precio de suscripción actualizado correctamente'
+            title: tAlerts('successTitle'),
+            description: t('updateSuccess')
           })
           await fetchCurrentPricing()
           await fetchPricingHistory()
           handleCancel()
         } else {
           const error = await response.json()
-          throw new Error(error.error || 'Error al actualizar precio')
+          throw new Error(error.error || t('updateError'))
         }
       }
     } catch (error) {
       console.error('Error al guardar:', error)
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Error al guardar el precio',
+        title: tAlerts('errorTitle'),
+        description: error instanceof Error ? error.message : t('saveError'),
         variant: 'destructive'
       })
     } finally {
@@ -192,7 +198,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
   }
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'N/A'
+    if (!timestamp) return tCommon('na')
 
     let date: Date | null = null
 
@@ -214,9 +220,9 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
       date = Number.isNaN(parsed.getTime()) ? null : parsed
     }
 
-    if (!date || Number.isNaN(date.getTime())) return 'N/A'
+    if (!date || Number.isNaN(date.getTime())) return tCommon('na')
 
-    return date.toLocaleDateString('es-ES', {
+    return date.toLocaleDateString(dateLocale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -231,13 +237,13 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Gestión de Precios de Suscripción
+            {t('managerTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-            <span className="ml-2">Cargando...</span>
+            <span className="ml-2">{t('loading')}</span>
           </div>
         </CardContent>
       </Card>
@@ -251,10 +257,10 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Precio Actual de Suscripción
+            {t('currentTitle')}
           </CardTitle>
           <CardDescription>
-            Gestiona el precio de suscripción para que los vendedores puedan acceder al marketplace completo
+            {t('currentDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -268,11 +274,11 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
                                   ARS {currentPricing.price.toFixed(2)}
                                 </p>
                     <p className="text-sm text-green-600">
-                      Precio activo desde {formatDate(currentPricing.createdAt)}
+                      {t('activeSince', { date: formatDate(currentPricing.createdAt) })}
                     </p>
                     {currentPricing.notes && (
                       <p className="text-sm text-green-600 mt-1">
-                        Notas: {currentPricing.notes}
+                        {t('notesLabel')}: {currentPricing.notes}
                       </p>
                     )}
                   </div>
@@ -280,11 +286,11 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
                 <div className="flex gap-2">
                   <Button onClick={handleEdit} variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
-                    Editar
+                    {tCommon('edit')}
                   </Button>
                   <Button onClick={handleCreateNew} size="sm">
                     <Plus className="h-4 w-4 mr-2" />
-                    Nuevo Precio
+                    {t('newPrice')}
                   </Button>
                 </div>
               </div>
@@ -293,14 +299,14 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
             <div className="text-center py-8">
               <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No hay precio configurado
+                {t('noPriceTitle')}
               </h3>
               <p className="text-gray-500 mb-4">
-                Es necesario configurar un precio para las suscripciones
+                {t('noPriceDescription')}
               </p>
               <Button onClick={handleCreateNew}>
                 <Plus className="h-4 w-4 mr-2" />
-                Configurar Primer Precio
+                {t('configureFirst')}
               </Button>
             </div>
           )}
@@ -312,13 +318,13 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
         <Card>
           <CardHeader>
             <CardTitle>
-              {isCreating ? 'Crear Nuevo Precio' : 'Editar Precio Actual'}
+              {isCreating ? t('formCreateTitle') : t('formEditTitle')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="price">Precio de Suscripción (ARS)</Label>
+                <Label htmlFor="price">{t('priceLabel')}</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
                     ARS
@@ -337,12 +343,12 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
               </div>
               
               <div>
-                <Label htmlFor="notes">Notas (Opcional)</Label>
+                <Label htmlFor="notes">{t('notesOptional')}</Label>
                 <Textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Razón del cambio de precio, promociones, etc."
+                  placeholder={t('notesPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -352,18 +358,18 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
                   {saving ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Guardando...
+                      {t('saving')}
                     </>
                   ) : (
                     <>
                       <Save className="h-4 w-4 mr-2" />
-                      {isCreating ? 'Crear' : 'Actualizar'}
+                      {isCreating ? t('create') : t('update')}
                     </>
                   )}
                 </Button>
                 <Button onClick={handleCancel} variant="outline">
                   <X className="h-4 w-4 mr-2" />
-                  Cancelar
+                  {tCommon('cancel')}
                 </Button>
               </div>
             </div>
@@ -377,10 +383,10 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <History className="h-5 w-5" />
-              Historial de Cambios de Precio
+              {t('historyTitle')}
             </CardTitle>
             <CardDescription>
-              Registro de todas las modificaciones realizadas al precio de suscripción
+              {t('historyDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -399,7 +405,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
                   </div>
                   <div className="text-right text-sm text-gray-500">
                     <div>{formatDate(change.changedAt)}</div>
-                    <div>por {change.changedBy}</div>
+                    <div>{t('changedBy', { user: change.changedBy })}</div>
                   </div>
                 </div>
               ))}
@@ -411,32 +417,32 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
       {/* Información Adicional */}
       <Card>
         <CardHeader>
-          <CardTitle>Información del Sistema</CardTitle>
+          <CardTitle>{t('systemInfoTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm text-gray-600">
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
               <p>
-                <strong>Precio Único:</strong> Solo se puede tener un precio activo a la vez
+                <strong>{t('systemInfoUnique')}</strong> {t('systemInfoUniqueDesc')}
               </p>
             </div>
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
               <p>
-                <strong>Historial:</strong> Todos los cambios se registran automáticamente
+                <strong>{t('systemInfoHistory')}</strong> {t('systemInfoHistoryDesc')}
               </p>
             </div>
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
               <p>
-                <strong>Impacto:</strong> Los cambios se aplican inmediatamente a nuevas suscripciones
+                <strong>{t('systemInfoImpact')}</strong> {t('systemInfoImpactDesc')}
               </p>
             </div>
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
               <p>
-                <strong>Marketplace:</strong> Este precio permite a los vendedores crear y gestionar productos y servicios
+                <strong>{t('systemInfoMarketplace')}</strong> {t('systemInfoMarketplaceDesc')}
               </p>
             </div>
           </div>

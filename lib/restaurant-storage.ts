@@ -4,12 +4,14 @@ import { storage } from "@/lib/firebase"
 const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"]
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
-export function validateRestaurantImageFile(file: File): string | null {
+export type RestaurantImageValidationCode = "invalid_type" | "too_large"
+
+export function validateRestaurantImageFile(file: File): RestaurantImageValidationCode | null {
   if (!IMAGE_TYPES.includes(file.type)) {
-    return "Usá una imagen JPG, PNG, WEBP o GIF."
+    return "invalid_type"
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return "La imagen no puede superar 5 MB."
+    return "too_large"
   }
   return null
 }
@@ -30,7 +32,7 @@ export async function uploadRestaurantBrandingImage(
   previousPath?: string | null
 ): Promise<{ url: string; path: string }> {
   const error = validateRestaurantImageFile(file)
-  if (error) throw new Error(error)
+  if (error) throw new Error(`restaurant_image:${error}`)
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg"
   const path = `restaurants/${restaurantId}/branding/${kind}-${Date.now()}.${ext}`
@@ -50,7 +52,7 @@ export async function uploadMenuItemImage(
   index: number
 ): Promise<{ url: string; path: string }> {
   const error = validateRestaurantImageFile(file)
-  if (error) throw new Error(error)
+  if (error) throw new Error(`restaurant_image:${error}`)
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg"
   const path = `restaurants/${restaurantId}/menu/${menuItemId}/${Date.now()}-${index}.${ext}`
@@ -66,7 +68,7 @@ export async function uploadMenuPromotionImage(
   file: File
 ): Promise<{ url: string; path: string }> {
   const error = validateRestaurantImageFile(file)
-  if (error) throw new Error(error)
+  if (error) throw new Error(`restaurant_image:${error}`)
 
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg"
   const path = `restaurants/${restaurantId}/promotions/${promotionId}/${Date.now()}.${ext}`

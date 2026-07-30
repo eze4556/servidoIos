@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import { ArrowLeft, MapPin, MessageSquare, Sparkles, UserPlus } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { useLocation } from "@/contexts/location-context"
@@ -19,6 +20,8 @@ import { Button } from "@/components/ui/button"
 import type { StoryAuthorGroup } from "@/types/story"
 
 export default function HistoriasPage() {
+  const t = useTranslations("storiesPage")
+  const tHeader = useTranslations("header")
   const { currentUser } = useAuth()
   const { coordinates, hasValidLocation, loadingLocation, openLocationPicker, shortLocation } =
     useLocation()
@@ -73,16 +76,19 @@ export default function HistoriasPage() {
             <Link
               href="/"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
-              aria-label="Volver"
+              aria-label={t("back")}
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-bold text-gray-900 sm:text-xl">Historias</h1>
+              <h1 className="truncate text-lg font-bold text-gray-900 sm:text-xl">{t("title")}</h1>
               <p className="truncate text-xs text-gray-500">
                 {hasValidLocation
-                  ? `Cerca · ${shortLocation || "tu zona"} · ${STORY_NEARBY_RADIUS_KM} km`
-                  : "Ofertas y novedades cerca tuyo"}
+                  ? t("subtitleNearby", {
+                      location: shortLocation || t("zone"),
+                      radius: STORY_NEARBY_RADIUS_KM,
+                    })
+                  : t("subtitleDefault")}
               </p>
             </div>
           </div>
@@ -98,7 +104,7 @@ export default function HistoriasPage() {
                 >
                   <Link href="/siguiendo">
                     <UserPlus className="mr-1 h-3.5 w-3.5" />
-                    Siguiendo
+                    {t("following")}
                   </Link>
                 </Button>
                 <Button
@@ -109,7 +115,7 @@ export default function HistoriasPage() {
                 >
                   <Link href="/mensajes">
                     <MessageSquare className="mr-1 h-3.5 w-3.5" />
-                    Mensajes
+                    {tHeader("messages")}
                   </Link>
                 </Button>
               </>
@@ -122,7 +128,7 @@ export default function HistoriasPage() {
               onClick={openLocationPicker}
             >
               <MapPin className="mr-1 h-3.5 w-3.5" />
-              Zona
+              {t("zone")}
             </Button>
           </div>
         </div>
@@ -148,16 +154,14 @@ export default function HistoriasPage() {
             <span className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-servido-gold/20 text-servido-900">
               <MapPin className="h-7 w-7" />
             </span>
-            <h2 className="text-lg font-semibold text-gray-900">Elegí tu zona</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Así te mostramos solo historias de locales cerca (no de otras ciudades).
-            </p>
+            <h2 className="text-lg font-semibold text-gray-900">{t("chooseZoneTitle")}</h2>
+            <p className="mt-2 text-sm text-gray-600">{t("chooseZoneBody")}</p>
             <Button
               type="button"
               className="mt-6 rounded-full bg-servido-800"
               onClick={openLocationPicker}
             >
-              Elegir ciudad o barrio
+              {t("chooseZoneCta")}
             </Button>
           </div>
         ) : displayGroups.length === 0 ? (
@@ -165,11 +169,9 @@ export default function HistoriasPage() {
             <span className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-servido-gold/20 text-servido-900">
               <Sparkles className="h-7 w-7" />
             </span>
-            <h2 className="text-lg font-semibold text-gray-900">No hay historias cerca</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t("emptyTitle")}</h2>
             <p className="mt-2 text-sm text-gray-600">
-              {canPost
-                ? "Todavía no hay de otros locales. Subí la tuya con el círculo + de arriba."
-                : `Todavía no hay publicaciones a menos de ${STORY_NEARBY_RADIUS_KM} km de tu zona.`}
+              {canPost ? t("emptySeller") : t("emptyBuyer", { radius: STORY_NEARBY_RADIUS_KM })}
             </p>
             {!canPost && (
               <Button
@@ -178,7 +180,7 @@ export default function HistoriasPage() {
                 className="mt-6 rounded-full"
                 onClick={openLocationPicker}
               >
-                Cambiar zona
+                {t("changeZone")}
               </Button>
             )}
           </div>
@@ -207,8 +209,10 @@ export default function HistoriasPage() {
                   <div className="absolute bottom-2 left-2 right-2 min-w-0">
                     <p className="truncate text-xs font-semibold text-white">{group.authorName}</p>
                     <p className="truncate text-[10px] text-white/80">
-                      {group.stories.length} historia{group.stories.length === 1 ? "" : "s"}
-                      {followedIds.has(group.authorId) ? " · Siguiendo" : ""}
+                      {group.stories.length === 1
+                        ? t("storyCountOne", { count: group.stories.length })
+                        : t("storyCountMany", { count: group.stories.length })}
+                      {followedIds.has(group.authorId) ? t("followingBadge") : ""}
                     </p>
                   </div>
                 </div>

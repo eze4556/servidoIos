@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
@@ -22,9 +23,13 @@ import {
 } from "@/components/ui/select"
 import { Loader2, UtensilsCrossed, CheckCircle2, ArrowRight } from "lucide-react"
 import type { DeliveryMode, Restaurant } from "@/types/restaurant"
-import { DELIVERY_MODE_LABELS } from "@/types/restaurant"
+import { getDeliveryModeLabel } from "@/lib/i18n/restaurant-labels"
+
+const DELIVERY_MODES: DeliveryMode[] = ["delivery_propio", "retiro_en_local", "ambos"]
 
 export default function RestaurantOnboardingPage() {
+  const t = useTranslations("restaurantOnboarding")
+  const tRestaurants = useTranslations("restaurants")
   const { currentUser } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -115,15 +120,13 @@ export default function RestaurantOnboardingPage() {
           <span className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-servido-gold/20 text-servido-800">
             <UtensilsCrossed className="h-7 w-7" />
           </span>
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Completá tu perfil</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Unos datos más y tu restaurante estará listo para recibir pedidos.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">{t("title")}</h1>
+          <p className="mt-2 text-sm text-gray-600">{t("subtitle")}</p>
         </div>
 
         <div className="space-y-5 rounded-3xl bg-white p-6 shadow-lg shadow-purple-900/5 ring-1 ring-gray-100 sm:p-8">
           <div className="space-y-2">
-            <Label htmlFor="restaurantName">Nombre del local</Label>
+            <Label htmlFor="restaurantName">{t("restaurantName")}</Label>
             <Input
               id="restaurantName"
               value={restaurantName}
@@ -135,30 +138,30 @@ export default function RestaurantOnboardingPage() {
           <BusinessLocationPicker
             value={businessLocation}
             onChange={setBusinessLocation}
-            label="Ubicación del local"
-            helperText="Buscá tu dirección o ciudad. Así te encuentran en historias cercanas."
+            label={t("locationLabel")}
+            helperText={t("locationHelper")}
           />
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descripción</Label>
+            <Label htmlFor="description">{t("description")}</Label>
             <Textarea
               id="description"
-              placeholder="Contá qué tipo de comida ofrecés, especialidades..."
+              placeholder={t("descriptionPlaceholder")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="min-h-[100px] rounded-xl"
             />
           </div>
           <div className="space-y-2">
-            <Label>Modalidad de entrega</Label>
+            <Label>{t("deliveryMode")}</Label>
             <Select value={deliveryMode} onValueChange={(v) => setDeliveryMode(v as DeliveryMode)}>
               <SelectTrigger className="h-11 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(DELIVERY_MODE_LABELS) as DeliveryMode[]).map((mode) => (
+                {DELIVERY_MODES.map((mode) => (
                   <SelectItem key={mode} value={mode}>
-                    {DELIVERY_MODE_LABELS[mode]}
+                    {getDeliveryModeLabel(tRestaurants, mode)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -167,7 +170,7 @@ export default function RestaurantOnboardingPage() {
 
           {deliveryMode !== "retiro_en_local" && (
             <div className="space-y-2">
-              <Label htmlFor="deliveryFee">Precio de envío ($)</Label>
+              <Label htmlFor="deliveryFee">{t("deliveryFee")}</Label>
               <Input
                 id="deliveryFee"
                 type="number"
@@ -177,19 +180,15 @@ export default function RestaurantOnboardingPage() {
                 onChange={(e) => setDeliveryFee(e.target.value)}
                 className="h-11 rounded-xl"
               />
-              <p className="text-xs text-gray-500">Lo paga el cliente. Podés cambiarlo después en Perfil.</p>
+              <p className="text-xs text-gray-500">{t("deliveryFeeHint")}</p>
             </div>
           )}
 
           <ul className="space-y-2 rounded-2xl bg-purple-50/60 p-4 text-sm text-gray-600">
-            {[
-              "Tu menú se carga desde el panel de restaurante",
-              "Los pedidos llegan en tiempo real",
-              "Podés activar o desactivar platos cuando quieras",
-            ].map((tip) => (
-              <li key={tip} className="flex items-start gap-2">
+            {(["tipMenu", "tipOrders", "tipToggle"] as const).map((tipKey) => (
+              <li key={tipKey} className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-servido-700" />
-                {tip}
+                {t(tipKey)}
               </li>
             ))}
           </ul>
@@ -203,17 +202,17 @@ export default function RestaurantOnboardingPage() {
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Guardando...
+                  {t("saving")}
                 </>
               ) : (
                 <>
-                  Ir al panel
+                  {t("goToPanel")}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </>
               )}
             </Button>
             <Button asChild variant="outline" className="h-11 rounded-full">
-              <Link href="/dashboard/restaurant">Saltar por ahora</Link>
+              <Link href="/dashboard/restaurant">{t("skipForNow")}</Link>
             </Button>
           </div>
         </div>

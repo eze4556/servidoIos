@@ -14,6 +14,7 @@ import {
   where,
 } from "firebase/firestore"
 import { ImagePlus, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { db } from "@/lib/firebase"
 import { mapMenuPromotionDoc } from "@/lib/restaurant-options"
 import {
@@ -35,6 +36,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  imageValidationMessage,
+  messageFromRestaurantImageUploadError,
+} from "@/lib/i18n/restaurant-image-errors"
 
 interface MenuCombosAdminProps {
   restaurantId: string
@@ -49,6 +54,8 @@ export function MenuCombosAdmin({
   enabled,
   onNeedSubscription,
 }: MenuCombosAdminProps) {
+  const t = useTranslations("menuAdmin")
+  const locale = useLocale()
   const [promotions, setPromotions] = useState<MenuPromotion[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -76,10 +83,10 @@ export function MenuCombosAdmin({
       )
       const next = snap.docs
         .map((d) => mapMenuPromotionDoc(d.id, d.data() as Record<string, unknown>))
-        .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "es"))
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, locale))
       setPromotions(next)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudieron cargar los combos")
+      setError(err instanceof Error ? err.message : t("combosLoadError"))
     } finally {
       setLoading(false)
     }
@@ -99,7 +106,7 @@ export function MenuCombosAdmin({
     if (!file) return
     const validation = validateRestaurantImageFile(file)
     if (validation) {
-      setError(validation)
+      setError(imageValidationMessage(validation, t))
       return
     }
     if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview)
@@ -161,12 +168,12 @@ export function MenuCombosAdmin({
       return
     }
     if (!name.trim()) {
-      setError("Ingresá el nombre del combo")
+      setError(t("errComboName"))
       return
     }
     const priceNum = Number(comboPrice)
     if (!Number.isFinite(priceNum) || priceNum < 0) {
-      setError("Ingresá un precio válido")
+      setError(t("errComboPrice"))
       return
     }
     const includedItems: MenuPromotionIncludedItem[] = Object.entries(included)
@@ -178,7 +185,7 @@ export function MenuCombosAdmin({
       .filter((x): x is MenuPromotionIncludedItem => Boolean(x))
 
     if (includedItems.length === 0) {
-      setError("Elegí al menos un producto incluido")
+      setError(t("errComboItems"))
       return
     }
 
@@ -258,7 +265,9 @@ export function MenuCombosAdmin({
       setFormOpen(false)
     } catch (err) {
       if (uploadedPath) await deleteStoragePaths([uploadedPath])
-      setError(err instanceof Error ? err.message : "No se pudo guardar el combo")
+      const msg = err instanceof Error ? err.message : ""
+      const imageMsg = messageFromRestaurantImageUploadError(msg, t)
+      setError(imageMsg || (err instanceof Error ? err.message : t("saveComboError")))
     } finally {
       setSaving(false)
     }
@@ -269,7 +278,7 @@ export function MenuCombosAdmin({
       onNeedSubscription()
       return
     }
-    if (!window.confirm(`¿Eliminar el combo "${promo.name}"?`)) return
+    if (!window.confirm(t("deleteComboConfirm", { name: promo.name }))) return
     await deleteDoc(doc(db, "menuPromotions", promo.id))
     await deleteStoragePaths([promo.imagePath])
     setPromotions((prev) => prev.filter((p) => p.id !== promo.id))
@@ -305,19 +314,17 @@ export function MenuCombosAdmin({
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4 ring-1 ring-gray-100">
         <div>
-          <h2 className="font-semibold text-gray-900">Combos / promociones</h2>
-          <p className="text-sm text-gray-500">
-            Precio fijo e ítems incluidos. El cliente no elige variantes dentro del combo.
-          </p>
+          <h2 className="font-semibold text-gray-900">{t("combosTitle")}</h2>
+          <p className="text-sm text-gray-500">{t("combosHint")}</p>
         </div>
         <Button className="rounded-full bg-servido-800" disabled={!enabled} onClick={openCreate}>
           <Plus className="mr-2 h-4 w-4" />
-          Nuevo combo
+          {t("newCombo")}
         </Button>
       </div>
 
       {promotions.length === 0 ? (
-        <p className="text-center text-gray-500">Todavía no tenés combos.</p>
+        <p className="text-center text-gray-500">{t("emptyCombos")}</p>
       ) : (
         <div className="space-y-3">
           {promotions.map((promo) => (
@@ -336,7 +343,7 @@ export function MenuCombosAdmin({
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-[10px] font-semibold text-white">
-                    Combo
+                    {t("comboBadge")}
                   </div>
                 )}
               </div>
@@ -371,31 +378,31 @@ export function MenuCombosAdmin({
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-h-[92vh] max-w-lg overflow-y-auto rounded-2xl">
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar combo" : "Nuevo combo"}</DialogTitle>
+            <DialogTitle>{editing ? t("editCombo") : t("newComboTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
             <div className="space-y-2">
-              <Label>Imagen del combo</Label>
+              <Label>{t("comboImageLabel")}</Label>
               <div className="flex items-center gap-3">
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-orange-400 to-red-500">
                   {imagePreview ? (
                     <Image
                       src={imagePreview}
-                      alt="Vista previa del combo"
+                      alt={t("comboPreviewAlt")}
                       fill
                       className="object-cover"
                       unoptimized
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs font-semibold text-white">
-                      Combo
+                      {t("comboBadge")}
                     </div>
                   )}
                 </div>
                 <label className="inline-flex cursor-pointer items-center rounded-full border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                   <ImagePlus className="mr-2 h-4 w-4" />
-                  {imagePreview ? "Reemplazar" : "Subir imagen"}
+                  {imagePreview ? t("replace") : t("uploadImage")}
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/gif"
@@ -407,14 +414,14 @@ export function MenuCombosAdmin({
                   />
                 </label>
               </div>
-              <p className="text-xs text-gray-500">JPG, PNG, WEBP o GIF. Máximo 5 MB.</p>
+              <p className="text-xs text-gray-500">{t("imageFormatHint")}</p>
             </div>
             <div className="space-y-2">
-              <Label>Nombre</Label>
+              <Label>{t("nameLabel")}</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label>Descripción</Label>
+              <Label>{t("descriptionLabel")}</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -423,7 +430,7 @@ export function MenuCombosAdmin({
               />
             </div>
             <div className="space-y-2">
-              <Label>Precio del combo ($)</Label>
+              <Label>{t("comboPriceLabel")}</Label>
               <Input
                 type="number"
                 min="0"
@@ -433,13 +440,13 @@ export function MenuCombosAdmin({
               />
             </div>
             <label className="flex items-center justify-between rounded-xl border border-gray-100 px-3 py-3">
-              <span className="text-sm font-medium">Disponible</span>
+              <span className="text-sm font-medium">{t("available")}</span>
               <Switch checked={available} onCheckedChange={setAvailable} />
             </label>
             <div className="space-y-2">
-              <Label>Productos incluidos</Label>
+              <Label>{t("includedProducts")}</Label>
               {availableMenuItems.length === 0 ? (
-                <p className="text-sm text-gray-500">Primero cargá productos en el menú.</p>
+                <p className="text-sm text-gray-500">{t("loadProductsFirst")}</p>
               ) : (
                 <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border border-gray-100 p-3">
                   {availableMenuItems.map((item) => {
@@ -480,7 +487,7 @@ export function MenuCombosAdmin({
               onClick={() => void handleSave()}
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Guardar combo
+              {t("saveCombo")}
             </Button>
           </div>
         </DialogContent>

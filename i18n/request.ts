@@ -9,14 +9,26 @@ import infoPrivacyEs from "../messages/legal/infoPrivacy.es.json"
 import infoPrivacyPt from "../messages/legal/infoPrivacy.pt-BR.json"
 import infoCareersEs from "../messages/legal/infoCareers.es.json"
 import infoCareersPt from "../messages/legal/infoCareers.pt-BR.json"
+import adminDashboardEs from "../messages/adminDashboard.es.json"
+import adminDashboardPt from "../messages/adminDashboard.pt-BR.json"
 
 function mergeLocaleMessages(base: typeof esMessages, legal: Record<string, unknown>) {
   return { ...base, ...legal } as typeof esMessages
 }
 
 const messagesByLocale: Record<AppLocale, typeof esMessages> = {
-  es: mergeLocaleMessages(esMessages, { ...infoTermsEs, ...infoPrivacyEs, ...infoCareersEs }),
-  "pt-BR": mergeLocaleMessages(ptBRMessages, { ...infoTermsPt, ...infoPrivacyPt, ...infoCareersPt }),
+  es: mergeLocaleMessages(esMessages, {
+    ...infoTermsEs,
+    ...infoPrivacyEs,
+    ...infoCareersEs,
+    ...adminDashboardEs,
+  }),
+  "pt-BR": mergeLocaleMessages(ptBRMessages, {
+    ...infoTermsPt,
+    ...infoPrivacyPt,
+    ...infoCareersPt,
+    ...adminDashboardPt,
+  }),
 }
 
 export default getRequestConfig(async () => {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { doc, getDoc } from "firebase/firestore"
 import {
   Bike,
@@ -27,7 +28,7 @@ import {
 import type { FoodOrder } from "@/types/restaurant"
 import { formatPriceNumber } from "@/lib/utils"
 
-const DEFAULT_TITLE = "Cadete · Servido"
+const DEFAULT_TITLE_KEY = "defaultTitle" as const
 
 /** Navegación a un destino (usa la ubicación actual del cadete como origen). */
 function navigationUrl(destination: string) {
@@ -54,6 +55,7 @@ function vibrateNewOrder() {
 }
 
 export default function CadeteDashboardPage() {
+  const t = useTranslations("cadeteDashboard")
   const { currentUser, handleLogout } = useAuth()
   const [available, setAvailable] = useState<FoodOrder[]>([])
   const [active, setActive] = useState<FoodOrder | null>(null)
@@ -100,9 +102,9 @@ export default function CadeteDashboardPage() {
       await resolveRestaurantAddress(current)
     } catch (err) {
       console.error(err)
-      setError("No se pudo cargar tu pedido.")
+      setError(t("errorLoadOrder"))
     }
-  }, [uid, approved, resolveRestaurantAddress])
+  }, [uid, approved, resolveRestaurantAddress, t])
 
   useEffect(() => {
     if (!uid || !approved) {
@@ -121,27 +123,27 @@ export default function CadeteDashboardPage() {
       },
       (err) => {
         console.error(err)
-        setError("Sin conexión a pedidos.")
+        setError(t("errorConnection"))
         setLoading(false)
       }
     )
 
     return () => unsubscribe()
-  }, [uid, approved, cadeteZone, loadActive])
+  }, [uid, approved, cadeteZone, loadActive, t])
 
   useEffect(() => {
     if (!approved) return
     if (available.length > 0 && !active) {
-      document.title = `(${available.length}) Nuevo pedido · Servido`
+      document.title = t("docTitleNewOrder", { count: available.length })
     } else if (active) {
-      document.title = "En camino · Servido"
+      document.title = t("docTitleEnRoute")
     } else {
-      document.title = DEFAULT_TITLE
+      document.title = t(DEFAULT_TITLE_KEY)
     }
     return () => {
-      document.title = DEFAULT_TITLE
+      document.title = t(DEFAULT_TITLE_KEY)
     }
-  }, [available.length, approved, active])
+  }, [available.length, approved, active, t])
 
   useEffect(() => {
     if (!approved || active) {
@@ -163,7 +165,7 @@ export default function CadeteDashboardPage() {
       await claimFoodOrder(orderId, uid, cadeteName)
       await loadActive()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo tomar.")
+      setError(err instanceof Error ? err.message : t("errorClaim"))
       await loadActive()
     } finally {
       setBusy(false)
@@ -180,7 +182,7 @@ export default function CadeteDashboardPage() {
       setRestaurantAddress(null)
       await loadActive()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo confirmar.")
+      setError(err instanceof Error ? err.message : t("errorDelivered"))
     } finally {
       setBusy(false)
     }
@@ -194,18 +196,16 @@ export default function CadeteDashboardPage() {
         ) : (
           <Clock className="mb-4 h-14 w-14 text-sky-400" />
         )}
-        <h1 className="text-2xl font-bold">{rejected ? "No aprobado" : "En revisión"}</h1>
+        <h1 className="text-2xl font-bold">{rejected ? t("rejectedTitle") : t("pendingTitle")}</h1>
         <p className="mt-3 max-w-xs text-base text-slate-300">
-          {rejected
-            ? "Tu postulación fue rechazada."
-            : "Te avisamos por email cuando puedas salir a entregar."}
+          {rejected ? t("rejectedBody") : t("pendingBody")}
         </p>
         <Link
           href="/"
           className="mt-10 inline-flex h-14 w-full max-w-xs items-center justify-center gap-2 rounded-2xl bg-white text-base font-bold text-slate-900"
         >
           <Home className="h-5 w-5" />
-          Inicio
+          {t("home")}
         </Link>
       </div>
     )
@@ -230,7 +230,7 @@ export default function CadeteDashboardPage() {
         <header className="flex items-center justify-between px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
           <div className="flex items-center gap-2">
             <Bike className="h-5 w-5 text-sky-400" />
-            <span className="text-sm font-medium text-slate-300">En camino</span>
+            <span className="text-sm font-medium text-slate-300">{t("enRoute")}</span>
           </div>
           <span className="rounded-full bg-sky-500/20 px-3 py-1 text-xs font-bold text-sky-300">
             #{active.id.slice(-6)}
@@ -244,7 +244,7 @@ export default function CadeteDashboardPage() {
             </p>
           )}
 
-          <p className="text-sm uppercase tracking-wide text-slate-400">Retirá en</p>
+          <p className="text-sm uppercase tracking-wide text-slate-400">{t("pickupAt")}</p>
           <h1 className="mt-1 text-3xl font-bold leading-tight">{active.restaurantName}</h1>
           {pickupAddress && <p className="mt-1 text-sm text-slate-400">{pickupAddress}</p>}
 
@@ -252,7 +252,7 @@ export default function CadeteDashboardPage() {
             <div className="mt-5 rounded-2xl bg-slate-900 p-4 ring-1 ring-slate-700">
               <p className="flex items-start gap-2 text-xs font-medium uppercase text-slate-400">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                Entregar en
+                {t("deliverTo")}
               </p>
               <p className="mt-2 text-xl font-semibold leading-snug">{dropoffAddress}</p>
             </div>
@@ -267,7 +267,7 @@ export default function CadeteDashboardPage() {
                 className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-sky-600 text-base font-bold active:bg-sky-500"
               >
                 <Store className="h-5 w-5" />
-                Ir al local
+                {t("goToStore")}
               </a>
             )}
             {dropoffAddress && (
@@ -278,7 +278,7 @@ export default function CadeteDashboardPage() {
                 className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-amber-500 text-base font-bold text-slate-950 active:bg-amber-400"
               >
                 <Navigation className="h-5 w-5" />
-                Ir al cliente
+                {t("goToCustomer")}
               </a>
             )}
             {fullRoute && (
@@ -289,7 +289,7 @@ export default function CadeteDashboardPage() {
                 className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-slate-800 text-sm font-semibold text-sky-300 ring-1 ring-slate-600 active:bg-slate-700"
               >
                 <MapPin className="h-4 w-4" />
-                Ver ruta completa (local → cliente)
+                {t("fullRoute")}
               </a>
             )}
           </div>
@@ -300,27 +300,24 @@ export default function CadeteDashboardPage() {
               className="mt-3 flex h-16 items-center justify-center gap-3 rounded-2xl bg-emerald-600 text-lg font-bold active:bg-emerald-500"
             >
               <Phone className="h-6 w-6" />
-              Llamar cliente
+              {t("callCustomer")}
             </a>
           )}
 
           <div className="mt-4 rounded-2xl bg-amber-500/10 p-4 ring-1 ring-amber-500/30">
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">Tu cobro</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">{t("yourPayTitle")}</p>
             {active.deliveryFee > 0 ? (
               <p className="mt-1 text-2xl font-bold text-amber-200">
-                Envío ${formatPriceNumber(active.deliveryFee)}
+                {t("deliveryFee", { amount: `$${formatPriceNumber(active.deliveryFee)}` })}
               </p>
             ) : (
-              <p className="mt-1 text-base font-semibold text-amber-200">Sin cargo de envío en este pedido</p>
+              <p className="mt-1 text-base font-semibold text-amber-200">{t("noDeliveryFee")}</p>
             )}
-            <p className="mt-2 text-sm leading-snug text-amber-100/80">
-              Servido no te paga por la app. El restaurante te abona afuera (efectivo o transferencia).
-              Este monto es solo referencia del envío que pagó el cliente.
-            </p>
+            <p className="mt-2 text-sm leading-snug text-amber-100/80">{t("cadetePayDisclaimer")}</p>
           </div>
 
           <div className="mt-4 rounded-2xl bg-slate-900/80 p-4 ring-1 ring-slate-800">
-            <p className="text-xs uppercase text-slate-500">Pedido</p>
+            <p className="text-xs uppercase text-slate-500">{t("orderLabel")}</p>
             <ul className="mt-2 space-y-1 text-base text-slate-200">
               {active.items.map((item, i) => (
                 <li key={i}>
@@ -348,7 +345,7 @@ export default function CadeteDashboardPage() {
               ) : (
                 <>
                   <CheckCircle2 className="h-8 w-8" />
-                  Entregado
+                  {t("delivered")}
                 </>
               )}
             </button>
@@ -362,9 +359,9 @@ export default function CadeteDashboardPage() {
     <div className="flex min-h-[100dvh] flex-col bg-slate-950 text-white">
       <header className="flex items-center justify-between px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
         <div>
-          <p className="text-sm text-slate-400">Hola, {cadeteName.split(" ")[0]}</p>
+          <p className="text-sm text-slate-400">{t("hello", { name: cadeteName.split(" ")[0] })}</p>
           <h1 className="text-xl font-bold">
-            {available.length > 0 ? "Pedidos listos" : "Esperando"}
+            {available.length > 0 ? t("ordersReady") : t("waiting")}
           </h1>
         </div>
         {cadeteZone && (
@@ -386,16 +383,14 @@ export default function CadeteDashboardPage() {
             <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-900 ring-1 ring-slate-700">
               <Bike className="h-10 w-10 text-sky-400" />
             </div>
-            <p className="text-xl font-semibold">Sin pedidos ahora</p>
-            <p className="mt-2 max-w-[240px] text-sm text-slate-400">
-              Dejá la app abierta. Aparecen solos cuando haya algo en tu zona.
-            </p>
+            <p className="text-xl font-semibold">{t("noOrdersNow")}</p>
+            <p className="mt-2 max-w-[240px] text-sm text-slate-400">{t("keepAppOpen")}</p>
             <button
               type="button"
               onClick={() => void handleLogout()}
               className="mt-10 text-sm text-slate-500 underline-offset-2 hover:underline"
             >
-              Cerrar sesión
+              {t("logout")}
             </button>
           </div>
         ) : (
@@ -421,13 +416,15 @@ export default function CadeteDashboardPage() {
                   )}
 
                   <p className="mt-2 text-sm text-slate-400">
-                    {order.items.reduce((n, i) => n + i.quantity, 0)} ítems
-                    {order.deliveryFee > 0 ? ` · Envío $${formatPriceNumber(order.deliveryFee)}` : ""}
-                    {order.notes ? " · Tiene nota" : ""}
+                    {t("itemsCount", {
+                      count: order.items.reduce((n, i) => n + i.quantity, 0),
+                    })}
+                    {order.deliveryFee > 0
+                      ? t("deliveryFeeShort", { amount: `$${formatPriceNumber(order.deliveryFee)}` })
+                      : ""}
+                    {order.notes ? t("hasNote") : ""}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Cobro con el restaurante, fuera de la app
-                  </p>
+                  <p className="mt-1 text-xs text-slate-500">{t("payOutsideApp")}</p>
                 </div>
 
                 <button
@@ -436,7 +433,7 @@ export default function CadeteDashboardPage() {
                   onClick={() => void handleClaim(order.id)}
                   className="flex h-16 w-full items-center justify-center gap-2 bg-sky-500 text-xl font-black text-slate-950 active:bg-sky-400 disabled:opacity-60"
                 >
-                  {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : "Tomar"}
+                  {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : t("takeOrder")}
                 </button>
               </li>
             ))}

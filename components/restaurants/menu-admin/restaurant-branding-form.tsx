@@ -4,12 +4,17 @@ import { useRef, useState } from "react"
 import Image from "next/image"
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore"
 import { ImagePlus, Loader2, Trash2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { db } from "@/lib/firebase"
 import { deleteStoragePaths, uploadRestaurantBrandingImage, validateRestaurantImageFile } from "@/lib/restaurant-storage"
 import type { Restaurant } from "@/types/restaurant"
 import { getRestaurantCoverUrl, getRestaurantLogoUrl } from "@/types/restaurant"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import {
+  imageValidationMessage,
+  messageFromRestaurantImageUploadError,
+} from "@/lib/i18n/restaurant-image-errors"
 
 interface RestaurantBrandingFormProps {
   restaurant: Restaurant
@@ -18,6 +23,7 @@ interface RestaurantBrandingFormProps {
 }
 
 export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: RestaurantBrandingFormProps) {
+  const t = useTranslations("menuAdmin")
   const coverInputRef = useRef<HTMLInputElement>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
   const [uploadingCover, setUploadingCover] = useState(false)
@@ -39,7 +45,7 @@ export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: Rest
     if (!file || disabled) return
     const validation = validateRestaurantImageFile(file)
     if (validation) {
-      setError(validation)
+      setError(imageValidationMessage(validation, t))
       return
     }
     setError(null)
@@ -63,7 +69,9 @@ export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: Rest
         })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo subir la imagen")
+      const msg = err instanceof Error ? err.message : ""
+      const imageMsg = messageFromRestaurantImageUploadError(msg, t)
+      setError(imageMsg || (err instanceof Error ? err.message : t("uploadImageError")))
     } finally {
       setUploading(false)
     }
@@ -85,28 +93,26 @@ export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: Rest
         })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo eliminar la imagen")
+      setError(err instanceof Error ? err.message : t("deleteImageError"))
     }
   }
 
   return (
     <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
       <div>
-        <h2 className="font-semibold text-gray-900">Portada y logo</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          La portada se ve arriba del perfil público y el logo aparece sobre ella.
-        </p>
+        <h2 className="font-semibold text-gray-900">{t("brandingTitle")}</h2>
+        <p className="mt-1 text-sm text-gray-500">{t("brandingHint")}</p>
       </div>
 
       {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       <div className="space-y-2">
-        <Label>Portada (horizontal)</Label>
+        <Label>{t("coverLabel")}</Label>
         <div className="relative aspect-[16/7] overflow-hidden rounded-2xl bg-gradient-to-br from-orange-400 to-red-500">
           {coverUrl ? (
-            <Image src={coverUrl} alt="Portada" fill className="object-cover" unoptimized />
+            <Image src={coverUrl} alt={t("coverAlt")} fill className="object-cover" unoptimized />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-white/90">Sin portada</div>
+            <div className="flex h-full items-center justify-center text-sm text-white/90">{t("noCover")}</div>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -128,7 +134,7 @@ export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: Rest
             onClick={() => coverInputRef.current?.click()}
           >
             {uploadingCover ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImagePlus className="mr-2 h-4 w-4" />}
-            {coverUrl ? "Reemplazar portada" : "Subir portada"}
+            {coverUrl ? t("replaceCover") : t("uploadCover")}
           </Button>
           {restaurant.coverImageUrl && (
             <Button
@@ -140,19 +146,19 @@ export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: Rest
               onClick={() => void handleRemove("cover")}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Quitar
+              {t("remove")}
             </Button>
           )}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label>Logo (cuadrado)</Label>
+        <Label>{t("logoLabel")}</Label>
         <div className="relative h-28 w-28 overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-red-500 ring-4 ring-white shadow">
           {logoUrl ? (
-            <Image src={logoUrl} alt="Logo" fill className="object-cover" unoptimized />
+            <Image src={logoUrl} alt={t("logoAlt")} fill className="object-cover" unoptimized />
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-white/90">Sin logo</div>
+            <div className="flex h-full items-center justify-center text-xs text-white/90">{t("noLogo")}</div>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -174,7 +180,7 @@ export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: Rest
             onClick={() => logoInputRef.current?.click()}
           >
             {uploadingLogo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImagePlus className="mr-2 h-4 w-4" />}
-            {logoUrl ? "Reemplazar logo" : "Subir logo"}
+            {logoUrl ? t("replaceLogo") : t("uploadLogo")}
           </Button>
           {restaurant.logoUrl && (
             <Button
@@ -186,7 +192,7 @@ export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: Rest
               onClick={() => void handleRemove("logo")}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Quitar
+              {t("remove")}
             </Button>
           )}
         </div>

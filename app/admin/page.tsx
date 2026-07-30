@@ -71,6 +71,7 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
 import { Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import type { 
   AdminSaleRecord, 
@@ -95,8 +96,11 @@ import * as XLSX from "xlsx"
 import { useToast } from "@/components/ui/use-toast"
 import { getDashboardProductImage } from "@/lib/image-utils"
 import { formatPrice, formatPriceNumber } from "@/lib/utils"
+import { getDateFnsLocale } from "@/lib/i18n/date-locale"
+import { getCadeteStatusLabel } from "@/lib/i18n/cadete-labels"
+import { getPurchaseStatusLabel, getShippingStatusLabel } from "@/lib/i18n/shipping-status-label"
 import SubscriptionPricingManager from "@/components/admin/subscription-pricing-manager"
-import { CADETE_STATUS_LABELS, type CadeteStatus } from "@/types/cadete"
+import type { CadeteStatus } from "@/types/cadete"
 import { sendCadeteStatusEmail } from "@/lib/email-service"
 
 interface UserData {
@@ -233,9 +237,31 @@ interface VentaProductoAdmin {
 }
 
 export default function AdminDashboard() {
+  const t = useTranslations("adminDashboard")
+  const locale = useLocale()
+  const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
+  const dateFnsLocale = getDateFnsLocale(locale)
   const { currentUser, authLoading } = useAuth()
   const router = useRouter()
-  const { toast } = useToast();
+  const { toast } = useToast()
+
+  const adminNavItems = useMemo(
+    () =>
+      [
+        { tab: "overview", label: t("nav.overview"), icon: Home },
+        { tab: "users", label: t("nav.users"), icon: Users },
+        { tab: "cadetes", label: t("nav.cadetes"), icon: Bike },
+        { tab: "categories", label: t("nav.categories"), icon: List },
+        { tab: "brands", label: t("nav.brands"), icon: Tag },
+        { tab: "allProducts", label: t("nav.allProducts"), icon: ShoppingCart },
+        { tab: "sales", label: t("nav.sales"), icon: DollarSign },
+        { tab: "banners", label: t("nav.banners"), icon: ImageIcon },
+        { tab: "alerts", label: t("nav.alerts"), icon: Megaphone },
+        { tab: "coupons", label: t("nav.coupons"), icon: Percent },
+        { tab: "subscriptionPricing", label: t("nav.subscriptionPricing"), icon: Percent },
+      ] as const,
+    [t]
+  )
 
   const [activeTab, setActiveTab] = useState("overview")
   const [users, setUsers] = useState<UserData[]>([])
@@ -612,7 +638,7 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error("Error fetching admin data:", err)
-      setError("Error al cargar los datos del panel. Verifica tu conexión y permisos.")
+      setError(t("errors.loadPanel"))
     } finally {
       setLoading(false)
     }
@@ -705,7 +731,7 @@ export default function AdminDashboard() {
       });
     } catch (err) {
       console.error('Error fetching sales data:', err)
-      setError('Error al cargar los datos de ventas')
+      setError(t("errors.loadSales"))
     } finally {
       setLoadingSales(false)
     }
@@ -759,9 +785,9 @@ export default function AdminDashboard() {
         vendedorNombre: paymentMarkingModal.vendedorNombre,
         monto: paymentMarkingModal.monto,
         metodoPago: paymentMethod,
-        notas: paymentNotes.trim() || 'Pago marcado manualmente por administrador',
+        notas: paymentNotes.trim() || t("notifications.manualPaymentNote"),
         administradorId: currentUser.firebaseUser.uid,
-        administradorNombre: currentUser.firebaseUser.displayName || 'Administrador',
+        administradorNombre: currentUser.firebaseUser.displayName || t("notifications.adminFallback"),
         fechaPago: new Date().toISOString(),
         createdAt: serverTimestamp()
       }
@@ -772,8 +798,16 @@ export default function AdminDashboard() {
       const notificationData = {
         userId: vendedorId,
         type: "payment_completed",
-        title: "Pago Procesado",
-        description: `Se ha procesado tu pago de ${formatPriceNumber(paymentMarkingModal.monto)} por ${paymentMethod === 'bank_transfer' ? 'transferencia bancaria' : paymentMethod === 'mercadopago' ? 'MercadoPago' : 'efectivo'}`,
+        title: t("toasts.paymentProcessedTitle"),
+        description: t("toasts.paymentProcessedDescription", {
+          amount: formatPriceNumber(paymentMarkingModal.monto),
+          method:
+            paymentMethod === "bank_transfer"
+              ? t("notifications.paymentMethodBank")
+              : paymentMethod === "mercadopago"
+                ? t("notifications.paymentMethodMercadoPago")
+                : t("notifications.paymentMethodCash"),
+        }),
         compraId,
         monto: paymentMarkingModal.monto,
         metodoPago: paymentMethod,
@@ -792,7 +826,7 @@ export default function AdminDashboard() {
       
     } catch (err) {
       console.error("Error marking payment as paid:", err)
-      setError("Error al marcar el pago como realizado")
+      setError(t("errors.markPaymentPaid"))
     } finally {
       setMarkingPayment(null)
     }
@@ -812,7 +846,7 @@ export default function AdminDashboard() {
       
     } catch (err) {
       console.error("Error fetching commission report:", err)
-      setError("Error al cargar el reporte de comisiones")
+      setError(t("errors.loadCommissionReport"))
     } finally {
       setLoadingCommissions(false)
     }
@@ -834,7 +868,7 @@ export default function AdminDashboard() {
       setManualPayments(payments)
     } catch (err) {
       console.error("Error fetching manual payments:", err)
-      setError("Error al cargar el historial de pagos manuales")
+      setError(t("errors.loadManualPayments"))
     } finally {
       setLoadingManualPayments(false)
     }
@@ -856,7 +890,7 @@ export default function AdminDashboard() {
       setNotifications(notificationsData)
     } catch (err) {
       console.error("Error fetching notifications:", err)
-      setError("Error al cargar las notificaciones")
+      setError(t("errors.loadNotifications"))
     } finally {
       setLoadingNotifications(false)
     }
@@ -879,7 +913,7 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error("Error processing payment:", err)
-      setError("Error al procesar el pago")
+      setError(t("errors.processPayment"))
     } finally {
       setMarkingPayment(null)
     }
@@ -904,14 +938,10 @@ export default function AdminDashboard() {
         const notificationData = {
           userId: sale.compradorEmail,
           type: "shipping_update",
-          title: "Actualización de Envío",
-          description: `El estado de tu pedido ha cambiado a: ${
-            newStatus === 'pendiente' ? 'Pendiente' :
-            newStatus === 'en_preparacion' ? 'En Preparación' :
-            newStatus === 'enviado' ? 'Enviado' :
-            newStatus === 'entregado' ? 'Entregado' :
-            'Cancelado'
-          }`,
+          title: t("toasts.shippingUpdateTitle"),
+          description: t("toasts.shippingUpdateDescription", {
+            status: getShippingStatusLabel(t, newStatus),
+          }),
           compraId,
           estadoEnvio: newStatus,
           isRead: false,
@@ -927,7 +957,7 @@ export default function AdminDashboard() {
       
     } catch (err) {
       console.error("Error updating shipping status:", err)
-      setError("Error al actualizar el estado de envío")
+      setError(t("errors.updateShipping"))
     } finally {
       setUpdatingShipping(null)
     }
@@ -937,7 +967,7 @@ export default function AdminDashboard() {
     file: File,
     pathPrefix: string,
   ): Promise<{ downloadURL: string; filePath: string }> => {
-    if (!currentUser) throw new Error("Usuario no autenticado.")
+    if (!currentUser) throw new Error(t("errors.notAuthenticated"))
     const filePath = `${pathPrefix}/${Date.now()}-${file.name}`
     const storageRef = ref(storage, filePath)
     try {
@@ -946,7 +976,7 @@ export default function AdminDashboard() {
       return { downloadURL, filePath }
     } catch (error) {
       console.error("Error uploading image: ", error)
-      throw new Error("Error al subir la imagen.")
+      throw new Error(t("errors.uploadImage"))
     }
   }
 
@@ -965,7 +995,7 @@ export default function AdminDashboard() {
 
   const handleAddCategory = async () => {
     if (newCategoryName.trim() === "") {
-      setError("El nombre de la categoría no puede estar vacío.")
+      setError(t("errors.categoryNameEmpty"))
       return
     }
     setAddingCategory(true)
@@ -1003,7 +1033,7 @@ export default function AdminDashboard() {
       handleRemoveCategoryImage()
     } catch (err) {
       console.error("Error adding category:", err)
-      setError("Error al añadir la categoría. Revisa la consola para más detalles.")
+      setError(t("errors.addCategory"))
     } finally {
       setAddingCategory(false)
       setUploadingCategoryImage(false)
@@ -1011,7 +1041,7 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteCategory = async (categoryId: string, categoryName: string, imagePath?: string) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar la categoría "${categoryName}"?`)) {
+    if (!window.confirm(t("confirms.deleteCategory", { name: categoryName }))) {
       return
     }
     try {
@@ -1027,7 +1057,7 @@ export default function AdminDashboard() {
       console.log("Category deleted:", categoryId)
     } catch (err) {
       console.error("Error deleting category:", err)
-      setError(`Error al eliminar la categoría "${categoryName}".`)
+      setError(t("errors.deleteCategory", { name: categoryName }))
     }
   }
 
@@ -1046,7 +1076,7 @@ export default function AdminDashboard() {
 
   const handleAddBrand = async () => {
     if (newBrandName.trim() === "") {
-      setError("El nombre de la marca no puede estar vacío.")
+      setError(t("errors.brandNameEmpty"))
       return
     }
     setAddingBrand(true)
@@ -1077,7 +1107,7 @@ export default function AdminDashboard() {
       handleRemoveBrandImage()
     } catch (err) {
       console.error("Error adding brand:", err)
-      setError("Error al añadir la marca. Revisa la consola para más detalles.")
+      setError(t("errors.addBrand"))
     } finally {
       setAddingBrand(false)
       setUploadingBrandImage(false)
@@ -1085,7 +1115,7 @@ export default function AdminDashboard() {
   }
 
   const handleDeleteBrand = async (brandId: string, brandName: string, imagePath?: string) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar la marca "${brandName}"?`)) {
+    if (!window.confirm(t("confirms.deleteBrand", { name: brandName }))) {
       return
     }
     try {
@@ -1101,7 +1131,7 @@ export default function AdminDashboard() {
       console.log("Brand deleted:", brandId)
     } catch (err) {
       console.error("Error deleting brand:", err)
-      setError(`Error al eliminar la marca "${brandName}".`)
+      setError(t("errors.deleteBrand", { name: brandName }))
     }
   }
 
@@ -1134,8 +1164,8 @@ export default function AdminDashboard() {
   const handleSaveCategoryEdit = async () => {
     if (!editingCategory || !editCategoryName.trim()) {
       toast({
-        title: "Error",
-        description: "El nombre de la categoría es requerido.",
+        title: t("alerts.errorTitle"),
+        description: t("errors.categoryNameRequired"),
         variant: "destructive",
       })
       return
@@ -1178,8 +1208,8 @@ export default function AdminDashboard() {
       })
 
       toast({
-        title: "Categoría actualizada",
-        description: `La categoría "${editCategoryName}" ha sido actualizada exitosamente.`,
+        title: t("toasts.categoryUpdatedTitle"),
+        description: t("toasts.categoryUpdatedDescription", { name: editCategoryName }),
       })
 
       // Reset edit state
@@ -1194,8 +1224,8 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error updating category:", error)
       toast({
-        title: "Error",
-        description: "No se pudo actualizar la categoría. Por favor, inténtalo de nuevo.",
+        title: t("alerts.errorTitle"),
+        description: t("errors.updateCategoryFailed"),
         variant: "destructive",
       })
       setUploadingEditCategoryImage(false)
@@ -1239,8 +1269,8 @@ export default function AdminDashboard() {
   const handleSaveBrandEdit = async () => {
     if (!editingBrand || !editBrandName.trim()) {
       toast({
-        title: "Error",
-        description: "El nombre de la marca es requerido.",
+        title: t("alerts.errorTitle"),
+        description: t("errors.brandNameRequired"),
         variant: "destructive",
       })
       return
@@ -1282,8 +1312,8 @@ export default function AdminDashboard() {
       })
 
       toast({
-        title: "Marca actualizada",
-        description: `La marca "${editBrandName}" ha sido actualizada exitosamente.`,
+        title: t("toasts.brandUpdatedTitle"),
+        description: t("toasts.brandUpdatedDescription", { name: editBrandName }),
       })
 
       // Reset edit state
@@ -1297,8 +1327,8 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error updating brand:", error)
       toast({
-        title: "Error",
-        description: "No se pudo actualizar la marca. Por favor, inténtalo de nuevo.",
+        title: t("alerts.errorTitle"),
+        description: t("errors.updateBrandFailed"),
         variant: "destructive",
       })
       setUploadingEditBrandImage(false)
@@ -1343,7 +1373,7 @@ export default function AdminDashboard() {
       )
     } catch (error) {
       console.error("Error updating user status:", error)
-      setError("Error al actualizar el estado del usuario.")
+      setError(t("errors.updateUserStatus"))
     }
   }
 
@@ -1367,7 +1397,7 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error("Error approving cadete:", error)
-      setError("Error al aprobar el cadete.")
+      setError(t("errors.approveCadete"))
     }
   }
 
@@ -1391,13 +1421,13 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error("Error rejecting cadete:", error)
-      setError("Error al rechazar el cadete.")
+      setError(t("errors.rejectCadete"))
     }
   }
 
   // Función para eliminar productos desde la pestaña "Todos los Productos"
   const handleDeleteAllProduct = async (productId: string, productName: string) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar el producto "${productName}"?`)) {
+    if (!window.confirm(t("confirms.deleteProduct", { name: productName }))) {
       return
     }
     setDeletingProductId(productId)
@@ -1409,7 +1439,7 @@ export default function AdminDashboard() {
       console.log("Product deleted:", productId)
     } catch (err) {
       console.error("Error deleting product:", err)
-      setError(`Error al eliminar el producto "${productName}".`)
+      setError(t("errors.deleteProduct", { name: productName }))
     } finally {
       setDeletingProductId(null)
     }
@@ -1431,11 +1461,11 @@ export default function AdminDashboard() {
 
   const handleAddBanner = async () => {
     if (newBannerTitle.trim() === "") {
-      setError("El título del banner no puede estar vacío.")
+      setError(t("errors.bannerTitleEmpty"))
       return
     }
     if (!newBannerImageFile) {
-      setError("Debes seleccionar una imagen para el banner.")
+      setError(t("errors.bannerImageRequired"))
       return
     }
 
@@ -1477,7 +1507,7 @@ export default function AdminDashboard() {
       handleRemoveBannerImage()
     } catch (err) {
       console.error("Error adding banner:", err)
-      setError("Error al añadir el banner. Revisa la consola para más detalles.")
+      setError(t("errors.addBanner"))
     } finally {
       setAddingBanner(false)
       setUploadingBannerImage(false)
@@ -1491,12 +1521,12 @@ export default function AdminDashboard() {
       setBanners(banners.map((banner) => (banner.id === bannerId ? { ...banner, isActive: !currentStatus } : banner)))
     } catch (error) {
       console.error("Error updating banner status:", error)
-      setError("Error al actualizar el estado del banner.")
+      setError(t("errors.updateBanner"))
     }
   }
 
   const handleDeleteBanner = async (bannerId: string, bannerTitle: string, imagePath?: string) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar el banner "${bannerTitle}"?`)) {
+    if (!window.confirm(t("confirms.deleteBanner", { name: bannerTitle }))) {
       return
     }
     try {
@@ -1510,18 +1540,18 @@ export default function AdminDashboard() {
       setError(null)
     } catch (err) {
       console.error("Error deleting banner:", err)
-      setError(`Error al eliminar el banner "${bannerTitle}".`)
+      setError(t("errors.deleteBanner", { name: bannerTitle }))
     }
   }
 
   // Funciones para manejar alertas de ofertas
   const handleAddAlert = async () => {
     if (newAlertTitle.trim() === "") {
-      setError("El título de la alerta no puede estar vacío.")
+      setError(t("errors.alertTitleEmpty"))
       return
     }
     if (newAlertMessage.trim() === "") {
-      setError("El mensaje de la alerta no puede estar vacío.")
+      setError(t("errors.alertMessageEmpty"))
       return
     }
 
@@ -1561,7 +1591,7 @@ export default function AdminDashboard() {
       setNewAlertEndDate("")
     } catch (err) {
       console.error("Error adding alert:", err)
-      setError("Error al añadir la alerta. Revisa la consola para más detalles.")
+      setError(t("errors.addAlert"))
     } finally {
       setAddingAlert(false)
     }
@@ -1574,12 +1604,12 @@ export default function AdminDashboard() {
       setOfferAlerts(offerAlerts.map((alert) => (alert.id === alertId ? { ...alert, isActive: !currentStatus } : alert)))
     } catch (error) {
       console.error("Error updating alert status:", error)
-      setError("Error al actualizar el estado de la alerta.")
+      setError(t("errors.updateAlert"))
     }
   }
 
   const handleDeleteAlert = async (alertId: string, alertTitle: string) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar la alerta "${alertTitle}"?`)) {
+    if (!window.confirm(t("confirms.deleteAlert", { name: alertTitle }))) {
       return
     }
     try {
@@ -1588,22 +1618,22 @@ export default function AdminDashboard() {
       setError(null)
     } catch (err) {
       console.error("Error deleting alert:", err)
-      setError(`Error al eliminar la alerta "${alertTitle}".`)
+      setError(t("errors.deleteAlert", { name: alertTitle }))
     }
   }
 
   // Funciones para manejar cupones
   const handleAddCoupon = async () => {
     if (newCouponCode.trim() === "") {
-      setError("El código del cupón no puede estar vacío.")
+      setError(t("errors.couponCodeEmpty"))
       return
     }
     if (newCouponName.trim() === "") {
-      setError("El nombre del cupón no puede estar vacío.")
+      setError(t("errors.couponNameEmpty"))
       return
     }
     if (!newCouponDiscountValue || parseFloat(newCouponDiscountValue) <= 0) {
-      setError("El valor del descuento debe ser mayor a 0.")
+      setError(t("errors.couponDiscountInvalid"))
       return
     }
 
@@ -1664,7 +1694,7 @@ export default function AdminDashboard() {
       setNewCouponEndDate("")
     } catch (err) {
       console.error("Error adding coupon:", err)
-      setError("Error al añadir el cupón. Revisa la consola para más detalles.")
+      setError(t("errors.addCoupon"))
     } finally {
       setAddingCoupon(false)
     }
@@ -1677,12 +1707,12 @@ export default function AdminDashboard() {
       setCoupons(coupons.map((coupon) => (coupon.id === couponId ? { ...coupon, isActive: !currentStatus } : coupon)))
     } catch (error) {
       console.error("Error updating coupon status:", error)
-      setError("Error al actualizar el estado del cupón.")
+      setError(t("errors.updateCoupon"))
     }
   }
 
   const handleDeleteCoupon = async (couponId: string, couponName: string) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar el cupón "${couponName}"?`)) {
+    if (!window.confirm(t("confirms.deleteCoupon", { name: couponName }))) {
       return
     }
     try {
@@ -1691,7 +1721,7 @@ export default function AdminDashboard() {
       setError(null)
     } catch (err) {
       console.error("Error deleting coupon:", err)
-      setError(`Error al eliminar el cupón "${couponName}".`)
+      setError(t("errors.deleteCoupon", { name: couponName }))
     }
   }
 
@@ -1714,14 +1744,16 @@ export default function AdminDashboard() {
 
   const handleBulkUserAction = async (action: 'activate' | 'deactivate' | 'delete') => {
     if (selectedUsers.length === 0) {
-      setError("No hay usuarios seleccionados")
+      setError(t("errors.noUsersSelected"))
       return
     }
 
-    const confirmMessage = 
-      action === 'activate' ? `¿Activar ${selectedUsers.length} usuarios?` :
-      action === 'deactivate' ? `¿Desactivar ${selectedUsers.length} usuarios?` :
-      `¿Eliminar ${selectedUsers.length} usuarios? Esta acción no se puede deshacer.`
+    const confirmMessage =
+      action === "activate"
+        ? t("confirms.bulkActivateUsers", { count: selectedUsers.length })
+        : action === "deactivate"
+          ? t("confirms.bulkDeactivateUsers", { count: selectedUsers.length })
+          : t("confirms.bulkDeleteUsers", { count: selectedUsers.length })
 
     if (!window.confirm(confirmMessage)) return
 
@@ -1761,7 +1793,7 @@ export default function AdminDashboard() {
       setError(null)
     } catch (err) {
       console.error("Error in bulk action:", err)
-      setError("Error al realizar la acción masiva")
+      setError(t("errors.bulkAction"))
     } finally {
       setBulkActionLoading(false)
     }
@@ -1785,11 +1817,11 @@ export default function AdminDashboard() {
 
   const handleBulkProductAction = async (action: 'delete') => {
     if (selectedProducts.length === 0) {
-      setError("No hay productos seleccionados")
+      setError(t("errors.noProductsSelected"))
       return
     }
 
-    if (!window.confirm(`¿Eliminar ${selectedProducts.length} productos? Esta acción no se puede deshacer.`)) return
+    if (!window.confirm(t("confirms.bulkDeleteProducts", { count: selectedProducts.length }))) return
 
     setBulkActionLoading(true)
     try {
@@ -1802,7 +1834,7 @@ export default function AdminDashboard() {
       setError(null)
     } catch (err) {
       console.error("Error in bulk product action:", err)
-      setError("Error al realizar la acción masiva")
+      setError(t("errors.bulkAction"))
     } finally {
       setBulkActionLoading(false)
     }
@@ -1911,8 +1943,8 @@ export default function AdminDashboard() {
     }))
     const ws = XLSX.utils.json_to_sheet(exportData)
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Ventas')
-    XLSX.writeFile(wb, 'ventas_admin.xlsx')
+    XLSX.utils.book_append_sheet(wb, ws, t("sales.exportSheetName"))
+    XLSX.writeFile(wb, t("sales.exportFileName"))
   }
 
   // 1. Agrupar ventas por compraId
@@ -1973,13 +2005,13 @@ export default function AdminDashboard() {
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
         <Alert variant="destructive" className="max-w-md">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Acceso Denegado</AlertTitle>
+          <AlertTitle>{t("shell.accessDeniedTitle")}</AlertTitle>
           <AlertDescription>
-            No tienes permisos para acceder a esta página. Por favor,{" "}
+            {t("shell.accessDeniedBeforeLogin")}{" "}
             <Link href="/login" className="underline">
-              inicia sesión
+              {t("shell.loginLink")}
             </Link>{" "}
-            con una cuenta de administrador.
+            {t("shell.accessDeniedAfterLogin")}
           </AlertDescription>
         </Alert>
       </div>
@@ -1990,7 +2022,7 @@ export default function AdminDashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-        <span className="ml-2 text-lg text-gray-700">Cargando panel administrativo...</span>
+        <span className="ml-2 text-lg text-gray-700">{t("shell.loading")}</span>
       </div>
     )
   }
@@ -2006,32 +2038,20 @@ export default function AdminDashboard() {
                 <Package2 className="h-6 w-6 text-purple-200" />
               </div>
               <div className="leading-tight">
-                <span className="block text-[10px] uppercase tracking-[0.28em] text-purple-200/70">Servido</span>
-                <span className="text-lg">Control Center</span>
+                <span className="block text-[10px] uppercase tracking-[0.28em] text-purple-200/70">{t("shell.brand")}</span>
+                <span className="text-lg">{t("shell.controlCenter")}</span>
               </div>
             </Link>
           </div>
           <div className="px-4 pb-3 pt-4">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.25em] text-purple-200/70">Session</p>
-              <p className="mt-2 text-sm text-white/80">Panel privilegiado para administración crítica</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-purple-200/70">{t("shell.session")}</p>
+              <p className="mt-2 text-sm text-white/80">{t("shell.sessionDescription")}</p>
             </div>
           </div>
           <div className="flex-1 overflow-auto py-2">
             <nav className="grid items-start gap-2 px-4 text-sm font-medium">
-              {[
-                { tab: "overview", label: "Resumen", icon: Home },
-                { tab: "users", label: "Usuarios", icon: Users },
-                { tab: "cadetes", label: "Cadetes", icon: Bike },
-                { tab: "categories", label: "Categorías", icon: List },
-                { tab: "brands", label: "Marcas", icon: Tag },
-                { tab: "allProducts", label: "Todos los Productos", icon: ShoppingCart },
-                { tab: "sales", label: "Ventas", icon: DollarSign },
-                { tab: "banners", label: "Banners", icon: ImageIcon },
-                { tab: "alerts", label: "Alertas", icon: Megaphone },
-                { tab: "coupons", label: "Cupones", icon: Percent },
-                { tab: "subscriptionPricing", label: "Precios Suscripción", icon: Percent },
-              ].map((item) => (
+              {adminNavItems.map((item) => (
                 <Button
                   key={item.tab}
                   variant={activeTab === item.tab ? "secondary" : "ghost"}
@@ -2062,7 +2082,7 @@ export default function AdminDashboard() {
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="lg:hidden">
                 <Menu className="h-6 w-6" />
-                <span className="sr-only">Abrir menú</span>
+                <span className="sr-only">{t("shell.openMenu")}</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="lg:hidden w-80 border-white/10 bg-slate-950 text-white">
@@ -2072,24 +2092,13 @@ export default function AdminDashboard() {
                     <Package2 className="h-6 w-6 text-purple-200" />
                   </div>
                   <div className="leading-tight">
-                    <span className="block text-[10px] uppercase tracking-[0.28em] text-purple-200/70">Servido</span>
-                    <span className="text-lg">Control Center</span>
+                    <span className="block text-[10px] uppercase tracking-[0.28em] text-purple-200/70">{t("shell.brand")}</span>
+                    <span className="text-lg">{t("shell.controlCenter")}</span>
                   </div>
                 </Link>
               </div>
               <nav className="grid gap-2 p-4 text-base font-medium">
-                {[
-                  { tab: "overview", label: "Resumen", icon: Home },
-                  { tab: "users", label: "Usuarios", icon: Users },
-                  { tab: "cadetes", label: "Cadetes", icon: Bike },
-                  { tab: "categories", label: "Categorías", icon: List },
-                  { tab: "brands", label: "Marcas", icon: Tag },
-                  { tab: "allProducts", label: "Todos los Productos", icon: ShoppingCart },
-                  { tab: "sales", label: "Ventas", icon: DollarSign },
-                  { tab: "banners", label: "Banners", icon: ImageIcon },
-                  { tab: "alerts", label: "Alertas", icon: Megaphone },
-                  { tab: "coupons", label: "Cupones", icon: Percent },
-                ].map((item) => (
+                {adminNavItems.map((item) => (
                   <Button
                     key={item.tab}
                     variant={activeTab === item.tab ? "secondary" : "ghost"}
@@ -2114,7 +2123,7 @@ export default function AdminDashboard() {
             </SheetContent>
           </Sheet>
           <h1 className="font-semibold text-lg md:text-2xl text-gray-800 flex-1 text-center lg:text-left">
-            Panel Administrativo
+            {t("shell.pageTitle")}
           </h1>
         </header>
 
@@ -2123,7 +2132,7 @@ export default function AdminDashboard() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>{t("alerts.errorTitle")}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -2131,16 +2140,16 @@ export default function AdminDashboard() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {/* Responsive TabsList */}
             <TabsList className="flex w-full overflow-x-auto justify-start sm:justify-center md:justify-start bg-white border-b pb-2 hidden lg:flex">
-              <TabsTrigger value="overview">Resumen</TabsTrigger>
-              <TabsTrigger value="users">Usuarios</TabsTrigger>
-              <TabsTrigger value="categories">Categorías</TabsTrigger>
-              <TabsTrigger value="brands">Marcas</TabsTrigger>
-              <TabsTrigger value="allProducts">Todos los Productos</TabsTrigger>
-              <TabsTrigger value="sales">Ventas y Comisiones</TabsTrigger>
-              <TabsTrigger value="banners">Banners</TabsTrigger>
-              <TabsTrigger value="alerts">Alertas</TabsTrigger>
-              <TabsTrigger value="coupons">Cupones</TabsTrigger>
-              <TabsTrigger value="subscriptionPricing">Precios Suscripción</TabsTrigger>
+              <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
+              <TabsTrigger value="users">{t("tabs.users")}</TabsTrigger>
+              <TabsTrigger value="categories">{t("tabs.categories")}</TabsTrigger>
+              <TabsTrigger value="brands">{t("tabs.brands")}</TabsTrigger>
+              <TabsTrigger value="allProducts">{t("tabs.allProducts")}</TabsTrigger>
+              <TabsTrigger value="sales">{t("tabs.sales")}</TabsTrigger>
+              <TabsTrigger value="banners">{t("tabs.banners")}</TabsTrigger>
+              <TabsTrigger value="alerts">{t("tabs.alerts")}</TabsTrigger>
+              <TabsTrigger value="coupons">{t("tabs.coupons")}</TabsTrigger>
+              <TabsTrigger value="subscriptionPricing">{t("tabs.subscriptionPricing")}</TabsTrigger>
             </TabsList>
 
             {/* Overview Tab */}
@@ -2150,49 +2159,49 @@ export default function AdminDashboard() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t("overview.totalUsers")}</CardTitle>
                     <Users className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{users.length}</div>
                       <p className="text-xs text-muted-foreground">
-                        {users.filter(u => u.isActive).length} activos
+                        {t("overview.activeUsers", { count: users.filter(u => u.isActive).length })}
                       </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">Total Productos</CardTitle>
+                      <CardTitle className="text-sm font-medium">{t("overview.totalProducts")}</CardTitle>
                       <ShoppingBag className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                       <div className="text-2xl font-bold">{products.length}</div>
                       <p className="text-xs text-muted-foreground">
-                        {products.filter(p => !p.isService).length} productos, {products.filter(p => p.isService).length} servicios
+                        {t("overview.productsServicesBreakdown", { products: products.filter(p => !p.isService).length, services: products.filter(p => p.isService).length })}
                       </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">Ventas Totales</CardTitle>
+                      <CardTitle className="text-sm font-medium">{t("overview.totalSales")}</CardTitle>
                       <TrendingUp className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                       <div className="text-2xl font-bold">{formatPriceNumber(salesSummary.totalVentas)}</div>
                       <p className="text-xs text-muted-foreground">
-                        {formatPriceNumber(salesSummary.totalComisiones)} en comisiones
+                        {t("overview.commissionsAmount", { amount: formatPriceNumber(salesSummary.totalComisiones) })}
                       </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">Notificaciones</CardTitle>
+                      <CardTitle className="text-sm font-medium">{t("overview.notifications")}</CardTitle>
                       <AlertTriangle className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                       <div className="text-2xl font-bold">{notifications.filter(n => !n.isRead).length}</div>
                       <p className="text-xs text-muted-foreground">
-                        {notifications.length} total
+                        {t("overview.totalCount", { count: notifications.length })}
                       </p>
                   </CardContent>
                 </Card>
@@ -2201,9 +2210,9 @@ export default function AdminDashboard() {
                 {/* Distribución por categorías */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Distribución de Productos por Categoría</CardTitle>
+                    <CardTitle>{t("overview.categoryDistributionTitle")}</CardTitle>
                     <CardDescription>
-                      Análisis de la distribución de productos en el marketplace
+                      {t("overview.categoryDistributionDesc")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -2239,7 +2248,7 @@ export default function AdminDashboard() {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">Categorías</CardTitle>
+                      <CardTitle className="text-sm font-medium">{t("overview.categories")}</CardTitle>
                       <List className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
@@ -2248,7 +2257,7 @@ export default function AdminDashboard() {
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">Marcas</CardTitle>
+                      <CardTitle className="text-sm font-medium">{t("overview.brands")}</CardTitle>
                       <Tag className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
@@ -2257,23 +2266,23 @@ export default function AdminDashboard() {
                   </Card>
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">Banners Activos</CardTitle>
+                      <CardTitle className="text-sm font-medium">{t("overview.activeBanners")}</CardTitle>
                       <ImageIcon className="w-4 h-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{banners.filter(b => b.isActive).length}</div>
-                      <p className="text-xs text-muted-foreground">de {banners.length} total</p>
+                      <p className="text-xs text-muted-foreground">{t("common.ofTotal", { total: banners.length })}</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">Cupones Activos</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t("overview.activeCoupons")}</CardTitle>
                     <Percent className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{coupons.filter(c => c.isActive).length}</div>
                       <p className="text-xs text-muted-foreground">
-                        {coupons.reduce((total, coupon) => total + coupon.usedCount, 0)} usos totales
+                        {t("overview.totalCouponUses", { count: coupons.reduce((total, coupon) => total + coupon.usedCount, 0) })}
                       </p>
                   </CardContent>
                 </Card>
@@ -2282,7 +2291,7 @@ export default function AdminDashboard() {
                 {/* Top vendedores */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Top Vendedores</CardTitle>
+                    <CardTitle>{t("overview.topSellersTitle")}</CardTitle>
                     <CardDescription>
                       Vendedores con más ventas en el período actual
                     </CardDescription>
@@ -2301,12 +2310,12 @@ export default function AdminDashboard() {
                                 </div>
                                 <div>
                                   <div className="font-medium">{vendedor.vendedorNombre}</div>
-                                  <div className="text-sm text-gray-500">{formatPriceNumber(vendedor.totalVentas)} en ventas</div>
+                                  <div className="text-sm text-gray-500">{t("overview.salesAmount", { amount: formatPriceNumber(vendedor.totalVentas) })}</div>
                                 </div>
                               </div>
                               <div className="text-right">
                                 <div className="font-semibold text-green-600">{formatPriceNumber(vendedor.totalComisiones)}</div>
-                                <div className="text-sm text-gray-500">comisiones</div>
+                                <div className="text-sm text-gray-500">{t("overview.commissionsLabel")}</div>
                               </div>
                             </div>
                           ))
@@ -2325,7 +2334,7 @@ export default function AdminDashboard() {
             <TabsContent value="users" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
-                  <CardTitle>Gestión de Usuarios</CardTitle>
+                  <CardTitle>{t("users.title")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {/* Acciones masivas */}
@@ -2333,7 +2342,7 @@ export default function AdminDashboard() {
                     <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-blue-900">
-                          {selectedUsers.length} usuario(s) seleccionado(s)
+                          {t("users.selectedCount", { count: selectedUsers.length })}
                         </span>
                         <div className="flex gap-2">
                           <Button
@@ -2346,7 +2355,7 @@ export default function AdminDashboard() {
                             ) : (
                               <CheckCircle className="h-4 w-4" />
                             )}
-                            <span className="ml-2">Activar</span>
+                            <span className="ml-2">{t("common.activate")}</span>
                           </Button>
                           <Button
                             size="sm"
@@ -2355,7 +2364,7 @@ export default function AdminDashboard() {
                             disabled={bulkActionLoading}
                           >
                             <X className="h-4 w-4" />
-                            <span className="ml-2">Desactivar</span>
+                            <span className="ml-2">{t("common.deactivate")}</span>
                           </Button>
                           <Button
                             size="sm"
@@ -2364,7 +2373,7 @@ export default function AdminDashboard() {
                             disabled={bulkActionLoading}
                           >
                             <Trash2 className="h-4 w-4" />
-                            <span className="ml-2">Eliminar</span>
+                            <span className="ml-2">{t("common.delete")}</span>
                           </Button>
                         </div>
                       </div>
@@ -2381,12 +2390,12 @@ export default function AdminDashboard() {
                               onCheckedChange={handleSelectAllUsers}
                             />
                           </TableHead>
-                          <TableHead className="w-[50px] p-1 md:p-2">Perfil</TableHead>
-                          <TableHead className="p-1 md:p-2">Nombre</TableHead>
-                          <TableHead className="p-1 md:p-2 max-w-[100px] truncate">Email</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Rol</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Estado</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Acciones</TableHead>
+                          <TableHead className="w-[50px] p-1 md:p-2">{t("common.profile")}</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("common.name")}</TableHead>
+                          <TableHead className="p-1 md:p-2 max-w-[100px] truncate">{t("common.email")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("common.role")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("common.status")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("common.actions")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -2425,7 +2434,7 @@ export default function AdminDashboard() {
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
                               >
-                                {user.isActive ? "Activo" : "Inactivo"}
+                                {user.isActive ? t("common.active") : t("common.inactive")}
                               </span>
                             </TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2">
@@ -2434,7 +2443,7 @@ export default function AdminDashboard() {
                                 size="sm"
                                 onClick={() => handleToggleUserActive(user.id, user.isActive)}
                               >
-                                {user.isActive ? "Desactivar" : "Activar"}
+                                {user.isActive ? t("common.deactivate") : t("common.activate")}
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -2450,7 +2459,7 @@ export default function AdminDashboard() {
             <TabsContent value="cadetes" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
-                  <CardTitle>Gestión de Cadetes</CardTitle>
+                  <CardTitle>{t("cadetes.title")}</CardTitle>
                   <CardDescription>
                     Aprobá o rechazá postulaciones. Solo los aprobados pueden tomar pedidos del pool.
                   </CardDescription>
@@ -2462,7 +2471,7 @@ export default function AdminDashboard() {
                     if (cadetes.length === 0) {
                       return (
                         <p className="py-8 text-center text-gray-500">
-                          Todavía no hay postulaciones de cadetes.
+                          {t("cadetes.empty")}
                         </p>
                       )
                     }
@@ -2470,20 +2479,20 @@ export default function AdminDashboard() {
                       <div className="space-y-6">
                         {pending.length > 0 && (
                           <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                            {pending.length} cadete(s) pendiente(s) de revisión
+                            {t("cadetes.pendingBanner", { count: pending.length })}
                           </p>
                         )}
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead>Nombre</TableHead>
-                                <TableHead>Contacto</TableHead>
-                                <TableHead className="hidden md:table-cell">Zona</TableHead>
-                                <TableHead className="hidden md:table-cell">Vehículo</TableHead>
-                                <TableHead className="hidden lg:table-cell">Documento</TableHead>
-                                <TableHead>Estado</TableHead>
-                                <TableHead>Acciones</TableHead>
+                                <TableHead>{t("common.name")}</TableHead>
+                                <TableHead>{t("cadetes.contact")}</TableHead>
+                                <TableHead className="hidden md:table-cell">{t("cadetes.zone")}</TableHead>
+                                <TableHead className="hidden md:table-cell">{t("cadetes.vehicle")}</TableHead>
+                                <TableHead className="hidden lg:table-cell">{t("cadetes.document")}</TableHead>
+                                <TableHead>{t("common.status")}</TableHead>
+                                <TableHead>{t("common.actions")}</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -2518,7 +2527,7 @@ export default function AdminDashboard() {
                                                 : "secondary"
                                           }
                                         >
-                                          {CADETE_STATUS_LABELS[status] || status}
+                                          {getCadeteStatusLabel(t, status)}
                                         </Badge>
                                       </TableCell>
                                       <TableCell>
@@ -2562,7 +2571,7 @@ export default function AdminDashboard() {
             <TabsContent value="categories" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
-                  <CardTitle>Gestión de Categorías</CardTitle>
+                  <CardTitle>{t("categories.title")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form
@@ -2572,9 +2581,9 @@ export default function AdminDashboard() {
                     }}
                     className="mb-6 p-4 border rounded-lg space-y-3"
                   >
-                    <h3 className="text-lg font-medium">Añadir Nueva Categoría</h3>
+                    <h3 className="text-lg font-medium">{t("categories.addTitle")}</h3>
                     <div>
-                      <Label htmlFor="newCategoryName">Nombre de Categoría</Label>
+                      <Label htmlFor="newCategoryName">{t("categories.categoryName")}</Label>
                       <Input
                         id="newCategoryName"
                         value={newCategoryName}
@@ -2583,17 +2592,17 @@ export default function AdminDashboard() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="newCategoryDescription">Descripción (Opcional)</Label>
+                      <Label htmlFor="newCategoryDescription">{t("categories.descriptionOptional")}</Label>
                       <Textarea
                         id="newCategoryDescription"
                         value={newCategoryDescription}
                         onChange={(e) => setNewCategoryDescription(e.target.value)}
-                        placeholder="Breve descripción de la categoría..."
+                        placeholder={t("categories.descriptionPlaceholder")}
                       />
                     </div>
                     {/* Image Upload for Category */}
                     <div>
-                      <Label htmlFor="newCategoryImage">Imagen de Categoría (Opcional)</Label>
+                      <Label htmlFor="newCategoryImage">{t("categories.imageOptional")}</Label>
                       <div className="mt-2 flex flex-col items-center gap-2 p-4 border-2 border-dashed rounded-lg">
                         <div className="w-24 h-24 relative flex items-center justify-center bg-gray-100 rounded-md overflow-hidden">
                           {newCategoryImagePreviewUrl ? (
@@ -2633,7 +2642,7 @@ export default function AdminDashboard() {
                       </div>
                       {uploadingCategoryImage && (
                         <p className="text-sm text-purple-600 mt-2 flex items-center">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Subiendo imagen...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("common.uploadingImage")}
                         </p>
                       )}
                     </div>
@@ -2643,7 +2652,7 @@ export default function AdminDashboard() {
                       ) : (
                         <PlusCircle className="mr-2 h-4 w-4" />
                       )}
-                      Añadir Categoría
+                      {t("categories.addButton")}
                     </Button>
                   </form>
 
@@ -2653,10 +2662,10 @@ export default function AdminDashboard() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[40px] p-1 md:p-2">Imagen</TableHead>
-                          <TableHead className="p-1 md:p-2">Nombre</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Descripción</TableHead>
-                          <TableHead className="p-1 md:p-2">Acciones</TableHead>
+                          <TableHead className="w-[40px] p-1 md:p-2">{t("common.image")}</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("common.name")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("common.description")}</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("common.actions")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -2708,9 +2717,9 @@ export default function AdminDashboard() {
                   {/* Category Edit Form */}
                   {editingCategory && (
                     <div className="mt-6 p-4 border rounded-lg bg-gray-50 space-y-3">
-                      <h3 className="text-lg font-medium">Editar Categoría: {editingCategory.name}</h3>
+                      <h3 className="text-lg font-medium">{t("categories.editTitle", { name: editingCategory.name })}</h3>
                       <div>
-                        <Label htmlFor="editCategoryName">Nombre de Categoría</Label>
+                        <Label htmlFor="editCategoryName">{t("categories.categoryName")}</Label>
                         <Input
                           id="editCategoryName"
                           value={editCategoryName}
@@ -2719,16 +2728,16 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="editCategoryDescription">Descripción (Opcional)</Label>
+                        <Label htmlFor="editCategoryDescription">{t("categories.descriptionOptional")}</Label>
                         <Textarea
                           id="editCategoryDescription"
                           value={editCategoryDescription}
                           onChange={(e) => setEditCategoryDescription(e.target.value)}
-                          placeholder="Breve descripción de la categoría..."
+                          placeholder={t("categories.descriptionPlaceholder")}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="editCategoryImage">Imagen de Categoría (Opcional)</Label>
+                        <Label htmlFor="editCategoryImage">{t("categories.imageOptional")}</Label>
                         <div className="mt-2 flex flex-col items-center gap-2 p-4 border-2 border-dashed rounded-lg">
                           <div className="w-24 h-24 relative flex items-center justify-center bg-gray-100 rounded-md overflow-hidden">
                             {editCategoryImagePreviewUrl ? (
@@ -2768,7 +2777,7 @@ export default function AdminDashboard() {
                         </div>
                         {uploadingEditCategoryImage && (
                           <p className="text-sm text-purple-600 mt-2 flex items-center">
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Subiendo imagen...
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("common.uploadingImage")}
                           </p>
                         )}
                       </div>
@@ -2782,13 +2791,13 @@ export default function AdminDashboard() {
                           ) : (
                             <CheckCircle className="mr-2 h-4 w-4" />
                           )}
-                          Guardar Cambios
+                          {t("common.saveChanges")}
                         </Button>
                         <Button 
                           variant="outline" 
                           onClick={handleCancelCategoryEdit}
                         >
-                          Cancelar
+                          {t("common.cancel")}
                         </Button>
                       </div>
                     </div>
@@ -2801,7 +2810,7 @@ export default function AdminDashboard() {
             <TabsContent value="brands" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
-                  <CardTitle>Gestión de Marcas</CardTitle>
+                  <CardTitle>{t("brands.title")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form
@@ -2811,9 +2820,9 @@ export default function AdminDashboard() {
                     }}
                     className="mb-6 p-4 border rounded-lg space-y-3"
                   >
-                    <h3 className="text-lg font-medium">Añadir Nueva Marca</h3>
+                    <h3 className="text-lg font-medium">{t("brands.addTitle")}</h3>
                     <div>
-                      <Label htmlFor="newBrandName">Nombre de Marca</Label>
+                      <Label htmlFor="newBrandName">{t("brands.brandName")}</Label>
                       <Input
                         id="newBrandName"
                         value={newBrandName}
@@ -2823,7 +2832,7 @@ export default function AdminDashboard() {
                     </div>
                     {/* Image Upload for Brand */}
                     <div>
-                      <Label htmlFor="newBrandImage">Logo de Marca (Opcional)</Label>
+                      <Label htmlFor="newBrandImage">{t("brands.logoOptional")}</Label>
                       <div className="mt-2 flex flex-col items-center gap-2 p-4 border-2 border-dashed rounded-lg">
                         <div className="w-24 h-24 relative flex items-center justify-center bg-gray-100 rounded-md overflow-hidden">
                           {newBrandImagePreviewUrl ? (
@@ -2863,7 +2872,7 @@ export default function AdminDashboard() {
                       </div>
                       {uploadingBrandImage && (
                         <p className="text-sm text-purple-600 mt-2 flex items-center">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Subiendo imagen...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("common.uploadingImage")}
                         </p>
                       )}
                     </div>
@@ -2873,7 +2882,7 @@ export default function AdminDashboard() {
                       ) : (
                         <PlusCircle className="mr-2 h-4 w-4" />
                       )}
-                      Añadir Marca
+                      {t("brands.addButton")}
                     </Button>
                   </form>
 
@@ -2883,9 +2892,9 @@ export default function AdminDashboard() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[80px]">Logo</TableHead>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Acciones</TableHead>
+                          <TableHead className="w-[80px]">{t("brands.logo")}</TableHead>
+                          <TableHead>{t("common.name")}</TableHead>
+                          <TableHead>{t("common.actions")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -2936,9 +2945,9 @@ export default function AdminDashboard() {
                   {/* Brand Edit Form */}
                   {editingBrand && (
                     <div className="mt-6 p-4 border rounded-lg bg-gray-50 space-y-3">
-                      <h3 className="text-lg font-medium">Editar Marca: {editingBrand.name}</h3>
+                      <h3 className="text-lg font-medium">{t("brands.editTitle", { name: editingBrand.name })}</h3>
                       <div>
-                        <Label htmlFor="editBrandName">Nombre de Marca</Label>
+                        <Label htmlFor="editBrandName">{t("brands.brandName")}</Label>
                         <Input
                           id="editBrandName"
                           value={editBrandName}
@@ -2947,7 +2956,7 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="editBrandImage">Logo de Marca (Opcional)</Label>
+                        <Label htmlFor="editBrandImage">{t("brands.logoOptional")}</Label>
                         <div className="mt-2 flex flex-col items-center gap-2 p-4 border-2 border-dashed rounded-lg">
                           <div className="w-24 h-24 relative flex items-center justify-center bg-gray-100 rounded-md overflow-hidden">
                             {editBrandImagePreviewUrl ? (
@@ -2987,7 +2996,7 @@ export default function AdminDashboard() {
                         </div>
                         {uploadingEditBrandImage && (
                           <p className="text-sm text-purple-600 mt-2 flex items-center">
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Subiendo imagen...
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("common.uploadingImage")}
                           </p>
                         )}
                       </div>
@@ -3001,13 +3010,13 @@ export default function AdminDashboard() {
                           ) : (
                             <CheckCircle className="mr-2 h-4 w-4" />
                           )}
-                          Guardar Cambios
+                          {t("common.saveChanges")}
                         </Button>
                         <Button 
                           variant="outline" 
                           onClick={handleCancelBrandEdit}
                         >
-                          Cancelar
+                          {t("common.cancel")}
                         </Button>
                       </div>
                     </div>
@@ -3020,32 +3029,32 @@ export default function AdminDashboard() {
             <TabsContent value="allProducts" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card className="w-full max-w-full">
                 <CardHeader>
-                  <CardTitle>Todos los Productos de la Plataforma</CardTitle>
+                  <CardTitle>{t("allProducts.title")}</CardTitle>
                   <CardDescription>
-                    Visualiza y gestiona todos los productos y servicios de todos los vendedores.
+                    {t("allProducts.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-1 xs:px-2 sm:px-4 md:px-6 py-2 w-full max-w-full">
                   {/* Filtros para todos los productos */}
                   <div className="mb-4 sm:mb-6 w-full max-w-full px-0 py-2 border rounded-lg bg-white flex flex-col gap-2 xs:gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
                     <div className="w-full max-w-full">
-                      <Label htmlFor="allProductsSearchTerm">Buscar</Label>
+                      <Label htmlFor="allProductsSearchTerm">{t("allProducts.search")}</Label>
                       <Input
                         id="allProductsSearchTerm"
-                        placeholder="Nombre o descripción..."
+                        placeholder={t("allProducts.searchPlaceholder")}
                         value={allProductsSearchTerm}
                         onChange={(e) => setAllProductsSearchTerm(e.target.value)}
                         className="text-xs xs:text-sm w-full max-w-full"
                       />
                     </div>
                     <div className="w-full max-w-full">
-                      <Label htmlFor="allProductsFilterCategory">Categoría</Label>
+                      <Label htmlFor="allProductsFilterCategory">{t("allProducts.category")}</Label>
                       <Select value={allProductsFilterCategory} onValueChange={setAllProductsFilterCategory}>
                         <SelectTrigger className="text-xs xs:text-sm w-full max-w-full">
-                          <SelectValue placeholder="Todas las categorías" />
+                          <SelectValue placeholder={t("allProducts.allCategories")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Todas las categorías</SelectItem>
+                          <SelectItem value="all">{t("allProducts.allCategories")}</SelectItem>
                           {categories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id} className="text-xs xs:text-sm">
                               {cat.name}
@@ -3055,13 +3064,13 @@ export default function AdminDashboard() {
                       </Select>
                     </div>
                     <div className="w-full max-w-full">
-                      <Label htmlFor="allProductsFilterSeller">Vendedor</Label>
+                      <Label htmlFor="allProductsFilterSeller">{t("common.seller")}</Label>
                       <Select value={allProductsFilterSeller} onValueChange={setAllProductsFilterSeller}>
                         <SelectTrigger className="text-xs xs:text-sm w-full max-w-full">
-                          <SelectValue placeholder="Todos los vendedores" />
+                          <SelectValue placeholder={t("allProducts.allSellers")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Todos los vendedores</SelectItem>
+                          <SelectItem value="all">{t("allProducts.allSellers")}</SelectItem>
                           {users
                             .filter((user) => user.role === "seller")
                             .map((seller) => (
@@ -3073,29 +3082,29 @@ export default function AdminDashboard() {
                       </Select>
                     </div>
                     <div className="w-full max-w-full">
-                      <Label htmlFor="allProductsFilterType">Tipo</Label>
+                      <Label htmlFor="allProductsFilterType">{t("allProducts.type")}</Label>
                       <Select value={allProductsFilterIsService} onValueChange={setAllProductsFilterIsService}>
                         <SelectTrigger className="text-xs xs:text-sm w-full max-w-full">
-                          <SelectValue placeholder="Todos los tipos" />
+                          <SelectValue placeholder={t("allProducts.allTypes")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Todos</SelectItem>
-                          <SelectItem value="product">Productos</SelectItem>
-                          <SelectItem value="service">Servicios</SelectItem>
+                          <SelectItem value="all">{t("sales.filters.payment.all")}</SelectItem>
+                          <SelectItem value="product">{t("common.products")}</SelectItem>
+                          <SelectItem value="service">{t("common.services")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="w-full max-w-full sm:col-span-2 lg:col-span-1">
-                      <Label htmlFor="allProductsSortOrder">Ordenar por</Label>
+                      <Label htmlFor="allProductsSortOrder">{t("allProducts.sortBy")}</Label>
                       <Select value={allProductsSortOrder} onValueChange={setAllProductsSortOrder}>
                         <SelectTrigger className="text-xs xs:text-sm w-full max-w-full">
-                          <SelectValue placeholder="Orden predeterminado" />
+                          <SelectValue placeholder={t("allProducts.sortDefaultPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="default">Predeterminado</SelectItem>
-                          <SelectItem value="reviews_desc">Reseñas (Mayor a Menor)</SelectItem>
-                          <SelectItem value="price_asc">Precio (Menor a Mayor)</SelectItem>
-                          <SelectItem value="price_desc">Precio (Mayor a Mayor)</SelectItem>
+                          <SelectItem value="default">{t("allProducts.sortDefault")}</SelectItem>
+                          <SelectItem value="reviews_desc">{t("allProducts.sortReviewsDesc")}</SelectItem>
+                          <SelectItem value="price_asc">{t("allProducts.sortPriceAsc")}</SelectItem>
+                          <SelectItem value="price_desc">{t("allProducts.sortPriceDesc")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -3106,20 +3115,20 @@ export default function AdminDashboard() {
                     <Table className="min-w-[320px] xs:min-w-[360px] sm:min-w-[400px] md:min-w-[500px] w-full max-w-full">
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="p-1 md:p-2 w-[100px] xs:w-[110px] text-xs">Producto</TableHead>
-                          <TableHead className="p-1 md:p-2 w-[60px] xs:w-[70px] text-xs">Precio</TableHead>
-                          <TableHead className="p-1 md:p-2 w-[70px] xs:w-[90px] text-xs">Vendedor</TableHead>
+                          <TableHead className="p-1 md:p-2 w-[100px] xs:w-[110px] text-xs">{t("common.product")}</TableHead>
+                          <TableHead className="p-1 md:p-2 w-[60px] xs:w-[70px] text-xs">{t("common.price")}</TableHead>
+                          <TableHead className="p-1 md:p-2 w-[70px] xs:w-[90px] text-xs">{t("common.seller")}</TableHead>
                           {/* Solo en sm+ */}
-                          <TableHead className="hidden sm:table-cell p-1 md:p-2 w-[50px] xs:w-[60px] text-xs">Tipo</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2 w-[50px] xs:w-[60px] text-xs">Reseñas</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2 w-[60px] xs:w-[80px] text-xs">Acciones</TableHead>
+                          <TableHead className="hidden sm:table-cell p-1 md:p-2 w-[50px] xs:w-[60px] text-xs">{t("allProducts.type")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2 w-[50px] xs:w-[60px] text-xs">{t("allProducts.reviews")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2 w-[60px] xs:w-[80px] text-xs">{t("common.actions")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredAllProducts.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={6} className="text-center py-8 text-xs">
-                              No se encontraron productos que coincidan con los filtros.
+                              {t("allProducts.empty")}
                             </TableCell>
                           </TableRow>
                         ) : (
@@ -3151,13 +3160,13 @@ export default function AdminDashboard() {
                                       <User className="h-3 w-3 md:h-4 md:w-4" />
                                     </AvatarFallback>
                                   </Avatar>
-                                  <span className="text-[10px] xs:text-xs md:text-xs max-w-[40px] xs:max-w-[60px] truncate">{product.seller?.name || "Vendedor"}</span>
+                                  <span className="text-[10px] xs:text-xs md:text-xs max-w-[40px] xs:max-w-[60px] truncate">{product.seller?.name || t("common.sellerFallback")}</span>
                                 </div>
                               </TableCell>
                               {/* Solo en sm+ */}
                               <TableCell className="hidden sm:table-cell p-1 md:p-2 align-middle">
                                 <Badge variant={product.isService ? "outline" : "secondary"} className="text-[10px] md:text-xs">
-                                  {product.isService ? "Servicio" : "Producto"}
+                                  {product.isService ? t("common.service") : t("common.product")}
                                 </Badge>
                               </TableCell>
                               <TableCell className="hidden md:table-cell p-1 md:p-2 align-middle">
@@ -3177,7 +3186,7 @@ export default function AdminDashboard() {
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                   ) : (
                                     <>
-                                      <Trash2 className="h-4 w-4 mr-1" /> Eliminar
+                                      <Trash2 className="h-4 w-4 mr-1" /> {t("common.delete")}
                                     </>
                                   )}
                                 </Button>
@@ -3199,91 +3208,91 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
                   <Card className="w-full">
                     <CardHeader className="pb-1 xs:pb-2">
-                      <CardTitle className="text-base xs:text-lg md:text-sm font-medium">Total Ventas</CardTitle>
+                      <CardTitle className="text-base xs:text-lg md:text-sm font-medium">{t("sales.totalSales")}</CardTitle>
                       <TrendingUp className="w-4 h-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 md:p-6">
                       <div className="text-xl xs:text-2xl font-bold">{formatPriceNumber(salesSummary.totalVentas)}</div>
-                      <p className="text-xs text-muted-foreground">Valor bruto de todas las ventas</p>
+                      <p className="text-xs text-muted-foreground">{t("sales.grossSalesHint")}</p>
                     </CardContent>
                   </Card>
                   <Card className="w-full">
                     <CardHeader className="pb-1 xs:pb-2">
-                      <CardTitle className="text-base xs:text-lg md:text-sm font-medium">Comisiones</CardTitle>
+                      <CardTitle className="text-base xs:text-lg md:text-sm font-medium">{t("sales.commissions")}</CardTitle>
                       <DollarSign className="w-4 h-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 md:p-6">
                       <div className="text-xl xs:text-2xl font-bold">{formatPriceNumber(salesSummary.totalComisiones)}</div>
-                      <p className="text-xs text-muted-foreground">8% de comisión total</p>
+                      <p className="text-xs text-muted-foreground">{t("sales.commissionRateHint")}</p>
                     </CardContent>
                   </Card>
                   <Card className="w-full">
                     <CardHeader className="pb-1 xs:pb-2">
-                      <CardTitle className="text-base xs:text-lg md:text-sm font-medium">Pendiente de Pago</CardTitle>
+                      <CardTitle className="text-base xs:text-lg md:text-sm font-medium">{t("sales.pendingPayment")}</CardTitle>
                       <Clock className="w-4 h-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 md:p-6">
                       <div className="text-xl xs:text-2xl font-bold">{formatPriceNumber(salesSummary.totalPendientePago)}</div>
-                      <p className="text-xs text-muted-foreground">A pagar a vendedores</p>
+                      <p className="text-xs text-muted-foreground">{t("sales.pendingToSellersHint")}</p>
                     </CardContent>
                   </Card>
                   <Card className="w-full">
                     <CardHeader className="pb-1 xs:pb-2">
-                      <CardTitle className="text-base xs:text-lg md:text-sm font-medium">Pagado</CardTitle>
+                      <CardTitle className="text-base xs:text-lg md:text-sm font-medium">{t("sales.paid")}</CardTitle>
                       <CheckCircle className="w-4 h-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 md:p-6">
                       <div className="text-xl xs:text-2xl font-bold">{formatPriceNumber(salesSummary.totalPagado)}</div>
-                      <p className="text-xs text-muted-foreground">Ya pagado a vendedores</p>
+                      <p className="text-xs text-muted-foreground">{t("sales.paidToSellersHint")}</p>
                     </CardContent>
                   </Card>
                 </div>
                 {/* Filtros y Ordenamiento */}
                 <Card className="w-full">
                   <CardHeader className="pb-2 xs:pb-3">
-                    <CardTitle className="text-lg xs:text-xl md:text-2xl">Filtros y Ordenamiento</CardTitle>
+                    <CardTitle className="text-lg xs:text-xl md:text-2xl">{t("sales.filtersTitle")}</CardTitle>
                   </CardHeader>
                   <CardContent className="p-2 sm:p-4 md:p-6">
                     <div className="space-y-2 xs:space-y-4 w-full">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
                         <div className="w-full">
-                          <Label htmlFor="filterEstadoPago" className="text-xs xs:text-sm">Estado de Pago</Label>
+                          <Label htmlFor="filterEstadoPago" className="text-xs xs:text-sm">{t("sales.paymentStatus")}</Label>
                           <Select value={salesFilters.estadoPago} onValueChange={(value) => setSalesFilters({...salesFilters, estadoPago: value as any})}>
                             <SelectTrigger className="text-xs xs:text-sm w-full h-8 xs:h-9">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">Todos</SelectItem>
-                              <SelectItem value="pendiente">Pendiente</SelectItem>
-                              <SelectItem value="pagado">Pagado</SelectItem>
-                              <SelectItem value="cancelado">Cancelado</SelectItem>
+                              <SelectItem value="all">{t("sales.filters.payment.all")}</SelectItem>
+                              <SelectItem value="pendiente">{t("sales.filters.payment.pendiente")}</SelectItem>
+                              <SelectItem value="pagado">{t("sales.filters.payment.pagado")}</SelectItem>
+                              <SelectItem value="cancelado">{t("sales.filters.payment.cancelado")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="w-full">
-                          <Label htmlFor="filterEstadoEnvio" className="text-xs xs:text-sm">Estado de Envío</Label>
+                          <Label htmlFor="filterEstadoEnvio" className="text-xs xs:text-sm">{t("sales.shippingStatus")}</Label>
                           <Select value={salesFilters.estadoEnvio || 'all'} onValueChange={(value) => setSalesFilters({...salesFilters, estadoEnvio: value === 'all' ? undefined : value as any})}>
                             <SelectTrigger className="text-xs xs:text-sm w-full h-8 xs:h-9">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">Todos</SelectItem>
-                              <SelectItem value="pendiente">Pendiente</SelectItem>
-                              <SelectItem value="en_preparacion">En Preparación</SelectItem>
-                              <SelectItem value="enviado">Enviado</SelectItem>
-                              <SelectItem value="entregado">Entregado</SelectItem>
-                              <SelectItem value="cancelado">Cancelado</SelectItem>
+                              <SelectItem value="all">{t("sales.filters.payment.all")}</SelectItem>
+                              <SelectItem value="pendiente">{t("sales.filters.payment.pendiente")}</SelectItem>
+                              <SelectItem value="en_preparacion">{t("sales.filters.shipping.en_preparacion")}</SelectItem>
+                              <SelectItem value="enviado">{t("sales.filters.shipping.enviado")}</SelectItem>
+                              <SelectItem value="entregado">{t("sales.filters.shipping.entregado")}</SelectItem>
+                              <SelectItem value="cancelado">{t("sales.filters.payment.cancelado")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="w-full">
-                          <Label htmlFor="filterVendedor" className="text-xs xs:text-sm">Vendedor</Label>
+                          <Label htmlFor="filterVendedor" className="text-xs xs:text-sm">{t("common.seller")}</Label>
                           <Select value={salesFilters.vendedorId || 'all'} onValueChange={(value) => setSalesFilters({...salesFilters, vendedorId: value === 'all' ? undefined : value})}>
                             <SelectTrigger className="text-xs xs:text-sm w-full h-8 xs:h-9">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">Todos</SelectItem>
+                              <SelectItem value="all">{t("sales.filters.payment.all")}</SelectItem>
                               {salesSummary.ventasPorVendedor.map((vendedor) => (
                                 <SelectItem key={vendedor.vendedorId} value={vendedor.vendedorId} className="text-xs xs:text-sm">
                                   {vendedor.vendedorNombre}
@@ -3300,12 +3309,12 @@ export default function AdminDashboard() {
                       </div>
                       <div className="relative w-full">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input placeholder="Buscar por comprador, producto o ID de compra..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 text-xs xs:text-sm w-full h-8 xs:h-9" />
+                        <Input placeholder={t("sales.searchPlaceholder")} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 text-xs xs:text-sm w-full h-8 xs:h-9" />
                       </div>
                       <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs xs:text-sm text-muted-foreground w-full">
-                        <span>Mostrando {filteredPurchases.length} de {purchases.length} compras</span>
+                        <span>{t("sales.showingPurchases", { filtered: filteredPurchases.length, total: purchases.length })}</span>
                         {(salesFilters.estadoPago !== 'all' || salesFilters.estadoEnvio !== 'all' || salesFilters.vendedorId || searchTerm) && (
-                          <Badge variant="outline">Filtros aplicados</Badge>
+                          <Badge variant="outline">{t("common.filtersApplied")}</Badge>
                         )}
                       </div>
                     </div>
@@ -3314,27 +3323,27 @@ export default function AdminDashboard() {
                 {/* Tabla de compras */}
                 <Card className="w-full">
                   <CardHeader className="pb-2 xs:pb-3">
-                    <CardTitle className="text-lg xs:text-xl md:text-2xl">Gestión de Compras (por compra)</CardTitle>
-                    <CardDescription className="text-xs xs:text-sm">Administra las compras agrupadas por documento de la colección purchases</CardDescription>
+                    <CardTitle className="text-lg xs:text-xl md:text-2xl">{t("sales.purchasesTitle")}</CardTitle>
+                    <CardDescription className="text-xs xs:text-sm">{t("sales.purchasesDesc")}</CardDescription>
                   </CardHeader>
                   <CardContent className="p-2 sm:p-4 md:p-6">
                     {loadingSales ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-                        <span className="ml-2">Cargando compras...</span>
+                        <span className="ml-2">{t("sales.loadingPurchases")}</span>
                       </div>
                     ) : (
                       <div className="overflow-x-auto w-full">
                         <Table className="min-w-[700px] w-full text-xs sm:text-sm">
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="p-1 md:p-2 w-[90px] text-xs">Fecha</TableHead>
-                              <TableHead className="p-1 md:p-2 w-[160px] text-xs">Productos</TableHead>
-                              <TableHead className="p-1 md:p-2 w-[100px] text-xs">Comprador</TableHead>
-                              <TableHead className="p-1 md:p-2 w-[80px] text-xs">Total</TableHead>
-                              <TableHead className="p-1 md:p-2 w-[80px] text-xs">Estado</TableHead>
-                              <TableHead className="p-1 md:p-2 w-[110px] text-xs">Pago a vendedores</TableHead>
-                              <TableHead className="p-1 md:p-2 w-[100px] text-xs">Acciones</TableHead>
+                              <TableHead className="p-1 md:p-2 w-[90px] text-xs">{t("common.date")}</TableHead>
+                              <TableHead className="p-1 md:p-2 w-[160px] text-xs">{t("common.products")}</TableHead>
+                              <TableHead className="p-1 md:p-2 w-[100px] text-xs">{t("common.buyer")}</TableHead>
+                              <TableHead className="p-1 md:p-2 w-[80px] text-xs">{t("common.total")}</TableHead>
+                              <TableHead className="p-1 md:p-2 w-[80px] text-xs">{t("common.status")}</TableHead>
+                              <TableHead className="p-1 md:p-2 w-[110px] text-xs">{t("sales.paymentToSellers")}</TableHead>
+                              <TableHead className="p-1 md:p-2 w-[100px] text-xs">{t("common.actions")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -3342,28 +3351,28 @@ export default function AdminDashboard() {
                               const allPaid = compra.paidToSellers === true || (Array.isArray(compra.products) && compra.products.every((p: any) => p.paidToSeller === true));
                               return (
                                 <TableRow key={compra.id} className="text-xs sm:text-sm">
-                                  <TableCell className="p-1 md:p-2 align-middle">{new Date(compra.createdAt?.toDate?.() || compra.createdAt).toLocaleDateString('es-ES')}</TableCell>
+                                  <TableCell className="p-1 md:p-2 align-middle">{new Date(compra.createdAt?.toDate?.() || compra.createdAt).toLocaleDateString(dateLocale)}</TableCell>
                                   <TableCell className="p-1 md:p-2 align-middle max-w-[160px] truncate">
                                     <ul className="list-disc pl-4">
                                       {Array.isArray(compra.products) && compra.products.map((p, idx) => (
-                                        <li key={idx} className="truncate text-xs sm:text-sm">{p.nombre || p.productName || p.productoNombre || 'Producto'} (x{p.quantity || p.cantidad || 1})</li>
+                                        <li key={idx} className="truncate text-xs sm:text-sm">{p.nombre || p.productName || p.productoNombre || t('common.product')} (x{p.quantity || p.cantidad || 1})</li>
                                       ))}
                                     </ul>
                                   </TableCell>
                                   <TableCell className="p-1 md:p-2 align-middle max-w-[100px] truncate">{usersMap[compra.buyerId]?.name || compra.buyerId}</TableCell>
                                   <TableCell className="p-1 md:p-2 align-middle whitespace-nowrap">{formatPriceNumber(compra.totalAmount || 0)}</TableCell>
                                   <TableCell className="p-1 md:p-2 align-middle">
-                                    <Badge variant={compra.status === 'approved' ? 'default' : 'secondary'}>{compra.status}</Badge>
+                                    <Badge variant={compra.status === 'approved' ? 'default' : 'secondary'}>{getPurchaseStatusLabel(t, compra.status)}</Badge>
                                   </TableCell>
                                   <TableCell className="p-1 md:p-2 align-middle">
                                     {allPaid ? (
-                                      <Badge variant="default">Pagado</Badge>
+                                      <Badge variant="default">{t("common.paid")}</Badge>
                                     ) : (
-                                      <Badge variant="secondary">Pendiente de pago a vendedores</Badge>
+                                      <Badge variant="secondary">{t("sales.pendingSellerPayment")}</Badge>
                                     )}
                                   </TableCell>
                                   <TableCell className="p-1 md:p-2 align-middle">
-                                    <Button variant="outline" size="sm" onClick={() => handleViewDetails(compra)} className="text-xs sm:text-sm">Ver Detalles</Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleViewDetails(compra)} className="text-xs sm:text-sm">{t("common.viewDetails")}</Button>
                                   </TableCell>
                                 </TableRow>
                               )
@@ -3371,7 +3380,7 @@ export default function AdminDashboard() {
                           </TableBody>
                         </Table>
                         {filteredPurchases.length === 0 && (
-                          <div className="text-center py-8 text-gray-500">{purchases.length === 0 ? 'No se encontraron compras' : 'No hay compras que coincidan con los filtros aplicados'}</div>
+                          <div className="text-center py-8 text-gray-500">{purchases.length === 0 ? t("sales.noPurchases") : t("sales.noPurchasesFiltered")}</div>
                         )}
                       </div>
                     )}
@@ -3384,9 +3393,9 @@ export default function AdminDashboard() {
             <TabsContent value="banners" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
-                  <CardTitle>Gestión de Banners</CardTitle>
+                  <CardTitle>{t("banners.title")}</CardTitle>
                   <CardDescription>
-                    Administra los banners que aparecen en la página principal de la aplicación.
+                    {t("banners.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -3397,10 +3406,10 @@ export default function AdminDashboard() {
                     }}
                     className="mb-6 flex flex-col gap-2 md:p-4 border rounded-lg"
                   >
-                    <h3 className="text-lg font-medium">Añadir Nuevo Banner</h3>
+                    <h3 className="text-lg font-medium">{t("banners.addTitle")}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="newBannerTitle">Título del Banner</Label>
+                        <Label htmlFor="newBannerTitle">{t("banners.bannerTitle")}</Label>
                         <Input
                           id="newBannerTitle"
                           value={newBannerTitle}
@@ -3409,7 +3418,7 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newBannerOrder">Orden de Visualización</Label>
+                        <Label htmlFor="newBannerOrder">{t("banners.displayOrder")}</Label>
                         <Input
                           id="newBannerOrder"
                           type="number"
@@ -3421,26 +3430,26 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="newBannerDescription">Descripción (Opcional)</Label>
+                      <Label htmlFor="newBannerDescription">{t("categories.descriptionOptional")}</Label>
                       <Textarea
                         id="newBannerDescription"
                         value={newBannerDescription}
                         onChange={(e) => setNewBannerDescription(e.target.value)}
-                        placeholder="Descripción del banner..."
+                        placeholder={t("banners.descriptionPlaceholder")}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="newBannerLinkUrl">URL de Enlace (Opcional)</Label>
+                      <Label htmlFor="newBannerLinkUrl">{t("banners.linkUrlOptional")}</Label>
                       <Input
                         id="newBannerLinkUrl"
                         type="url"
                         value={newBannerLinkUrl}
                         onChange={(e) => setNewBannerLinkUrl(e.target.value)}
-                        placeholder="https://ejemplo.com"
+                        placeholder={t("banners.linkPlaceholder")}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="newBannerImage">Imagen del Banner</Label>
+                      <Label htmlFor="newBannerImage">{t("banners.bannerImage")}</Label>
                       <div className="mt-2 flex flex-col items-center gap-2 p-4 border-2 border-dashed rounded-lg">
                         <div className="w-48 h-24 relative flex items-center justify-center bg-gray-100 rounded-md overflow-hidden">
                           {newBannerImagePreviewUrl ? (
@@ -3481,7 +3490,7 @@ export default function AdminDashboard() {
                       </div>
                       {uploadingBannerImage && (
                         <p className="text-sm text-purple-600 mt-2 flex items-center">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Subiendo imagen...
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("common.uploadingImage")}
                         </p>
                       )}
                     </div>
@@ -3491,7 +3500,7 @@ export default function AdminDashboard() {
                       ) : (
                         <PlusCircle className="mr-2 h-4 w-4" />
                       )}
-                      Añadir Banner
+                      {t("banners.addButton")}
                     </Button>
                   </form>
 
@@ -3499,11 +3508,11 @@ export default function AdminDashboard() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="p-1 md:p-2">Imagen</TableHead>
-                          <TableHead className="p-1 md:p-2">Título</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Orden</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Estado</TableHead>
-                          <TableHead className="p-1 md:p-2">Acciones</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("common.image")}</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("banners.bannerTitle")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("banners.order")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("common.status")}</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("common.actions")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -3522,7 +3531,7 @@ export default function AdminDashboard() {
                             <TableCell className="hidden md:table-cell p-1 md:p-2">
                               <div className="flex items-center gap-2">
                                 <Switch checked={banner.isActive} onCheckedChange={() => handleToggleBannerActive(banner.id, banner.isActive)} />
-                                <Badge variant={banner.isActive ? "default" : "secondary"}>{banner.isActive ? "Activo" : "Inactivo"}</Badge>
+                                <Badge variant={banner.isActive ? "default" : "secondary"}>{banner.isActive ? t("common.active") : t("common.inactive")}</Badge>
                               </div>
                             </TableCell>
                             <TableCell className="p-1 md:p-2">
@@ -3543,9 +3552,9 @@ export default function AdminDashboard() {
             <TabsContent value="alerts" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
-                  <CardTitle>Gestión de Alertas de Ofertas</CardTitle>
+                  <CardTitle>{t("offerAlerts.title")}</CardTitle>
                   <CardDescription>
-                    Crea y administra alertas que aparecen en la aplicación para informar sobre ofertas especiales.
+                    {t("offerAlerts.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -3556,10 +3565,10 @@ export default function AdminDashboard() {
                     }}
                     className="mb-6 flex flex-col gap-2 md:p-4 border rounded-lg"
                   >
-                    <h3 className="text-lg font-medium">Crear Nueva Alerta</h3>
+                    <h3 className="text-lg font-medium">{t("offerAlerts.addTitle")}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="newAlertTitle">Título de la Alerta</Label>
+                        <Label htmlFor="newAlertTitle">{t("offerAlerts.alertTitle")}</Label>
                         <Input
                           id="newAlertTitle"
                           value={newAlertTitle}
@@ -3568,33 +3577,33 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newAlertType">Tipo de Alerta</Label>
+                        <Label htmlFor="newAlertType">{t("offerAlerts.alertType")}</Label>
                         <Select value={newAlertType} onValueChange={(value: "info" | "warning" | "success" | "error") => setNewAlertType(value)}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="info">Información</SelectItem>
-                            <SelectItem value="warning">Advertencia</SelectItem>
-                            <SelectItem value="success">Éxito</SelectItem>
-                            <SelectItem value="error">Error</SelectItem>
+                            <SelectItem value="info">{t("offerAlerts.types.info")}</SelectItem>
+                            <SelectItem value="warning">{t("offerAlerts.types.warning")}</SelectItem>
+                            <SelectItem value="success">{t("offerAlerts.types.success")}</SelectItem>
+                            <SelectItem value="error">{t("alerts.errorTitle")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="newAlertMessage">Mensaje</Label>
+                      <Label htmlFor="newAlertMessage">{t("offerAlerts.message")}</Label>
                       <Textarea
                         id="newAlertMessage"
                         value={newAlertMessage}
                         onChange={(e) => setNewAlertMessage(e.target.value)}
-                        placeholder="Mensaje de la alerta..."
+                        placeholder={t("offerAlerts.messagePlaceholder")}
                         required
                       />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="newAlertStartDate">Fecha de Inicio</Label>
+                        <Label htmlFor="newAlertStartDate">{t("offerAlerts.startDate")}</Label>
                         <Input
                           id="newAlertStartDate"
                           type="datetime-local"
@@ -3603,7 +3612,7 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newAlertEndDate">Fecha de Fin (Opcional)</Label>
+                        <Label htmlFor="newAlertEndDate">{t("offerAlerts.endDateOptional")}</Label>
                         <Input
                           id="newAlertEndDate"
                           type="datetime-local"
@@ -3618,7 +3627,7 @@ export default function AdminDashboard() {
                       ) : (
                         <PlusCircle className="mr-2 h-4 w-4" />
                       )}
-                      Crear Alerta
+                      {t("offerAlerts.createButton")}
                     </Button>
                   </form>
 
@@ -3626,12 +3635,12 @@ export default function AdminDashboard() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="p-1 md:p-2">Tipo</TableHead>
-                          <TableHead className="p-1 md:p-2">Título</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Mensaje</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Fechas</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Estado</TableHead>
-                          <TableHead className="p-1 md:p-2">Acciones</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("offerAlerts.type")}</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("common.title")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("offerAlerts.message")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("offerAlerts.dates")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("common.status")}</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("common.actions")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -3639,22 +3648,22 @@ export default function AdminDashboard() {
                           <TableRow key={alert.id} className="text-xs md:text-sm">
                             <TableCell className="p-1 md:p-2">
                               <Badge variant={alert.type === "info" ? "default" : alert.type === "warning" ? "secondary" : alert.type === "success" ? "default" : "destructive"}>
-                                {alert.type === "info" && "Info"}
-                                {alert.type === "warning" && "Advertencia"}
-                                {alert.type === "success" && "Éxito"}
-                                {alert.type === "error" && "Error"}
+                                {alert.type === "info" && t("offerAlerts.types.infoShort")}
+                                {alert.type === "warning" && t("offerAlerts.types.warning")}
+                                {alert.type === "success" && t("offerAlerts.types.success")}
+                                {alert.type === "error" && t("alerts.errorTitle")}
                               </Badge>
                             </TableCell>
                             <TableCell className="p-1 md:p-2 max-w-[80px] truncate font-medium">{alert.title}</TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2 max-w-[120px] truncate">{alert.message}</TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2 text-xs">
-                                <div>Inicio: {alert.startDate?.toDate?.()?.toLocaleDateString() || "Ahora"}</div>
-                              {alert.endDate && <div>Fin: {alert.endDate?.toDate?.()?.toLocaleDateString()}</div>}
+                                <div>{t('common.start')}: {alert.startDate?.toDate?.()?.toLocaleDateString() || t("common.now")}</div>
+                              {alert.endDate && <div>{t('common.end')}: {alert.endDate?.toDate?.()?.toLocaleDateString()}</div>}
                             </TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2">
                               <div className="flex items-center gap-2">
                                 <Switch checked={alert.isActive} onCheckedChange={() => handleToggleAlertActive(alert.id, alert.isActive)} />
-                                <Badge variant={alert.isActive ? "default" : "secondary"}>{alert.isActive ? "Activa" : "Inactiva"}</Badge>
+                                <Badge variant={alert.isActive ? "default" : "secondary"}>{alert.isActive ? t("common.activeF") : t("common.inactiveF")}</Badge>
                               </div>
                             </TableCell>
                             <TableCell className="p-1 md:p-2">
@@ -3675,9 +3684,9 @@ export default function AdminDashboard() {
             <TabsContent value="coupons" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <Card>
                 <CardHeader>
-                  <CardTitle>Gestión de Cupones</CardTitle>
+                  <CardTitle>{t("coupons.title")}</CardTitle>
                   <CardDescription>
-                    Crea y administra cupones de descuento que los vendedores pueden utilizar.
+                    {t("coupons.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -3688,53 +3697,53 @@ export default function AdminDashboard() {
                     }}
                     className="mb-6 flex flex-col gap-2 md:p-4 border rounded-lg"
                   >
-                    <h3 className="text-lg font-medium">Crear Nuevo Cupón</h3>
+                    <h3 className="text-lg font-medium">{t("coupons.addTitle")}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="newCouponCode">Código del Cupón</Label>
+                        <Label htmlFor="newCouponCode">{t("coupons.code")}</Label>
                         <Input
                           id="newCouponCode"
                           value={newCouponCode}
                           onChange={(e) => setNewCouponCode(e.target.value.toUpperCase())}
-                          placeholder="DESCUENTO20"
+                          placeholder={t("coupons.codePlaceholder")}
                           required
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newCouponName">Nombre del Cupón</Label>
+                        <Label htmlFor="newCouponName">{t("coupons.name")}</Label>
                         <Input
                           id="newCouponName"
                           value={newCouponName}
                           onChange={(e) => setNewCouponName(e.target.value)}
-                          placeholder="Descuento del 20%"
+                          placeholder={t("coupons.namePlaceholder")}
                           required
                         />
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="newCouponDescription">Descripción (Opcional)</Label>
+                      <Label htmlFor="newCouponDescription">{t("categories.descriptionOptional")}</Label>
                       <Textarea
                         id="newCouponDescription"
                         value={newCouponDescription}
                         onChange={(e) => setNewCouponDescription(e.target.value)}
-                        placeholder="Descripción del cupón..."
+                        placeholder={t("coupons.descriptionPlaceholder")}
                       />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="newCouponDiscountType">Tipo de Descuento</Label>
+                        <Label htmlFor="newCouponDiscountType">{t("coupons.discountType")}</Label>
                         <Select value={newCouponDiscountType} onValueChange={(value: "percentage" | "fixed") => setNewCouponDiscountType(value)}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="percentage">Porcentaje (%)</SelectItem>
-                            <SelectItem value="fixed">Monto Fijo ($)</SelectItem>
+                            <SelectItem value="percentage">{t("coupons.percentage")}</SelectItem>
+                            <SelectItem value="fixed">{t("coupons.fixedAmount")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor="newCouponDiscountValue">Valor del Descuento</Label>
+                        <Label htmlFor="newCouponDiscountValue">{t("coupons.discountValue")}</Label>
                         <Input
                           id="newCouponDiscountValue"
                           type="number"
@@ -3747,22 +3756,22 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newCouponApplicableTo">Aplicable a</Label>
+                        <Label htmlFor="newCouponApplicableTo">{t("coupons.applicableTo")}</Label>
                         <Select value={newCouponApplicableTo} onValueChange={(value: "all" | "sellers" | "buyers") => setNewCouponApplicableTo(value)}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">Todos</SelectItem>
-                            <SelectItem value="sellers">Solo Vendedores</SelectItem>
-                            <SelectItem value="buyers">Solo Compradores</SelectItem>
+                            <SelectItem value="all">{t("sales.filters.payment.all")}</SelectItem>
+                            <SelectItem value="sellers">{t("coupons.sellersOnly")}</SelectItem>
+                            <SelectItem value="buyers">{t("coupons.buyersOnly")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="newCouponMinPurchase">Compra Mínima (Opcional)</Label>
+                        <Label htmlFor="newCouponMinPurchase">{t("coupons.minPurchaseOptional")}</Label>
                         <Input
                           id="newCouponMinPurchase"
                           type="number"
@@ -3774,7 +3783,7 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newCouponMaxDiscount">Descuento Máximo (Opcional)</Label>
+                        <Label htmlFor="newCouponMaxDiscount">{t("coupons.maxDiscountOptional")}</Label>
                         <Input
                           id="newCouponMaxDiscount"
                           type="number"
@@ -3786,7 +3795,7 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newCouponUsageLimit">Límite de Uso (Opcional)</Label>
+                        <Label htmlFor="newCouponUsageLimit">{t("coupons.usageLimitOptional")}</Label>
                         <Input
                           id="newCouponUsageLimit"
                           type="number"
@@ -3799,7 +3808,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="newCouponStartDate">Fecha de Inicio</Label>
+                        <Label htmlFor="newCouponStartDate">{t("offerAlerts.startDate")}</Label>
                         <Input
                           id="newCouponStartDate"
                           type="datetime-local"
@@ -3808,7 +3817,7 @@ export default function AdminDashboard() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newCouponEndDate">Fecha de Fin (Opcional)</Label>
+                        <Label htmlFor="newCouponEndDate">{t("offerAlerts.endDateOptional")}</Label>
                         <Input
                           id="newCouponEndDate"
                           type="datetime-local"
@@ -3823,7 +3832,7 @@ export default function AdminDashboard() {
                       ) : (
                         <PlusCircle className="mr-2 h-4 w-4" />
                       )}
-                      Crear Cupón
+                      {t("coupons.createButton")}
                     </Button>
                   </form>
 
@@ -3831,13 +3840,13 @@ export default function AdminDashboard() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="p-1 md:p-2">Código</TableHead>
-                          <TableHead className="p-1 md:p-2">Nombre</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Descuento</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Uso</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Fechas</TableHead>
-                          <TableHead className="hidden md:table-cell p-1 md:p-2">Estado</TableHead>
-                          <TableHead className="p-1 md:p-2">Acciones</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("coupons.code")}</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("coupons.name")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("coupons.discount")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("coupons.usage")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("offerAlerts.dates")}</TableHead>
+                          <TableHead className="hidden md:table-cell p-1 md:p-2">{t("common.status")}</TableHead>
+                          <TableHead className="p-1 md:p-2">{t("common.actions")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -3850,23 +3859,23 @@ export default function AdminDashboard() {
                             </TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2">
                               <div className="font-medium">{coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatPriceNumber(coupon.discountValue)}</div>
-                              {coupon.minPurchase && <div className="text-xs text-gray-500">Mín: {formatPriceNumber(coupon.minPurchase)}</div>}
-                              {coupon.maxDiscount && <div className="text-xs text-gray-500">Máx: {formatPriceNumber(coupon.maxDiscount)}</div>}
+                              {coupon.minPurchase && <div className="text-xs text-gray-500">{t("common.min")}: {formatPriceNumber(coupon.minPurchase)}</div>}
+                              {coupon.maxDiscount && <div className="text-xs text-gray-500">{t("common.max")}: {formatPriceNumber(coupon.maxDiscount)}</div>}
                             </TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2">
-                              <div>{coupon.usedCount} usos</div>
-                              {coupon.usageLimit && <div className="text-xs text-gray-500">de {coupon.usageLimit}</div>}
+                              <div>{t("common.uses", { count: coupon.usedCount })}</div>
+                              {coupon.usageLimit && <div className="text-xs text-gray-500">{t("common.usesOf", { limit: coupon.usageLimit })}</div>}
                             </TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2 text-xs">
-                              <div>Inicio: {coupon.startDate?.toDate?.()?.toLocaleDateString() || "Ahora"}</div>
+                              <div>{t('common.start')}: {coupon.startDate?.toDate?.()?.toLocaleDateString() || t("common.now")}</div>
                               {coupon.endDate && (
-                                <div>Fin: {coupon.endDate?.toDate?.()?.toLocaleDateString()}</div>
+                                <div>{t('common.end')}: {coupon.endDate?.toDate?.()?.toLocaleDateString()}</div>
                               )}
                             </TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2">
                               <div className="flex items-center gap-2">
                                 <Switch checked={coupon.isActive} onCheckedChange={() => handleToggleCouponActive(coupon.id, coupon.isActive)} />
-                                <Badge variant={coupon.isActive ? "default" : "secondary"}>{coupon.isActive ? "Activo" : "Inactivo"}</Badge>
+                                <Badge variant={coupon.isActive ? "default" : "secondary"}>{coupon.isActive ? t("common.active") : t("common.inactive")}</Badge>
                               </div>
                             </TableCell>
                             <TableCell className="p-1 md:p-2">
@@ -3890,15 +3899,15 @@ export default function AdminDashboard() {
               ) : (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Acceso Privilegiado</CardTitle>
+                    <CardTitle>{t("subscriptionPricingFallback.title")}</CardTitle>
                     <CardDescription>
-                      Debes estar autenticado para acceder a esta funcionalidad
+                      {t("subscriptionPricingFallback.description")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-                      <span className="ml-2">Verificando autenticación...</span>
+                      <span className="ml-2">{t("subscriptionPricingFallback.verifying")}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -3912,20 +3921,20 @@ export default function AdminDashboard() {
       <Dialog open={paymentMarkingModal.isOpen} onOpenChange={closePaymentMarkingModal}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Marcar Pago como Completado</DialogTitle>
+            <DialogTitle>{t("paymentModal.title")}</DialogTitle>
             <DialogDescription>
-              Confirma el pago manual para el vendedor {paymentMarkingModal.vendedorNombre}
+              {t("paymentModal.description", { sellerName: paymentMarkingModal.vendedorNombre })}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-sm font-medium">Vendedor</Label>
+                <Label className="text-sm font-medium">{t("paymentModal.seller")}</Label>
                 <p className="text-sm text-gray-600">{paymentMarkingModal.vendedorNombre}</p>
               </div>
               <div>
-                <Label className="text-sm font-medium">Monto a Pagar</Label>
+                <Label className="text-sm font-medium">{t("paymentModal.amountToPay")}</Label>
                 <p className="text-sm font-semibold text-green-600">
                   {formatPriceNumber(paymentMarkingModal.monto)}
                 </p>
@@ -3934,27 +3943,27 @@ export default function AdminDashboard() {
             
             <div>
               <Label htmlFor="paymentMethod" className="text-sm font-medium">
-                Método de Pago
+                {t("paymentModal.paymentMethod")}
               </Label>
               <Select value={paymentMethod} onValueChange={(value: 'bank_transfer' | 'mercadopago' | 'cash') => setPaymentMethod(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bank_transfer">Transferencia Bancaria</SelectItem>
-                  <SelectItem value="mercadopago">MercadoPago</SelectItem>
-                  <SelectItem value="cash">Efectivo</SelectItem>
+                  <SelectItem value="bank_transfer">{t("paymentModal.methods.bank_transfer")}</SelectItem>
+                  <SelectItem value="mercadopago">{t("paymentModal.methods.mercadopago")}</SelectItem>
+                  <SelectItem value="cash">{t("paymentModal.methods.cash")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div>
               <Label htmlFor="paymentNotes" className="text-sm font-medium">
-                Notas del Pago
+                {t("paymentModal.paymentNotes")}
               </Label>
               <Textarea
                 id="paymentNotes"
-                placeholder="Agregar notas sobre el pago (opcional)"
+                placeholder={t("paymentModal.notesPlaceholder")}
                 value={paymentNotes}
                 onChange={(e) => setPaymentNotes(e.target.value)}
                 rows={3}
@@ -3965,7 +3974,7 @@ export default function AdminDashboard() {
               <div className="flex items-center">
                 <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
                 <p className="text-sm text-yellow-800">
-                  Esta acción marcará el pago como completado y enviará una notificación al vendedor.
+                  {t("paymentModal.warning")}
                 </p>
               </div>
             </div>
@@ -3977,7 +3986,7 @@ export default function AdminDashboard() {
               onClick={closePaymentMarkingModal}
               disabled={markingPayment === `${paymentMarkingModal.compraId}-${paymentMarkingModal.vendedorId}`}
             >
-              Cancelar
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleMarkPaymentAsPaid}
@@ -3986,12 +3995,12 @@ export default function AdminDashboard() {
               {markingPayment === `${paymentMarkingModal.compraId}-${paymentMarkingModal.vendedorId}` ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Procesando...
+                  {t("common.processing")}
                 </>
               ) : (
                 <>
                   <CheckCircle className="mr-2 h-4 w-4" />
-                  Confirmar Pago
+                  {t("common.confirmPayment")}
                 </>
               )}
             </Button>
@@ -4003,28 +4012,28 @@ export default function AdminDashboard() {
       <Dialog open={showPurchaseModal} onOpenChange={setShowPurchaseModal}>
         <DialogContent className="max-w-5xl w-full">
           <DialogHeader>
-            <DialogTitle>Detalle de Compra</DialogTitle>
+            <DialogTitle>{t("purchaseModal.title")}</DialogTitle>
             <DialogDescription>
-              ID Pago: {selectedPurchase?.paymentId}
+              {t("purchaseModal.paymentId")}: {selectedPurchase?.paymentId}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <p>Fecha: {selectedPurchase?.createdAt ? (selectedPurchase?.createdAt.toDate ? new Date(selectedPurchase.createdAt.toDate()).toLocaleString() : new Date(selectedPurchase.createdAt).toLocaleString()) : ''}</p>
-            <p>Comprador: {selectedPurchase?.buyerId ? usersMap[selectedPurchase.buyerId as string]?.name || selectedPurchase.buyerId : ''}</p>
-            <p>Total: {formatPriceNumber(selectedPurchase?.totalAmount || 0)}</p>
+            <p>{t('common.date')}: {selectedPurchase?.createdAt ? (selectedPurchase?.createdAt.toDate ? new Date(selectedPurchase.createdAt.toDate()).toLocaleString() : new Date(selectedPurchase.createdAt).toLocaleString()) : ''}</p>
+            <p>{t('common.buyer')}: {selectedPurchase?.buyerId ? usersMap[selectedPurchase.buyerId as string]?.name || selectedPurchase.buyerId : ''}</p>
+            <p>{t('common.total')}: {formatPriceNumber(selectedPurchase?.totalAmount || 0)}</p>
             {/* Tabla de productos en el modal */}
             <div>
               <Table className="w-full min-w-[900px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="py-2 px-3 align-middle">Producto</TableHead>
-                    <TableHead className="py-2 px-3 align-middle">Cantidad</TableHead>
-                    <TableHead className="py-2 px-3 align-middle">Precio</TableHead>
-                    <TableHead className="py-2 px-3 align-middle">Subtotal</TableHead>
-                    <TableHead className="py-2 px-3 align-middle">Vendedor</TableHead>
-                    <TableHead className="py-2 px-3 align-middle">Monto a Pagar</TableHead>
-                    <TableHead className="py-2 px-3 align-middle">Estado</TableHead>
-                    <TableHead className="py-2 px-3 align-middle">Acción</TableHead>
+                    <TableHead className="py-2 px-3 align-middle">{t('common.product')}</TableHead>
+                    <TableHead className="py-2 px-3 align-middle">{t('common.quantity')}</TableHead>
+                    <TableHead className="py-2 px-3 align-middle">{t('common.price')}</TableHead>
+                    <TableHead className="py-2 px-3 align-middle">{t('common.subtotal')}</TableHead>
+                    <TableHead className="py-2 px-3 align-middle">{t('common.seller')}</TableHead>
+                    <TableHead className="py-2 px-3 align-middle">{t('common.amountToPay')}</TableHead>
+                    <TableHead className="py-2 px-3 align-middle">{t('common.status')}</TableHead>
+                    <TableHead className="py-2 px-3 align-middle">{t('common.action')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -4033,7 +4042,7 @@ export default function AdminDashboard() {
                     const isPaid = p.paidToSeller === true;
                     return (
                       <TableRow key={idx} className="align-middle">
-                        <TableCell className="py-2 px-3 align-middle">{p.nombre || p.productName || p.productoNombre || 'Producto'}</TableCell>
+                        <TableCell className="py-2 px-3 align-middle">{p.nombre || p.productName || p.productoNombre || t('common.product')}</TableCell>
                         <TableCell className="py-2 px-3 align-middle">{p.quantity || p.cantidad || 1}</TableCell>
                         <TableCell className="py-2 px-3 align-middle">{formatPriceNumber(p.precio || p.price || 0)}</TableCell>
                         <TableCell className="py-2 px-3 align-middle">{formatPriceNumber((p.precio || p.price || 0) * (p.quantity || p.cantidad || 1))}</TableCell>
@@ -4041,9 +4050,9 @@ export default function AdminDashboard() {
                         <TableCell className="py-2 px-3 align-middle text-green-700 font-semibold">{formatPriceNumber(amountToPay)}</TableCell>
                         <TableCell className="py-2 px-3 align-middle">
                           {isPaid ? (
-                            <Badge variant="default">Pagado</Badge>
+                            <Badge variant="default">{t("common.paid")}</Badge>
                           ) : (
-                            <Badge variant="secondary">Pendiente</Badge>
+                            <Badge variant="secondary">{t("common.pending")}</Badge>
                           )}
                         </TableCell>
                         <TableCell className="py-2 px-3 align-middle">
@@ -4070,19 +4079,19 @@ export default function AdminDashboard() {
                                 fetchAdminData();
                                 // Mostrar toast de confirmación
                                 toast({
-                                  title: 'Pago marcado como realizado',
-                                  description: `El producto ha sido marcado como pagado al vendedor.`
+                                  title: t("toasts.paymentMarkedTitle"),
+                                  description: t("toasts.paymentMarkedDescription"),
                                 });
                               }}
                             >
-                              Marcar como pagado
+                              {t("common.markAsPaid")}
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleViewSeller(p.vendedorId as string)}
                             >
-                              Ver Vendedor
+                              {t("common.viewSeller")}
                             </Button>
                           </div>
                         </TableCell>
@@ -4099,37 +4108,37 @@ export default function AdminDashboard() {
       <Dialog open={showSellerModal} onOpenChange={setShowSellerModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Datos del Vendedor</DialogTitle>
+            <DialogTitle>{t("sellerModal.title")}</DialogTitle>
             <DialogDescription>
-              Información detallada del vendedor seleccionado
+              {t("sellerModal.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             <Avatar>
               <AvatarImage src={selectedSellerId ? usersMap[selectedSellerId as string]?.photoURL : undefined} />
-              <AvatarFallback>V</AvatarFallback>
+              <AvatarFallback>{t("sellerModal.avatarFallback")}</AvatarFallback>
             </Avatar>
-            <p><strong>Nombre:</strong> {selectedSellerId ? usersMap[selectedSellerId as string]?.name : ''}</p>
-            <p><strong>Email:</strong> {selectedSellerId ? usersMap[selectedSellerId as string]?.email : ''}</p>
-            <p><strong>UID:</strong> {selectedSellerId}</p>
-            <p><strong>Activo:</strong> {selectedSellerId ? (usersMap[selectedSellerId as string]?.isActive ? 'Sí' : 'No') : ''}</p>
-            <p><strong>Suscrito:</strong> {selectedSellerId ? ((usersMap[selectedSellerId as string]?.subscription_status === 'active' || usersMap[selectedSellerId as string]?.subscription?.status === 'active' || usersMap[selectedSellerId as string]?.isSubscribed) ? 'Sí' : 'No') : ''}</p>
+            <p><strong>{t('common.name')}:</strong> {selectedSellerId ? usersMap[selectedSellerId as string]?.name : ''}</p>
+            <p><strong>{t('common.email')}:</strong> {selectedSellerId ? usersMap[selectedSellerId as string]?.email : ''}</p>
+            <p><strong>{t('common.uid')}:</strong> {selectedSellerId}</p>
+            <p><strong>{t('common.active')}:</strong> {selectedSellerId ? (usersMap[selectedSellerId as string]?.isActive ? t("common.yes") : t("common.no")) : ''}</p>
+            <p><strong>{t('common.subscribed')}:</strong> {selectedSellerId ? ((usersMap[selectedSellerId as string]?.subscription_status === 'active' || usersMap[selectedSellerId as string]?.subscription?.status === 'active' || usersMap[selectedSellerId as string]?.isSubscribed) ? t("common.yes") : t("common.no")) : ''}</p>
             {bankData ? (
               <div className="pt-4 border-t space-y-1">
-                <h3 className="font-semibold text-sm">Datos Bancarios</h3>
-                <p><strong>Banco:</strong> {bankData.banco}</p>
-                <p><strong>Alias:</strong> {bankData.alias}</p>
-                <p><strong>CBU:</strong> {bankData.cbu}</p>
-                <p><strong>Titular:</strong> {bankData.titular}</p>
-                <p><strong>CUIT:</strong> {bankData.cuit}</p>
-                <p><strong>Tipo de Cuenta:</strong> {bankData.tipoCuenta}</p>
-                <p><strong>Preferencia de Retiro:</strong> {bankData.preferenciaRetiro}</p>
-                <p><strong>Impuesto Inmediato:</strong> {bankData.impuestoInmediato}%</p>
-                <p><strong>Impuesto 7 días:</strong> {bankData.impuesto7Dias}%</p>
-                <p><strong>Impuesto 30 días:</strong> {bankData.impuesto30Dias}%</p>
+                <h3 className="font-semibold text-sm">{t('common.bankDetails')}</h3>
+                <p><strong>{t('common.bank')}:</strong> {bankData.banco}</p>
+                <p><strong>{t('common.alias')}:</strong> {bankData.alias}</p>
+                <p><strong>{t('common.cbu')}:</strong> {bankData.cbu}</p>
+                <p><strong>{t('common.accountHolder')}:</strong> {bankData.titular}</p>
+                <p><strong>{t('common.cuit')}:</strong> {bankData.cuit}</p>
+                <p><strong>{t('common.accountType')}:</strong> {bankData.tipoCuenta}</p>
+                <p><strong>{t('common.withdrawalPreference')}:</strong> {bankData.preferenciaRetiro}</p>
+                <p><strong>{t('common.immediateTax')}:</strong> {bankData.impuestoInmediato}%</p>
+                <p><strong>{t('common.tax7Days')}:</strong> {bankData.impuesto7Dias}%</p>
+                <p><strong>{t('common.tax30Days')}:</strong> {bankData.impuesto30Dias}%</p>
               </div>
             ) : (
-              <p className="text-muted pt-4 border-t">Este vendedor no tiene datos bancarios cargados.</p>
+              <p className="text-muted pt-4 border-t">{t("sellerModal.noBankData")}</p>
             )}
           </div>
         </DialogContent>

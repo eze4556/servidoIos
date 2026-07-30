@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Image from "next/image"
+import { useTranslations } from "next-intl"
 import {
   addDoc,
   collection,
@@ -57,6 +58,7 @@ interface MenuAdminPanelProps {
 }
 
 export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: MenuAdminPanelProps) {
+  const t = useTranslations("menuAdmin")
   const [categories, setCategories] = useState<MenuCategory[]>([])
   const [items, setItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -78,7 +80,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       setCategories(result.categories)
       setItems(result.items)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo cargar el menú")
+      setError(err instanceof Error ? err.message : t("loadMenuError"))
     } finally {
       setLoading(false)
     }
@@ -122,7 +124,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       setNewCategoryName("")
       setSelectedCategoryId(ref.id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo crear la categoría")
+      setError(err instanceof Error ? err.message : t("createCategoryError"))
     } finally {
       setSavingCategory(false)
     }
@@ -155,7 +157,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       )
       setRenamingId(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo renombrar")
+      setError(err instanceof Error ? err.message : t("renameError"))
     }
   }
 
@@ -174,7 +176,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       if (selectedCategoryId === category.id) setSelectedCategoryId(null)
       setDeleteCategoryTarget(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo eliminar la categoría")
+      setError(err instanceof Error ? err.message : t("deleteCategoryError"))
     }
   }
 
@@ -190,7 +192,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       )
     } catch {
       setCategories(previous)
-      setError("No se pudo guardar el orden de categorías")
+      setError(t("reorderCategoriesError"))
     }
   }
 
@@ -210,7 +212,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       )
     } catch {
       setItems(previous)
-      setError("No se pudo guardar el orden de productos")
+      setError(t("reorderProductsError"))
     }
   }
 
@@ -227,7 +229,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
 
   const deleteItem = async (item: MenuItem) => {
     if (!requireEnabled()) return
-    if (!window.confirm(`¿Eliminar "${item.name}"?`)) return
+    if (!window.confirm(t("deleteProductConfirm", { name: item.name }))) return
     await deleteStoragePaths(item.imagePaths || [])
     await deleteDoc(doc(db, "menuItems", item.id))
     setItems((prev) => prev.filter((m) => m.id !== item.id))
@@ -257,7 +259,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
             setSelectedCategoryId(null)
           }}
         >
-          Categorías
+          {t("tabCategories")}
         </button>
         <button
           type="button"
@@ -267,7 +269,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
           )}
           onClick={() => setAdminTab("combos")}
         >
-          Combos
+          {t("tabCombos")}
         </button>
       </div>
 
@@ -281,17 +283,15 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       ) : !selectedCategory ? (
         <>
           <div className="rounded-2xl bg-white p-5 ring-1 ring-gray-100">
-            <h2 className="mb-1 font-semibold text-gray-900">Categorías del menú</h2>
-            <p className="mb-4 text-sm text-gray-500">
-              Primero creá categorías y después agregá productos dentro de cada una.
-            </p>
+            <h2 className="mb-1 font-semibold text-gray-900">{t("categoriesTitle")}</h2>
+            <p className="mb-4 text-sm text-gray-500">{t("categoriesHint")}</p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <div className="flex-1 space-y-1">
-                <Label className="sr-only">Nueva categoría</Label>
+                <Label className="sr-only">{t("newCategorySr")}</Label>
                 <Input
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="Ej: Entradas, Pizzas, Bebidas"
+                  placeholder={t("categoryPlaceholder")}
                   className="rounded-xl"
                   disabled={!enabled}
                 />
@@ -302,13 +302,13 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
                 onClick={() => void handleCreateCategory()}
               >
                 {savingCategory ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                Crear categoría
+                {t("createCategory")}
               </Button>
             </div>
           </div>
 
           {categories.length === 0 ? (
-            <p className="text-center text-gray-500">Todavía no tenés categorías.</p>
+            <p className="text-center text-gray-500">{t("emptyCategories")}</p>
           ) : (
             <SortableList
               items={categories}
@@ -340,9 +340,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
                           onClick={() => setSelectedCategoryId(category.id)}
                         >
                           <p className="font-medium text-gray-900">{category.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {count} producto{count === 1 ? "" : "s"}
-                          </p>
+                          <p className="text-xs text-gray-500">{t("productCount", { count })}</p>
                         </button>
                       )}
                     </div>
@@ -354,7 +352,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
                         setRenameValue(category.name)
                       }}
                       disabled={!enabled}
-                      aria-label="Renombrar"
+                      aria-label={t("renameAria")}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -363,7 +361,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
                       size="icon"
                       onClick={() => setDeleteCategoryTarget(category)}
                       disabled={!enabled}
-                      aria-label="Eliminar categoría"
+                      aria-label={t("deleteCategoryAria")}
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
@@ -371,7 +369,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
                       type="button"
                       className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"
                       onClick={() => setSelectedCategoryId(category.id)}
-                      aria-label="Abrir categoría"
+                      aria-label={t("openCategoryAria")}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -391,16 +389,14 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
               onClick={() => setSelectedCategoryId(null)}
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
-              Categorías
+              {t("tabCategories")}
             </Button>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white p-4 ring-1 ring-gray-100">
             <div>
               <h2 className="font-semibold text-gray-900">{selectedCategory.name}</h2>
-              <p className="text-sm text-gray-500">
-                {categoryItems.length} producto{categoryItems.length === 1 ? "" : "s"}
-              </p>
+              <p className="text-sm text-gray-500">{t("productCount", { count: categoryItems.length })}</p>
             </div>
             <Button
               className="rounded-full bg-servido-800"
@@ -412,12 +408,12 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
               }}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Agregar producto
+              {t("addProduct")}
             </Button>
           </div>
 
           {categoryItems.length === 0 ? (
-            <p className="text-center text-gray-500">Esta categoría está vacía.</p>
+            <p className="text-center text-gray-500">{t("emptyCategory")}</p>
           ) : (
             <SortableList
               items={categoryItems}
@@ -434,7 +430,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
                         <Image src={image} alt={item.name} fill className="object-cover" unoptimized />
                       ) : (
                         <div className="flex h-full items-center justify-center text-[10px] text-gray-400">
-                          Sin foto
+                          {t("noPhoto")}
                         </div>
                       )}
                     </div>
@@ -443,7 +439,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
                         <p className="font-medium text-gray-900">{item.name}</p>
                         {menuItemHasOptions(item) && (
                           <Badge variant="secondary" className="text-[10px]">
-                            Con opciones
+                            {t("withOptions")}
                           </Badge>
                         )}
                       </div>
@@ -508,22 +504,22 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
           >
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>¿Eliminar categoría?</AlertDialogTitle>
+                <AlertDialogTitle>{t("deleteCategoryTitle")}</AlertDialogTitle>
                 <AlertDialogDescription>
                   {deleteCategoryTarget
                     ? items.some((item) => item.categoryId === deleteCategoryTarget.id)
-                      ? `La categoría "${deleteCategoryTarget.name}" tiene productos. Se eliminarán también esos productos y sus fotos.`
-                      : `Se eliminará la categoría "${deleteCategoryTarget.name}".`
+                      ? t("deleteCategoryWithProducts", { name: deleteCategoryTarget.name })
+                      : t("deleteCategoryOnly", { name: deleteCategoryTarget.name })
                     : ""}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-red-600 hover:bg-red-700"
                   onClick={() => void confirmDeleteCategory()}
                 >
-                  Eliminar
+                  {t("delete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

@@ -21,12 +21,9 @@ import {
   updateAppointmentStatus,
 } from "@/lib/service-appointments"
 import type { ServiceAppointment, ServiceSchedule, WeekdayKey } from "@/types/service-appointments"
-import {
-  APPOINTMENT_STATUS_LABELS,
-  DEFAULT_SERVICE_SCHEDULE,
-  WEEKDAY_LABELS,
-  WEEKDAY_ORDER,
-} from "@/types/service-appointments"
+import { DEFAULT_SERVICE_SCHEDULE, WEEKDAY_ORDER } from "@/types/service-appointments"
+import { useLocale, useTranslations } from "next-intl"
+import { getAppointmentStatusLabel, getWeekdayLabel } from "@/lib/i18n/agenda-labels"
 
 type ServiceOption = {
   id: string
@@ -50,7 +47,6 @@ function statusVariant(status: ServiceAppointment["status"]): "default" | "secon
 function editorScheduleForService(svc?: ServiceOption | null): ServiceSchedule {
   if (svc?.serviceSchedule) {
     const normalized = normalizeServiceSchedule(svc.serviceSchedule)
-    // Si quedó vacío por un guardado inválido (ej. formato de hora), recuperar lun–vie
     if (countScheduledDays(normalized) === 0) {
       return {
         ...normalized,
@@ -60,7 +56,6 @@ function editorScheduleForService(svc?: ServiceOption | null): ServiceSchedule {
     }
     return normalized
   }
-  // Primera vez: switch ON + lun–vie, para que al guardar ya queden pedidos visibles
   return {
     ...DEFAULT_SERVICE_SCHEDULE,
     enabled: true,
@@ -70,12 +65,14 @@ function editorScheduleForService(svc?: ServiceOption | null): ServiceSchedule {
 
 export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: SellerAgendaPanelProps) {
   const { toast } = useToast()
+  const t = useTranslations("sellerDashboard.agenda")
+  const tAlerts = useTranslations("sellerDashboard.alerts")
+  const locale = useLocale()
+  const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
   const [appointments, setAppointments] = useState<ServiceAppointment[]>([])
   const [loadingAppts, setLoadingAppts] = useState(true)
   const [selectedServiceId, setSelectedServiceId] = useState<string>(services[0]?.id || "")
-  const [schedule, setSchedule] = useState<ServiceSchedule>(() =>
-    editorScheduleForService(services[0])
-  )
+  const [schedule, setSchedule] = useState<ServiceSchedule>(() => editorScheduleForService(services[0]))
   const [saving, setSaving] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -91,7 +88,6 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
     }
   }, [services, selectedServiceId])
 
-  // Solo al cambiar de servicio (no al actualizar props tras guardar: eso borraba el aviso)
   useEffect(() => {
     if (!selectedServiceId) return
     const svc = services.find((s) => s.id === selectedServiceId)
@@ -104,7 +100,6 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
   useEffect(() => {
     if (!sellerId) return
     setLoadingAppts(true)
-    // Completa avisos que no se pudieron escribir al agendar (reglas / Admin)
     void syncAppointmentNotificationsForUser(sellerId)
     return subscribeSellerAppointments(sellerId, (items) => {
       setAppointments(items)
@@ -126,7 +121,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
       })
   }, [appointments])
 
-  const selectedServiceName = services.find((s) => s.id === selectedServiceId)?.name || "servicio"
+  const selectedServiceName = services.find((s) => s.id === selectedServiceId)?.name || t("serviceDefaultName")
 
   const toggleDay = (key: WeekdayKey, enabled: boolean) => {
     setSchedule((prev) => {
@@ -163,14 +158,13 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
     const days = countScheduledDays(toSave)
 
     if (days === 0) {
-      const msg = "Seleccioná al menos un día de atención antes de guardar."
+      const msg = t("needDaysError")
       setError(msg)
-      toast({ title: "Faltan días", description: msg, variant: "destructive" })
+      toast({ title: t("needDaysToastTitle"), description: msg, variant: "destructive" })
       setSaving(false)
       return
     }
 
-    // Si hay días pero el switch está off, lo activamos: si no, el cliente no ve turnos
     if (!toSave.enabled) {
       toSave = { ...toSave, enabled: true }
       setSchedule(toSave)
@@ -181,22 +175,20 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
       setSchedule(saved)
       onScheduleSaved?.(selectedServiceId, saved)
       const dayCount = countScheduledDays(saved)
-      const ok = `“${selectedServiceName}”: ${dayCount} día${dayCount === 1 ? "" : "s"} guardado${
-        dayCount === 1 ? "" : "s"
-      }. Los clientes ya pueden pedir turno.`
+      const ok =
+        dayCount === 1
+          ? t("scheduleSavedDescription", { serviceName: selectedServiceName, count: dayCount })
+          : t("scheduleSavedDescriptionPlural", { serviceName: selectedServiceName, count: dayCount })
       setMessage(ok)
       toast({
-        title: "Horarios guardados",
+        title: t("scheduleSavedTitle"),
         description: ok,
       })
     } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "No se pudo guardar. Revisá tu conexión o permisos de Firestore."
+      const msg = err instanceof Error ? err.message : t("saveGenericError")
       setError(msg)
       toast({
-        title: "Error al guardar horarios",
+        title: t("saveErrorToastTitle"),
         description: msg,
         variant: "destructive",
       })
@@ -212,13 +204,13 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
     try {
       await updateAppointmentStatus({ appointmentId, status, actorId: sellerId })
       toast({
-        title: "Turno actualizado",
-        description: APPOINTMENT_STATUS_LABELS[status],
+        title: t("appointmentUpdatedTitle"),
+        description: getAppointmentStatusLabel(t, status),
       })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "No se pudo actualizar."
+      const msg = err instanceof Error ? err.message : t("updateError")
       setError(msg)
-      toast({ title: "Error", description: msg, variant: "destructive" })
+      toast({ title: tAlerts("errorTitle"), description: msg, variant: "destructive" })
     } finally {
       setBusyId(null)
     }
@@ -226,14 +218,11 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
 
   if (services.length === 0) {
     return (
-      <BuyerPanel title="Agenda de servicios" description="Turnos y disponibilidad">
+      <BuyerPanel title={t("emptyPanelTitle")} description={t("emptyPanelDescription")}>
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Sin servicios publicados</AlertTitle>
-          <AlertDescription>
-            Primero creá un servicio en “Añadir servicio”. Después volvé acá para guardar los horarios
-            en los que los clientes pueden pedir turno.
-          </AlertDescription>
+          <AlertTitle>{t("emptyNoServicesTitle")}</AlertTitle>
+          <AlertDescription>{t("emptyNoServicesDescription")}</AlertDescription>
         </Alert>
       </BuyerPanel>
     )
@@ -243,20 +232,14 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
     <div className="space-y-6">
       <Alert className="border-servido-200 bg-servido-50/80 text-servido-950">
         <CalendarDays className="h-4 w-4" />
-        <AlertTitle>Guardá los horarios de cada servicio</AlertTitle>
-        <AlertDescription>
-          Elegí el servicio, marcá los días y tocá <strong>Guardar horarios</strong>. Hasta que
-          guardes, en la ficha del servicio no aparecen turnos para reservar.
-        </AlertDescription>
+        <AlertTitle>{t("bannerTitle")}</AlertTitle>
+        <AlertDescription>{t("bannerDescription")}</AlertDescription>
       </Alert>
 
-      <BuyerPanel
-        title="Disponibilidad"
-        description="Definí días y franjas para que los clientes pidan turno"
-      >
+      <BuyerPanel title={t("availabilityTitle")} description={t("availabilityDescription")}>
         <div className="space-y-4">
           <div>
-            <Label className="mb-2 block">Servicio</Label>
+            <Label className="mb-2 block">{t("serviceLabel")}</Label>
             <select
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={selectedServiceId}
@@ -265,7 +248,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
               {services.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
-                  {s.serviceSchedule?.enabled ? " · con horarios" : " · sin horarios guardados"}
+                  {s.serviceSchedule?.enabled ? t("serviceWithSchedule") : t("serviceWithoutSchedule")}
                 </option>
               ))}
             </select>
@@ -273,10 +256,8 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
 
           <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2">
             <div>
-              <p className="text-sm font-medium">Aceptar reservas online</p>
-              <p className="text-xs text-muted-foreground">
-                Debe estar activo para que se vean turnos en la ficha del servicio
-              </p>
+              <p className="text-sm font-medium">{t("acceptOnlineTitle")}</p>
+              <p className="text-xs text-muted-foreground">{t("acceptOnlineHint")}</p>
             </div>
             <Switch
               checked={schedule.enabled}
@@ -285,7 +266,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
           </div>
 
           <div className="max-w-[180px]">
-            <Label htmlFor="duration">Duración del turno (min)</Label>
+            <Label htmlFor="duration">{t("durationLabel")}</Label>
             <Input
               id="duration"
               type="number"
@@ -318,7 +299,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
                       checked={dayOn}
                       onChange={(e) => toggleDay(key, e.target.checked)}
                     />
-                    {WEEKDAY_LABELS[key]}
+                    {getWeekdayLabel(t, key)}
                   </label>
                   <div className="flex flex-wrap items-center gap-2">
                     <Input
@@ -328,7 +309,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
                       onChange={(e) => updateRange(key, "start", e.target.value)}
                       className="w-[130px]"
                     />
-                    <span className="text-xs text-muted-foreground">a</span>
+                    <span className="text-xs text-muted-foreground">{t("timeRangeTo")}</span>
                     <Input
                       type="time"
                       disabled={!dayOn}
@@ -345,14 +326,14 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>No se pudo guardar</AlertTitle>
+              <AlertTitle>{t("saveErrorTitle")}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
           {message && (
             <Alert className="border-emerald-300 bg-emerald-50 text-emerald-900">
               <CheckCircle2 className="h-4 w-4 text-emerald-700" />
-              <AlertTitle>Listo</AlertTitle>
+              <AlertTitle>{t("saveSuccessTitle")}</AlertTitle>
               <AlertDescription>{message}</AlertDescription>
             </Alert>
           )}
@@ -360,26 +341,26 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
           <Button disabled={saving || !selectedServiceId} onClick={() => void handleSaveSchedule()}>
             {saving ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Guardando...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("saving")}
               </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" /> Guardar horarios
+                <Save className="mr-2 h-4 w-4" /> {t("saveSchedule")}
               </>
             )}
           </Button>
         </div>
       </BuyerPanel>
 
-      <BuyerPanel title="Próximos turnos" description="Confirmá, rechazá o completá reservas">
+      <BuyerPanel title={t("upcomingTitle")} description={t("upcomingDescription")}>
         {loadingAppts ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Cargando agenda...
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("loadingAppointments")}
           </div>
         ) : upcoming.length === 0 ? (
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
             <CalendarDays className="mt-0.5 h-5 w-5 shrink-0" />
-            Todavía no hay turnos. Cuando un cliente reserve, aparece acá.
+            {t("noAppointments")}
           </div>
         ) : (
           <div className="space-y-3">
@@ -388,17 +369,21 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="font-semibold">{appt.serviceName}</p>
-                    <p className="text-sm text-muted-foreground">{formatAppointmentWhen(appt)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatAppointmentWhen(appt, { locale: dateLocale, noDate: t("noDate") })}
+                    </p>
                     <p className="mt-1 text-sm">
-                      {appt.buyerName || "Cliente"}
+                      {appt.buyerName || t("buyerDefault")}
                       {appt.buyerEmail ? ` · ${appt.buyerEmail}` : ""}
                     </p>
                     {appt.notes && (
-                      <p className="mt-1 text-xs text-muted-foreground">Nota: {appt.notes}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("notePrefix", { notes: appt.notes })}
+                      </p>
                     )}
                   </div>
                   <Badge variant={statusVariant(appt.status)}>
-                    {APPOINTMENT_STATUS_LABELS[appt.status]}
+                    {getAppointmentStatusLabel(t, appt.status)}
                   </Badge>
                 </div>
 
@@ -410,7 +395,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
                         disabled={busyId === appt.id}
                         onClick={() => void handleStatus(appt.id, "confirmed")}
                       >
-                        <Check className="mr-1 h-4 w-4" /> Confirmar
+                        <Check className="mr-1 h-4 w-4" /> {t("confirm")}
                       </Button>
                       <Button
                         size="sm"
@@ -418,7 +403,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
                         disabled={busyId === appt.id}
                         onClick={() => void handleStatus(appt.id, "rejected")}
                       >
-                        <X className="mr-1 h-4 w-4" /> Rechazar
+                        <X className="mr-1 h-4 w-4" /> {t("reject")}
                       </Button>
                     </>
                   )}
@@ -429,7 +414,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
                         disabled={busyId === appt.id}
                         onClick={() => void handleStatus(appt.id, "completed")}
                       >
-                        Completar
+                        {t("complete")}
                       </Button>
                       <Button
                         size="sm"
@@ -437,7 +422,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
                         disabled={busyId === appt.id}
                         onClick={() => void handleStatus(appt.id, "cancelled")}
                       >
-                        Cancelar
+                        {t("cancel")}
                       </Button>
                     </>
                   )}

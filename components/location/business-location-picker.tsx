@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Check, Loader2, MapPin, Search } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { searchPlaces, type GeocodeSearchResult } from "@/lib/business-location"
 import { hasValidCoordinates, type BusinessLocation } from "@/lib/geo"
 import { Input } from "@/components/ui/input"
@@ -28,10 +29,13 @@ interface BusinessLocationPickerProps {
 export function BusinessLocationPicker({
   value,
   onChange,
-  label = "Ubicación del local",
-  helperText = "Buscá tu ciudad o barrio y elegí de la lista. Así tus historias se ven cerca.",
+  label,
+  helperText,
   className,
 }: BusinessLocationPickerProps) {
+  const t = useTranslations("businessLocationPicker")
+  const resolvedLabel = label ?? t("defaultLabel")
+  const resolvedHelper = helperText ?? t("defaultHelper")
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<GeocodeSearchResult[]>([])
   const [searching, setSearching] = useState(false)
@@ -51,7 +55,7 @@ export function BusinessLocationPicker({
       try {
         setResults(await searchPlaces(term))
       } catch {
-        setError("No pudimos buscar. Probá de nuevo.")
+        setError(t("searchError"))
         setResults([])
       } finally {
         setSearching(false)
@@ -81,10 +85,10 @@ export function BusinessLocationPicker({
       if (found[0]) {
         selectResult(found[0])
       } else {
-        setError("No encontramos esa ciudad. Probá buscando arriba.")
+        setError(t("cityNotFound"))
       }
     } catch {
-      setError("No pudimos buscar. Probá de nuevo.")
+      setError(t("searchError"))
     } finally {
       setSearching(false)
     }
@@ -93,8 +97,8 @@ export function BusinessLocationPicker({
   return (
     <div className={cn("space-y-3", className)}>
       <div>
-        <Label className="text-sm font-medium text-gray-900">{label}</Label>
-        {helperText && <p className="mt-1 text-xs text-gray-500">{helperText}</p>}
+        <Label className="text-sm font-medium text-gray-900">{resolvedLabel}</Label>
+        {resolvedHelper && <p className="mt-1 text-xs text-gray-500">{resolvedHelper}</p>}
       </div>
 
       {value && hasValidCoordinates(value.latitude, value.longitude) && value.label ? (
@@ -109,7 +113,7 @@ export function BusinessLocationPicker({
             className="text-xs font-medium text-emerald-800 underline"
             onClick={() => onChange(null)}
           >
-            Cambiar
+            {t("change")}
           </button>
         </div>
       ) : (
@@ -119,7 +123,7 @@ export function BusinessLocationPicker({
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ej: Rosario, Santa Fe o tu calle"
+              placeholder={t("searchPlaceholder")}
               className="h-11 rounded-2xl pl-10"
             />
             {searching && (

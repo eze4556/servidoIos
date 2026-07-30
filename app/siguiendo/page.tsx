@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Loader2, UserPlus, Frown, Store, UtensilsCrossed } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { listFollowing, unfollowBusiness } from "@/lib/follows"
@@ -11,6 +12,8 @@ import { profilePathForFollow, type Follow } from "@/types/follow"
 import { Button } from "@/components/ui/button"
 
 export default function SiguiendoPage() {
+  const t = useTranslations("followingPage")
+  const tHeader = useTranslations("header")
   const { currentUser, authLoading } = useAuth()
   const router = useRouter()
   const [follows, setFollows] = useState<Follow[]>([])
@@ -64,8 +67,8 @@ export default function SiguiendoPage() {
             <UserPlus className="h-5 w-5" />
           </span>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Siguiendo</h1>
-            <p className="text-xs text-gray-500">Tiendas y restaurantes que seguís</p>
+            <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
+            <p className="text-xs text-gray-500">{t("subtitle")}</p>
           </div>
         </div>
       </div>
@@ -78,16 +81,14 @@ export default function SiguiendoPage() {
         ) : follows.length === 0 ? (
           <div className="rounded-3xl bg-white p-10 text-center ring-1 ring-gray-100">
             <Frown className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-            <p className="font-medium text-gray-800">Todavía no seguís a nadie</p>
-            <p className="mt-1 text-sm text-gray-500">
-              Seguí comercios desde sus historias o su perfil para verlos primero.
-            </p>
+            <p className="font-medium text-gray-800">{t("emptyTitle")}</p>
+            <p className="mt-1 text-sm text-gray-500">{t("emptyBody")}</p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               <Button asChild className="rounded-full bg-servido-800">
-                <Link href="/historias">Ver historias</Link>
+                <Link href="/historias">{t("viewStories")}</Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full">
-                <Link href="/restaurantes">Restaurantes</Link>
+                <Link href="/restaurantes">{tHeader("restaurants")}</Link>
               </Button>
             </div>
           </div>
@@ -118,7 +119,7 @@ export default function SiguiendoPage() {
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-gray-900">{follow.targetName}</p>
                     <p className="text-xs text-gray-500">
-                      {follow.targetType === "restaurant" ? "Restaurante" : "Tienda"}
+                      {follow.targetType === "restaurant" ? t("typeRestaurant") : t("typeStore")}
                     </p>
                   </div>
                 </Link>
@@ -132,7 +133,7 @@ export default function SiguiendoPage() {
                   {removing === follow.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    "Dejar"
+                    t("unfollow")
                   )}
                 </Button>
               </li>

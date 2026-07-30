@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { MapPin } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { useLocation } from "@/contexts/location-context"
 import {
@@ -30,6 +31,7 @@ function removeStoryFromGroups(groups: StoryAuthorGroup[], storyId: string): Sto
 }
 
 export function HomeStoriesSection({ className }: HomeStoriesSectionProps) {
+  const t = useTranslations("storiesHome")
   const { currentUser } = useAuth()
   const { coordinates, hasValidLocation, loadingLocation, openLocationPicker, shortLocation } =
     useLocation()
@@ -101,10 +103,10 @@ export function HomeStoriesSection({ className }: HomeStoriesSectionProps) {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold text-gray-900">
-              Ver historias cerca tuyo
+              {t("pickLocationTitle")}
             </span>
             <span className="block truncate text-xs text-gray-500">
-              Elegí tu ciudad o barrio (tocá acá)
+              {t("pickLocationHint")}
             </span>
           </span>
         </button>
@@ -116,7 +118,7 @@ export function HomeStoriesSection({ className }: HomeStoriesSectionProps) {
     <div className={`min-w-0 max-w-full overflow-x-hidden ${className || ""}`}>
       {!loading && groups.length > 0 && shortLocation && (
         <p className="mb-2 truncate px-1 text-[10px] font-medium uppercase tracking-wider text-gray-400">
-          Cerca · {shortLocation} · {STORY_NEARBY_RADIUS_KM} km
+          {t("nearbyLabel", { location: shortLocation, radius: STORY_NEARBY_RADIUS_KM })}
         </p>
       )}
       <StoriesRail
@@ -131,8 +133,8 @@ export function HomeStoriesSection({ className }: HomeStoriesSectionProps) {
       {!loading && !loadingLocation && hasValidLocation && groups.length === 0 && (
         <p className="mt-1 truncate px-1 text-xs text-gray-500">
           {canPost
-            ? "Nadie cerca publicó aún. Subí la tuya con el +."
-            : "No hay historias cerca por ahora. "}
+            ? t("emptySeller")
+            : t("emptyBuyer")}
           {!canPost && (
             <Button
               type="button"
@@ -140,7 +142,7 @@ export function HomeStoriesSection({ className }: HomeStoriesSectionProps) {
               className="h-auto p-0 text-xs text-servido-800"
               onClick={openLocationPicker}
             >
-              Cambiar zona
+              {t("changeZone")}
             </Button>
           )}
         </p>

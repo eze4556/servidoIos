@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, UserMinus, UserPlus } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { followBusiness, isFollowing, unfollowBusiness } from "@/lib/follows"
 import type { FollowTargetType } from "@/types/follow"
@@ -30,6 +31,7 @@ export function FollowButton({
   className,
   onChanged,
 }: FollowButtonProps) {
+  const t = useTranslations("followButton")
   const { currentUser } = useAuth()
   const router = useRouter()
   const [following, setFollowing] = useState(false)
@@ -110,9 +112,9 @@ export function FollowButton({
         {busy || loading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
         ) : following ? (
-          "Siguiendo"
+          t("following")
         ) : (
-          "Seguir"
+          t("follow")
         )}
       </button>
     )
@@ -136,12 +138,12 @@ export function FollowButton({
       ) : following ? (
         <>
           <UserMinus className="h-4 w-4" />
-          Siguiendo
+          {t("following")}
         </>
       ) : (
         <>
           <UserPlus className="h-4 w-4" />
-          Seguir
+          {t("follow")}
         </>
       )}
     </button>

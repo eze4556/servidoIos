@@ -4,10 +4,12 @@ import { Suspense, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { StoryComposer } from "@/components/stories/story-composer"
 
 function NuevaHistoriaContent() {
+  const t = useTranslations("storyNewPage")
   const { currentUser, authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -39,13 +41,13 @@ function NuevaHistoriaContent() {
           <Link
             href="/historias"
             className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
-            aria-label="Volver"
+            aria-label={t("back")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Nueva historia</h1>
-            <p className="text-xs text-gray-500">Se publica por 24 horas</p>
+            <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
+            <p className="text-xs text-gray-500">{t("subtitle")}</p>
           </div>
         </div>
       </div>

@@ -10,6 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore"
 import { ImagePlus, Loader2, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { db } from "@/lib/firebase"
 import { deleteStoragePaths, uploadMenuItemImage, validateRestaurantImageFile } from "@/lib/restaurant-storage"
 import type { MenuCategory, MenuItem, MenuOptionGroup } from "@/types/restaurant"
@@ -35,6 +36,10 @@ import {
 } from "@/components/ui/select"
 import { HorizontalSortableList } from "./sortable-list"
 import { MenuOptionGroupsEditor } from "./menu-option-groups-editor"
+import {
+  imageValidationMessage,
+  messageFromRestaurantImageUploadError,
+} from "@/lib/i18n/restaurant-image-errors"
 
 type DraftImage =
   | { id: string; kind: "existing"; url: string; path: string }
@@ -61,6 +66,7 @@ export function MenuProductForm({
   nextSortOrder,
   onSaved,
 }: MenuProductFormProps) {
+  const t = useTranslations("menuAdmin")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -94,22 +100,22 @@ export function MenuProductForm({
   }, [open, item, initialCategoryId])
 
   const categoryName = useMemo(
-    () => categories.find((c) => c.id === categoryId)?.name || item?.category || "General",
-    [categories, categoryId, item?.category]
+    () => categories.find((c) => c.id === categoryId)?.name || item?.category || t("defaultCategory"),
+    [categories, categoryId, item?.category, t]
   )
 
   const addFiles = (files: FileList | null) => {
     if (!files) return
     const remaining = MENU_ITEM_MAX_IMAGES - images.length
     if (remaining <= 0) {
-      setError(`Máximo ${MENU_ITEM_MAX_IMAGES} fotos por producto.`)
+      setError(t("maxPhotosError", { max: MENU_ITEM_MAX_IMAGES }))
       return
     }
     const next: DraftImage[] = []
     for (const file of Array.from(files).slice(0, remaining)) {
       const validation = validateRestaurantImageFile(file)
       if (validation) {
-        setError(validation)
+        setError(imageValidationMessage(validation, t) || validation)
         continue
       }
       next.push({
@@ -135,16 +141,16 @@ export function MenuProductForm({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setError("Ingresá el nombre del producto.")
+      setError(t("errProductName"))
       return
     }
     const priceNum = Number(price)
     if (!Number.isFinite(priceNum) || priceNum < 0) {
-      setError("Ingresá un precio válido.")
+      setError(t("errInvalidPrice"))
       return
     }
     if (!categoryId) {
-      setError("Elegí una categoría.")
+      setError(t("errPickCategory"))
       return
     }
 
@@ -218,7 +224,9 @@ export function MenuProductForm({
       })
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo guardar el producto")
+      const msg = err instanceof Error ? err.message : ""
+      const imageMsg = messageFromRestaurantImageUploadError(msg, t)
+      setError(imageMsg || (err instanceof Error ? err.message : t("saveProductError")))
     } finally {
       setSaving(false)
     }
@@ -228,14 +236,14 @@ export function MenuProductForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-lg overflow-y-auto rounded-2xl p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{item ? "Editar producto" : "Agregar producto"}</DialogTitle>
+          <DialogTitle>{item ? t("editProduct") : t("addProductTitle")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
           <div className="space-y-2">
-            <Label>Fotos (hasta {MENU_ITEM_MAX_IMAGES})</Label>
+            <Label>{t("photosLabel", { max: MENU_ITEM_MAX_IMAGES })}</Label>
             <HorizontalSortableList
               items={images}
               onReorder={setImages}
@@ -247,7 +255,7 @@ export function MenuProductForm({
                     type="button"
                     className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white"
                     onClick={() => removeImage(image.id)}
-                    aria-label="Quitar foto"
+                    aria-label={t("removePhotoAria")}
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -274,17 +282,17 @@ export function MenuProductForm({
               onClick={() => fileInputRef.current?.click()}
             >
               <ImagePlus className="mr-2 h-4 w-4" />
-              Agregar fotos
+              {t("addPhotos")}
             </Button>
           </div>
 
           <div className="space-y-2">
-            <Label>Nombre</Label>
+            <Label>{t("nameLabel")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} className="rounded-xl" />
           </div>
 
           <div className="space-y-2">
-            <Label>Descripción</Label>
+            <Label>{t("descriptionLabel")}</Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -295,7 +303,7 @@ export function MenuProductForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Precio ($)</Label>
+              <Label>{t("priceLabel")}</Label>
               <Input
                 type="number"
                 min="0"
@@ -305,10 +313,10 @@ export function MenuProductForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Categoría</Label>
+              <Label>{t("categoryLabel")}</Label>
               <Select value={categoryId} onValueChange={setCategoryId}>
                 <SelectTrigger className="rounded-xl">
-                  <SelectValue placeholder="Elegí categoría" />
+                  <SelectValue placeholder={t("pickCategoryPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
@@ -322,7 +330,7 @@ export function MenuProductForm({
           </div>
 
           <label className="flex items-center justify-between rounded-xl border border-gray-100 px-3 py-3">
-            <span className="text-sm font-medium text-gray-800">Disponible</span>
+            <span className="text-sm font-medium text-gray-800">{t("available")}</span>
             <Switch checked={available} onCheckedChange={setAvailable} />
           </label>
 
@@ -334,7 +342,7 @@ export function MenuProductForm({
             onClick={() => void handleSave()}
           >
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {item ? "Guardar cambios" : "Crear producto"}
+            {item ? t("saveChanges") : t("createProduct")}
           </Button>
         </div>
       </DialogContent>
