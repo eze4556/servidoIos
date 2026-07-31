@@ -68,7 +68,8 @@ import {
   where,
   getDoc,
 } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { deleteStoragePathAsAdmin } from "@/lib/admin-storage-client"
 import { Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
@@ -1046,9 +1047,12 @@ export default function AdminDashboard() {
     }
     try {
       if (imagePath) {
-        const imageRef = ref(storage, imagePath)
-        await deleteObject(imageRef)
-        console.log("Image deleted from storage:", imagePath)
+        try {
+          await deleteStoragePathAsAdmin(imagePath)
+          console.log("Image deleted from storage:", imagePath)
+        } catch (storageErr) {
+          console.warn("Storage delete failed, removing category anyway:", storageErr)
+        }
       }
 
       await deleteDoc(doc(db, "categories", categoryId))
@@ -1120,8 +1124,7 @@ export default function AdminDashboard() {
     }
     try {
       if (imagePath) {
-        const imageRef = ref(storage, imagePath)
-        await deleteObject(imageRef)
+        await deleteStoragePathAsAdmin(imagePath)
         console.log("Image deleted from storage:", imagePath)
       }
 
@@ -1181,8 +1184,7 @@ export default function AdminDashboard() {
         // Delete old image if it exists
         if (editingCategory.imagePath) {
           try {
-            const oldImageRef = ref(storage, editingCategory.imagePath)
-            await deleteObject(oldImageRef)
+            await deleteStoragePathAsAdmin(editingCategory.imagePath)
           } catch (error) {
             console.error("Error deleting old category image:", error)
           }
@@ -1286,8 +1288,7 @@ export default function AdminDashboard() {
         // Delete old image if it exists
         if (editingBrand.imagePath) {
           try {
-            const oldImageRef = ref(storage, editingBrand.imagePath)
-            await deleteObject(oldImageRef)
+            await deleteStoragePathAsAdmin(editingBrand.imagePath)
           } catch (error) {
             console.error("Error deleting old brand image:", error)
           }
@@ -1531,8 +1532,7 @@ export default function AdminDashboard() {
     }
     try {
       if (imagePath) {
-        const imageRef = ref(storage, imagePath)
-        await deleteObject(imageRef)
+        await deleteStoragePathAsAdmin(imagePath)
       }
 
       await deleteDoc(doc(db, "banners", bannerId))
