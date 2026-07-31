@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,54 +39,51 @@ interface CouponInputProps {
   items?: Array<{ sellerId: string; id: string; name: string }>
 }
 
-const SAMPLE_COUPONS: Coupon[] = [
+const SAMPLE_COUPON_META = [
   {
     id: "1",
     code: "DESCUENTO20",
-    name: "Descuento del 20%",
-    description: "Descuento del 20% en toda la compra",
-    discountType: "percentage",
+    nameKey: "sampleDescuento20Name" as const,
+    descKey: "sampleDescuento20Desc" as const,
+    discountType: "percentage" as const,
     discountValue: 20,
     minPurchase: 1000,
     maxDiscount: 500,
     usageLimit: 100,
     usedCount: 50,
-    applicableTo: "buyers",
+    applicableTo: "buyers" as const,
     sellerId: null,
     isActive: true,
-    createdAt: new Date(),
   },
   {
     id: "2",
     code: "FIXED50",
-    name: "Descuento fijo $50",
-    description: "Descuento fijo de $50 en compras mayores a $500",
-    discountType: "fixed",
+    nameKey: "sampleFixed50Name" as const,
+    descKey: "sampleFixed50Desc" as const,
+    discountType: "fixed" as const,
     discountValue: 50,
     minPurchase: 500,
     maxDiscount: null,
     usageLimit: 50,
     usedCount: 25,
-    applicableTo: "buyers",
+    applicableTo: "buyers" as const,
     sellerId: null,
     isActive: true,
-    createdAt: new Date(),
   },
   {
     id: "3",
     code: "BIENVENIDA10",
-    name: "Cupón de bienvenida 10%",
-    description: "10% de descuento para nuevos usuarios",
-    discountType: "percentage",
+    nameKey: "sampleBienvenida10Name" as const,
+    descKey: "sampleBienvenida10Desc" as const,
+    discountType: "percentage" as const,
     discountValue: 10,
     minPurchase: 100,
     maxDiscount: 200,
     usageLimit: 1000,
     usedCount: 300,
-    applicableTo: "buyers",
+    applicableTo: "buyers" as const,
     sellerId: null,
     isActive: true,
-    createdAt: new Date(),
   },
 ]
 
@@ -108,8 +105,17 @@ export function CouponInput({
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
+  const sampleCoupons = useMemo((): Coupon[] => {
+    return SAMPLE_COUPON_META.map(({ nameKey, descKey, ...meta }) => ({
+      ...meta,
+      name: t(nameKey),
+      description: t(descKey),
+      createdAt: new Date(),
+    }))
+  }, [t])
+
   const validateCoupon = (code: string): Coupon | null => {
-    const coupon = SAMPLE_COUPONS.find((c) => c.code === code.toUpperCase())
+    const coupon = sampleCoupons.find((c) => c.code === code.toUpperCase())
     return coupon || null
   }
 

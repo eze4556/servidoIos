@@ -28,6 +28,8 @@ interface GroupedItems {
 export function CartDrawer() {
   const t = useTranslations("cart")
   const { formatPrice, formatPriceNumber } = usePriceFormat()
+  const productCountLabel = (count: number) => (count === 1 ? t("product") : t("products"))
+  const purchaseCreatedTitle = `✅ ${t("purchaseCreatedToast")}`
   const { 
     items, 
     removeFromCart, 
@@ -107,8 +109,11 @@ export function CartDrawer() {
       removeFromCart(purchaseData.item.id)
 
       toast({
-        title: "✅ Compra creada",
-        description: `${purchaseData.item.name} - ${formatPriceNumber(purchaseData.item.price * purchaseData.item.quantity)}`,
+        title: purchaseCreatedTitle,
+        description: t("purchaseCreatedOneLine", {
+          name: purchaseData.item.name,
+          price: formatPriceNumber(purchaseData.item.price * purchaseData.item.quantity),
+        }),
         duration: 3000,
       })
 
@@ -193,8 +198,12 @@ export function CartDrawer() {
       const totalAmount = purchaseData.sellerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
       
       toast({
-        title: "✅ Compra creada",
-        description: `${purchaseData.sellerItems.length} productos - ${formatPriceNumber(totalAmount)}`,
+        title: purchaseCreatedTitle,
+        description: t("purchaseCreatedMultiLine", {
+          count: purchaseData.sellerItems.length,
+          itemsLabel: productCountLabel(purchaseData.sellerItems.length),
+          price: formatPriceNumber(totalAmount),
+        }),
         duration: 3000,
       })
 
@@ -258,7 +267,7 @@ export function CartDrawer() {
       if (vendorCount > 1) {
         toast({
           title: t("paymentsBySeller"),
-          description: `Tu compra tiene ${vendorCount} vendedores. Vas a realizar ${vendorCount} pagos.`,
+          description: t("multiSellerIntro", { count: vendorCount }),
           duration: 5000,
         })
       }
@@ -292,8 +301,15 @@ export function CartDrawer() {
         title: response.data.mode === "multi_seller" ? t("paymentStarted") : t("purchaseCreated"),
         description:
           response.data.mode === "multi_seller"
-            ? `${vendorCount} pagos · primero ${formatPriceNumber(response.data.nextPayment?.amount || totalAmount)}`
-            : `${items.length} productos - ${formatPriceNumber(totalAmount)}`,
+            ? t("multiSellerFirstLine", {
+                count: vendorCount,
+                amount: formatPriceNumber(response.data.nextPayment?.amount || totalAmount),
+              })
+            : t("purchaseCreatedMultiLine", {
+                count: items.length,
+                itemsLabel: productCountLabel(items.length),
+                price: formatPriceNumber(totalAmount),
+              }),
         duration: 5000,
       })
 

@@ -677,7 +677,14 @@
     "increaseQty": "Aumentar cantidad de {name}",
     "continueShopping": "Seguir comprando",
     "checkout": "Finalizar compra",
-    "remove": "Quitar"
+    "remove": "Quitar",
+    "purchaseCreatedToast": "Compra creada",
+    "purchaseCreatedOneLine": "{name} - {price}",
+    "purchaseCreatedMultiLine": "{count} {itemsLabel} - {price}",
+    "multiSellerIntro": "Tu compra tiene {count} vendedores. Vas a realizar {count} pagos.",
+    "multiSellerFirstLine": "{count} pagos · primero {amount}",
+    "noProductsCheckout": "No hay productos para comprar",
+    "pay": "Pagar"
   },
   "products": {
     "filtersSort": "Filtros y orden",
@@ -968,7 +975,13 @@
     "ruleSameSeller": "Los cupones solo se pueden aplicar a productos del mismo vendedor",
     "examples": "Cupones de ejemplo: DESCUENTO20, FIXED50, BIENVENIDA10",
     "offPercent": "{value}% OFF",
-    "offFixed": "${value} OFF"
+    "offFixed": "${value} OFF",
+    "sampleDescuento20Name": "Descuento del 20%",
+    "sampleDescuento20Desc": "Descuento del 20% en toda la compra",
+    "sampleFixed50Name": "Descuento fijo $50",
+    "sampleFixed50Desc": "Descuento fijo de $50 en compras mayores a $500",
+    "sampleBienvenida10Name": "Cupón de bienvenida 10%",
+    "sampleBienvenida10Desc": "10% de descuento para nuevos usuarios"
   },
   "paymentDateButton": {
     "defaultProductName": "Producto",

@@ -666,7 +666,7 @@ export function BuyerDashboardTabs({
                   <div>
                     <p className="font-medium text-gray-900">{purchase.productName}</p>
                     <p className="text-xs text-gray-500">
-                      {purchase.isService ? "Servicio" : "Producto"} · {purchase.vendedorNombre}
+                      {purchase.isService ? t("service") : t("product")} · {purchase.vendedorNombre}
                     </p>
                     <p className="text-xs text-gray-400">
                       {formatPurchaseDate(purchase.fechaCompra, {
