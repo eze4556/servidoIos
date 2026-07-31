@@ -463,7 +463,7 @@ export default function ChatPage() {
           type="submit"
           disabled={sending || !newMessage.trim()}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#075e54] text-white disabled:opacity-40"
-          aria-label="Enviar"
+          aria-label={t("sendAria")}
         >
           {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
         </button>

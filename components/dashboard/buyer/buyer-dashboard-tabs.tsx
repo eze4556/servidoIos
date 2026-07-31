@@ -35,7 +35,7 @@ import { BuyerAppointmentsPanel } from "@/components/dashboard/buyer/buyer-appoi
 import type { CentralizedPurchase, PurchaseItem } from "@/types/centralized-payments"
 import { getDashboardProductImage } from "@/lib/image-utils"
 import { formatPriceNumber } from "@/lib/utils"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 
 interface CompraProductoBuyer {
   compraId: string
@@ -137,6 +137,10 @@ export function BuyerDashboardTabs({
 }: BuyerDashboardTabsProps) {
   const t = useTranslations("buyerDashboard")
   const tr = useTranslations("reviews")
+  const locale = useLocale()
+  const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
+  const formatPurchaseDate = (date: string | Date, options?: Intl.DateTimeFormatOptions) =>
+    new Date(date).toLocaleDateString(dateLocale, options)
   const totalSpent =
     productosComprados.filter((p) => p.estadoPago === "pagado").reduce((sum, p) => sum + p.productPrice * p.quantity, 0) +
     centralizedPurchases.reduce((sum, p) => sum + p.total, 0)
@@ -187,8 +191,7 @@ export function BuyerDashboardTabs({
                         {t("purchaseLabel", { id: purchase.id.slice(-8) })}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {new Date(purchase.fecha).toLocaleDateString()} · {purchase.items.length} producto
-                        {purchase.items.length > 1 ? "s" : ""}
+                        {formatPurchaseDate(purchase.fecha)} · {t("itemsInPurchase", { count: purchase.items.length })}
                       </p>
                     </div>
                   </div>
@@ -213,7 +216,7 @@ export function BuyerDashboardTabs({
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-gray-900">{purchase.productName}</p>
                       <p className="text-xs text-gray-500">
-                        {new Date(purchase.fechaCompra).toLocaleDateString()} · {purchase.vendedorNombre}
+                        {formatPurchaseDate(purchase.fechaCompra)} · {purchase.vendedorNombre}
                       </p>
                     </div>
                   </div>
@@ -287,7 +290,7 @@ export function BuyerDashboardTabs({
                           })
                         : t("purchaseLabel", { id: t("noPaymentId") })}
                     </p>
-                    <p className="text-sm text-gray-700">{new Date(purchase.fechaCompra).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-700">{formatPurchaseDate(purchase.fechaCompra)}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <StatusBadge status={purchase.estadoPago} />
@@ -578,7 +581,7 @@ export function BuyerDashboardTabs({
                     <div>
                       <p className="font-medium text-gray-900">{t("purchaseLabel", { id: purchase.id.slice(-8) })}</p>
                       <p className="text-xs text-gray-500">
-                        {new Date(purchase.fecha).toLocaleDateString("es-ES", {
+                        {formatPurchaseDate(purchase.fecha, {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
@@ -665,7 +668,7 @@ export function BuyerDashboardTabs({
                       {purchase.isService ? "Servicio" : "Producto"} · {purchase.vendedorNombre}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {new Date(purchase.fechaCompra).toLocaleDateString("es-ES", {
+                      {formatPurchaseDate(purchase.fechaCompra, {
                         year: "numeric",
                         month: "long",
                         day: "numeric",

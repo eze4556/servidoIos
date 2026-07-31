@@ -404,7 +404,7 @@ export default function BuyerDashboardPage() {
           )
         )
 
-        setSuccessMessage("¡Entrega confirmada exitosamente! El vendedor ha sido notificado.")
+        setSuccessMessage(td("deliverySuccess"))
       } else {
         setError(td("productNotInCentralized"))
       }
@@ -433,7 +433,7 @@ export default function BuyerDashboardPage() {
 
   const handleUploadProfileImage = async () => {
     if (!currentUser || !profileImageFile) {
-      setProfileUpdateError("No hay imagen seleccionada o usuario no autenticado.")
+      setProfileUpdateError(td("profileNoImageSelected"))
       return
     }
 
@@ -467,11 +467,11 @@ export default function BuyerDashboardPage() {
       }
 
       await refreshUserProfile() // Refresh context state
-      setProfileUpdateSuccess("Foto de perfil actualizada exitosamente.")
+      setProfileUpdateSuccess(td("profileUploadSuccess"))
       setProfileImageFile(null) // Clear file input
     } catch (err) {
       console.error("Error uploading profile image:", err)
-      setProfileUpdateError("Error al subir la foto de perfil. Inténtalo de nuevo.")
+      setProfileUpdateError(td("profileUploadError"))
     } finally {
       setUploadingProfileImage(false)
     }
@@ -479,7 +479,7 @@ export default function BuyerDashboardPage() {
 
   const handleRemoveProfileImage = async () => {
     if (!currentUser || !currentUser.photoPath) {
-      setProfileUpdateError("No hay foto de perfil para eliminar.")
+      setProfileUpdateError(td("profileNoPhotoToRemove"))
       return
     }
 
@@ -509,10 +509,10 @@ export default function BuyerDashboardPage() {
 
       await refreshUserProfile() // Refresh context state
       setProfileImagePreviewUrl(null) // Clear preview
-      setProfileUpdateSuccess("Foto de perfil eliminada exitosamente.")
+      setProfileUpdateSuccess(td("profileRemoveSuccess"))
     } catch (err) {
       console.error("Error removing profile image:", err)
-      setProfileUpdateError("Error al eliminar la foto de perfil. Inténtalo de nuevo.")
+      setProfileUpdateError(td("profileRemoveError"))
     } finally {
       setUploadingProfileImage(false)
     }
@@ -526,23 +526,23 @@ export default function BuyerDashboardPage() {
   // Exportar a Excel
   const handleExportExcel = () => {
     const data = productosComprados.map(p => ({
-      ID: p.compraId,
-      Fecha: p.fechaCompra,
-      Comprador: p.buyerId,
-      Vendedor: p.vendedorNombre,
-      Producto: p.productName,
-      Cantidad: p.quantity,
-              PrecioUnitario: formatPriceNumber(p.productPrice),
-        Subtotal: formatPriceNumber(p.productPrice * p.quantity),
-      EstadoPago: p.estadoPago,
-      EstadoEnvio: p.shippingStatus,
-      Tracking: p.shippingTracking,
-      Transportista: p.shippingCarrier,
+      [td("excelColId")]: p.compraId,
+      [td("excelColDate")]: p.fechaCompra,
+      [td("excelColBuyer")]: p.buyerId,
+      [td("excelColSeller")]: p.vendedorNombre,
+      [td("excelColProduct")]: p.productName,
+      [td("excelColQty")]: p.quantity,
+      [td("excelColUnitPrice")]: formatPriceNumber(p.productPrice),
+      [td("excelColSubtotal")]: formatPriceNumber(p.productPrice * p.quantity),
+      [td("excelColPaymentStatus")]: p.estadoPago,
+      [td("excelColShippingStatus")]: p.shippingStatus,
+      [td("excelColTracking")]: p.shippingTracking,
+      [td("excelColCarrier")]: p.shippingCarrier,
     }))
     const ws = XLSX.utils.json_to_sheet(data)
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Compras")
-    XLSX.writeFile(wb, "compras_usuario.xlsx")
+    XLSX.utils.book_append_sheet(wb, ws, td("excelSheetPurchases"))
+    XLSX.writeFile(wb, td("excelFileName"))
   }
 
   if (authLoading || (!currentUser && !authLoading)) {
@@ -566,14 +566,14 @@ export default function BuyerDashboardPage() {
       {error && (
         <Alert variant="destructive" className="mb-4 rounded-2xl">
           <AlertCircle className="h-5 w-5" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{td("errorTitle")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       {successMessage && (
         <Alert className="mb-4 rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
           <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Éxito</AlertTitle>
+          <AlertTitle>{td("successTitle")}</AlertTitle>
           <AlertDescription>{successMessage}</AlertDescription>
         </Alert>
       )}
@@ -582,7 +582,7 @@ export default function BuyerDashboardPage() {
         <div className="mb-5 overflow-hidden rounded-2xl shadow-md ring-1 ring-black/5">
           <Image
             src="/images/bannernuevooficial5.jpeg"
-            alt="Servido Market: todo lo que necesitás"
+            alt={td("bannerAlt")}
             width={1600}
             height={728}
             className="h-auto w-full"

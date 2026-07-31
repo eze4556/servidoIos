@@ -4,10 +4,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { MessageCircle, X } from "lucide-react"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { useChatUnread } from "@/components/chat/chat-unread-context"
 
 export function DesktopChatFab() {
+  const t = useTranslations("header")
   const { currentUser } = useAuth()
   const pathname = usePathname()
   const { unreadCount } = useChatUnread()
@@ -23,7 +25,7 @@ export function DesktopChatFab() {
           type="button"
           onClick={() => setFabHidden(true)}
           className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-gray-800 text-white shadow"
-          aria-label="Ocultar chat"
+          aria-label={t("hideChatFab")}
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -32,7 +34,7 @@ export function DesktopChatFab() {
           className="relative flex h-14 items-center gap-2 rounded-full bg-servido-800 px-5 text-white shadow-xl shadow-servido-900/30 transition hover:bg-servido-900"
         >
           <MessageCircle className="h-5 w-5" />
-          <span className="text-sm font-semibold">Chat</span>
+          <span className="text-sm font-semibold">{t("chat")}</span>
           {unreadCount > 0 && (
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white">
               {unreadCount > 9 ? "9+" : unreadCount}

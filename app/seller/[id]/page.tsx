@@ -35,6 +35,7 @@ import { getProductThumbnail } from "@/lib/image-utils"
 import { useAuth } from "@/contexts/auth-context"
 import { useCart } from "@/contexts/cart-context"
 import { FollowButton } from "@/components/follows/follow-button"
+import { useLocale, useTranslations } from "next-intl"
 
 interface SellerProfile {
   uid: string
@@ -80,6 +81,13 @@ interface Product {
 }
 
 export default function SellerProfilePage() {
+  const ts = useTranslations("sellerStore")
+  const tp = useTranslations("product")
+  const tc = useTranslations("cart")
+  const tsv = useTranslations("servicesPage")
+  const tr = useTranslations("reviews")
+  const locale = useLocale()
+  const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
   const params = useParams()
   const sellerId = params.id as string
   const { currentUser } = useAuth()
@@ -113,7 +121,7 @@ export default function SellerProfilePage() {
         // Obtener datos del vendedor
         const sellerDoc = await getDoc(doc(db, "users", sellerId))
         if (!sellerDoc.exists()) {
-          setError("Vendedor no encontrado")
+          setError(ts("notFound"))
           return
         }
 
@@ -150,7 +158,7 @@ export default function SellerProfilePage() {
 
       } catch (err) {
         console.error("Error fetching seller data:", err)
-        setError("Error al cargar los datos del vendedor")
+        setError(ts("loadError"))
       } finally {
         setLoading(false)
       }
@@ -277,13 +285,13 @@ export default function SellerProfilePage() {
   // }
 
   const handleContactSeller = async () => {
-    alert("Funcionalidad de chat temporalmente deshabilitada")
+    alert(ts("chatDisabled"))
   }
 
   const handleDeleteProduct = async (productId: string, isService: boolean) => {
     if (!isOwner) return
 
-    if (confirm(`¿Estás seguro de que quieres eliminar este ${isService ? 'servicio' : 'producto'}?`)) {
+    if (confirm(ts("deleteConfirm", { item: isService ? ts("itemService") : ts("itemProduct") }))) {
       try {
         await deleteDoc(doc(db, "products", productId))
         // Actualizar la lista local
@@ -294,7 +302,7 @@ export default function SellerProfilePage() {
         }
       } catch (error) {
         console.error("Error deleting product:", error)
-        alert("Error al eliminar el producto")
+        alert(ts("deleteError"))
       }
     }
   }
@@ -318,8 +326,8 @@ export default function SellerProfilePage() {
       <div className="flex items-center justify-center min-h-screen p-4">
         <Alert variant="destructive" className="max-w-md">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error || "Vendedor no encontrado"}</AlertDescription>
+          <AlertTitle>{tr("errorTitle")}</AlertTitle>
+          <AlertDescription>{error || ts("notFound")}</AlertDescription>
         </Alert>
       </div>
     )
@@ -328,6 +336,12 @@ export default function SellerProfilePage() {
   const filteredProducts = getFilteredItems(products)
   const filteredServices = getFilteredItems(services)
   const categories = [...new Set([...products, ...services].map(item => item.category))]
+
+  const sellerDisplayName = seller.displayName || ts("defaultName")
+  const memberSinceDate = seller.createdAt?.toDate?.()?.toLocaleDateString(dateLocale)
+  const memberSinceLabel = ts("sellerSince", {
+    date: memberSinceDate || ts("recently"),
+  })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -340,7 +354,7 @@ export default function SellerProfilePage() {
               <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
                 <Image
                   src={seller.photoURL || "/placeholder-user.jpg"}
-                  alt={seller.displayName || "Vendedor"}
+                  alt={sellerDisplayName}
                   fill
                   className="object-cover"
                 />
@@ -348,11 +362,11 @@ export default function SellerProfilePage() {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <Store className="h-6 w-6 text-orange-600" />
-                  {seller.displayName || "Vendedor"}
+                  {sellerDisplayName}
                 </h1>
                 <p className="text-gray-600 flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  Vendedor desde {seller.createdAt?.toDate?.()?.toLocaleDateString() || "recientemente"}
+                  {memberSinceLabel}
                 </p>
                 {seller.location && (
                   <p className="text-gray-600 flex items-center gap-1">
@@ -369,28 +383,28 @@ export default function SellerProfilePage() {
                 <FollowButton
                   targetUserId={sellerId}
                   targetType="store"
-                  targetName={seller.displayName || "Vendedor"}
+                  targetName={sellerDisplayName}
                   targetPhotoURL={seller.photoURL}
                 />
               )}
               {!isOwner && (
                 <Button onClick={handleContactSeller} className="bg-orange-600 hover:bg-orange-700">
                   <MessageSquare className="h-4 w-4 mr-2" />
-                  Contactar
+                  {ts("contact")}
                 </Button>
               )}
               {isOwner && (
                 <Button asChild className="bg-blue-600 hover:bg-blue-700">
                   <Link href="/dashboard/seller">
                     <User className="h-4 w-4 mr-2" />
-                    Mi Dashboard
+                    {ts("myDashboard")}
                   </Link>
                 </Button>
               )}
               {(seller.subscription_status === "active" || seller.subscription?.status === "active" || seller.isSubscribed) && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   <Star className="h-3 w-3 mr-1" />
-                  Vendedor Verificado
+                  {ts("verifiedBadge")}
                 </Badge>
               )}
             </div>
@@ -407,11 +421,11 @@ export default function SellerProfilePage() {
           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">{products.length}</div>
-              <div className="text-sm text-gray-600">Productos</div>
+              <div className="text-sm text-gray-600">{ts("statProducts")}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">{services.length}</div>
-              <div className="text-sm text-gray-600">Servicios</div>
+              <div className="text-sm text-gray-600">{ts("statServices")}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">
@@ -420,11 +434,11 @@ export default function SellerProfilePage() {
                   0
                 }
               </div>
-              <div className="text-sm text-gray-600">Días activo</div>
+              <div className="text-sm text-gray-600">{ts("statDaysActive")}</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">4.8</div>
-              <div className="text-sm text-gray-600">Calificación</div>
+              <div className="text-sm text-gray-600">{ts("statRating")}</div>
             </div>
           </div>
         </div>
@@ -439,7 +453,7 @@ export default function SellerProfilePage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Buscar productos o servicios..."
+                  placeholder={ts("searchPlaceholder")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -448,10 +462,10 @@ export default function SellerProfilePage() {
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Todas las categorías" />
+                <SelectValue placeholder={ts("allCategories")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las categorías</SelectItem>
+                <SelectItem value="all">{ts("allCategories")}</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>{category}</SelectItem>
                 ))}
@@ -459,25 +473,25 @@ export default function SellerProfilePage() {
             </Select>
             <Select value={priceFilter} onValueChange={setPriceFilter}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Todos los precios" />
+                <SelectValue placeholder={ts("allPrices")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los precios</SelectItem>
-                <SelectItem value="0-1000">Hasta $1,000</SelectItem>
-                <SelectItem value="1000-5000">$1,000 - $5,000</SelectItem>
-                <SelectItem value="5000-10000">$5,000 - $10,000</SelectItem>
-                <SelectItem value="10000-">Más de $10,000</SelectItem>
+                <SelectItem value="all">{ts("allPrices")}</SelectItem>
+                <SelectItem value="0-1000">{ts("priceUpTo1k")}</SelectItem>
+                <SelectItem value="1000-5000">{ts("price1k5k")}</SelectItem>
+                <SelectItem value="5000-10000">{ts("price5k10k")}</SelectItem>
+                <SelectItem value="10000-">{ts("priceOver10k")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Ordenar por" />
+                <SelectValue placeholder={ts("sortBy")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="newest">Más recientes</SelectItem>
-                <SelectItem value="price-low">Precio: menor a mayor</SelectItem>
-                <SelectItem value="price-high">Precio: mayor a menor</SelectItem>
-                <SelectItem value="name">Nombre A-Z</SelectItem>
+                <SelectItem value="newest">{ts("sortNewest")}</SelectItem>
+                <SelectItem value="price-low">{ts("sortPriceLow")}</SelectItem>
+                <SelectItem value="price-high">{ts("sortPriceHigh")}</SelectItem>
+                <SelectItem value="name">{ts("sortName")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -488,11 +502,11 @@ export default function SellerProfilePage() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
-              Productos ({filteredProducts.length})
+              {ts("tabProducts", { count: filteredProducts.length })}
             </TabsTrigger>
             <TabsTrigger value="services" className="flex items-center gap-2">
               <Store className="h-4 w-4" />
-              Servicios ({filteredServices.length})
+              {ts("tabServices", { count: filteredServices.length })}
             </TabsTrigger>
           </TabsList>
 
@@ -501,9 +515,9 @@ export default function SellerProfilePage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Package className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No hay productos disponibles</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">{ts("emptyProductsTitle")}</h3>
                   <p className="text-gray-500 text-center">
-                    Este vendedor aún no ha publicado productos.
+                    {ts("emptyProductsBody")}
                   </p>
                 </CardContent>
               </Card>
@@ -561,7 +575,7 @@ export default function SellerProfilePage() {
                             variant="secondary" 
                             className="absolute top-2 left-2 bg-white/80 text-xs"
                           >
-                            {product.condition}
+                            {product.condition === "nuevo" ? tc("conditionNew") : tc("conditionUsed")}
                           </Badge>
                         )}
                       </div>
@@ -593,13 +607,13 @@ export default function SellerProfilePage() {
                           )}
                           {isOwner && (
                             <div className="text-sm text-gray-500">
-                              Tu producto
+                              {ts("yourProduct")}
                             </div>
                           )}
                         </div>
                         {product.freeShipping && (
                           <Badge variant="outline" className="text-xs">
-                            Envío gratis
+                            {tp("freeShipping")}
                           </Badge>
                         )}
                       </div>
@@ -615,9 +629,9 @@ export default function SellerProfilePage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Store className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No hay servicios disponibles</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">{ts("emptyServicesTitle")}</h3>
                   <p className="text-gray-500 text-center">
-                    Este vendedor aún no ha publicado servicios.
+                    {ts("emptyServicesBody")}
                   </p>
                 </CardContent>
               </Card>
@@ -671,7 +685,7 @@ export default function SellerProfilePage() {
                           )}
                         </div>
                         <Badge className="absolute top-2 left-2 bg-blue-600 text-xs">
-                          Servicio
+                          {tsv("badge")}
                         </Badge>
                       </div>
                       
@@ -702,7 +716,7 @@ export default function SellerProfilePage() {
                           )}
                           {isOwner && (
                             <div className="text-sm text-gray-500">
-                              Tu servicio
+                              {ts("yourService")}
                             </div>
                           )}
                         </div>

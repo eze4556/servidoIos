@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 interface CategoryItem {
@@ -14,7 +15,8 @@ interface HomeCategoryPillsProps {
 }
 
 export function HomeCategoryPills({ categories, selectedId, onSelect }: HomeCategoryPillsProps) {
-  const pills = [{ id: "all", name: "Todas" }, ...categories.slice(0, 8)]
+  const th = useTranslations("home")
+  const pills = [{ id: "all", name: th("allCategories") }, ...categories.slice(0, 8)]
 
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

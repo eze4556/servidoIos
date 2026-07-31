@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
 
 interface BannerSlide {
   id: string
   src: string
-  alt: string
+  altKey: "bannerAlt1" | "bannerAlt2" | "bannerAlt3" | "bannerAlt4" | "bannerAlt5"
   href?: string
   width: number
   height: number
@@ -20,7 +21,7 @@ const OFFICIAL_BANNERS: BannerSlide[] = [
   {
     id: "bannernuevooficial",
     src: "/images/bannernuevooficial.jpeg",
-    alt: "Encontrá la tecnología ideal para vos",
+    altKey: "bannerAlt1",
     href: "/products",
     width: 1600,
     height: 724,
@@ -28,7 +29,7 @@ const OFFICIAL_BANNERS: BannerSlide[] = [
   {
     id: "bannernuevooficial2",
     src: "/images/bannernuevooficial2.jpeg",
-    alt: "Equipá tu hogar con lo mejor",
+    altKey: "bannerAlt2",
     href: "/products",
     width: 1600,
     height: 726,
@@ -36,7 +37,7 @@ const OFFICIAL_BANNERS: BannerSlide[] = [
   {
     id: "bannernuevooficial3",
     src: "/images/bannernuevooficial3.jpeg",
-    alt: "Pedí lo que más te gusta",
+    altKey: "bannerAlt3",
     href: "/restaurantes",
     width: 1600,
     height: 729,
@@ -44,7 +45,7 @@ const OFFICIAL_BANNERS: BannerSlide[] = [
   {
     id: "bannernuevooficial4",
     src: "/images/bannernuevooficial4.jpeg",
-    alt: "Todos los servicios en un solo lugar",
+    altKey: "bannerAlt4",
     href: "/services",
     width: 1600,
     height: 723,
@@ -52,7 +53,7 @@ const OFFICIAL_BANNERS: BannerSlide[] = [
   {
     id: "bannernuevooficial5",
     src: "/images/bannernuevooficial5.jpeg",
-    alt: "Servido Market: todo lo que necesitás",
+    altKey: "bannerAlt5",
     href: "/products",
     width: 1600,
     height: 728,
@@ -65,6 +66,7 @@ interface HomeBannerCarouselProps {
 }
 
 export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBannerCarouselProps) {
+  const th = useTranslations("home")
   const { authLoading } = useAuth()
   const slides = OFFICIAL_BANNERS
   const [index, setIndex] = useState(0)
@@ -198,6 +200,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
   }
 
   const current = slides[index]
+  const currentAlt = current ? th(current.altKey) : ""
 
   return (
     <section
@@ -243,7 +246,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
             const image = (
               <Image
                 src={slide.src}
-                alt={slide.alt}
+                alt={th(slide.altKey)}
                 width={slide.width}
                 height={slide.height}
                 priority={i === 0}
@@ -287,7 +290,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
             <button
               type="button"
               onClick={() => stepBy(-1)}
-              aria-label="Banner anterior"
+              aria-label={th("bannerPrev")}
               className={cn(
                 "absolute left-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-black/60 active:scale-95 sm:left-3 sm:h-10 sm:w-10",
                 controlsVisible
@@ -300,7 +303,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
             <button
               type="button"
               onClick={() => stepBy(1)}
-              aria-label="Banner siguiente"
+              aria-label={th("bannerNext")}
               className={cn(
                 "absolute right-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-black/60 active:scale-95 sm:right-3 sm:h-10 sm:w-10",
                 controlsVisible
@@ -317,7 +320,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
                   key={slide.id}
                   type="button"
                   onClick={() => goTo(i)}
-                  aria-label={`Ir al banner ${i + 1}`}
+                  aria-label={th("bannerGoTo", { n: i + 1 })}
                   aria-current={i === index}
                   className={cn(
                     "h-1.5 rounded-full transition-all",
@@ -330,7 +333,7 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
         )}
 
         <span className="sr-only">
-          Banner {index + 1} de {slides.length}: {current?.alt}. Usá las flechas o deslizá para ver más.
+          {th("bannerStatus", { current: index + 1, total: slides.length, alt: currentAlt })}
         </span>
       </div>
     </section>

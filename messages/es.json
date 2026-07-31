@@ -38,7 +38,8 @@
     "navFollow": "Seguir",
     "navRestaurants": "Restaurantes",
     "navServices": "Servicios",
-    "navFavorites": "Favoritos"
+    "navFavorites": "Favoritos",
+    "hideChatFab": "Ocultar chat"
   },
   "tabBar": {
     "home": "Inicio",
@@ -246,7 +247,8 @@
     "deliveryFeeShort": " · Envío {amount}",
     "hasNote": " · Tiene nota",
     "payOutsideApp": "Cobro con el restaurante, fuera de la app",
-    "takeOrder": "Tomar"
+    "takeOrder": "Tomar",
+    "defaultName": "Cadete"
   },
   "restaurantOnboarding": {
     "title": "Completá tu perfil",
@@ -571,12 +573,41 @@
     "securePurchase": "Compra segura",
     "startSelling": "Empezá a vender",
     "chipServices": "Servicios",
+    "chipElectronics": "Electrónica",
+    "chipHome": "Hogar",
+    "chipOffers": "Ofertas",
     "shortcutProducts": "Productos",
     "shortcutDelivery": "Delivery",
     "shortcutSuper": "Súper",
     "shortcutPharmacy": "Farmacia",
     "shortcutShipping": "Envíos",
-    "shortcutServices": "Servicios"
+    "shortcutServices": "Servicios",
+    "seeAllCategories": "Ver todas las categorías",
+    "noBrands": "No hay marcas para mostrar.",
+    "bannerAlt1": "Encontrá la tecnología ideal para vos",
+    "bannerAlt2": "Equipá tu hogar con lo mejor",
+    "bannerAlt3": "Pedí lo que más te gusta",
+    "bannerAlt4": "Todos los servicios en un solo lugar",
+    "bannerAlt5": "Servido Market: todo lo que necesitás",
+    "bannerPrev": "Banner anterior",
+    "bannerNext": "Banner siguiente",
+    "bannerGoTo": "Ir al banner {n}",
+    "bannerStatus": "Banner {current} de {total}: {alt}. Usá las flechas o deslizá para ver más."
+  },
+  "locationPicker": {
+    "title": "¿Dónde enviamos?",
+    "description": "Elegí ciudad o barrio, o usá tu ubicación actual.",
+    "close": "Cerrar",
+    "currentLocation": "Ubicación actual",
+    "useGps": "Usar mi ubicación actual",
+    "orSearch": "o buscá",
+    "searchPlaceholder": "Ciudad, barrio o CP...",
+    "clear": "Limpiar",
+    "searchError": "No pudimos buscar ubicaciones. Probá de nuevo.",
+    "saveError": "No se pudo guardar la ubicación.",
+    "detectError": "No pudimos detectar tu ubicación. Escribí ciudad o barrio.",
+    "useQuery": "Usar \"{query}\"",
+    "frequentCities": "Ciudades frecuentes"
   },
   "cart": {
     "title": "Carrito",
@@ -623,6 +654,7 @@
     "purchaseCreated": "Compra creada",
     "paymentStarted": "Pago 1 iniciado",
     "error": "Error",
+    "genericError": "Error",
     "conditionNew": "Nuevo",
     "conditionUsed": "Usado",
     "decreaseQty": "Disminuir cantidad de {name}",
@@ -650,7 +682,19 @@
     "noResultsFilters": "No se encontraron productos con los filtros aplicados.",
     "clearFilters": "Limpiar filtros",
     "refreshHint": "Actualización cada 5 min",
-    "bannerAlt": "Encontrá la tecnología ideal para vos"
+    "bannerAlt": "Encontrá la tecnología ideal para vos",
+    "loadMore": "Cargar más productos",
+    "brandLabel": "Marca"
+  },
+  "categoryPage": {
+    "notFound": "Categoría no encontrada.",
+    "loadError": "Error al cargar los productos de esta categoría.",
+    "backHome": "Volver al inicio",
+    "home": "Inicio",
+    "titleInCategory": "Productos en {name}",
+    "empty": "No hay productos disponibles en esta categoría.",
+    "exploreOthers": "Explorar otros productos",
+    "shippingCost": "Envío:"
   },
   "filters": {
     "title": "Filtros",
@@ -708,6 +752,7 @@
     "removeError": "No se pudo eliminar el favorito",
     "loginForCart": "Debes iniciar sesión para agregar productos al carrito",
     "addedToCart": "Agregado al carrito",
+    "addedToCartDesc": "{name} se agregó a tu carrito",
     "addToCartError": "No se pudo agregar al carrito",
     "removeTitle": "Eliminar de favoritos",
     "service": "Servicio",
@@ -717,7 +762,8 @@
     "view": "Ver",
     "emptyTitle": "No hay favoritos",
     "emptyHint": "Todavía no agregaste ningún producto. Explorá el catálogo y guardá los que más te gusten.",
-    "goProducts": "Ir a productos"
+    "goProducts": "Ir a productos",
+    "unnamedProduct": "Producto"
   },
   "servicesPage": {
     "loading": "Cargando servicios...",
@@ -801,7 +847,112 @@
     "noDescription": "Este producto no tiene descripción disponible.",
     "reviewsTitle": "Reseñas",
     "relatedTitle": "Productos relacionados",
-    "relatedSubtitle": "Otros artículos que te pueden interesar"
+    "relatedSubtitle": "Otros artículos que te pueden interesar",
+    "productInfoMissing": "No se pudo obtener la información del producto",
+    "outOfStockToast": "Producto sin stock disponible",
+    "purchaseCreatedToast": "Compra creada",
+    "purchaseCreatedDesc": "{name} - {price}",
+    "protectedPurchase": "Compra protegida",
+    "returns": "Devoluciones",
+    "sellerDefault": "Vendedor"
+  },
+  "share": {
+    "label": "Compartir:",
+    "shareText": "¡Mirá este producto en Servido! {name}",
+    "shareTextWithPrice": "¡Mirá este producto en Servido! {name} - {price}"
+  },
+  "purchaseSummaryCard": {
+    "title": "Resumen de compra",
+    "description": "Si hay varios vendedores, vas a realizar un pago por cada uno. El precio publicado no sube por la comisión.",
+    "productsCount": "{count} Productos",
+    "itemsTotal": "Items en total",
+    "vendorsCount": "{count} Vendedores",
+    "differentStores": "Diferentes tiendas",
+    "vendorBreakdown": "Desglose por Vendedor",
+    "vendorN": "Vendedor {n}",
+    "items": "{count} items",
+    "subtotal": "Subtotal:",
+    "commissionLine": "Comisión Servido (8%):",
+    "sellerNet": "Neto vendedor (~92%):",
+    "shipping": "Envío:",
+    "totalCommission": "Comisión total (8%):",
+    "totalToPay": "Total a pagar:",
+    "splitInfo": "Cómo se reparte:",
+    "splitBody": "vos pagás el precio publicado. Cada vendedor cobra en su Mercado Pago y Servido retiene automáticamente el 8% de comisión sobre los productos (el envío no se comisiona). Si hay varios vendedores, vas a hacer un pago por cada uno."
+  },
+  "sellerStore": {
+    "notFound": "Vendedor no encontrado",
+    "loadError": "Error al cargar los datos del vendedor",
+    "defaultName": "Vendedor",
+    "sellerSince": "Vendedor desde {date}",
+    "recently": "recientemente",
+    "contact": "Contactar",
+    "myDashboard": "Mi panel",
+    "verifiedBadge": "Vendedor verificado",
+    "statProducts": "Productos",
+    "statServices": "Servicios",
+    "statDaysActive": "Días activo",
+    "statRating": "Calificación",
+    "searchPlaceholder": "Buscar productos o servicios...",
+    "allCategories": "Todas las categorías",
+    "allPrices": "Todos los precios",
+    "sortBy": "Ordenar por",
+    "sortNewest": "Más recientes",
+    "sortPriceLow": "Precio: menor a mayor",
+    "sortPriceHigh": "Precio: mayor a menor",
+    "sortName": "Nombre A-Z",
+    "priceUpTo1k": "Hasta $1,000",
+    "price1k5k": "$1,000 - $5,000",
+    "price5k10k": "$5,000 - $10,000",
+    "priceOver10k": "Más de $10,000",
+    "tabProducts": "Productos ({count})",
+    "tabServices": "Servicios ({count})",
+    "emptyProductsTitle": "No hay productos disponibles",
+    "emptyProductsBody": "Este vendedor aún no ha publicado productos.",
+    "emptyServicesTitle": "No hay servicios disponibles",
+    "emptyServicesBody": "Este vendedor aún no ha publicado servicios.",
+    "yourProduct": "Tu producto",
+    "yourService": "Tu servicio",
+    "deleteConfirm": "¿Estás seguro de que querés eliminar este {item}?",
+    "itemProduct": "producto",
+    "itemService": "servicio",
+    "deleteError": "Error al eliminar el producto",
+    "chatDisabled": "Funcionalidad de chat temporalmente deshabilitada"
+  },
+  "coupons": {
+    "title": "Cupón de descuento",
+    "description": "Ingresá un código de cupón para obtener descuentos en tu compra",
+    "sameSellerHint": "Los cupones solo se pueden aplicar a productos del mismo vendedor",
+    "enterCode": "Por favor ingresá un código de cupón",
+    "sameSellerError": "Los cupones solo se pueden aplicar a productos del mismo vendedor",
+    "notFound": "Cupón no encontrado",
+    "inactive": "Este cupón no está activo",
+    "wrongSeller": "Este cupón no es válido para productos de este vendedor",
+    "notYetAvailable": "Este cupón aún no está disponible",
+    "expired": "Este cupón ha expirado",
+    "minPurchase": "Monto mínimo requerido: {amount}",
+    "usageLimit": "Este cupón ha alcanzado su límite de uso",
+    "applyError": "Error al aplicar el cupón",
+    "appliedTitle": "Cupón aplicado",
+    "appliedDesc": "{name} - {discount} de descuento",
+    "discountPercent": "{value}%",
+    "discountFixed": "${value}",
+    "removedTitle": "Cupón removido",
+    "removedDesc": "El cupón ha sido removido de tu compra",
+    "sellerSpecific": "Cupón específico del vendedor",
+    "discountApplied": "Descuento aplicado:",
+    "remove": "Remover cupón",
+    "codeLabel": "Código de cupón",
+    "codePlaceholder": "Ingresá tu código de cupón",
+    "applying": "Aplicando...",
+    "apply": "Aplicar",
+    "ruleSingleUse": "Los cupones son válidos para una sola compra",
+    "ruleMinPurchase": "Algunos cupones pueden tener restricciones de monto mínimo",
+    "ruleBeforeTax": "Los descuentos se aplican antes de impuestos y envío",
+    "ruleSameSeller": "Los cupones solo se pueden aplicar a productos del mismo vendedor",
+    "examples": "Cupones de ejemplo: DESCUENTO20, FIXED50, BIENVENIDA10",
+    "offPercent": "{value}% OFF",
+    "offFixed": "${value} OFF"
   },
   "reviews": {
     "userReviewsTitle": "Reseñas de Usuarios ({count})",
@@ -835,6 +986,8 @@
     "cancel": "Cancelar",
     "waitingSeller": "Esperando respuesta del vendedor...",
     "unknownDate": "Fecha desconocida",
+    "phoneBlocked": "***NÚMERO BLOQUEADO***",
+    "anonymousUser": "Usuario anónimo",
     "errorTitle": "Error",
     "successTitle": "Éxito"
   },
@@ -949,7 +1102,14 @@
     "lastSeenHours": "última vez hace {count} h",
     "lastSeenYesterday": "última vez ayer",
     "lastSeenDays": "última vez hace {count} días",
-    "lastSeenOnDate": "última vez el {date}"
+    "lastSeenOnDate": "última vez el {date}",
+    "sendAria": "Enviar",
+    "loadConversationsError": "Error al cargar tus conversaciones.",
+    "emptyConversations": "Aún no tenés conversaciones.",
+    "exploreToChat": "Explorar productos para iniciar un chat",
+    "sellerEmptyHint": "Los compradores iniciarán conversaciones contigo.",
+    "noMessagesYet": "No hay mensajes aún.",
+    "dateUnknown": "N/D"
   },
   "buyerDashboard": {
     "panelTitle": "Panel comprador",
@@ -1073,7 +1233,37 @@
     "deliveryErrorDetail": "Error al confirmar la entrega: {message}",
     "centralizedNotFound": "No se encontró la compra centralizada especificada.",
     "productNotInCentralized": "No se encontró el producto en la compra centralizada.",
-    "removePhotoConfirm": "¿Estás seguro de que quieres eliminar tu foto de perfil?"
+    "removePhotoConfirm": "¿Estás seguro de que quieres eliminar tu foto de perfil?",
+    "errorTitle": "Error",
+    "successTitle": "Éxito",
+    "bannerAlt": "Servido Market: todo lo que necesitás",
+    "profileNoImageSelected": "No hay imagen seleccionada o usuario no autenticado.",
+    "profileUploadSuccess": "Foto de perfil actualizada exitosamente.",
+    "profileUploadError": "Error al subir la foto de perfil. Inténtalo de nuevo.",
+    "profileNoPhotoToRemove": "No hay foto de perfil para eliminar.",
+    "profileRemoveSuccess": "Foto de perfil eliminada exitosamente.",
+    "profileRemoveError": "Error al eliminar la foto de perfil. Inténtalo de nuevo.",
+    "itemsInPurchase": "{count, plural, one {# producto} other {# productos}}",
+    "excelSheetPurchases": "Compras",
+    "excelFileName": "compras_usuario.xlsx",
+    "excelColId": "ID",
+    "excelColDate": "Fecha",
+    "excelColBuyer": "Comprador",
+    "excelColSeller": "Vendedor",
+    "excelColProduct": "Producto",
+    "excelColQty": "Cantidad",
+    "excelColUnitPrice": "Precio unitario",
+    "excelColSubtotal": "Subtotal",
+    "excelColPaymentStatus": "Estado pago",
+    "excelColShippingStatus": "Estado envío",
+    "excelColTracking": "Tracking",
+    "excelColCarrier": "Transportista"
+  },
+  "dashboardShell": {
+    "openPanelMenu": "Abrir menú del panel",
+    "panelMenuTitle": "Menú del panel",
+    "backHomeAria": "Volver al inicio",
+    "myPanelLabel": "Mi panel"
   },
   "notifications": {
     "title": "Notificaciones",
@@ -1210,6 +1400,19 @@
       "stateRequired": "La provincia/estado es requerido",
       "zipRequired": "El código postal es requerido"
     }
+  },
+  "shippingAddress": {
+    "noAddress": "Sin dirección",
+    "viewLong": "Ver dirección",
+    "viewShort": "Dirección",
+    "title": "Dirección de envío",
+    "descriptionForProduct": "Información de entrega para {productName}",
+    "fullNameLabel": "Nombre y apellido:",
+    "dniLabel": "DNI:",
+    "phoneLabel": "Teléfono:",
+    "addressLabel": "Dirección:",
+    "zipLabel": "Código postal: {code}",
+    "additionalNote": "Nota adicional:"
   },
   "infoCommon": {
     "backHome": "Volver al inicio",
@@ -1564,7 +1767,15 @@
       "updateError": "No se pudo actualizar el estado del cupón.",
       "deleteConfirm": "¿Estás seguro de que querés eliminar el cupón \"{name}\"?",
       "deletedSuccess": "Cupón eliminado correctamente.",
-      "deleteError": "No se pudo eliminar el cupón."
+      "deleteError": "No se pudo eliminar el cupón.",
+      "availableLoadError": "No se pudieron cargar los cupones.",
+      "associateSelectRequired": "Seleccioná un cupón, al menos un producto y asegurá tu sesión.",
+      "associateDateRangeRequired": "Seleccioná un rango de fechas de validez para el cupón.",
+      "associateDateOrderInvalid": "La fecha de inicio no puede ser posterior a la fecha de fin.",
+      "associateSuccess": "{count, plural, one {Cupón asociado a # producto correctamente.} other {Cupón asociado a # productos correctamente.}}",
+      "associateError": "No se pudo asociar el cupón a los productos.",
+      "removeFromProductSuccess": "Cupón eliminado del producto correctamente.",
+      "removeFromProductError": "No se pudo eliminar el cupón del producto."
     },
     "agenda": {
       "emptyPanelTitle": "Agenda de servicios",
@@ -1641,7 +1852,11 @@
       "storyTitle": "Publicar historia",
       "deleteConfirm": "¿Estás seguro de que querés eliminar este producto? Esta acción no se puede deshacer.",
       "deletedSuccess": "Producto eliminado exitosamente.",
-      "deleteError": "Error al eliminar el producto."
+      "deleteError": "Error al eliminar el producto.",
+      "loadError": "Error al cargar tus productos."
+    },
+    "catalog": {
+      "categoriesLoadError": "Error al cargar categorías y marcas."
     },
     "forms": {
       "missingRequiredTitle": "Faltan campos obligatorios",
@@ -1658,7 +1873,14 @@
         "mediaRequired": "Debés subir al menos una imagen o video",
         "conditionRequired": "La condición es obligatoria",
         "shippingCostRequired": "El costo de envío es obligatorio o seleccioná envío gratis"
-      }
+      },
+      "notAuthenticated": "Usuario no autenticado.",
+      "mediaUploadError": "Error al subir el archivo.",
+      "profileImageUploadError": "Error al subir la imagen de perfil.",
+      "productSubmitErrorUpdate": "Error al actualizar el producto. {message}",
+      "productSubmitErrorAdd": "Error al añadir el producto. {message}",
+      "serviceSubmitErrorUpdate": "Error al actualizar el servicio. {message}",
+      "serviceSubmitErrorAdd": "Error al añadir el servicio. {message}"
     },
     "media": {
       "productLabel": "Imágenes y videos del producto",
@@ -1821,7 +2043,20 @@
         "commission": "Comisión",
         "net": "Neto",
         "status": "Estado"
-      }
+      },
+      "exportExcel": "Exportar Excel",
+      "excelSheetSales": "Ventas",
+      "excelFileName": "ventas_vendedor.xlsx",
+      "excelColDate": "Fecha",
+      "excelColProduct": "Producto",
+      "excelColPrice": "Precio",
+      "excelColBuyer": "Comprador",
+      "excelColBuyerEmail": "Email comprador",
+      "excelColStatus": "Estado",
+      "excelColPurchase": "Compra",
+      "invoiceVendorDefault": "vendedor",
+      "invoiceDateRangeAll": "todas-las-fechas",
+      "invoiceFileName": "ventas-{vendor}-{range}.csv"
     }
   },
   "notFound": {

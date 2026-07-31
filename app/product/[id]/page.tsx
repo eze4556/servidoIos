@@ -145,6 +145,7 @@ export default function ProductDetailPage() {
   const tp = useTranslations("product")
   const tc = useTranslations("cart")
   const tr = useTranslations("reviews")
+  const phoneBlockedLabel = tr("phoneBlocked")
   const params = useParams()
   const router = useRouter()
   const { addItem, getItemQuantity } = useCart()
@@ -455,7 +456,7 @@ export default function ProductDetailPage() {
       const reviewData = {
         productId: product.id,
         userId: currentUser.firebaseUser.uid,
-        userName: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email || "Usuario Anónimo",
+        userName: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email || tr("anonymousUser"),
         rating: reviewRating,
         comment: reviewComment,
         createdAt: serverTimestamp(),
@@ -516,7 +517,7 @@ export default function ProductDetailPage() {
       const questionData = {
         productId: product.id,
         userId: currentUser.firebaseUser.uid,
-        userName: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email || "Usuario Anónimo",
+        userName: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email || tr("anonymousUser"),
         question: newQuestion,
         createdAt: serverTimestamp(),
       }
@@ -570,7 +571,7 @@ export default function ProductDetailPage() {
       const questionRef = doc(db, "questions", questionId)
       await updateDoc(questionRef, {
         answer: answerText,
-        answeredBy: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email || "Vendedor",
+        answeredBy: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email || tp("sellerDefault"),
         answeredAt: serverTimestamp(),
       })
 
@@ -580,7 +581,7 @@ export default function ProductDetailPage() {
             ? {
                 ...q,
                 answer: answerText,
-                answeredBy: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email || "Vendedor",
+                answeredBy: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email || tp("sellerDefault"),
                 answeredAt: new Date(),
               }
             : q,
@@ -670,8 +671,8 @@ export default function ProductDetailPage() {
 
     if (!product) {
       toast({
-        title: "Error",
-        description: "No se pudo obtener la información del producto",
+        title: tc("error"),
+        description: tp("productInfoMissing"),
         variant: "destructive"
       })
       return
@@ -679,8 +680,8 @@ export default function ProductDetailPage() {
 
     if (maxQuantity <= 0) {
       toast({
-        title: "Error",
-        description: "Producto sin stock disponible",
+        title: tc("error"),
+        description: tp("outOfStockToast"),
         variant: "destructive"
       })
       return
@@ -707,8 +708,11 @@ export default function ProductDetailPage() {
       }
 
       toast({
-        title: "✅ Compra creada",
-        description: `${product.name} - ${formatPriceNumber(finalPrice * quantity)}`,
+        title: tp("purchaseCreatedToast"),
+        description: tp("purchaseCreatedDesc", {
+          name: product.name,
+          price: formatPriceNumber(finalPrice * quantity),
+        }),
         duration: 3000,
       })
 
@@ -1013,11 +1017,11 @@ export default function ProductDetailPage() {
               <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
                 <span className="flex items-center gap-1.5">
                   <Shield className="h-4 w-4 text-purple-600" />
-                  Compra protegida
+                  {tp("protectedPurchase")}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <RotateCcw className="h-4 w-4 text-purple-600" />
-                  Devoluciones
+                  {tp("returns")}
                 </span>
               </div>
             </div>
@@ -1124,7 +1128,7 @@ export default function ProductDetailPage() {
                           ]
                           let censoredText = text
                           phonePatterns.forEach((pattern) => {
-                            censoredText = censoredText.replace(pattern, "***NÚMERO BLOQUEADO***")
+                            censoredText = censoredText.replace(pattern, phoneBlockedLabel)
                           })
                           return censoredText
                         }
@@ -1211,7 +1215,7 @@ export default function ProductDetailPage() {
                             ]
                             let censoredText = text
                             phonePatterns.forEach(pattern => {
-                              censoredText = censoredText.replace(pattern, '***NÚMERO BLOQUEADO***')
+                              censoredText = censoredText.replace(pattern, phoneBlockedLabel)
                             })
                             return censoredText
                           }
@@ -1244,7 +1248,7 @@ export default function ProductDetailPage() {
                               ]
                               let censoredText = text
                               phonePatterns.forEach(pattern => {
-                                censoredText = censoredText.replace(pattern, '***NÚMERO BLOQUEADO***')
+                                censoredText = censoredText.replace(pattern, phoneBlockedLabel)
                               })
                               return censoredText
                             }

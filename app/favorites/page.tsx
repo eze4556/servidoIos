@@ -46,7 +46,7 @@ function mapFavoriteFromProduct(
   return {
     id: productId,
     favoriteId,
-    name: (productData.name as string) || "Producto",
+    name: (productData.name as string) || "",
     description: productData.description as string | undefined,
     price: Number(productData.price) || 0,
     imageUrl: productData.imageUrl as string | undefined,
@@ -203,7 +203,7 @@ export default function FavoritesPage() {
     } catch (removeError) {
       console.error("Error removing favorite:", removeError)
       toast({
-        title: "Error",
+        title: tc("error"),
         description: tf("removeError"),
         variant: "destructive",
       })
@@ -213,7 +213,7 @@ export default function FavoritesPage() {
   const addToCart = (product: FavoriteProduct) => {
     if (!currentUser) {
       toast({
-        title: "Error",
+        title: tc("error"),
         description: tf("loginForCart"),
         variant: "destructive",
       })
@@ -239,13 +239,13 @@ export default function FavoritesPage() {
 
       toast({
         title: tf("addedToCart"),
-        description: `${product.name} se agregó a tu carrito`,
+        description: tf("addedToCartDesc", { name: product.name || tf("unnamedProduct") }),
         duration: 3000,
       })
     } catch (cartError) {
       console.error("Error adding to cart:", cartError)
       toast({
-        title: "Error",
+        title: tc("error"),
         description: tf("addToCartError"),
         variant: "destructive",
       })
@@ -363,7 +363,7 @@ export default function FavoritesPage() {
                   <CardContent className="p-4">
                     <Link href={`/product/${product.id}`}>
                       <h3 className="mb-2 line-clamp-2 text-lg font-semibold transition-colors group-hover:text-purple-600">
-                        {product.name}
+                        {product.name || tf("unnamedProduct")}
                       </h3>
                     </Link>
 

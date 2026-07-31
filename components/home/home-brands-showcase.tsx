@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { SimpleImage } from "@/components/ui/simple-image"
 
 interface BrandItem {
@@ -15,12 +16,14 @@ interface HomeBrandsShowcaseProps {
 }
 
 export function HomeBrandsShowcase({ brands, loading }: HomeBrandsShowcaseProps) {
+  const th = useTranslations("home")
+
   if (loading && brands.length === 0) {
     return <div className="h-28 animate-pulse rounded-3xl bg-purple-100/50" />
   }
 
   if (brands.length === 0) {
-    return <p className="text-center text-gray-500">No hay marcas para mostrar.</p>
+    return <p className="text-center text-gray-500">{th("noBrands")}</p>
   }
 
   const loop = brands.concat(brands)

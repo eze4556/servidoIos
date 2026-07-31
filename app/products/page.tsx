@@ -253,7 +253,7 @@ export default function ProductsPage() {
       chips.push({ label: name, onRemove: () => setSelectedCategory("all") })
     }
     if (selectedBrand && selectedBrand !== "all") {
-      const name = brands.find((b) => b.id === selectedBrand)?.name || "Marca"
+      const name = brands.find((b) => b.id === selectedBrand)?.name || tp("brandLabel")
       chips.push({ label: name, onRemove: () => setSelectedBrand("all") })
     }
     if (minPrice) chips.push({ label: `Desde $${minPrice}`, onRemove: () => setMinPrice("") })
@@ -461,7 +461,7 @@ export default function ProductsPage() {
                           Cargando...
                         </>
                       ) : (
-                        "Cargar más productos"
+                        tp("loadMore")
                       )}
                     </Button>
                   </div>

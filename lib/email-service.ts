@@ -1,13 +1,24 @@
+import { defaultLocale, isAppLocale, LOCALE_COOKIE, type AppLocale } from "@/i18n/config"
+
 export interface WelcomeEmailData {
   user_name: string
   user_email: string
   account_type: string
+  locale?: AppLocale
 }
 
 export interface CadeteStatusEmailData {
   user_name: string
   user_email: string
   decision: "approved" | "rejected"
+  locale?: AppLocale
+}
+
+function readClientLocale(): AppLocale {
+  if (typeof document === "undefined") return defaultLocale
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=([^;]+)`))
+  const raw = match?.[1] ? decodeURIComponent(match[1]) : null
+  return isAppLocale(raw) ? raw : defaultLocale
 }
 
 /**
@@ -24,6 +35,7 @@ export const sendWelcomeEmail = async (data: WelcomeEmailData): Promise<void> =>
         user_name: data.user_name,
         user_email: data.user_email,
         account_type: data.account_type,
+        locale: data.locale ?? readClientLocale(),
       }),
     })
 
@@ -49,6 +61,7 @@ export const sendCadeteStatusEmail = async (data: CadeteStatusEmailData): Promis
         user_name: data.user_name,
         user_email: data.user_email,
         decision: data.decision,
+        locale: data.locale ?? readClientLocale(),
       }),
     })
 

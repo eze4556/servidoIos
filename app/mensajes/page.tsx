@@ -44,7 +44,7 @@ export default function MensajesPage() {
     )
 
     return () => unsub()
-  }, [currentUser?.firebaseUser.uid])
+  }, [currentUser?.firebaseUser.uid, t])
 
   if (authLoading || !currentUser) {
     return (

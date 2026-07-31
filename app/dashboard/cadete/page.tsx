@@ -68,7 +68,7 @@ export default function CadeteDashboardPage() {
   const approved = isCadeteApproved(currentUser?.status, currentUser?.isActive)
   const rejected = currentUser?.status === "rejected"
   const uid = currentUser?.firebaseUser.uid
-  const cadeteName = currentUser?.name || currentUser?.firebaseUser.displayName || "Cadete"
+  const cadeteName = currentUser?.name || currentUser?.firebaseUser.displayName || t("defaultName")
   const cadeteZone = currentUser?.zone
 
   const resolveRestaurantAddress = useCallback(async (order: FoodOrder | null) => {

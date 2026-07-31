@@ -589,7 +589,7 @@ export default function SellerDashboardPage() {
             compradorNombre: users[compra.compradorId]?.displayName || users[compra.compradorId]?.name || '',
             compradorEmail: users[compra.compradorId]?.email || '',
             productId: item?.productoId || '',
-            productName: item?.productoNombre || products[item?.productoId]?.name || 'Producto sin nombre',
+            productName: item?.productoNombre || products[item?.productoId]?.name || t("shipping.productUntitled"),
             productPrice: item?.precioUnitario || 0,
             quantity: item?.cantidad || 0,
             vendedorId: item?.vendedorId || '',
@@ -637,7 +637,7 @@ export default function SellerDashboardPage() {
             compradorNombre: users[compra.buyerId]?.displayName || users[compra.buyerId]?.name || '',
             compradorEmail: compra.buyerId || '',
             productId: item.productId || '',
-            productName: item.name || 'Producto sin nombre',
+            productName: item.name || t("shipping.productUntitled"),
             productPrice: item.price || 0,
             quantity: item.quantity || 0,
             vendedorId: item.vendedorId || '',
@@ -661,7 +661,7 @@ export default function SellerDashboardPage() {
       }, 2000)
     }
     fetchData()
-  }, [currentUser])
+  }, [currentUser, t])
 
   // useEffect para manejar parámetros de suscripción en la URL
   useEffect(() => {
@@ -738,18 +738,18 @@ export default function SellerDashboardPage() {
   // Exportar a Excel
   const handleExportExcel = () => {
     const data = filteredSales.map(sale => ({
-      Fecha: sale.fechaCompra ? new Date(sale.fechaCompra).toLocaleString() : '',
-      Producto: productsMap[sale.productId]?.name || sale.productName,
-      Precio: sale.productPrice,
-      Comprador: usersMap[sale.buyerId]?.name,
-      EmailComprador: usersMap[sale.buyerId]?.email,
-      Estado: sale.status,
-      Compra: sale.compraId
+      [t("earnings.excelColDate")]: sale.fechaCompra ? new Date(sale.fechaCompra).toLocaleString(dateLocale) : '',
+      [t("earnings.excelColProduct")]: productsMap[sale.productId]?.name || sale.productName,
+      [t("earnings.excelColPrice")]: sale.productPrice,
+      [t("earnings.excelColBuyer")]: usersMap[sale.buyerId]?.name,
+      [t("earnings.excelColBuyerEmail")]: usersMap[sale.buyerId]?.email,
+      [t("earnings.excelColStatus")]: sale.status,
+      [t("earnings.excelColPurchase")]: sale.compraId
     }))
     const ws = XLSX.utils.json_to_sheet(data)
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Ventas")
-    XLSX.writeFile(wb, "ventas_vendedor.xlsx")
+    XLSX.utils.book_append_sheet(wb, ws, t("earnings.excelSheetSales"))
+    XLSX.writeFile(wb, t("earnings.excelFileName"))
   }
 
 
@@ -1065,14 +1065,14 @@ export default function SellerDashboardPage() {
       } catch (error) {
         console.error("Error fetching coupons:", error)
         toast({
-          title: "Error",
-          description: "No se pudieron cargar los cupones.",
+          title: t("alerts.errorTitle"),
+          description: t("coupons.availableLoadError"),
           variant: "destructive",
         })
       }
     }
     fetchCoupons()
-  }, [toast])
+  }, [toast, t])
 
   // Fetch my coupons when create-coupons tab is active
   useEffect(() => {
@@ -1229,7 +1229,7 @@ export default function SellerDashboardPage() {
       setCatalogLoadedForUid(sellerUid)
     } catch (err) {
       console.error("Error fetching seller products:", err)
-      setError("Error al cargar tus productos.")
+      setError(t("products.loadError"))
     } finally {
       setLoadingData(false)
     }
@@ -1254,8 +1254,8 @@ export default function SellerDashboardPage() {
   const associateCouponToProducts = async () => {
     if (!selectedCouponId || selectedProductIds.length === 0 || !currentUser) {
       toast({
-        title: "Error",
-        description: "Selecciona un cupón, al menos un producto y asegura tu sesión.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.associateSelectRequired"),
         variant: "destructive",
       })
       return
@@ -1263,8 +1263,8 @@ export default function SellerDashboardPage() {
 
     if (!couponApplyStartDate || !couponApplyEndDate) {
       toast({
-        title: "Error",
-        description: "Por favor, selecciona un rango de fechas de validez para el cupón.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.associateDateRangeRequired"),
         variant: "destructive",
       })
       return
@@ -1272,8 +1272,8 @@ export default function SellerDashboardPage() {
 
     if (couponApplyStartDate > couponApplyEndDate) {
       toast({
-        title: "Error",
-        description: "La fecha de inicio no puede ser posterior a la fecha de fin.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.associateDateOrderInvalid"),
         variant: "destructive",
       })
       return
@@ -1295,14 +1295,14 @@ export default function SellerDashboardPage() {
       await fetchSellerData(currentUser.firebaseUser.uid) // Refresh product list
       setIsCouponModalOpen(false)
       toast({
-        title: "Éxito",
-        description: `Cupón asociado a ${selectedProductIds.length} producto(s) correctamente.`,
+        title: t("alerts.successTitle"),
+        description: t("coupons.associateSuccess", { count: selectedProductIds.length }),
       })
     } catch (error) {
       console.error("Error associating coupon to products:", error)
       toast({
-        title: "Error",
-        description: "No se pudo asociar el cupón a los productos.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.associateError"),
         variant: "destructive",
       })
     } finally {
@@ -1325,14 +1325,14 @@ export default function SellerDashboardPage() {
 
       await fetchSellerData(currentUser.firebaseUser.uid) // Refresh product list
       toast({
-        title: "Éxito",
-        description: "Cupón eliminado del producto correctamente.",
+        title: t("alerts.successTitle"),
+        description: t("coupons.removeFromProductSuccess"),
       })
     } catch (error) {
       console.error("Error removing coupon from product:", error)
       toast({
-        title: "Error",
-        description: "No se pudo eliminar el cupón del producto.",
+        title: t("alerts.errorTitle"),
+        description: t("coupons.removeFromProductError"),
         variant: "destructive",
       })
     }
@@ -1504,7 +1504,7 @@ export default function SellerDashboardPage() {
       setBrands(brandsData)
     } catch (error) {
       console.error("Error fetching categories and brands:", error)
-      setError("Error al cargar categorías y marcas.")
+      setError(t("catalog.categoriesLoadError"))
     }
   }
 
@@ -1567,7 +1567,7 @@ export default function SellerDashboardPage() {
   }
 
   const uploadMediaToStorage = async (file: File): Promise<ProductMedia> => {
-    if (!currentUser) throw new Error("Usuario no autenticado.")
+    if (!currentUser) throw new Error(t("forms.notAuthenticated"))
     setUploadingMedia(true)
 
     const isVideo = file.type.startsWith("video/")
@@ -1602,7 +1602,7 @@ export default function SellerDashboardPage() {
       return result as ProductMedia
     } catch (error) {
       console.error("Error uploading media: ", error)
-      throw new Error("Error al subir el archivo.")
+      throw new Error(t("forms.mediaUploadError"))
     } finally {
       setUploadingMedia(false)
     }
@@ -1839,7 +1839,13 @@ export default function SellerDashboardPage() {
     } catch (err) {
       console.error("Error submitting product:", err)
       setError(
-        `Error al ${isEditing ? "actualizar" : "añadir"} el producto. ${err instanceof Error ? err.message : ""}`,
+        isEditing
+          ? t("forms.productSubmitErrorUpdate", {
+              message: err instanceof Error ? err.message : "",
+            })
+          : t("forms.productSubmitErrorAdd", {
+              message: err instanceof Error ? err.message : "",
+            }),
       )
     } finally {
       setSubmittingProduct(false)
@@ -1856,7 +1862,7 @@ export default function SellerDashboardPage() {
   }
 
   const uploadProfileImageToStorage = async (file: File): Promise<{ downloadURL: string; filePath: string }> => {
-    if (!currentUser) throw new Error("Usuario no autenticado.")
+    if (!currentUser) throw new Error(t("forms.notAuthenticated"))
     setUploadingProfileImage(true)
     const filePath = `users/${currentUser.firebaseUser.uid}/profile/${Date.now()}-${file.name}`
     const storageRef = ref(storage, filePath)
@@ -1866,7 +1872,7 @@ export default function SellerDashboardPage() {
       return { downloadURL, filePath }
     } catch (error) {
       console.error("Error uploading profile image: ", error)
-      throw new Error("Error al subir la imagen de perfil.")
+      throw new Error(t("forms.profileImageUploadError"))
     } finally {
       setUploadingProfileImage(false)
     }
@@ -2219,7 +2225,13 @@ export default function SellerDashboardPage() {
     } catch (err) {
       console.error("Error submitting service:", err)
       setError(
-        `Error al ${isEditing ? "actualizar" : "añadir"} el servicio. ${err instanceof Error ? err.message : ""}`,
+        isEditing
+          ? t("forms.serviceSubmitErrorUpdate", {
+              message: err instanceof Error ? err.message : "",
+            })
+          : t("forms.serviceSubmitErrorAdd", {
+              message: err instanceof Error ? err.message : "",
+            }),
       )
     } finally {
       setSubmittingProduct(false)
@@ -2329,9 +2341,10 @@ export default function SellerDashboardPage() {
       const a = document.createElement('a')
       a.href = url
       
-      const vendorName = currentUser.firebaseUser.displayName || 'vendedor'
-      const dateRange = startDate && endDate ? `${startDate}-${endDate}` : 'todas-las-fechas'
-      a.download = `ventas-${vendorName}-${dateRange}.csv`
+      const vendorName = currentUser.firebaseUser.displayName || t("earnings.invoiceVendorDefault")
+      const dateRange =
+        startDate && endDate ? `${startDate}-${endDate}` : t("earnings.invoiceDateRangeAll")
+      a.download = t("earnings.invoiceFileName", { vendor: vendorName, range: dateRange })
       a.click()
       window.URL.revokeObjectURL(url)
       

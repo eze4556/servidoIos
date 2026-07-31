@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { ChevronRight, Loader2, MapPin, Navigation, Search, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useLocation } from "@/contexts/location-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +34,8 @@ const QUICK_CITIES = [
 ]
 
 export function LocationPickerSheet() {
+  const t = useTranslations("locationPicker")
+  const tc = useTranslations("common")
   const {
     pickerOpen,
     closeLocationPicker,
@@ -77,7 +80,7 @@ export function LocationPickerSheet() {
         const data = await response.json()
         setResults(Array.isArray(data.results) ? data.results : [])
       } catch {
-        setError("No pudimos buscar ubicaciones. Probá de nuevo.")
+        setError(t("searchError"))
         setResults([])
       } finally {
         setSearching(false)
@@ -93,7 +96,7 @@ export function LocationPickerSheet() {
     try {
       await setManualLocation({ location: label, latitude, longitude })
     } catch {
-      setError("No se pudo guardar la ubicación.")
+      setError(t("saveError"))
     } finally {
       setSaving(false)
     }
@@ -106,7 +109,7 @@ export function LocationPickerSheet() {
       await refreshLocation()
       closeLocationPicker()
     } catch {
-      setError("No pudimos detectar tu ubicación. Escribí ciudad o barrio.")
+      setError(t("detectError"))
     } finally {
       setDetecting(false)
     }
@@ -137,17 +140,17 @@ export function LocationPickerSheet() {
           <div className="mb-2 flex items-start justify-between gap-3">
             <div className="min-w-0">
               <DialogTitle className="text-xl font-bold tracking-tight text-white">
-                ¿Dónde enviamos?
+                {t("title")}
               </DialogTitle>
               <DialogDescription className="mt-1.5 text-sm leading-relaxed text-purple-100/90">
-                Elegí ciudad o barrio, o usá tu ubicación actual.
+                {t("description")}
               </DialogDescription>
             </div>
             <button
               type="button"
               onClick={closeLocationPicker}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/20 transition-colors hover:bg-white/25"
-              aria-label="Cerrar"
+              aria-label={t("close")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -160,10 +163,10 @@ export function LocationPickerSheet() {
               </span>
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-purple-200">
-                  Ubicación actual
+                  {t("currentLocation")}
                 </p>
                 <p className="mt-0.5 truncate font-semibold">
-                  {loadingLocation ? "Detectando..." : shortLocation || userLocation}
+                  {loadingLocation ? tc("detecting") : shortLocation || userLocation}
                 </p>
               </div>
             </div>
@@ -182,13 +185,13 @@ export function LocationPickerSheet() {
             ) : (
               <Navigation className="mr-2 h-4 w-4" />
             )}
-            Usar mi ubicación actual
+            {t("useGps")}
           </Button>
 
           <div className="relative flex items-center gap-3">
             <span className="h-px flex-1 bg-gray-200" />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-              o buscá
+              {t("orSearch")}
             </span>
             <span className="h-px flex-1 bg-gray-200" />
           </div>
@@ -198,7 +201,7 @@ export function LocationPickerSheet() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ciudad, barrio o CP..."
+              placeholder={t("searchPlaceholder")}
               className="h-12 rounded-2xl border-0 bg-gray-50 pl-10 pr-10 text-base ring-1 ring-gray-200 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-purple-300 sm:text-sm"
               autoComplete="off"
             />
@@ -207,7 +210,7 @@ export function LocationPickerSheet() {
                 type="button"
                 onClick={() => setQuery("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                aria-label="Limpiar"
+                aria-label={t("clear")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -223,7 +226,7 @@ export function LocationPickerSheet() {
           {searching && (
             <div className="flex items-center justify-center gap-2 py-3 text-sm text-gray-500">
               <Loader2 className="h-4 w-4 animate-spin text-servido-700" />
-              Buscando...
+              {tc("searching")}
             </div>
           )}
 
@@ -268,7 +271,7 @@ export function LocationPickerSheet() {
                 <MapPin className="h-4 w-4" />
               </span>
               <span className="text-sm text-gray-700">
-                Usar <strong className="text-servido-900">&quot;{query.trim()}&quot;</strong>
+                {t("useQuery", { query: query.trim() })}
               </span>
             </button>
           )}
@@ -276,7 +279,7 @@ export function LocationPickerSheet() {
           {query.trim().length < 2 && (
             <div>
               <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                Ciudades frecuentes
+                {t("frequentCities")}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {QUICK_CITIES.map((city) => {

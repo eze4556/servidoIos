@@ -23,10 +23,10 @@ export function HomeSearchHero({ chips }: HomeSearchHeroProps) {
   const [query, setQuery] = useState("")
 
   const defaultChips: SearchChip[] = [
-    { label: "Electrónica", href: "/search?q=electronica" },
-    { label: "Hogar", href: "/search?q=hogar" },
+    { label: th("chipElectronics"), href: "/search?q=electronica" },
+    { label: th("chipHome"), href: "/search?q=hogar" },
     { label: th("chipServices"), href: "/services" },
-    { label: "Ofertas", href: "/products" },
+    { label: th("chipOffers"), href: "/products" },
   ]
 
   const displayChips = chips ?? defaultChips

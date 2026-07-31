@@ -1,0 +1,40 @@
+{
+  "accountTypes": {
+    "seller": "Vendedor",
+    "buyer": "Comprador",
+    "user": "Comprador",
+    "restaurant": "Restaurante",
+    "cadete": "Entregador"
+  },
+  "welcome": {
+    "subject": "Bem-vindo ao Servido!",
+    "htmlLang": "pt-BR",
+    "pageTitle": "Bem-vindo ao Servido",
+    "tagline": "Marketplace local",
+    "greeting": "Olá, {userName}!",
+    "intro": "Sua conta no Servido está pronta. Ficamos felizes em ter você conosco.",
+    "detailsHeading": "Seus dados",
+    "userLabel": "Usuário:",
+    "accountTypeLabel": "Tipo de conta:",
+    "ctaIntro": "Já pode entrar e começar a usar o Servido.",
+    "ctaButton": "Ir para o Servido",
+    "footerIgnore": "Se você não criou esta conta, pode ignorar esta mensagem.",
+    "footerRights": "© Servido · {displayUrl}"
+  },
+  "cadeteStatus": {
+    "htmlLang": "pt-BR",
+    "sectionTag": "Entregadores",
+    "greeting": "Olá, {userName}",
+    "approvedTitle": "Você foi aprovado como entregador!",
+    "rejectedTitle": "Atualização da sua candidatura",
+    "approvedBody": "Já pode acessar o painel e aceitar pedidos disponíveis na sua região.",
+    "rejectedBody": "Sua candidatura como entregador não foi aprovada por enquanto. Se achar que houve um erro, fale com o suporte.",
+    "approvedBadge": "APROVADO",
+    "rejectedBadge": "NÃO APROVADO",
+    "approvedCta": "Ir para o painel do entregador",
+    "rejectedCta": "Ir para o Servido",
+    "approvedSubject": "Você foi aprovado como entregador no Servido!",
+    "rejectedSubject": "Atualização da sua candidatura como entregador",
+    "footer": "© Servido"
+  }
+}

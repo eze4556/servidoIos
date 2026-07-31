@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { HomeCategoryCard } from "@/components/home/home-category-card"
 import { HomeCategoriesSkeleton } from "@/components/home/home-skeleton"
@@ -18,12 +19,15 @@ interface HomeCategoriesShowcaseProps {
 }
 
 export function HomeCategoriesShowcase({ categories, loading }: HomeCategoriesShowcaseProps) {
+  const th = useTranslations("home")
+  const tc = useTranslations("common")
+
   if (loading && categories.length === 0) {
     return <HomeCategoriesSkeleton />
   }
 
   if (categories.length === 0) {
-    return <p className="text-gray-500">No hay categorías disponibles.</p>
+    return <p className="text-gray-500">{tc("noCategories")}</p>
   }
 
   return (
@@ -53,7 +57,7 @@ export function HomeCategoriesShowcase({ categories, loading }: HomeCategoriesSh
           href="/products"
           className="text-sm font-medium text-purple-700 underline-offset-4 hover:underline"
         >
-          Ver todas las categorías
+          {th("seeAllCategories")}
         </Link>
       </div>
     </>

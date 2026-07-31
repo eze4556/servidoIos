@@ -1,0 +1,40 @@
+{
+  "accountTypes": {
+    "seller": "Vendedor",
+    "buyer": "Comprador",
+    "user": "Comprador",
+    "restaurant": "Restaurante",
+    "cadete": "Cadete"
+  },
+  "welcome": {
+    "subject": "¡Bienvenido a Servido!",
+    "htmlLang": "es",
+    "pageTitle": "Bienvenido a Servido",
+    "tagline": "Marketplace local",
+    "greeting": "¡Hola, {userName}!",
+    "intro": "Tu cuenta en Servido ya está lista. Nos alegra tenerte con nosotros.",
+    "detailsHeading": "Tus datos",
+    "userLabel": "Usuario:",
+    "accountTypeLabel": "Tipo de cuenta:",
+    "ctaIntro": "Ya podés entrar y empezar a usar Servido.",
+    "ctaButton": "Ir a Servido",
+    "footerIgnore": "Si no creaste esta cuenta, podés ignorar este mensaje.",
+    "footerRights": "© Servido · {displayUrl}"
+  },
+  "cadeteStatus": {
+    "htmlLang": "es",
+    "sectionTag": "Cadetes",
+    "greeting": "Hola, {userName}",
+    "approvedTitle": "¡Fuiste aprobado como cadete!",
+    "rejectedTitle": "Actualización de tu postulación",
+    "approvedBody": "Ya podés entrar al panel y tomar pedidos disponibles en tu zona.",
+    "rejectedBody": "Tu postulación como cadete no fue aprobada por ahora. Si creés que es un error, contactá a soporte.",
+    "approvedBadge": "APROBADO",
+    "rejectedBadge": "NO APROBADO",
+    "approvedCta": "Ir al panel de cadete",
+    "rejectedCta": "Ir a Servido",
+    "approvedSubject": "¡Fuiste aprobado como cadete en Servido!",
+    "rejectedSubject": "Actualización de tu postulación como cadete",
+    "footer": "© Servido"
+  }
+}

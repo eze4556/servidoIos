@@ -1,9 +1,12 @@
+"use client"
+
 import type { ReactNode } from "react"
 import Link from "next/link"
 import { ArrowLeft, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface DashboardShellLayoutProps {
   pageTitle: string
@@ -28,16 +31,17 @@ export function DashboardShellLayout({
   children,
   mainClassName,
 }: DashboardShellLayoutProps) {
+  const ts = useTranslations("dashboardShell")
   const panelMenu = (
     <Sheet open={isMobileMenuOpen} onOpenChange={onMobileMenuOpenChange}>
       <SheetTrigger asChild>
         <Button variant="outline" size="icon" className="shrink-0 rounded-xl border-purple-100">
           <Menu className="h-5 w-5" />
-          <span className="sr-only">Abrir menú del panel</span>
+          <span className="sr-only">{ts("openPanelMenu")}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-[min(300px,88vw)] border-none p-0">
-        <SheetTitle className="sr-only">Menú del panel</SheetTitle>
+        <SheetTitle className="sr-only">{ts("panelMenuTitle")}</SheetTitle>
         {mobileSidebar}
       </SheetContent>
     </Sheet>
@@ -52,14 +56,14 @@ export function DashboardShellLayout({
         <header className="sticky top-0 z-30 border-b border-purple-100/80 bg-white lg:hidden">
           <div className="flex h-14 items-center gap-2 px-3">
             <Button asChild variant="ghost" size="icon" className="h-9 w-9 shrink-0 rounded-full">
-              <Link href="/" aria-label="Volver al inicio">
+              <Link href="/" aria-label={ts("backHomeAria")}>
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
             {panelMenu}
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-servido-700">
-                Mi panel
+                {ts("myPanelLabel")}
               </p>
               <h1 className="truncate text-base font-semibold leading-tight text-gray-900">
                 {pageTitle}
@@ -82,7 +86,7 @@ export function DashboardShellLayout({
           <div className="flex h-16 items-center gap-3 px-6">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-600">
-                Mi panel
+                {ts("myPanelLabel")}
               </p>
               <h1 className="truncate text-xl font-semibold text-gray-900">{pageTitle}</h1>
               <p className="truncate text-sm text-gray-500">{pageSubtitle}</p>

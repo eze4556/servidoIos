@@ -1,13 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { 
-  Facebook, 
-  Twitter, 
-  MessageCircle
-} from "lucide-react"
-import { toast } from "sonner"
+import { Facebook, MessageCircle, Twitter } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 
 interface ShareButtonsProps {
   productName: string
@@ -16,15 +11,21 @@ interface ShareButtonsProps {
   productImage?: string
 }
 
-export function ShareButtons({ productName, productUrl, productPrice, productImage }: ShareButtonsProps) {
+export function ShareButtons({ productName, productUrl, productPrice }: ShareButtonsProps) {
+  const t = useTranslations("share")
+  const locale = useLocale()
+  const currencyLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
 
-  const shareText = productPrice 
-    ? `¡Mira este producto en Servido! ${productName} - ${productPrice.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}`
-    : `¡Mira este producto en Servido! ${productName}`
+  const shareText = productPrice
+    ? t("shareTextWithPrice", {
+        name: productName,
+        price: productPrice.toLocaleString(currencyLocale, { style: "currency", currency: "ARS" }),
+      })
+    : t("shareText", { name: productName })
 
   const handleShare = (platform: string) => {
     let shareUrl = ""
-    
+
     switch (platform) {
       case "facebook":
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}&quote=${encodeURIComponent(shareText)}`
@@ -38,46 +39,43 @@ export function ShareButtons({ productName, productUrl, productPrice, productIma
       default:
         return
     }
-    
+
     window.open(shareUrl, "_blank", "width=600,height=400")
   }
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-gray-600">Compartir:</span>
-      
-      {/* WhatsApp */}
+      <span className="text-sm text-gray-600">{t("label")}</span>
+
       <Button
         variant="outline"
         size="sm"
         onClick={() => handleShare("whatsapp")}
-        className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100 hover:border-green-300"
+        className="border-green-200 bg-green-50 text-green-700 hover:border-green-300 hover:bg-green-100"
       >
         <MessageCircle className="h-4 w-4" />
         <span className="ml-1 hidden sm:inline">WhatsApp</span>
       </Button>
 
-      {/* Facebook */}
       <Button
         variant="outline"
         size="sm"
         onClick={() => handleShare("facebook")}
-        className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+        className="border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100"
       >
         <Facebook className="h-4 w-4" />
         <span className="ml-1 hidden sm:inline">Facebook</span>
       </Button>
 
-      {/* Twitter */}
       <Button
         variant="outline"
         size="sm"
         onClick={() => handleShare("twitter")}
-        className="bg-sky-50 border-sky-200 text-sky-700 hover:bg-sky-100 hover:border-sky-300"
+        className="border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300 hover:bg-sky-100"
       >
         <Twitter className="h-4 w-4" />
         <span className="ml-1 hidden sm:inline">Twitter</span>
       </Button>
     </div>
   )
-} 
+}
