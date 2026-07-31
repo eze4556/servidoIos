@@ -44,7 +44,7 @@ import {
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
 import ServiceDetail from "@/components/services/ServiceDetail"
-import { formatPrice, formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { ShareButtons } from "@/components/ui/share-buttons"
 import { ApiService } from "@/lib/services/api"
 import { useToast } from "@/hooks/use-toast"
@@ -142,6 +142,7 @@ interface Coupon {
 }
 
 export default function ProductDetailPage() {
+  const { formatPrice, formatPriceNumber } = usePriceFormat()
   const tp = useTranslations("product")
   const tc = useTranslations("cart")
   const tr = useTranslations("reviews")

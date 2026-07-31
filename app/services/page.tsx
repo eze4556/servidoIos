@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Search, Filter, Star, MapPin, Clock, User, Package } from "lucide-react"
 import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy, where } from "firebase/firestore"
-import { formatPrice } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { getProductThumbnail } from "@/lib/image-utils"
 import type { ProductMedia } from "@/types/product"
 import { useTranslations } from "next-intl"
@@ -37,6 +37,7 @@ interface Service {
 }
 
 export default function ServicesPage() {
+  const { formatPrice } = usePriceFormat()
   const ts = useTranslations("servicesPage")
   const tc = useTranslations("cart")
   const tr = useTranslations("roles")

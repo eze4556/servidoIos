@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import type { PaymentItem } from "@/types/payments"
 import { ApiService } from "@/lib/services/api"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 
 interface PaymentButtonProps {
   items: PaymentItem[]
@@ -17,6 +17,7 @@ interface PaymentButtonProps {
 
 export function PaymentButton({ items, sellerId, className = "" }: PaymentButtonProps) {
   const [loading, setLoading] = useState(false)
+  const { formatPriceNumber } = usePriceFormat()
   const { toast } = useToast()
   const { currentUser } = useAuth()
 

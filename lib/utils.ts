@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import crypto from "crypto"
+import { intlNumberLocale } from "@/i18n/config"
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || "your-fallback-encryption-key-min-32-chars!!"
 const ALGORITHM = "aes-256-gcm"
@@ -13,36 +14,36 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 
-export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
+export function formatPrice(price: number, locale?: string | null): string {
+  return new Intl.NumberFormat(intlNumberLocale(locale), {
+    style: "currency",
+    currency: "ARS",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price)
 }
 
 
-export function formatPriceNumber(price: number): string {
-  return new Intl.NumberFormat('es-AR', {
+export function formatPriceNumber(price: number, locale?: string | null): string {
+  return new Intl.NumberFormat(intlNumberLocale(locale), {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price)
 }
 
 
-export function formatPriceReduced(price: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
+export function formatPriceReduced(price: number, locale?: string | null): string {
+  return new Intl.NumberFormat(intlNumberLocale(locale), {
+    style: "currency",
+    currency: "ARS",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price)
 }
 
 
-export function formatPriceNumberReduced(price: number): string {
-  return new Intl.NumberFormat('es-AR', {
+export function formatPriceNumberReduced(price: number, locale?: string | null): string {
+  return new Intl.NumberFormat(intlNumberLocale(locale), {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price)
@@ -60,8 +61,8 @@ export function cleanAndFormatPrice(price: string | number): string {
 }
 
 
-export function formatLargeNumber(num: number): string {
-  return new Intl.NumberFormat('es-AR', {
+export function formatLargeNumber(num: number, locale?: string | null): string {
+  return new Intl.NumberFormat(intlNumberLocale(locale), {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(num)

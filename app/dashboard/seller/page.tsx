@@ -97,7 +97,7 @@ import { getSellerShipments, updateShippingStatus, initializeShipping } from "@/
 // Los iconos ya están importados arriba
 import * as XLSX from "xlsx"
 import { getDashboardProductImage } from "@/lib/image-utils"
-import { formatPrice, formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { SubscriptionNotification } from "@/components/subscription-notification"
 import { SellerBusinessLocationCard } from "@/components/dashboard/seller-business-location-card"
 import {
@@ -291,6 +291,7 @@ function getFechaCompra(compra: any): string {
 export default function SellerDashboardPage() {
   const t = useTranslations("sellerDashboard")
   const locale = useLocale()
+  const { formatPrice, formatPriceNumber, updatePriceFormat } = usePriceFormat()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
   const dateFnsLocale = getDateFnsLocale(locale)
   const { currentUser, authLoading, handleLogout, refreshUserProfile } = useAuth()
@@ -3597,11 +3598,7 @@ export default function SellerDashboardPage() {
                     <div className="space-y-6">
                       <h3 className="text-lg font-semibold">{t("profile.settingsTitle")}</h3>
                       
-                      <PriceFormatToggle 
-                        onFormatChange={(useReducedDecimals) => {
-                          console.log('Formato de precios actualizado:', useReducedDecimals)
-                        }}
-                      />
+                      <PriceFormatToggle onFormatChange={updatePriceFormat} />
                       
                       <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
                         <CardHeader>

@@ -36,5 +36,11 @@
     "approvedSubject": "¡Fuiste aprobado como cadete en Servido!",
     "rejectedSubject": "Actualización de tu postulación como cadete",
     "footer": "© Servido"
+  },
+  "api": {
+    "notConfigured": "Servicio de email no configurado",
+    "invalidData": "Datos inválidos",
+    "sendFailed": "No se pudo enviar el email",
+    "unexpectedError": "Error inesperado"
   }
 }

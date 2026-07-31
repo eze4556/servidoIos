@@ -11,10 +11,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { db } from "@/lib/firebase"
 import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
-import { formatPrice } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { useTranslations } from "next-intl"
 
 export default function SearchPage() {
+  const { formatPrice } = usePriceFormat()
   const ts = useTranslations("search")
   const th = useTranslations("header")
   const tc = useTranslations("common")

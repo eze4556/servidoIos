@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Calendar, Clock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useLocale, useTranslations } from "next-intl"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 
 interface PaymentDateButtonProps {
   paymentDate?: string | null
@@ -25,6 +25,7 @@ export function PaymentDateButton({
 }: PaymentDateButtonProps) {
   const t = useTranslations("paymentDateButton")
   const locale = useLocale()
+  const { formatPriceNumber } = usePriceFormat()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
   const [isOpen, setIsOpen] = useState(false)
 

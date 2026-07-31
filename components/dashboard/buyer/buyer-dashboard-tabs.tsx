@@ -34,7 +34,7 @@ import { StatusBadge } from "@/components/dashboard/buyer/buyer-status-badge"
 import { BuyerAppointmentsPanel } from "@/components/dashboard/buyer/buyer-appointments-panel"
 import type { CentralizedPurchase, PurchaseItem } from "@/types/centralized-payments"
 import { getDashboardProductImage } from "@/lib/image-utils"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { useTranslations, useLocale } from "next-intl"
 
 interface CompraProductoBuyer {
@@ -136,6 +136,7 @@ export function BuyerDashboardTabs({
   buyerId,
 }: BuyerDashboardTabsProps) {
   const t = useTranslations("buyerDashboard")
+  const { formatPriceNumber } = usePriceFormat()
   const tr = useTranslations("reviews")
   const locale = useLocale()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"

@@ -173,3 +173,17 @@ export function getCadeteStatusEmailSubject(locale: AppLocale, decision: "approv
   const c = getEmailMessages(locale).cadeteStatus
   return decision === "approved" ? c.approvedSubject : c.rejectedSubject
 }
+
+export type EmailApiErrorKey = keyof EmailMessages["api"]
+
+export function getEmailApiError(locale: AppLocale, key: EmailApiErrorKey): string {
+  return getEmailMessages(locale).api[key]
+}
+
+function resolveRequestLocale(request: Request, bodyLocale: unknown): AppLocale {
+  return resolveEmailLocale(
+    typeof bodyLocale === "string" ? bodyLocale : parseLocaleFromCookie(request.headers.get("cookie"))
+  )
+}
+
+export { resolveRequestLocale as resolveEmailLocaleFromRequest }

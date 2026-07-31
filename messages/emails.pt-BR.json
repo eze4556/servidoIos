@@ -36,5 +36,11 @@
     "approvedSubject": "Você foi aprovado como entregador no Servido!",
     "rejectedSubject": "Atualização da sua candidatura como entregador",
     "footer": "© Servido"
+  },
+  "api": {
+    "notConfigured": "Serviço de e-mail não configurado",
+    "invalidData": "Dados inválidos",
+    "sendFailed": "Não foi possível enviar o e-mail",
+    "unexpectedError": "Erro inesperado"
   }
 }

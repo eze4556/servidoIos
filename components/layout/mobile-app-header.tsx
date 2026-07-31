@@ -30,7 +30,7 @@ import { useLocation } from "@/contexts/location-context"
 import { db } from "@/lib/firebase"
 import { collection, getDocs } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
-import { formatPrice } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { UserGreeting } from "@/components/layout/user-greeting"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import { LocaleFlagToggle } from "@/components/layout/locale-flag-toggle"
@@ -63,6 +63,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
   const tm = useTranslations("mobileMenu")
   const tc = useTranslations("common")
   const tr = useTranslations("roles")
+  const { formatPrice } = usePriceFormat()
   const router = useRouter()
   const pathname = usePathname()
   const { currentUser, authLoading, handleLogout, getDashboardLink } = useAuth()

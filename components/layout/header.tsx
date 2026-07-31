@@ -39,7 +39,7 @@ import { useChatUnread } from "@/components/chat/chat-unread-context"
 import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
-import { formatPrice } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { UserGreeting } from "@/components/layout/user-greeting"
 import { LocaleFlagToggle } from "@/components/layout/locale-flag-toggle"
 
@@ -63,6 +63,7 @@ interface SearchProduct {
 export function Header() {
   const t = useTranslations("header")
   const tc = useTranslations("common")
+  const { formatPrice } = usePriceFormat()
   const { currentUser, authLoading, handleLogout, getDashboardLink, getVenderLink } = useAuth()
   const { userLocation, shortLocation, loadingLocation, openLocationPicker } = useLocation()
   const { unreadCount } = useChatUnread()

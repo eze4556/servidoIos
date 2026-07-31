@@ -11,11 +11,12 @@ import { Button } from "@/components/ui/button"
 import { Loader2, UtensilsCrossed } from "lucide-react"
 import type { FoodOrder } from "@/types/restaurant"
 import { formatOrderItemSelections } from "@/types/restaurant"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
 
 export default function FoodOrdersPage() {
   const t = useTranslations("foodOrders")
+  const { formatPrice } = usePriceFormat()
   const { currentUser, authLoading } = useAuth()
   const [orders, setOrders] = useState<FoodOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -116,7 +117,7 @@ export default function FoodOrdersPage() {
                     )
                   })}
                 </ul>
-                <p className="mt-3 font-bold text-servido-800">${formatPriceNumber(order.total)}</p>
+                <p className="mt-3 font-bold text-servido-800">{formatPrice(order.total)}</p>
               </div>
             ))}
           </div>

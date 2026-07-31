@@ -241,6 +241,8 @@ export default function AdminDashboard() {
   const t = useTranslations("adminDashboard")
   const locale = useLocale()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
+  const fmtNum = (n: number) => formatPriceNumber(n, locale)
+  const fmtCur = (n: number) => formatPrice(n, locale)
   const dateFnsLocale = getDateFnsLocale(locale)
   const { currentUser, authLoading } = useAuth()
   const router = useRouter()
@@ -801,7 +803,7 @@ export default function AdminDashboard() {
         type: "payment_completed",
         title: t("toasts.paymentProcessedTitle"),
         description: t("toasts.paymentProcessedDescription", {
-          amount: formatPriceNumber(paymentMarkingModal.monto),
+          amount: fmtNum(paymentMarkingModal.monto),
           method:
             paymentMethod === "bank_transfer"
               ? t("notifications.paymentMethodBank")
@@ -1391,7 +1393,7 @@ export default function AdminDashboard() {
       )
       if (cadete?.email) {
         void sendCadeteStatusEmail({
-          user_name: cadete.name || "Cadete",
+          user_name: cadete.name || t("cadetes.defaultName"),
           user_email: cadete.email,
           decision: "approved",
         })
@@ -1415,7 +1417,7 @@ export default function AdminDashboard() {
       )
       if (cadete?.email) {
         void sendCadeteStatusEmail({
-          user_name: cadete.name || "Cadete",
+          user_name: cadete.name || t("cadetes.defaultName"),
           user_email: cadete.email,
           decision: "rejected",
         })
@@ -2187,9 +2189,9 @@ export default function AdminDashboard() {
                       <TrendingUp className="w-4 h-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                      <div className="text-2xl font-bold">{formatPriceNumber(salesSummary.totalVentas)}</div>
+                      <div className="text-2xl font-bold">{fmtNum(salesSummary.totalVentas)}</div>
                       <p className="text-xs text-muted-foreground">
-                        {t("overview.commissionsAmount", { amount: formatPriceNumber(salesSummary.totalComisiones) })}
+                        {t("overview.commissionsAmount", { amount: fmtNum(salesSummary.totalComisiones) })}
                       </p>
                   </CardContent>
                 </Card>
@@ -2293,7 +2295,7 @@ export default function AdminDashboard() {
                   <CardHeader>
                     <CardTitle>{t("overview.topSellersTitle")}</CardTitle>
                     <CardDescription>
-                      Vendedores con más ventas en el período actual
+                      {t("overview.topSellersDesc")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -2310,18 +2312,18 @@ export default function AdminDashboard() {
                                 </div>
                                 <div>
                                   <div className="font-medium">{vendedor.vendedorNombre}</div>
-                                  <div className="text-sm text-gray-500">{t("overview.salesAmount", { amount: formatPriceNumber(vendedor.totalVentas) })}</div>
+                                  <div className="text-sm text-gray-500">{t("overview.salesAmount", { amount: fmtNum(vendedor.totalVentas) })}</div>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="font-semibold text-green-600">{formatPriceNumber(vendedor.totalComisiones)}</div>
+                                <div className="font-semibold text-green-600">{fmtNum(vendedor.totalComisiones)}</div>
                                 <div className="text-sm text-gray-500">{t("overview.commissionsLabel")}</div>
                               </div>
                             </div>
                           ))
                       ) : (
                         <div className="text-center py-8 text-gray-500">
-                          No hay datos de ventas disponibles
+                          {t("overview.noSalesData")}
                         </div>
                       )}
                     </div>
@@ -2636,7 +2638,7 @@ export default function AdminDashboard() {
                             onClick={handleRemoveCategoryImage}
                             className="text-red-600 hover:text-red-700"
                           >
-                            <XCircle className="mr-1 h-4 w-4" /> Quitar Imagen
+                            <XCircle className="mr-1 h-4 w-4" /> {t("common.removeImage")}
                           </Button>
                         )}
                       </div>
@@ -2771,7 +2773,7 @@ export default function AdminDashboard() {
                               onClick={handleRemoveEditCategoryImage}
                               className="text-red-600 hover:text-red-700"
                             >
-                              <XCircle className="mr-1 h-4 w-4" /> Quitar Imagen
+                              <XCircle className="mr-1 h-4 w-4" /> {t("common.removeImage")}
                             </Button>
                           )}
                         </div>
@@ -2866,7 +2868,7 @@ export default function AdminDashboard() {
                             onClick={handleRemoveBrandImage}
                             className="text-red-600 hover:text-red-700"
                           >
-                            <XCircle className="mr-1 h-4 w-4" /> Quitar Imagen
+                            <XCircle className="mr-1 h-4 w-4" /> {t("common.removeImage")}
                           </Button>
                         )}
                       </div>
@@ -2990,7 +2992,7 @@ export default function AdminDashboard() {
                               onClick={handleRemoveEditBrandImage}
                               className="text-red-600 hover:text-red-700"
                             >
-                              <XCircle className="mr-1 h-4 w-4" /> Quitar Imagen
+                              <XCircle className="mr-1 h-4 w-4" /> {t("common.removeImage")}
                             </Button>
                           )}
                         </div>
@@ -3151,7 +3153,7 @@ export default function AdminDashboard() {
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell className="p-1 md:p-2 whitespace-nowrap align-middle">{formatPrice(product.price)}</TableCell>
+                              <TableCell className="p-1 md:p-2 whitespace-nowrap align-middle">{fmtCur(product.price)}</TableCell>
                               <TableCell className="p-1 md:p-2 max-w-[70px] xs:max-w-[90px] align-middle">
                                 <div className="flex items-center gap-1 xs:gap-2 md:gap-2 min-w-0">
                                   <Avatar className="h-4 w-4 xs:h-5 xs:w-5 md:h-8 md:w-8 flex-shrink-0">
@@ -3212,7 +3214,7 @@ export default function AdminDashboard() {
                       <TrendingUp className="w-4 h-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 md:p-6">
-                      <div className="text-xl xs:text-2xl font-bold">{formatPriceNumber(salesSummary.totalVentas)}</div>
+                      <div className="text-xl xs:text-2xl font-bold">{fmtNum(salesSummary.totalVentas)}</div>
                       <p className="text-xs text-muted-foreground">{t("sales.grossSalesHint")}</p>
                     </CardContent>
                   </Card>
@@ -3222,7 +3224,7 @@ export default function AdminDashboard() {
                       <DollarSign className="w-4 h-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 md:p-6">
-                      <div className="text-xl xs:text-2xl font-bold">{formatPriceNumber(salesSummary.totalComisiones)}</div>
+                      <div className="text-xl xs:text-2xl font-bold">{fmtNum(salesSummary.totalComisiones)}</div>
                       <p className="text-xs text-muted-foreground">{t("sales.commissionRateHint")}</p>
                     </CardContent>
                   </Card>
@@ -3232,7 +3234,7 @@ export default function AdminDashboard() {
                       <Clock className="w-4 h-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 md:p-6">
-                      <div className="text-xl xs:text-2xl font-bold">{formatPriceNumber(salesSummary.totalPendientePago)}</div>
+                      <div className="text-xl xs:text-2xl font-bold">{fmtNum(salesSummary.totalPendientePago)}</div>
                       <p className="text-xs text-muted-foreground">{t("sales.pendingToSellersHint")}</p>
                     </CardContent>
                   </Card>
@@ -3242,7 +3244,7 @@ export default function AdminDashboard() {
                       <CheckCircle className="w-4 h-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent className="p-2 sm:p-4 md:p-6">
-                      <div className="text-xl xs:text-2xl font-bold">{formatPriceNumber(salesSummary.totalPagado)}</div>
+                      <div className="text-xl xs:text-2xl font-bold">{fmtNum(salesSummary.totalPagado)}</div>
                       <p className="text-xs text-muted-foreground">{t("sales.paidToSellersHint")}</p>
                     </CardContent>
                   </Card>
@@ -3303,7 +3305,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex items-end w-full">
                           <Button variant="outline" onClick={() => { setSalesFilters({estadoPago: 'all', estadoEnvio: 'all'}); setSalesSorting({field: 'fecha', order: 'desc'}); }} className="w-full h-8 xs:h-9 text-xs xs:text-sm">
-                            <X className="mr-2 h-4 w-4" /> Limpiar
+                            <X className="mr-2 h-4 w-4" /> {t("common.clear")}
                           </Button>
                         </div>
                       </div>
@@ -3360,7 +3362,7 @@ export default function AdminDashboard() {
                                     </ul>
                                   </TableCell>
                                   <TableCell className="p-1 md:p-2 align-middle max-w-[100px] truncate">{usersMap[compra.buyerId]?.name || compra.buyerId}</TableCell>
-                                  <TableCell className="p-1 md:p-2 align-middle whitespace-nowrap">{formatPriceNumber(compra.totalAmount || 0)}</TableCell>
+                                  <TableCell className="p-1 md:p-2 align-middle whitespace-nowrap">{fmtNum(compra.totalAmount || 0)}</TableCell>
                                   <TableCell className="p-1 md:p-2 align-middle">
                                     <Badge variant={compra.status === 'approved' ? 'default' : 'secondary'}>{getPurchaseStatusLabel(t, compra.status)}</Badge>
                                   </TableCell>
@@ -3484,7 +3486,7 @@ export default function AdminDashboard() {
                             onClick={handleRemoveBannerImage}
                             className="text-red-600 hover:text-red-700"
                           >
-                            <XCircle className="mr-1 h-4 w-4" /> Quitar Imagen
+                            <XCircle className="mr-1 h-4 w-4" /> {t("common.removeImage")}
                           </Button>
                         )}
                       </div>
@@ -3858,9 +3860,9 @@ export default function AdminDashboard() {
                               {coupon.description && <div className="text-xs text-gray-500 truncate">{coupon.description}</div>}
                             </TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2">
-                              <div className="font-medium">{coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatPriceNumber(coupon.discountValue)}</div>
-                              {coupon.minPurchase && <div className="text-xs text-gray-500">{t("common.min")}: {formatPriceNumber(coupon.minPurchase)}</div>}
-                              {coupon.maxDiscount && <div className="text-xs text-gray-500">{t("common.max")}: {formatPriceNumber(coupon.maxDiscount)}</div>}
+                              <div className="font-medium">{coupon.discountType === "percentage" ? `${coupon.discountValue}%` : fmtNum(coupon.discountValue)}</div>
+                              {coupon.minPurchase && <div className="text-xs text-gray-500">{t("common.min")}: {fmtNum(coupon.minPurchase)}</div>}
+                              {coupon.maxDiscount && <div className="text-xs text-gray-500">{t("common.max")}: {fmtNum(coupon.maxDiscount)}</div>}
                             </TableCell>
                             <TableCell className="hidden md:table-cell p-1 md:p-2">
                               <div>{t("common.uses", { count: coupon.usedCount })}</div>
@@ -3936,7 +3938,7 @@ export default function AdminDashboard() {
               <div>
                 <Label className="text-sm font-medium">{t("paymentModal.amountToPay")}</Label>
                 <p className="text-sm font-semibold text-green-600">
-                  {formatPriceNumber(paymentMarkingModal.monto)}
+                  {fmtNum(paymentMarkingModal.monto)}
                 </p>
               </div>
             </div>
@@ -4020,7 +4022,7 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             <p>{t('common.date')}: {selectedPurchase?.createdAt ? (selectedPurchase?.createdAt.toDate ? new Date(selectedPurchase.createdAt.toDate()).toLocaleString() : new Date(selectedPurchase.createdAt).toLocaleString()) : ''}</p>
             <p>{t('common.buyer')}: {selectedPurchase?.buyerId ? usersMap[selectedPurchase.buyerId as string]?.name || selectedPurchase.buyerId : ''}</p>
-            <p>{t('common.total')}: {formatPriceNumber(selectedPurchase?.totalAmount || 0)}</p>
+            <p>{t('common.total')}: {fmtNum(selectedPurchase?.totalAmount || 0)}</p>
             {/* Tabla de productos en el modal */}
             <div>
               <Table className="w-full min-w-[900px]">
@@ -4044,10 +4046,10 @@ export default function AdminDashboard() {
                       <TableRow key={idx} className="align-middle">
                         <TableCell className="py-2 px-3 align-middle">{p.nombre || p.productName || p.productoNombre || t('common.product')}</TableCell>
                         <TableCell className="py-2 px-3 align-middle">{p.quantity || p.cantidad || 1}</TableCell>
-                        <TableCell className="py-2 px-3 align-middle">{formatPriceNumber(p.precio || p.price || 0)}</TableCell>
-                        <TableCell className="py-2 px-3 align-middle">{formatPriceNumber((p.precio || p.price || 0) * (p.quantity || p.cantidad || 1))}</TableCell>
+                        <TableCell className="py-2 px-3 align-middle">{fmtNum(p.precio || p.price || 0)}</TableCell>
+                        <TableCell className="py-2 px-3 align-middle">{fmtNum((p.precio || p.price || 0) * (p.quantity || p.cantidad || 1))}</TableCell>
                         <TableCell className="py-2 px-3 align-middle">{usersMap[p.vendedorId]?.name || p.vendedorId}</TableCell>
-                        <TableCell className="py-2 px-3 align-middle text-green-700 font-semibold">{formatPriceNumber(amountToPay)}</TableCell>
+                        <TableCell className="py-2 px-3 align-middle text-green-700 font-semibold">{fmtNum(amountToPay)}</TableCell>
                         <TableCell className="py-2 px-3 align-middle">
                           {isPaid ? (
                             <Badge variant="default">{t("common.paid")}</Badge>

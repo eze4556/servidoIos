@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ShoppingCart, Users, Calculator, DollarSign, Truck } from "lucide-react"
 import { getCartPurchaseSummary } from "@/lib/centralized-payments-api"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 
 interface PurchaseSummaryProps {
   cartItems: Array<{
@@ -24,6 +24,7 @@ interface PurchaseSummaryProps {
 
 export function PurchaseSummary({ cartItems, className = "" }: PurchaseSummaryProps) {
   const t = useTranslations("purchaseSummaryCard")
+  const { formatPriceNumber } = usePriceFormat()
   const summary = getCartPurchaseSummary(cartItems)
 
   const totalShipping = cartItems.reduce((total, item) => {

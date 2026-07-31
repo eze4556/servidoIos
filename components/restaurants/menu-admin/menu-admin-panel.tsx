@@ -29,7 +29,8 @@ import {
 import { deleteStoragePaths } from "@/lib/restaurant-storage"
 import type { MenuCategory, MenuItem } from "@/types/restaurant"
 import { getMenuItemPrimaryImage, menuItemHasOptions } from "@/types/restaurant"
-import { formatPriceNumber, cn } from "@/lib/utils"
+import { cn } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -59,6 +60,7 @@ interface MenuAdminPanelProps {
 
 export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: MenuAdminPanelProps) {
   const t = useTranslations("menuAdmin")
+  const { formatPrice } = usePriceFormat()
   const [categories, setCategories] = useState<MenuCategory[]>([])
   const [items, setItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -443,7 +445,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500">${formatPriceNumber(item.price)}</p>
+                      <p className="text-sm text-gray-500">{formatPrice(item.price)}</p>
                     </div>
                     <Switch
                       checked={item.available}

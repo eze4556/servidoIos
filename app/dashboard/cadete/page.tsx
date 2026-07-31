@@ -26,7 +26,7 @@ import {
   subscribeAvailableFoodOrders,
 } from "@/lib/cadete-orders"
 import type { FoodOrder } from "@/types/restaurant"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 
 const DEFAULT_TITLE_KEY = "defaultTitle" as const
 
@@ -55,6 +55,7 @@ function vibrateNewOrder() {
 }
 
 export default function CadeteDashboardPage() {
+  const { formatPrice, formatPriceNumber } = usePriceFormat()
   const t = useTranslations("cadeteDashboard")
   const { currentUser, handleLogout } = useAuth()
   const [available, setAvailable] = useState<FoodOrder[]>([])
@@ -308,7 +309,7 @@ export default function CadeteDashboardPage() {
             <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">{t("yourPayTitle")}</p>
             {active.deliveryFee > 0 ? (
               <p className="mt-1 text-2xl font-bold text-amber-200">
-                {t("deliveryFee", { amount: `$${formatPriceNumber(active.deliveryFee)}` })}
+                {t("deliveryFee", { amount: formatPrice(active.deliveryFee) })}
               </p>
             ) : (
               <p className="mt-1 text-base font-semibold text-amber-200">{t("noDeliveryFee")}</p>
@@ -330,7 +331,7 @@ export default function CadeteDashboardPage() {
                 {active.notes}
               </p>
             )}
-            <p className="mt-3 text-lg font-bold text-white">${formatPriceNumber(active.total)}</p>
+            <p className="mt-3 text-lg font-bold text-white">{formatPrice(active.total)}</p>
           </div>
 
           <div className="mt-auto pt-6">
@@ -404,7 +405,7 @@ export default function CadeteDashboardPage() {
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="text-2xl font-bold leading-tight">{order.restaurantName}</h2>
                     <span className="shrink-0 text-lg font-bold text-emerald-400">
-                      ${formatPriceNumber(order.total)}
+                      {formatPrice(order.total)}
                     </span>
                   </div>
 
@@ -420,7 +421,7 @@ export default function CadeteDashboardPage() {
                       count: order.items.reduce((n, i) => n + i.quantity, 0),
                     })}
                     {order.deliveryFee > 0
-                      ? t("deliveryFeeShort", { amount: `$${formatPriceNumber(order.deliveryFee)}` })
+                      ? t("deliveryFeeShort", { amount: formatPrice(order.deliveryFee) })
                       : ""}
                     {order.notes ? t("hasNote") : ""}
                   </p>

@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ArrowLeft, AlertCircle, Loader2 } from "lucide-react"
 import { getProductThumbnail } from "@/lib/image-utils"
-import { formatPrice } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 
 interface Product {
   id: string
@@ -35,6 +35,7 @@ interface Category {
 }
 
 export default function CategoryProductsPage() {
+  const { formatPrice } = usePriceFormat()
   const tc = useTranslations("categoryPage")
   const tp = useTranslations("product")
   const tr = useTranslations("reviews")

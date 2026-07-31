@@ -46,7 +46,7 @@ import {
   getFoodOrderStatusLabel,
   getRestaurantPaymentMethodLabel,
 } from "@/lib/i18n/restaurant-labels"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { cn } from "@/lib/utils"
 import { notifyFoodOrderStatus } from "@/lib/notifications"
 
@@ -71,6 +71,7 @@ function getNextRestaurantStatus(order: FoodOrder): FoodOrderStatus | null {
 }
 
 export default function RestaurantDashboardPage() {
+  const { formatPrice, formatPriceNumber } = usePriceFormat()
   const t = useTranslations("restaurantDashboard")
   const tRestaurants = useTranslations("restaurants")
   const tFood = useTranslations("foodOrders")
@@ -631,7 +632,7 @@ export default function RestaurantDashboardPage() {
                       )}
                       {isDelivery && order.deliveryFee > 0 && (
                         <span>
-                          · {t("clientDeliveryFee")} ${formatPriceNumber(order.deliveryFee)}
+                          · {t("clientDeliveryFee")} {formatPrice(order.deliveryFee)}
                         </span>
                       )}
                     </div>
@@ -643,7 +644,7 @@ export default function RestaurantDashboardPage() {
                           feeRef:
                             order.deliveryFee > 0
                               ? t("cadeteFeeRef", {
-                                  amount: `$${formatPriceNumber(order.deliveryFee)}`,
+                                  amount: formatPrice(order.deliveryFee),
                                 })
                               : "",
                         })}
@@ -668,7 +669,7 @@ export default function RestaurantDashboardPage() {
                       })}
                     </ul>
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-bold text-servido-800">${formatPriceNumber(order.total)}</span>
+                      <span className="font-bold text-servido-800">{formatPrice(order.total)}</span>
                       <div className="flex flex-wrap gap-2">
                         {order.paymentStatus !== "approved" &&
                           (order.paymentMethod === "cash" || order.paymentMethod === "transfer") &&

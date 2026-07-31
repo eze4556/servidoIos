@@ -21,7 +21,7 @@ import type { PurchaseWithShipping } from "@/types/shipping"
 import { getBuyerPurchases } from "@/lib/centralized-payments-api"
 import type { CentralizedPurchase, PurchaseItem } from "@/types/centralized-payments"
 import * as XLSX from "xlsx"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 
 
 // Mantenemos la interface Purchase original para compatibilidad
@@ -93,6 +93,7 @@ interface CompraProductoBuyer {
 }
 
 export default function BuyerDashboardPage() {
+  const { formatPriceNumber } = usePriceFormat()
   const td = useTranslations("buyerDashboard")
   const { currentUser, authLoading, handleLogout, refreshUserProfile } = useAuth() // Use useAuth hook
   const router = useRouter()

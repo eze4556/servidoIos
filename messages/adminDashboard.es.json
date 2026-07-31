@@ -223,6 +223,7 @@
     "cadetes": {
       "title": "Gestión de Cadetes",
       "description": "Aprobá o rechazá postulaciones. Solo los aprobados pueden tomar pedidos del pool.",
+      "defaultName": "Cadete",
       "empty": "Todavía no hay postulaciones de cadetes.",
       "pendingBanner": "{count} cadete(s) pendiente(s) de revisión",
       "contact": "Contacto",

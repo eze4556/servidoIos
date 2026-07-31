@@ -14,7 +14,7 @@ import {
   sortOptionGroups,
   type SelectionInput,
 } from "@/lib/restaurant-options"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -52,6 +52,7 @@ export function MenuItemDetailDialog({
   onAdd,
 }: MenuItemDetailDialogProps) {
   const t = useTranslations("menuItemDialog")
+  const { formatPrice } = usePriceFormat()
   const images = item ? getMenuItemImages(item) : []
   const [activeIndex, setActiveIndex] = useState(0)
   const [selections, setSelections] = useState<SelectionInput[]>([])
@@ -256,9 +257,9 @@ export function MenuItemDetailDialog({
                               </div>
                               <span className="text-sm text-gray-600">
                                 {option.priceDelta > 0
-                                  ? `+$${formatPriceNumber(option.priceDelta)}`
+                                  ? `+${formatPrice(option.priceDelta)}`
                                   : option.priceDelta < 0
-                                    ? `-$${formatPriceNumber(Math.abs(option.priceDelta))}`
+                                    ? `-${formatPrice(Math.abs(option.priceDelta))}`
                                     : t("included")}
                               </span>
                             </label>
@@ -273,14 +274,14 @@ export function MenuItemDetailDialog({
 
           {error && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-          <p className="text-lg font-semibold text-servido-800">${formatPriceNumber(livePrice)}</p>
+          <p className="text-lg font-semibold text-servido-800">{formatPrice(livePrice)}</p>
           <Button
             className="w-full rounded-full bg-servido-800"
             disabled={!canOrder}
             onClick={handleAdd}
           >
             <Plus className="mr-1 h-4 w-4" />
-            {t("addLabel", { price: `$${formatPriceNumber(livePrice)}` })}
+            {t("addLabel", { price: formatPrice(livePrice) })}
           </Button>
         </div>
       </DialogContent>

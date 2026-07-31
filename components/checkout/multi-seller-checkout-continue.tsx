@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ApiService } from "@/lib/services/api"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { Loader2, CreditCard } from "lucide-react"
 
 const CHECKOUT_SESSION_KEY = "servido_checkout_session"
@@ -45,6 +45,7 @@ export function MultiSellerCheckoutContinue({
   variant = "success",
 }: Props) {
   const t = useTranslations("checkoutMultiSeller")
+  const { formatPriceNumber } = usePriceFormat()
   const [loading, setLoading] = useState(Boolean(sessionId))
   const [error, setError] = useState<string | null>(null)
   const [completedCount, setCompletedCount] = useState(0)

@@ -1,7 +1,9 @@
+"use client"
+
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { SimpleImage } from "@/components/ui/simple-image"
-import { formatPrice } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { ShoppingBag, Sparkles, Star } from "lucide-react"
 
 interface HomeProductCardProps {
@@ -29,6 +31,7 @@ export function HomeProductCard({
   shippingCost,
   badge,
 }: HomeProductCardProps) {
+  const { formatPrice } = usePriceFormat()
   const src =
     (media && media.length > 0 && media[0].url) ||
     imageUrl ||

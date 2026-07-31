@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { formatPrice } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { ServiceBookingCard } from "@/components/services/service-booking-card"
 import type { ServiceSchedule } from "@/types/service-appointments"
 
@@ -89,6 +89,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
   submittingAnswer,
   hasUserReviewed = false,
 }) => {
+  const { formatPrice } = usePriceFormat()
   const tProduct = useTranslations("product")
   const tr = useTranslations("reviews")
   const ts = useTranslations("serviceDetail")

@@ -7,7 +7,7 @@ import { MapPin, UtensilsCrossed } from "lucide-react"
 import type { Restaurant } from "@/types/restaurant"
 import { getRestaurantCoverUrl, getRestaurantLogoUrl } from "@/types/restaurant"
 import { getDeliveryModeLabel } from "@/lib/i18n/restaurant-labels"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 
 interface RestaurantCardProps {
   restaurant: Restaurant
@@ -17,6 +17,7 @@ interface RestaurantCardProps {
 
 export function RestaurantCard({ restaurant, categories = [], minPrice }: RestaurantCardProps) {
   const t = useTranslations("restaurants")
+  const { formatPrice } = usePriceFormat()
   const coverUrl = getRestaurantCoverUrl(restaurant)
   const logoUrl = getRestaurantLogoUrl(restaurant)
 
@@ -65,7 +66,7 @@ export function RestaurantCard({ restaurant, categories = [], minPrice }: Restau
         </div>
         {typeof minPrice === "number" && (
           <p className="text-xs font-semibold text-servido-800">
-            {t("fromPrice", { price: `$${formatPriceNumber(minPrice)}` })}
+            {t("fromPrice", { price: formatPrice(minPrice) })}
           </p>
         )}
       </div>

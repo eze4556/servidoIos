@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useCart } from "@/contexts/cart-context"
 import { db } from "@/lib/firebase"
 import { collection, deleteDoc, doc, getDoc, getDocs, query, where } from "firebase/firestore"
-import { formatPrice } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { getProductThumbnail } from "@/lib/image-utils"
 import { useToast } from "@/components/ui/use-toast"
 import { useTranslations } from "next-intl"
@@ -84,6 +84,7 @@ function mapFavoriteFromDoc(
 }
 
 export default function FavoritesPage() {
+  const { formatPrice } = usePriceFormat()
   const tf = useTranslations("favorites")
   const tc = useTranslations("cart")
   const tr = useTranslations("roles")

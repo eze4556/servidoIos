@@ -23,7 +23,7 @@ import {
   validateRestaurantImageFile,
 } from "@/lib/restaurant-storage"
 import type { MenuItem, MenuPromotion, MenuPromotionIncludedItem } from "@/types/restaurant"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -55,6 +55,7 @@ export function MenuCombosAdmin({
   onNeedSubscription,
 }: MenuCombosAdminProps) {
   const t = useTranslations("menuAdmin")
+  const { formatPrice } = usePriceFormat()
   const locale = useLocale()
   const [promotions, setPromotions] = useState<MenuPromotion[]>([])
   const [loading, setLoading] = useState(true)
@@ -350,7 +351,7 @@ export function MenuCombosAdmin({
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-gray-900">{promo.name}</p>
                 <p className="text-sm text-gray-500">
-                  ${formatPriceNumber(promo.comboPrice)} ·{" "}
+                  {formatPrice(promo.comboPrice)} ·{" "}
                   {promo.includedItems.map((i) => `${i.quantity}x ${i.name}`).join(", ")}
                 </p>
               </div>
@@ -459,7 +460,7 @@ export function MenuCombosAdmin({
                         />
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                          <p className="text-xs text-gray-500">${formatPriceNumber(item.price)}</p>
+                          <p className="text-xs text-gray-500">{formatPrice(item.price)}</p>
                         </div>
                         {checked && (
                           <Input

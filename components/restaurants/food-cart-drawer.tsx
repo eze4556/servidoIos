@@ -20,7 +20,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import type {
   DeliveryMode,
   RestaurantPaymentMethod,
@@ -43,6 +43,7 @@ export function FoodCartDrawer({
 }: FoodCartDrawerProps) {
   const t = useTranslations("foodCart")
   const tRestaurants = useTranslations("restaurants")
+  const { formatPrice, formatPriceNumber } = usePriceFormat()
   const { currentUser } = useAuth()
   const router = useRouter()
   const { items, restaurantName, itemCount, subtotal, updateQuantity, removeItem, clearCart, restaurantId } =
@@ -186,7 +187,7 @@ export function FoodCartDrawer({
                 {item.subtitle && (
                   <p className="line-clamp-2 text-xs text-gray-500">{item.subtitle}</p>
                 )}
-                <p className="text-sm text-gray-500">${formatPriceNumber(item.price)}</p>
+                <p className="text-sm text-gray-500">{formatPrice(item.price)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -265,17 +266,17 @@ export function FoodCartDrawer({
         <div className="border-t pt-4">
           <div className="mb-2 flex justify-between text-sm text-gray-600">
             <span>{t("subtotal")}</span>
-            <span>${formatPriceNumber(subtotal)}</span>
+            <span>{formatPrice(subtotal)}</span>
           </div>
           {deliveryFee > 0 && (
             <div className="mb-2 flex justify-between text-sm text-gray-600">
               <span>{t("deliveryFee")}</span>
-              <span>${formatPriceNumber(deliveryFee)}</span>
+              <span>{formatPrice(deliveryFee)}</span>
             </div>
           )}
           <div className="mb-4 flex justify-between font-bold text-gray-900">
             <span>{t("total")}</span>
-            <span>${formatPriceNumber(total)}</span>
+            <span>{formatPrice(total)}</span>
           </div>
           {error && <p className="mb-3 whitespace-pre-line text-sm text-red-600">{error}</p>}
           {successMsg && <p className="mb-3 whitespace-pre-line text-sm text-emerald-700">{successMsg}</p>}

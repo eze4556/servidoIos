@@ -2,31 +2,30 @@ import { Resend } from "resend"
 import { NextResponse } from "next/server"
 import {
   buildWelcomeHtml,
+  getEmailApiError,
   getWelcomeEmailSubject,
-  parseLocaleFromCookie,
-  resolveEmailLocale,
+  resolveEmailLocaleFromRequest,
 } from "@/lib/email-templates"
 
 export const runtime = "nodejs"
 
 export async function POST(request: Request) {
+  let locale = resolveEmailLocaleFromRequest(request, undefined)
   try {
     const apiKey = process.env.RESEND_API_KEY
     if (!apiKey) {
       console.error("RESEND_API_KEY is not configured")
-      return NextResponse.json({ error: "Email service not configured" }, { status: 500 })
+      return NextResponse.json({ error: getEmailApiError(locale, "notConfigured") }, { status: 500 })
     }
 
     const body = await request.json()
+    locale = resolveEmailLocaleFromRequest(request, body.locale)
     const userName = String(body.user_name || "").trim()
     const userEmail = String(body.user_email || "").trim().toLowerCase()
     const accountTypeRaw = String(body.account_type || "buyer").trim()
-    const locale = resolveEmailLocale(
-      typeof body.locale === "string" ? body.locale : parseLocaleFromCookie(request.headers.get("cookie"))
-    )
 
     if (!userName || !userEmail || !userEmail.includes("@")) {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 })
+      return NextResponse.json({ error: getEmailApiError(locale, "invalidData") }, { status: 400 })
     }
 
     const from = process.env.EMAIL_FROM || "Servido <hola@servido.com.ar>"
@@ -49,12 +48,15 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Resend welcome email error:", error)
-      return NextResponse.json({ error: error.message || "Failed to send email" }, { status: 502 })
+      return NextResponse.json(
+        { error: error.message || getEmailApiError(locale, "sendFailed") },
+        { status: 502 }
+      )
     }
 
     return NextResponse.json({ success: true, id: data?.id || null })
   } catch (error) {
     console.error("Welcome email route error:", error)
-    return NextResponse.json({ error: "Unexpected error" }, { status: 500 })
+    return NextResponse.json({ error: getEmailApiError(locale, "unexpectedError") }, { status: 500 })
   }
 }

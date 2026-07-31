@@ -30,7 +30,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { formatPrice } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { getProductThumbnail } from "@/lib/image-utils"
 import { useAuth } from "@/contexts/auth-context"
 import { useCart } from "@/contexts/cart-context"
@@ -81,6 +81,7 @@ interface Product {
 }
 
 export default function SellerProfilePage() {
+  const { formatPrice } = usePriceFormat()
   const ts = useTranslations("sellerStore")
   const tp = useTranslations("product")
   const tc = useTranslations("cart")

@@ -31,11 +31,12 @@ import {
   sortBySortOrderThenName,
 } from "@/lib/restaurant-menu"
 import { getMenuItemFromPrice, mapMenuPromotionDoc } from "@/lib/restaurant-options"
-import { formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 
 export default function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const t = useTranslations("restaurants")
+  const { formatPrice, formatPriceNumber } = usePriceFormat()
   const { addItem } = useFoodCart()
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   const [categories, setCategories] = useState<MenuCategory[]>([])
@@ -189,10 +190,10 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                 <Badge className="bg-orange-50 text-orange-800 hover:bg-orange-50">
                   {t("shippingLabel")}{" "}
                   {Number(restaurant.deliveryFee) > 0
-                    ? `$${formatPriceNumber(restaurant.deliveryFee || 0)}`
+                    ? formatPrice(restaurant.deliveryFee || 0)
                     : Number(restaurant.deliveryFee) === 0
                       ? t("shippingFree")
-                      : "$300"}
+                      : formatPrice(300)}
                 </Badge>
               )}
             </div>
@@ -261,7 +262,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                       {promo.includedItems.map((i) => `${i.quantity}x ${i.name}`).join(" · ")}
                     </p>
                     <p className="mt-1 font-semibold text-servido-800">
-                      ${formatPriceNumber(promo.comboPrice)}
+                      {formatPrice(promo.comboPrice)}
                     </p>
                   </div>
                   <Button
@@ -321,7 +322,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                           <Image src={image} alt={item.name} fill className="object-cover" unoptimized />
                         ) : (
                           <div className="flex h-full items-center justify-center text-[10px] text-gray-400">
-                            Sin foto
+                            {t("noPhoto")}
                           </div>
                         )}
                       </div>
@@ -332,8 +333,8 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                         )}
                         <p className="mt-1 font-semibold text-servido-800">
                           {hasOptions && fromPrice !== item.price
-                            ? `Desde $${formatPriceNumber(fromPrice)}`
-                            : `$${formatPriceNumber(item.price)}`}
+                            ? t("fromPrice", { price: formatPrice(fromPrice) })
+                            : formatPrice(item.price)}
                         </p>
                       </div>
                       <Button

@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { ApiService } from "@/lib/services/api"
 import type { CartItem } from "@/contexts/cart-context"
 import { getCartItemImage } from "@/lib/image-utils"
-import { formatPrice, formatPriceNumber } from "@/lib/utils"
+import { usePriceFormat } from "@/hooks/use-price-format"
 import { ShippingForm, type ShippingAddress } from "@/components/cart/shipping-form"
 import { CouponInput } from "@/components/ui/coupon-input"
 import { saveCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
@@ -27,6 +27,7 @@ interface GroupedItems {
 
 export function CartDrawer() {
   const t = useTranslations("cart")
+  const { formatPrice, formatPriceNumber } = usePriceFormat()
   const { 
     items, 
     removeFromCart, 
