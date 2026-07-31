@@ -953,6 +953,27 @@
     "offPercent": "{value}% OFF",
     "offFixed": "${value} OFF"
   },
+  "paymentDateButton": {
+    "defaultProductName": "Produto",
+    "triggerLabel": "Data de pagamento",
+    "dialogTitle": "Informações de pagamento",
+    "dialogDescription": "Detalhes sobre o pagamento de {productName}",
+    "statusLabel": "Status:",
+    "paymentDateLabel": "Data de pagamento:",
+    "amountLabel": "Valor:",
+    "dateUnavailable": "Data indisponível",
+    "notAvailable": "Indisponível",
+    "status": {
+      "pagado": "Pago",
+      "pendiente": "Pendente",
+      "cancelado": "Cancelado",
+      "unknown": "Desconhecido"
+    },
+    "pendingNote": "O pagamento será processado conforme a configuração. Os vendedores recebem os valores descontando a comissão de 8%.",
+    "pendingNoteStrong": "Nota:",
+    "paidNote": "O vendedor recebeu o pagamento correspondente.",
+    "paidNoteStrong": "Pagamento concluído:"
+  },
   "reviews": {
     "userReviewsTitle": "Avaliações de usuários ({count})",
     "writeReview": "Escreva sua avaliação",
@@ -988,7 +1009,11 @@
     "phoneBlocked": "***NÚMERO BLOQUEADO***",
     "anonymousUser": "Usuário anônimo",
     "errorTitle": "Erro",
-    "successTitle": "Sucesso"
+    "successTitle": "Sucesso",
+    "phoneNotAllowedInline": "Não são permitidos números de telefone",
+    "phoneAlertReview": "Não são permitidos números de telefone nos comentários por segurança.",
+    "phoneAlertQuestion": "Não são permitidos números de telefone nas perguntas por segurança.",
+    "commentPlaceholderGeneric": "Conte sua experiência..."
   },
   "serviceDetail": {
     "linkCopied": "Link copiado!",

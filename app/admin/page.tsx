@@ -2608,7 +2608,7 @@ export default function AdminDashboard() {
                           {newCategoryImagePreviewUrl ? (
                             <Image
                               src={newCategoryImagePreviewUrl || "/placeholder.svg"}
-                              alt="Vista previa de categoría"
+                              alt={t("categories.previewAlt")}
                               layout="fill"
                               objectFit="cover"
                             />
@@ -2743,7 +2743,7 @@ export default function AdminDashboard() {
                             {editCategoryImagePreviewUrl ? (
                               <Image
                                 src={editCategoryImagePreviewUrl}
-                                alt="Vista previa de categoría"
+                                alt={t("categories.previewAlt")}
                                 layout="fill"
                                 objectFit="contain"
                               />
@@ -2838,7 +2838,7 @@ export default function AdminDashboard() {
                           {newBrandImagePreviewUrl ? (
                             <Image
                               src={newBrandImagePreviewUrl || "/placeholder.svg"}
-                              alt="Vista previa de marca"
+                              alt={t("brands.previewAlt")}
                               layout="fill"
                               objectFit="contain"
                             />
@@ -2962,7 +2962,7 @@ export default function AdminDashboard() {
                             {editBrandImagePreviewUrl ? (
                               <Image
                                 src={editBrandImagePreviewUrl}
-                                alt="Vista previa de marca"
+                                alt={t("brands.previewAlt")}
                                 layout="fill"
                                 objectFit="contain"
                               />
@@ -3455,7 +3455,7 @@ export default function AdminDashboard() {
                           {newBannerImagePreviewUrl ? (
                             <Image
                               src={newBannerImagePreviewUrl}
-                              alt="Vista previa del banner"
+                              alt={t("banners.previewAlt")}
                               layout="fill"
                               objectFit="cover"
                             />
