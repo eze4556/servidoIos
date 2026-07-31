@@ -16,6 +16,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage
 import { updateProfile, getAuth } from "firebase/auth"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/contexts/auth-context"
 import type { PurchaseWithShipping } from "@/types/shipping"
 import { getBuyerPurchases } from "@/lib/centralized-payments-api"
@@ -95,6 +96,7 @@ interface CompraProductoBuyer {
 export default function BuyerDashboardPage() {
   const { formatPriceNumber } = usePriceFormat()
   const td = useTranslations("buyerDashboard")
+  const { toast } = useToast()
   const { currentUser, authLoading, handleLogout, refreshUserProfile } = useAuth() // Use useAuth hook
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -261,7 +263,11 @@ export default function BuyerDashboardPage() {
   }
 
   const handleChatWithSeller = async (_purchase: CompraProductoBuyer) => {
-    alert(td("chatDisabled"))
+    toast({
+      title: td("errorTitle"),
+      description: td("chatDisabled"),
+      duration: 4000,
+    })
   }
 
   // Confirmar entrega del producto

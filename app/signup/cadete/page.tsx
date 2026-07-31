@@ -31,12 +31,7 @@ import {
 import { signupCadete } from "@/lib/auth/signup-partner"
 import { cn } from "@/lib/utils"
 
-const VEHICLE_OPTIONS = [
-  { id: "bicycle", stored: "Bicicleta" },
-  { id: "motorcycle", stored: "Moto" },
-  { id: "car", stored: "Auto" },
-  { id: "on_foot", stored: "A pie" },
-] as const
+const VEHICLE_IDS = ["bicycle", "motorcycle", "car", "on_foot"] as const
 
 export default function CadeteSignupPage() {
   const router = useRouter()
@@ -48,7 +43,7 @@ export default function CadeteSignupPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [zone, setZone] = useState("")
-  const [vehicle, setVehicle] = useState(VEHICLE_OPTIONS[1].stored)
+  const [vehicle, setVehicle] = useState<string>("motorcycle")
   const [documentId, setDocumentId] = useState("")
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -143,8 +138,8 @@ export default function CadeteSignupPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {VEHICLE_OPTIONS.map(({ id, stored }) => (
-                    <SelectItem key={id} value={stored}>
+                  {VEHICLE_IDS.map((id) => (
+                    <SelectItem key={id} value={id}>
                       {t(`vehicles.${id}`)}
                     </SelectItem>
                   ))}

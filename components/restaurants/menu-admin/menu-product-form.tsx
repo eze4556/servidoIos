@@ -16,6 +16,7 @@ import { deleteStoragePaths, uploadMenuItemImage, validateRestaurantImageFile } 
 import type { MenuCategory, MenuItem, MenuOptionGroup } from "@/types/restaurant"
 import { MENU_ITEM_MAX_IMAGES, getMenuItemImages } from "@/types/restaurant"
 import { sanitizeOptionGroupsForSave, sortOptionGroups } from "@/lib/restaurant-options"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -67,6 +68,7 @@ export function MenuProductForm({
   onSaved,
 }: MenuProductFormProps) {
   const t = useTranslations("menuAdmin")
+  const tApi = useTranslations("apiErrors")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -226,7 +228,7 @@ export function MenuProductForm({
     } catch (err) {
       const msg = err instanceof Error ? err.message : ""
       const imageMsg = messageFromRestaurantImageUploadError(msg, t)
-      setError(imageMsg || (err instanceof Error ? err.message : t("saveProductError")))
+      setError(imageMsg || describeApiError(err, tApi, t("saveProductError")))
     } finally {
       setSaving(false)
     }

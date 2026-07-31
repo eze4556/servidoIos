@@ -23,6 +23,7 @@ import {
   validateRestaurantImageFile,
 } from "@/lib/restaurant-storage"
 import type { MenuItem, MenuPromotion, MenuPromotionIncludedItem } from "@/types/restaurant"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,6 +56,7 @@ export function MenuCombosAdmin({
   onNeedSubscription,
 }: MenuCombosAdminProps) {
   const t = useTranslations("menuAdmin")
+  const tApi = useTranslations("apiErrors")
   const { formatPrice } = usePriceFormat()
   const locale = useLocale()
   const [promotions, setPromotions] = useState<MenuPromotion[]>([])
@@ -87,7 +89,7 @@ export function MenuCombosAdmin({
         .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, locale))
       setPromotions(next)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("combosLoadError"))
+      setError(describeApiError(err, tApi, t("combosLoadError")))
     } finally {
       setLoading(false)
     }
@@ -268,7 +270,7 @@ export function MenuCombosAdmin({
       if (uploadedPath) await deleteStoragePaths([uploadedPath])
       const msg = err instanceof Error ? err.message : ""
       const imageMsg = messageFromRestaurantImageUploadError(msg, t)
-      setError(imageMsg || (err instanceof Error ? err.message : t("saveComboError")))
+      setError(imageMsg || describeApiError(err, tApi, t("saveComboError")))
     } finally {
       setSaving(false)
     }

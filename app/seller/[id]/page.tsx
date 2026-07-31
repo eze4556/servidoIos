@@ -36,6 +36,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useCart } from "@/contexts/cart-context"
 import { FollowButton } from "@/components/follows/follow-button"
 import { useLocale, useTranslations } from "next-intl"
+import { useToast } from "@/components/ui/use-toast"
 
 interface SellerProfile {
   uid: string
@@ -88,6 +89,7 @@ export default function SellerProfilePage() {
   const tsv = useTranslations("servicesPage")
   const tr = useTranslations("reviews")
   const locale = useLocale()
+  const { toast } = useToast()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
   const params = useParams()
   const sellerId = params.id as string
@@ -286,7 +288,11 @@ export default function SellerProfilePage() {
   // }
 
   const handleContactSeller = async () => {
-    alert(ts("chatDisabled"))
+    toast({
+      title: tc("error"),
+      description: ts("chatDisabled"),
+      duration: 4000,
+    })
   }
 
   const handleDeleteProduct = async (productId: string, isService: boolean) => {
@@ -303,7 +309,11 @@ export default function SellerProfilePage() {
         }
       } catch (error) {
         console.error("Error deleting product:", error)
-        alert(ts("deleteError"))
+        toast({
+          title: tc("error"),
+          description: ts("deleteError"),
+          variant: "destructive",
+        })
       }
     }
   }

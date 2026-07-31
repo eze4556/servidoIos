@@ -49,6 +49,7 @@ import { ShareButtons } from "@/components/ui/share-buttons"
 import { ApiService } from "@/lib/services/api"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslations } from "next-intl"
+import { translateClientError } from "@/lib/i18n/translate-client-error"
 import { getProductThumbnail } from "@/lib/image-utils"
 import { ProductBreadcrumbs } from "@/components/product/product-breadcrumbs"
 import { ProductGallery } from "@/components/product/product-gallery"
@@ -146,6 +147,7 @@ export default function ProductDetailPage() {
   const tp = useTranslations("product")
   const tc = useTranslations("cart")
   const tr = useTranslations("reviews")
+  const tApi = useTranslations("apiErrors")
   const phoneBlockedLabel = tr("phoneBlocked")
   const params = useParams()
   const router = useRouter()
@@ -382,7 +384,11 @@ export default function ProductDetailPage() {
 
   const handleToggleFavorite = async () => {
     if (!currentUser) {
-      alert(tp("favoriteLoginRequired"))
+      toast({
+        title: tc("error"),
+        description: tp("favoriteLoginRequired"),
+        variant: "destructive",
+      })
       router.push("/login")
       return
     }
@@ -656,7 +662,11 @@ export default function ProductDetailPage() {
   // }
 
   const handleContactSeller = async () => {
-    alert(tp("chatDisabled"))
+    toast({
+      title: tc("error"),
+      description: tp("chatDisabled"),
+      duration: 4000,
+    })
   }
 
   // Función para manejar la compra directa
@@ -723,7 +733,10 @@ export default function ProductDetailPage() {
       console.error("Error al procesar la compra directa:", error)
       toast({
         title: tc("error"),
-        description: error instanceof Error ? error.message : tp("purchaseError"),
+        description:
+          error instanceof Error
+            ? translateClientError(error.message, tApi)
+            : tp("purchaseError"),
         variant: "destructive"
       })
     } finally {

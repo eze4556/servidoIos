@@ -250,7 +250,7 @@ export default function SignupPage() {
             <Input
               id="password"
               type="password"
-              placeholder="Mínimo 6 caracteres"
+              placeholder={t("passwordPlaceholderMin")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={authInputClass}
@@ -265,7 +265,7 @@ export default function SignupPage() {
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Repetí tu contraseña"
+              placeholder={t("passwordPlaceholderConfirm")}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={authInputClass}

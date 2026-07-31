@@ -23,6 +23,7 @@ import {
 import type { ServiceAppointment, ServiceSchedule, WeekdayKey } from "@/types/service-appointments"
 import { DEFAULT_SERVICE_SCHEDULE, WEEKDAY_ORDER } from "@/types/service-appointments"
 import { useLocale, useTranslations } from "next-intl"
+import { translateClientError } from "@/lib/i18n/translate-client-error"
 import { getAppointmentStatusLabel, getWeekdayLabel } from "@/lib/i18n/agenda-labels"
 
 type ServiceOption = {
@@ -67,6 +68,9 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
   const { toast } = useToast()
   const t = useTranslations("sellerDashboard.agenda")
   const tAlerts = useTranslations("sellerDashboard.alerts")
+  const tApi = useTranslations("apiErrors")
+  const describeApiError = (err: unknown, fallback: string) =>
+    err instanceof Error ? translateClientError(err.message, tApi) : fallback
   const locale = useLocale()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
   const [appointments, setAppointments] = useState<ServiceAppointment[]>([])
@@ -185,7 +189,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
         description: ok,
       })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t("saveGenericError")
+      const msg = describeApiError(err, t("saveGenericError"))
       setError(msg)
       toast({
         title: t("saveErrorToastTitle"),
@@ -208,7 +212,7 @@ export function SellerAgendaPanel({ sellerId, services, onScheduleSaved }: Selle
         description: getAppointmentStatusLabel(t, status),
       })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t("updateError")
+      const msg = describeApiError(err, t("updateError"))
       setError(msg)
       toast({ title: tAlerts("errorTitle"), description: msg, variant: "destructive" })
     } finally {

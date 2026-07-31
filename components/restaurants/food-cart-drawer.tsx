@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useFoodCart } from "@/contexts/food-cart-context"
 import { ApiService } from "@/lib/services/api"
 import { getRestaurantPaymentMethodLabel } from "@/lib/i18n/restaurant-labels"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -42,6 +43,7 @@ export function FoodCartDrawer({
   transferInfo,
 }: FoodCartDrawerProps) {
   const t = useTranslations("foodCart")
+  const tApi = useTranslations("apiErrors")
   const tRestaurants = useTranslations("restaurants")
   const { formatPrice, formatPriceNumber } = usePriceFormat()
   const { currentUser } = useAuth()
@@ -150,7 +152,7 @@ export function FoodCartDrawer({
         router.push("/pedidos/comida")
       }, 2500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("errorCheckout"))
+      setError(describeApiError(err, tApi, t("errorCheckout")))
     } finally {
       setLoading(false)
     }

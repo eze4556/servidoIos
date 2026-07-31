@@ -20,6 +20,7 @@ import { ShippingForm, type ShippingAddress } from "@/components/cart/shipping-f
 import { CouponInput } from "@/components/ui/coupon-input"
 import { saveCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
 import { useTranslations } from "next-intl"
+import { translateClientError } from "@/lib/i18n/translate-client-error"
 
 interface GroupedItems {
   [sellerId: string]: CartItem[]
@@ -27,6 +28,7 @@ interface GroupedItems {
 
 export function CartDrawer() {
   const t = useTranslations("cart")
+  const tApi = useTranslations("apiErrors")
   const { formatPrice, formatPriceNumber } = usePriceFormat()
   const productCountLabel = (count: number) => (count === 1 ? t("product") : t("products"))
   const purchaseCreatedTitle = `✅ ${t("purchaseCreatedToast")}`
@@ -123,7 +125,10 @@ export function CartDrawer() {
       console.error("Error al procesar el pago:", error)
       toast({
         title: t("error"),
-        description: error instanceof Error ? error.message : t("paymentError"),
+        description:
+          error instanceof Error
+            ? translateClientError(error.message, tApi)
+            : t("paymentError"),
         variant: "destructive"
       })
     } finally {
@@ -213,7 +218,10 @@ export function CartDrawer() {
       console.error("Error al procesar el pago:", error)
       toast({
         title: t("error"),
-        description: error instanceof Error ? error.message : t("paymentError"),
+        description:
+          error instanceof Error
+            ? translateClientError(error.message, tApi)
+            : t("paymentError"),
         variant: "destructive"
       })
     } finally {
@@ -318,7 +326,10 @@ export function CartDrawer() {
       console.error("Error al procesar el pago:", error)
       toast({
         title: t("error"),
-        description: error instanceof Error ? error.message : t("paymentError"),
+        description:
+          error instanceof Error
+            ? translateClientError(error.message, tApi)
+            : t("paymentError"),
         variant: "destructive"
       })
     } finally {

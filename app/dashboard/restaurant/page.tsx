@@ -50,16 +50,20 @@ import { usePriceFormat } from "@/hooks/use-price-format"
 import { cn } from "@/lib/utils"
 import { getNextFoodOrderStatus, setFoodOrderStatus } from "@/lib/food-order-tracking"
 import { notifyFoodOrderStatus } from "@/lib/notifications"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 
 type RestaurantTab = "orders" | "menu" | "profile"
 
 export default function RestaurantDashboardPage() {
   const { formatPrice, formatPriceNumber } = usePriceFormat()
   const t = useTranslations("restaurantDashboard")
+  const tApi = useTranslations("apiErrors")
   const tRestaurants = useTranslations("restaurants")
   const tFood = useTranslations("foodOrders")
   const locale = useLocale()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
+
+  const paymentApiError = (err: unknown, fallback: string) => describeApiError(err, tApi, fallback)
 
   const { currentUser, handleLogout, refreshUserProfile } = useAuth()
   const router = useRouter()
@@ -264,7 +268,7 @@ export default function RestaurantDashboardPage() {
       }
       window.location.href = response.data.init_point
     } catch (err) {
-      setPaymentMsg(err instanceof Error ? err.message : t("subscribeError"))
+      setPaymentMsg(paymentApiError(err, t("subscribeError")))
       setSubscribing(false)
     }
   }
@@ -289,7 +293,7 @@ export default function RestaurantDashboardPage() {
         setPaymentMsg(t("cancelAtPeriodEnd"))
       }
     } catch (err) {
-      setPaymentMsg(err instanceof Error ? err.message : t("cancelError"))
+      setPaymentMsg(paymentApiError(err, t("cancelError")))
     } finally {
       setCancellingSubscription(false)
     }
@@ -359,7 +363,7 @@ export default function RestaurantDashboardPage() {
       )
       setPaymentMsg(t("paymentsSaved"))
     } catch (err) {
-      setPaymentMsg(err instanceof Error ? err.message : t("saveError"))
+      setPaymentMsg(paymentApiError(err, t("saveError")))
     } finally {
       setSavingPayments(false)
     }
@@ -375,7 +379,7 @@ export default function RestaurantDashboardPage() {
       }
       window.location.href = response.data.authorizationUrl
     } catch (err) {
-      setPaymentMsg(err instanceof Error ? err.message : t("mpConnectStartError"))
+      setPaymentMsg(paymentApiError(err, t("mpConnectionStartError")))
       setConnectingMp(false)
     }
   }
@@ -390,7 +394,7 @@ export default function RestaurantDashboardPage() {
       setPaymentMethods((prev) => prev.filter((m) => m !== "mercadopago"))
       setPaymentMsg(t("mpDisconnected"))
     } catch (err) {
-      setPaymentMsg(err instanceof Error ? err.message : t("mpDisconnectError"))
+      setPaymentMsg(paymentApiError(err, t("mpDisconnectError")))
     } finally {
       setConnectingMp(false)
     }

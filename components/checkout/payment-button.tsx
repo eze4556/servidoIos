@@ -9,6 +9,7 @@ import type { PaymentItem } from "@/types/payments"
 import { ApiService } from "@/lib/services/api"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useTranslations } from "next-intl"
+import { translateClientError } from "@/lib/i18n/translate-client-error"
 
 interface PaymentButtonProps {
   items: PaymentItem[]
@@ -22,6 +23,7 @@ export function PaymentButton({ items, sellerId, className = "" }: PaymentButton
   const { toast } = useToast()
   const { currentUser } = useAuth()
   const t = useTranslations("cart")
+  const tApi = useTranslations("apiErrors")
 
   const handlePayment = async () => {
     if (!currentUser) {
@@ -92,7 +94,10 @@ export function PaymentButton({ items, sellerId, className = "" }: PaymentButton
       console.error("Error al procesar el pago:", error)
       toast({
         title: t("error"),
-        description: error instanceof Error ? error.message : t("paymentError"),
+        description:
+          error instanceof Error
+            ? translateClientError(error.message, tApi)
+            : t("paymentError"),
         variant: "destructive",
       })
     } finally {

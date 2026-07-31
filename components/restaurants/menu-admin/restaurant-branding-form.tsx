@@ -15,6 +15,7 @@ import {
   imageValidationMessage,
   messageFromRestaurantImageUploadError,
 } from "@/lib/i18n/restaurant-image-errors"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 
 interface RestaurantBrandingFormProps {
   restaurant: Restaurant
@@ -24,6 +25,7 @@ interface RestaurantBrandingFormProps {
 
 export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: RestaurantBrandingFormProps) {
   const t = useTranslations("menuAdmin")
+  const tApi = useTranslations("apiErrors")
   const coverInputRef = useRef<HTMLInputElement>(null)
   const logoInputRef = useRef<HTMLInputElement>(null)
   const [uploadingCover, setUploadingCover] = useState(false)
@@ -71,7 +73,7 @@ export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: Rest
     } catch (err) {
       const msg = err instanceof Error ? err.message : ""
       const imageMsg = messageFromRestaurantImageUploadError(msg, t)
-      setError(imageMsg || (err instanceof Error ? err.message : t("uploadImageError")))
+      setError(imageMsg || describeApiError(err, tApi, t("uploadImageError")))
     } finally {
       setUploading(false)
     }
@@ -93,7 +95,7 @@ export function RestaurantBrandingForm({ restaurant, onUpdated, disabled }: Rest
         })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("deleteImageError"))
+      setError(describeApiError(err, tApi, t("deleteImageError")))
     }
   }
 

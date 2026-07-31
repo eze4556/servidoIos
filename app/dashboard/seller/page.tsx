@@ -67,6 +67,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage
 import { Loader2 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations, useLocale } from "next-intl"
+import { translateClientError } from "@/lib/i18n/translate-client-error"
 import { getDateFnsLocale } from "@/lib/i18n/date-locale"
 import { useAuth } from "@/contexts/auth-context"
 // import { ChatList } from "@/components/chat-list"
@@ -290,6 +291,12 @@ function getFechaCompra(compra: any): string {
 
 export default function SellerDashboardPage() {
   const t = useTranslations("sellerDashboard")
+  const tApi = useTranslations("apiErrors")
+  const describeApiError = (err: unknown, fallback?: string) => {
+    if (err instanceof Error) return translateClientError(err.message, tApi)
+    if (typeof err === "string" && err.trim()) return translateClientError(err, tApi)
+    return fallback ?? t("alerts.genericError")
+  }
   const locale = useLocale()
   const { formatPrice, formatPriceNumber, updatePriceFormat } = usePriceFormat()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
@@ -849,7 +856,7 @@ export default function SellerDashboardPage() {
       } else {
         toast({
           title: t("alerts.errorTitle"),
-          description: result.error || t("shipping.toastUpdateError"),
+          description: (result.error ? describeApiError(result.error) : null) || t("shipping.toastUpdateError"),
           variant: "destructive",
           })
         }
@@ -908,7 +915,7 @@ export default function SellerDashboardPage() {
       } else {
         toast({
           title: t("alerts.errorTitle"),
-          description: result.error || t("shipping.toastUpdateError"),
+          description: (result.error ? describeApiError(result.error) : null) || t("shipping.toastUpdateError"),
           variant: "destructive",
         })
       }
@@ -1842,10 +1849,10 @@ export default function SellerDashboardPage() {
       setError(
         isEditing
           ? t("forms.productSubmitErrorUpdate", {
-              message: err instanceof Error ? err.message : "",
+              message: describeApiError(err, ""),
             })
           : t("forms.productSubmitErrorAdd", {
-              message: err instanceof Error ? err.message : "",
+              message: describeApiError(err, ""),
             }),
       )
     } finally {
@@ -1923,7 +1930,7 @@ export default function SellerDashboardPage() {
       console.error("Error saving profile image:", err)
       setError(
         t("profile.photoUpdateError", {
-          message: err instanceof Error ? err.message : "",
+          message: describeApiError(err, ""),
         })
       )
     } finally {
@@ -1965,7 +1972,7 @@ export default function SellerDashboardPage() {
       console.error("Error removing profile image:", err)
       setError(
         t("profile.photoRemoveError", {
-          message: err instanceof Error ? err.message : String(err),
+          message: describeApiError(err),
         })
       )
     } finally {
@@ -2008,7 +2015,7 @@ export default function SellerDashboardPage() {
       }
     } catch (err) {
       console.error("[handleSubscribe] Error en la suscripción:", err);
-      toast({ title: t("alerts.errorTitle"), description: err instanceof Error ? err.message : String(err), variant: 'destructive' });
+      toast({ title: t("alerts.errorTitle"), description: describeApiError(err), variant: 'destructive' });
     } finally {
       setSubscribing(false);
     }
@@ -2052,7 +2059,7 @@ export default function SellerDashboardPage() {
     } catch (err) {
       toast({
         title: t("alerts.errorTitle"),
-        description: err instanceof Error ? err.message : t("subscription.cancelError"),
+        description: describeApiError(err, t("subscription.cancelError")),
         variant: "destructive",
       })
     } finally {
@@ -2079,7 +2086,7 @@ export default function SellerDashboardPage() {
 
       window.location.href = response.data.authorizationUrl
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
+      const message = describeApiError(err)
       toast({ title: t("alerts.errorTitle"), description: message, variant: "destructive" })
     } finally {
       setConnectingMercadoPago(false)
@@ -2110,7 +2117,7 @@ export default function SellerDashboardPage() {
         description: t("mercadoPago.toastDisconnectedDescription"),
       })
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
+      const message = describeApiError(err)
       toast({ title: t("alerts.errorTitle"), description: message, variant: "destructive" })
     } finally {
       setDisconnectingMercadoPago(false)
@@ -2228,10 +2235,10 @@ export default function SellerDashboardPage() {
       setError(
         isEditing
           ? t("forms.serviceSubmitErrorUpdate", {
-              message: err instanceof Error ? err.message : "",
+              message: describeApiError(err, ""),
             })
           : t("forms.serviceSubmitErrorAdd", {
-              message: err instanceof Error ? err.message : "",
+              message: describeApiError(err, ""),
             }),
       )
     } finally {
@@ -2470,7 +2477,7 @@ export default function SellerDashboardPage() {
       toast({
         title: t("shipping.toastSaveErrorTitle"),
         description: t("shipping.toastSaveErrorDescription", {
-          message: err instanceof Error ? err.message : t("shipping.statusUnknown"),
+          message: describeApiError(err, t("shipping.statusUnknown")),
         }),
         variant: 'destructive',
       });

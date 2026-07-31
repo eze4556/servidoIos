@@ -1,3 +1,5 @@
+"use client"
+
 import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import Image from "next/image"
@@ -5,6 +7,7 @@ import Link from "next/link"
 import { ArrowLeft, LogOut, Sparkles, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 export interface DashboardNavItem<T extends string = string> {
   id: T
@@ -28,12 +31,12 @@ interface DashboardSidebarProps<T extends string> {
   onNavClick?: () => void
 }
 
-const groupLabels: Record<string, string> = {
-  principal: "Principal",
-  tienda: "Tienda",
-  operaciones: "Operaciones",
-  guardado: "Guardado",
-  cuenta: "Cuenta",
+const groupLabelKeys: Record<string, string> = {
+  principal: "groupPrincipal",
+  tienda: "groupTienda",
+  operaciones: "groupOperaciones",
+  guardado: "groupGuardado",
+  cuenta: "groupCuenta",
 }
 
 function groupNavItems<T extends string>(items: DashboardNavItem<T>[]) {
@@ -117,6 +120,7 @@ export function DashboardSidebar<T extends string>({
   footerLinks = [],
   onNavClick,
 }: DashboardSidebarProps<T>) {
+  const tShell = useTranslations("dashboardShell")
   const groups = groupNavItems(navItems)
 
   const handleNav = (tab: T) => {
@@ -192,7 +196,7 @@ export function DashboardSidebar<T extends string>({
             <div key={key}>
               {groups.length > 1 && (
                 <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-purple-300/80">
-                  {groupLabels[key] || key}
+                  {groupLabelKeys[key] ? tShell(groupLabelKeys[key]) : key}
                 </p>
               )}
               <div className="space-y-1">

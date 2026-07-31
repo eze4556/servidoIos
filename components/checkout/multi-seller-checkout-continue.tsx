@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
+import { translateClientError } from "@/lib/i18n/translate-client-error"
 import { Button } from "@/components/ui/button"
 import { ApiService } from "@/lib/services/api"
 import { usePriceFormat } from "@/hooks/use-price-format"
@@ -45,6 +46,7 @@ export function MultiSellerCheckoutContinue({
   variant = "success",
 }: Props) {
   const t = useTranslations("checkoutMultiSeller")
+  const tApi = useTranslations("apiErrors")
   const { formatPriceNumber } = usePriceFormat()
   const [loading, setLoading] = useState(Boolean(sessionId))
   const [error, setError] = useState<string | null>(null)
@@ -115,7 +117,9 @@ export function MultiSellerCheckoutContinue({
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : t("continueError"))
+          setError(
+            err instanceof Error ? translateClientError(err.message, tApi) : t("continueError")
+          )
         }
       } finally {
         if (!cancelled) setLoading(false)

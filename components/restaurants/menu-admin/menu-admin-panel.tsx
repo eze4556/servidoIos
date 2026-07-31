@@ -27,6 +27,7 @@ import {
   sortBySortOrderThenName,
 } from "@/lib/restaurant-menu"
 import { deleteStoragePaths } from "@/lib/restaurant-storage"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 import type { MenuCategory, MenuItem } from "@/types/restaurant"
 import { getMenuItemPrimaryImage, menuItemHasOptions } from "@/types/restaurant"
 import { cn } from "@/lib/utils"
@@ -60,6 +61,7 @@ interface MenuAdminPanelProps {
 
 export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: MenuAdminPanelProps) {
   const t = useTranslations("menuAdmin")
+  const tApi = useTranslations("apiErrors")
   const { formatPrice } = usePriceFormat()
   const [categories, setCategories] = useState<MenuCategory[]>([])
   const [items, setItems] = useState<MenuItem[]>([])
@@ -82,7 +84,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       setCategories(result.categories)
       setItems(result.items)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("loadMenuError"))
+      setError(describeApiError(err, tApi, t("loadMenuError")))
     } finally {
       setLoading(false)
     }
@@ -126,7 +128,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       setNewCategoryName("")
       setSelectedCategoryId(ref.id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("createCategoryError"))
+      setError(describeApiError(err, tApi, t("createCategoryError")))
     } finally {
       setSavingCategory(false)
     }
@@ -159,7 +161,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       )
       setRenamingId(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("renameError"))
+      setError(describeApiError(err, tApi, t("renameError")))
     }
   }
 
@@ -178,7 +180,7 @@ export function MenuAdminPanel({ restaurantId, enabled, onNeedSubscription }: Me
       if (selectedCategoryId === category.id) setSelectedCategoryId(null)
       setDeleteCategoryTarget(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("deleteCategoryError"))
+      setError(describeApiError(err, tApi, t("deleteCategoryError")))
     }
   }
 

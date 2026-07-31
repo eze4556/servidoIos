@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useLocale, useTranslations } from "next-intl"
+import { useToast } from "@/components/ui/use-toast"
 
 interface Review {
   id: string
@@ -90,6 +91,7 @@ const ProductServiceReviewsAndQuestions: React.FC<Props> = ({
 }) => {
   const t = useTranslations("reviews")
   const locale = useLocale()
+  const { toast } = useToast()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
 
   const [reviewRating, setReviewRating] = useState(0)
@@ -117,7 +119,11 @@ const ProductServiceReviewsAndQuestions: React.FC<Props> = ({
     if (reviewRating === 0 || reviewComment.trim().length < 10) return
 
     if (containsPhoneNumber(reviewComment.trim())) {
-      alert(t("phoneAlertReview"))
+      toast({
+        title: t("errorTitle"),
+        description: t("phoneAlertReview"),
+        variant: "destructive",
+      })
       return
     }
 
@@ -131,7 +137,11 @@ const ProductServiceReviewsAndQuestions: React.FC<Props> = ({
     if (questionText.trim().length < 10) return
 
     if (containsPhoneNumber(questionText.trim())) {
-      alert(t("phoneAlertQuestion"))
+      toast({
+        title: t("errorTitle"),
+        description: t("phoneAlertQuestion"),
+        variant: "destructive",
+      })
       return
     }
 

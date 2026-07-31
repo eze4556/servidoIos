@@ -5,6 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 export type PartnerSignupVariant = "restaurant" | "cadete"
 
@@ -85,6 +86,8 @@ export function PartnerSignupShell({
   footer,
   icon: Icon,
 }: PartnerSignupShellProps) {
+  const tAuth = useTranslations("auth")
+  const tFooter = useTranslations("footer")
   const styles = variantStyles[variant]
   const [phase, setPhase] = useState<"intro" | "hero" | "form">("intro")
   const [reducedMotion, setReducedMotion] = useState(false)
@@ -134,7 +137,7 @@ export function PartnerSignupShell({
               )}
             >
               <Icon className="h-3.5 w-3.5" />
-              {variant === "restaurant" ? "Soy restaurante" : "Soy cadete"}
+              {variant === "restaurant" ? tAuth("partnerBadgeRestaurant") : tAuth("partnerBadgeCadete")}
             </span>
 
             <h1 className="max-w-md text-3xl font-bold tracking-tight text-white xl:text-4xl">{heroTitle}</h1>
@@ -158,7 +161,7 @@ export function PartnerSignupShell({
           </div>
 
           <p className="relative z-10 px-10 py-6 text-xs text-purple-300/80 xl:px-16">
-            © {new Date().getFullYear()} Servido · Todos los derechos reservados
+            {tFooter("copyright", { year: new Date().getFullYear() })}
           </p>
         </div>
 

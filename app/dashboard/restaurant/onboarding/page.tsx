@@ -39,6 +39,7 @@ export default function RestaurantOnboardingPage() {
   const [restaurantName, setRestaurantName] = useState("")
   const [deliveryFee, setDeliveryFee] = useState("300")
   const [businessLocation, setBusinessLocation] = useState<BusinessLocation | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadRestaurant() {
@@ -80,6 +81,7 @@ export default function RestaurantOnboardingPage() {
       return
     }
     setSaving(true)
+    setSaveError(null)
     try {
       await saveBusinessLocation(currentUser.firebaseUser.uid, businessLocation, {
         restaurantId: currentUser.restaurantId,
@@ -95,6 +97,7 @@ export default function RestaurantOnboardingPage() {
       router.push("/dashboard/restaurant")
     } catch (err) {
       console.error("Onboarding save error:", err)
+      setSaveError(t("saveError"))
     } finally {
       setSaving(false)
     }
@@ -192,6 +195,12 @@ export default function RestaurantOnboardingPage() {
               </li>
             ))}
           </ul>
+
+          {saveError ? (
+            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+              {saveError}
+            </p>
+          ) : null}
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button

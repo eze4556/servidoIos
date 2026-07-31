@@ -128,7 +128,55 @@
     "passwordPlaceholderConfirm": "Repetí tu contraseña",
     "namePlaceholder": "Juan Pérez",
     "emailPlaceholder": "tu@email.com",
-    "phonePlaceholder": "+54 9 11 1234-5678"
+    "phonePlaceholder": "+54 9 11 1234-5678",
+    "partnerBadgeRestaurant": "Soy restaurante",
+    "partnerBadgeCadete": "Soy cadete"
+  },
+  "dashboardShell": {
+    "groupPrincipal": "Principal",
+    "groupTienda": "Tienda",
+    "groupOperaciones": "Operaciones",
+    "groupGuardado": "Guardado",
+    "groupCuenta": "Cuenta"
+  },
+  "apiErrors": {
+    "unauthorized": "No autorizado",
+    "noSession": "Tenés que iniciar sesión",
+    "paymentStartMissing": "No se recibió el enlace de pago. Intentá de nuevo.",
+    "paymentProcessFailed": "Error al procesar el pago",
+    "sellerMpRequired": "El vendedor debe conectar Mercado Pago para cobrar",
+    "purchaseNotFound": "Compra no encontrada",
+    "shippingForbidden": "No tenés permiso para actualizar este envío",
+    "shippingInvalidStatus": "Estado de envío inválido",
+    "foodOrderNotFound": "El pedido no existe",
+    "foodOrderNotYours": "Este pedido no te pertenece",
+    "foodOrderNoNextStatus": "No hay más estados para avanzar",
+    "foodOrderStatusBlocked": "Todavía no podés avanzar a ese estado",
+    "shippingPurchaseSellerRequired": "ID de compra y vendedor requeridos",
+    "shippingAlreadyInitialized": "El envío ya está inicializado",
+    "shippingTrackingMin": "El número de seguimiento debe tener al menos 3 caracteres",
+    "shippingCarrierMin": "El nombre del transportista debe tener al menos 2 caracteres",
+    "shippingNotesMax": "Las notas no pueden exceder 500 caracteres",
+    "shippingApprovedOnly": "Solo se pueden actualizar envíos de compras aprobadas",
+    "shippingNoPhysical": "Los servicios no requieren envío físico",
+    "shippingValidateFailed": "Error al validar permisos",
+    "sellerIdRequired": "ID de vendedor requerido",
+    "buyerIdRequired": "ID de comprador requerido",
+    "foodBuyerMismatch": "La sesión no coincide con la cuenta del pedido",
+    "foodOrderMissingData": "Faltan datos del pedido",
+    "foodOrderNoItems": "El pedido no tiene productos",
+    "foodPickPayment": "Elegí un método de pago",
+    "foodRestaurantNotFound": "Restaurante no encontrado",
+    "foodRestaurantOwnerNotFound": "No encontramos la cuenta del restaurante",
+    "foodRestaurantNoSubscription": "Este restaurante no tiene suscripción activa en Servido",
+    "foodPaymentMethodNotAccepted": "Este restaurante no acepta ese método de pago",
+    "foodTransferNotConfigured": "El restaurante todavía no cargó datos de transferencia",
+    "foodInvalidQuantity": "Cantidad inválida",
+    "foodComboNotFound": "Combo no encontrado",
+    "foodComboWrongRestaurant": "El combo no pertenece a este restaurante",
+    "foodDishNotFound": "Plato no encontrado",
+    "foodDishWrongRestaurant": "El plato no pertenece a este restaurante",
+    "foodDishUnavailable": "El plato {name} no está disponible"
   },
   "signupCadete": {
     "heroTitle": "Trabajá como cadete en Servido",
@@ -279,7 +327,8 @@
     "tipToggle": "Podés activar o desactivar platos cuando quieras",
     "saving": "Guardando...",
     "goToPanel": "Ir al panel",
-    "skipForNow": "Saltar por ahora"
+    "skipForNow": "Saltar por ahora",
+    "saveError": "No se pudo guardar. Intentá de nuevo."
   },
   "restaurantDashboard": {
     "mpConnected": "Mercado Pago conectado correctamente.",
@@ -1689,7 +1738,8 @@
     },
     "alerts": {
       "errorTitle": "Error",
-      "successTitle": "Éxito"
+      "successTitle": "Éxito",
+      "genericError": "Ocurrió un error. Intentá de nuevo."
     },
     "overview": {
       "publishedProducts": "Productos publicados",
