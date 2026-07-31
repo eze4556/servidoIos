@@ -44,7 +44,11 @@
     "navRestaurants": "Restaurantes",
     "navServices": "Servicios",
     "navFavorites": "Favoritos",
-    "hideChatFab": "Ocultar chat"
+    "hideChatFab": "Ocultar chat",
+    "languageMenu": "Idioma",
+    "languageAria": "Cambiar idioma",
+    "languageEs": "Español",
+    "languagePtBr": "Português (Brasil)"
   },
   "tabBar": {
     "home": "Inicio",
