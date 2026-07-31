@@ -491,6 +491,9 @@ export async function requestServiceAppointment(input: {
       }
       return String(data.appointmentId)
     }
+    if (typeof data.error === "string" && data.error.trim()) {
+      throw new Error(data.error.trim())
+    }
     console.warn("API appointments failed, using client fallback:", data.error || res.status)
   } catch (err) {
     console.warn("API appointments unavailable, using client fallback:", err)

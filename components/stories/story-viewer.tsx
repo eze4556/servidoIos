@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Check, ExternalLink, Eye, Loader2, Send, Trash2, X } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 import { useAuth } from "@/contexts/auth-context"
 import { recordStoryView, softDeleteStory } from "@/lib/stories"
 import { replyToStory, STORY_REPLY_ERROR, CHAT_CONTENT_BLOCKED } from "@/lib/story-chat"
@@ -29,6 +30,7 @@ export function StoryViewer({
   onStoryDeleted,
 }: StoryViewerProps) {
   const t = useTranslations("storyViewer")
+  const tApi = useTranslations("apiErrors")
   const tTime = useTranslations("storyViewer.relativeTime")
   const router = useRouter()
   const { currentUser } = useAuth()
@@ -265,7 +267,7 @@ export function StoryViewer({
       } else if (err instanceof Error && err.message === CHAT_CONTENT_BLOCKED) {
         setReplyError(t("errors.blockedContent"))
       } else {
-        setReplyError(err instanceof Error ? err.message : t("replySendError"))
+        setReplyError(describeApiError(err, tApi, t("replySendError")))
       }
     } finally {
       setReplySending(false)

@@ -8,9 +8,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { XCircle, Home, RefreshCw, HelpCircle } from "lucide-react"
 import Link from "next/link"
 import { MultiSellerCheckoutContinue, readCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
+import { translateClientError } from "@/lib/i18n/translate-client-error"
 
 export default function PurchaseFailurePage() {
   const t = useTranslations("purchase")
+  const tApi = useTranslations("apiErrors")
   const searchParams = useSearchParams()
   const [failureData, setFailureData] = useState<{
     paymentId?: string
@@ -34,6 +36,19 @@ export default function PurchaseFailurePage() {
     }
     setCheckoutSessionId(checkout)
   }, [searchParams])
+
+  const displayErrorMessage = failureData.errorMessage
+    ? translateClientError(
+        (() => {
+          try {
+            return decodeURIComponent(failureData.errorMessage!)
+          } catch {
+            return failureData.errorMessage!
+          }
+        })(),
+        tApi
+      )
+    : undefined
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center p-4">
@@ -66,7 +81,7 @@ export default function PurchaseFailurePage() {
                 )}
                 {failureData.errorMessage && (
                   <p className="text-sm text-red-700 mt-2">
-                    <span className="font-semibold">{t("error")}</span> {failureData.errorMessage}
+                    <span className="font-semibold">{t("error")}</span> {displayErrorMessage}
                   </p>
                 )}
               </div>

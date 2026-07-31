@@ -22,6 +22,7 @@ import {
   type ServiceSlot,
 } from "@/lib/service-appointments"
 import type { ServiceSchedule } from "@/types/service-appointments"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 
 type ServiceBookingCardProps = {
   serviceId: string
@@ -172,6 +173,7 @@ export function ServiceBookingCard({
   schedule: scheduleProp,
 }: ServiceBookingCardProps) {
   const t = useTranslations("serviceBooking")
+  const tApi = useTranslations("apiErrors")
   const tReviews = useTranslations("reviews")
   const locale = useLocale()
   const dateLocale = getDateFnsLocale(locale)
@@ -313,7 +315,7 @@ export function ServiceBookingCard({
       setNotes("")
       // El listener en vivo actualiza los horarios libres
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("bookError"))
+      setError(describeApiError(err, tApi, t("bookError")))
     } finally {
       setSubmitting(false)
     }
@@ -387,7 +389,7 @@ export function ServiceBookingCard({
                     </p>
                     <p className="text-sm font-medium capitalize text-servido-950">
                       {selectedDate
-                        ? format(selectedDate, "EEEE d 'de' MMMM", { locale: dateLocale })
+                        ? format(selectedDate, "EEEE, d MMMM", { locale: dateLocale })
                         : t("pickDay")}
                     </p>
                   </div>

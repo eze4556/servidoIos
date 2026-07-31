@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Tag, X, CheckCircle, AlertCircle } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 
 interface Coupon {
   id: string
@@ -96,6 +97,7 @@ export function CouponInput({
   items = [],
 }: CouponInputProps) {
   const t = useTranslations("coupons")
+  const tApi = useTranslations("apiErrors")
   const tc = useTranslations("cart")
   const locale = useLocale()
   const numberLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
@@ -208,7 +210,7 @@ export function CouponInput({
         duration: 3000,
       })
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t("applyError")
+      const errorMessage = describeApiError(err, tApi, t("applyError"))
       setError(errorMessage)
       toast({
         title: tc("error"),

@@ -50,6 +50,16 @@ const MESSAGE_TO_KEY: Record<string, string> = {
   "Estado de conexión inválido o expirado": "mpConnectStateInvalid",
   "El estado de conexión expiró": "mpConnectStateExpired",
   "Vendedor no encontrado": "sellerNotFound",
+  "Datos de turno incompletos": "appointmentIncomplete",
+  "Horario inválido": "appointmentInvalidTime",
+  "Ese horario ya pasó": "appointmentPast",
+  "El servicio no existe": "serviceNotFound",
+  "No es un servicio": "notAService",
+  "El servicio no tiene vendedor": "serviceNoSeller",
+  "No podés reservar tu propio servicio": "appointmentOwnService",
+  "El prestador no acepta reservas online": "appointmentBookingDisabled",
+  "Ese horario ya no está disponible": "appointmentSlotTakenShort",
+  "Error interno": "internalError",
 }
 
 type ApiErrorTranslate = (key: string, values?: Record<string, string | number>) => string

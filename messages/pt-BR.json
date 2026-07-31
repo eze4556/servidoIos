@@ -197,7 +197,17 @@
     "mpConnectParamsMissing": "Faltam parâmetros de conexão",
     "mpConnectStateInvalid": "Estado de conexão inválido ou expirado",
     "mpConnectStateExpired": "O estado de conexão expirou",
-    "sellerNotFound": "Vendedor não encontrado"
+    "sellerNotFound": "Vendedor não encontrado",
+    "appointmentIncomplete": "Dados do horário incompletos",
+    "appointmentInvalidTime": "Horário inválido",
+    "appointmentPast": "Esse horário já passou",
+    "serviceNotFound": "O serviço não existe",
+    "notAService": "Não é um serviço",
+    "serviceNoSeller": "O serviço não tem vendedor",
+    "appointmentOwnService": "Você não pode reservar seu próprio serviço",
+    "appointmentBookingDisabled": "O prestador não aceita reservas online",
+    "appointmentSlotTakenShort": "Esse horário não está mais disponível",
+    "internalError": "Erro interno. Tente de novo."
   },
   "signupCadete": {
     "heroTitle": "Trabalhe como entregador no Servido",

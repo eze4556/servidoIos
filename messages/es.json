@@ -197,7 +197,17 @@
     "mpConnectParamsMissing": "Faltan parámetros de conexión",
     "mpConnectStateInvalid": "Estado de conexión inválido o expirado",
     "mpConnectStateExpired": "El estado de conexión expiró",
-    "sellerNotFound": "Vendedor no encontrado"
+    "sellerNotFound": "Vendedor no encontrado",
+    "appointmentIncomplete": "Datos del turno incompletos",
+    "appointmentInvalidTime": "Horario inválido",
+    "appointmentPast": "Ese horario ya pasó",
+    "serviceNotFound": "El servicio no existe",
+    "notAService": "No es un servicio",
+    "serviceNoSeller": "El servicio no tiene vendedor",
+    "appointmentOwnService": "No podés reservar tu propio servicio",
+    "appointmentBookingDisabled": "El prestador no acepta reservas online",
+    "appointmentSlotTakenShort": "Ese horario ya no está disponible",
+    "internalError": "Error interno. Intentá de nuevo."
   },
   "signupCadete": {
     "heroTitle": "Trabajá como cadete en Servido",
