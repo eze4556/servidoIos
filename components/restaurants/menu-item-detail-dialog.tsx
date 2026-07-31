@@ -14,6 +14,7 @@ import {
   sortOptionGroups,
   type SelectionInput,
 } from "@/lib/restaurant-options"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { Button } from "@/components/ui/button"
 import {
@@ -52,6 +53,7 @@ export function MenuItemDetailDialog({
   onAdd,
 }: MenuItemDetailDialogProps) {
   const t = useTranslations("menuItemDialog")
+  const tApi = useTranslations("apiErrors")
   const { formatPrice } = usePriceFormat()
   const images = item ? getMenuItemImages(item) : []
   const [activeIndex, setActiveIndex] = useState(0)
@@ -131,7 +133,7 @@ export function MenuItemDetailDialog({
       })
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("optionsError"))
+      setError(describeApiError(err, tApi, t("optionsError")))
     }
   }
 

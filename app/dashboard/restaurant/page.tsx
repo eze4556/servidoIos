@@ -50,7 +50,7 @@ import { usePriceFormat } from "@/hooks/use-price-format"
 import { cn } from "@/lib/utils"
 import { getNextFoodOrderStatus, setFoodOrderStatus } from "@/lib/food-order-tracking"
 import { notifyFoodOrderStatus } from "@/lib/notifications"
-import { describeApiError } from "@/lib/i18n/translate-client-error"
+import { describeApiError, translateClientError } from "@/lib/i18n/translate-client-error"
 
 type RestaurantTab = "orders" | "menu" | "profile"
 
@@ -102,7 +102,8 @@ export default function RestaurantDashboardPage() {
       void refreshUserProfile()
       window.history.replaceState({}, "", "/dashboard/restaurant")
     } else if (flag === "error") {
-      setPaymentMsg(t("mpConnectError"))
+      const reason = params.get("reason")
+      setPaymentMsg(reason ? translateClientError(reason, tApi) : t("mpConnectError"))
       setActiveTab("profile")
       window.history.replaceState({}, "", "/dashboard/restaurant")
     } else if (sub === "success") {
@@ -113,7 +114,7 @@ export default function RestaurantDashboardPage() {
       setPaymentMsg(t("subError"))
       window.history.replaceState({}, "", "/dashboard/restaurant")
     }
-  }, [refreshUserProfile, t])
+  }, [refreshUserProfile, t, tApi])
 
   // Si ya tiene suscripción activa pero el flag del local no, sincronizar
   useEffect(() => {
@@ -222,12 +223,16 @@ export default function RestaurantDashboardPage() {
     }
     const nextStatus = getNextFoodOrderStatus(order, "restaurant")
     if (!nextStatus || !currentUser) return
-    await setFoodOrderStatus({
-      orderId: order.id,
-      status: nextStatus,
-      actor: "restaurant",
-      actorUserId: currentUser.firebaseUser.uid,
-    })
+    try {
+      await setFoodOrderStatus({
+        orderId: order.id,
+        status: nextStatus,
+        actor: "restaurant",
+        actorUserId: currentUser.firebaseUser.uid,
+      })
+    } catch (err) {
+      setPaymentMsg(paymentApiError(err, t("orderAdvanceError")))
+    }
   }
 
   const confirmOrderPayment = async (order: FoodOrder) => {
@@ -237,18 +242,22 @@ export default function RestaurantDashboardPage() {
     }
     const statusPatch =
       order.status === "recibido" ? { status: "confirmado" as FoodOrderStatus } : {}
-    await updateDoc(doc(db, "foodOrders", order.id), {
-      paymentStatus: "approved",
-      ...statusPatch,
-      updatedAt: serverTimestamp(),
-    })
-    if (statusPatch.status) {
-      void notifyFoodOrderStatus({
-        buyerId: order.buyerId,
-        orderId: order.id,
-        status: "confirmado",
-        restaurantName: order.restaurantName,
+    try {
+      await updateDoc(doc(db, "foodOrders", order.id), {
+        paymentStatus: "approved",
+        ...statusPatch,
+        updatedAt: serverTimestamp(),
       })
+      if (statusPatch.status) {
+        void notifyFoodOrderStatus({
+          buyerId: order.buyerId,
+          orderId: order.id,
+          status: "confirmado",
+          restaurantName: order.restaurantName,
+        })
+      }
+    } catch (err) {
+      setPaymentMsg(paymentApiError(err, t("confirmPaymentError")))
     }
   }
 

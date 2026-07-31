@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 import { doc, getDoc } from "firebase/firestore"
 import {
   Bike,
@@ -60,6 +61,7 @@ function vibrateNewOrder() {
 export default function CadeteDashboardPage() {
   const { formatPrice, formatPriceNumber } = usePriceFormat()
   const t = useTranslations("cadeteDashboard")
+  const tApi = useTranslations("apiErrors")
   const tFood = useTranslations("foodOrders")
   const { currentUser, handleLogout } = useAuth()
   const [available, setAvailable] = useState<FoodOrder[]>([])
@@ -172,7 +174,7 @@ export default function CadeteDashboardPage() {
       await claimFoodOrder(orderId, uid, cadeteName)
       await loadActive()
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("errorClaim"))
+      setError(describeApiError(err, tApi, t("errorClaim")))
       await loadActive()
     } finally {
       setBusy(false)
@@ -193,7 +195,7 @@ export default function CadeteDashboardPage() {
       }
       await loadActive()
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("errorDelivered"))
+      setError(describeApiError(err, tApi, t("errorDelivered")))
     } finally {
       setBusy(false)
     }

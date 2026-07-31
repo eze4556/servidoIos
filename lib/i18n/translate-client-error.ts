@@ -34,6 +34,22 @@ const MESSAGE_TO_KEY: Record<string, string> = {
   "Cantidad inválida": "foodInvalidQuantity",
   "El combo no pertenece a este restaurante": "foodComboWrongRestaurant",
   "El plato no pertenece a este restaurante": "foodDishWrongRestaurant",
+  "Este pedido ya no está disponible.": "foodOrderUnavailable",
+  "El pago de este pedido no está aprobado.": "foodOrderPaymentNotApproved",
+  "Este pedido es retiro en local.": "foodOrderPickupOnly",
+  "Ya fue tomado por otro cadete.": "foodOrderTakenByOtherCadete",
+  "Solo podés marcar como entregados los pedidos en camino.": "foodOrderDeliverEnRouteOnly",
+  "Ese horario ya no está disponible. Elegí otro turno.": "appointmentSlotTaken",
+  "Tenés que iniciar sesión para pedir un turno.": "appointmentLoginRequired",
+  "La reserva no existe.": "appointmentNotFound",
+  "No tenés permiso para esta reserva.": "appointmentForbidden",
+  "Solo podés cancelar tu reserva.": "appointmentCancelOwnOnly",
+  "Hay opciones inválidas en el pedido": "menuOptionsInvalid",
+  "No se pudo conectar Mercado Pago": "mpConnectFailed",
+  "Faltan parámetros de conexión": "mpConnectParamsMissing",
+  "Estado de conexión inválido o expirado": "mpConnectStateInvalid",
+  "El estado de conexión expiró": "mpConnectStateExpired",
+  "Vendedor no encontrado": "sellerNotFound",
 }
 
 type ApiErrorTranslate = (key: string, values?: Record<string, string | number>) => string
@@ -48,6 +64,21 @@ export function translateClientError(message: string, t: ApiErrorTranslate): str
 
   const dishUnavailable = /^El plato (.+) no está disponible$/.exec(trimmed)
   if (dishUnavailable) return t("foodDishUnavailable", { name: dishUnavailable[1] })
+
+  const chooseGroup = /^Elegí (.+)$/.exec(trimmed)
+  if (chooseGroup) return t("menuChooseGroup", { name: chooseGroup[1] })
+
+  const maxSelect = /^Podés elegir hasta (\d+) en (.+)$/.exec(trimmed)
+  if (maxSelect) return t("menuMaxSelect", { max: maxSelect[1], name: maxSelect[2] })
+
+  const invalidOption = /^Opción no válida en (.+)$/.exec(trimmed)
+  if (invalidOption) return t("menuInvalidOption", { name: invalidOption[1] })
+
+  const comboUnavailable = /^El combo (.+) no está disponible$/.exec(trimmed)
+  if (comboUnavailable) return t("foodComboUnavailable", { name: comboUnavailable[1] })
+
+  const comboEmpty = /^El combo (.+) no tiene productos$/.exec(trimmed)
+  if (comboEmpty) return t("foodComboEmpty", { name: comboEmpty[1] })
 
   return message
 }

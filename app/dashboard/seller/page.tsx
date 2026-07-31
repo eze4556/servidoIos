@@ -718,7 +718,9 @@ export default function SellerDashboardPage() {
     } else if (mercadoPagoStatus === 'error') {
       toast({
         title: t("mercadoPago.toastConnectErrorTitle"),
-        description: mercadoPagoReason || t("mercadoPago.toastConnectErrorDefault"),
+        description:
+          (mercadoPagoReason ? translateClientError(mercadoPagoReason, tApi) : null) ||
+          t("mercadoPago.toastConnectErrorDefault"),
         variant: "destructive",
       })
       const newUrl = new URL(window.location.href)
