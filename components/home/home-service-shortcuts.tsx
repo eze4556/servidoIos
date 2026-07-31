@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { Globe2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 
@@ -10,7 +11,8 @@ export function HomeServiceShortcuts() {
   const serviceShortcuts: {
     id: string
     label: string
-    emoji: string
+    emoji?: string
+    globeIcon?: boolean
     href: string
     circle: string
     shadow: string
@@ -37,10 +39,10 @@ export function HomeServiceShortcuts() {
     {
       id: "internacional",
       label: th("shortcutInternational"),
-      emoji: "🇨🇳",
+      globeIcon: true,
       href: "/compras-internacionales",
-      circle: "bg-gradient-to-br from-red-500 via-rose-600 to-amber-600",
-      shadow: "shadow-rose-500/40",
+      circle: "bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700",
+      shadow: "shadow-blue-500/40",
       iconAnim: "home-shortcut-float-delay-2",
     },
     {
@@ -88,7 +90,7 @@ export function HomeServiceShortcuts() {
           className="flex gap-1 overflow-x-auto px-3 pb-1 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory sm:gap-2 sm:px-4 [&::-webkit-scrollbar]:hidden"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
-          {serviceShortcuts.map(({ id, label, emoji, href, circle, shadow, iconAnim }, index) => (
+          {serviceShortcuts.map(({ id, label, emoji, globeIcon, href, circle, shadow, iconAnim }, index) => (
             <Link
               key={id}
               href={href}
@@ -107,8 +109,18 @@ export function HomeServiceShortcuts() {
                 >
                   <span className="absolute inset-0 rounded-full bg-white/25 opacity-60" />
                   <span className="absolute inset-0 rounded-full bg-gradient-to-t from-black/10 to-white/30" />
-                  <span className="relative text-xl leading-none drop-shadow-md xs:text-2xl" aria-hidden>
-                    {emoji}
+                  <span className="relative flex h-6 w-6 items-center justify-center xs:h-7 xs:w-7">
+                    {globeIcon ? (
+                      <Globe2
+                        className="h-6 w-6 text-white drop-shadow-md xs:h-7 xs:w-7"
+                        strokeWidth={2.25}
+                        aria-hidden
+                      />
+                    ) : (
+                      <span className="text-xl leading-none drop-shadow-md xs:text-2xl" aria-hidden>
+                        {emoji}
+                      </span>
+                    )}
                   </span>
                 </span>
               </span>

@@ -30,8 +30,8 @@ export default function ComprasInternacionalesContent() {
         </Button>
 
         <div className="mb-8 text-center">
-          <span className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-servido-700/10 text-servido-800">
-            <Globe2 className="h-7 w-7" />
+          <span className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-600/30 ring-4 ring-white">
+            <Globe2 className="h-8 w-8" strokeWidth={2.25} aria-hidden />
           </span>
           <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">{t("title")}</h1>
           <p className="mt-3 text-sm leading-relaxed text-gray-600 sm:text-base">{t("subtitle")}</p>
