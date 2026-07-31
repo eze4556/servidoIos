@@ -27,11 +27,11 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import {
-  getNotificationBody,
   isNotificationRead,
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/notifications"
+import { resolveAppNotificationDisplay } from "@/lib/i18n/resolve-app-notification"
 import { syncAppointmentNotificationsForUser } from "@/lib/service-appointments"
 import type { AppNotification } from "@/types/notifications"
 
@@ -78,6 +78,7 @@ function iconFor(type: string, shippingStatus?: string) {
 
 export default function NotificationsPage() {
   const t = useTranslations("notifications")
+  const tApp = useTranslations("appNotifications")
   const tAuth = useTranslations("auth")
   const locale = useLocale()
   const { currentUser } = useAuth()
@@ -181,7 +182,7 @@ export default function NotificationsPage() {
         <div className="mx-auto grid max-w-2xl gap-3">
           {items.map((n) => {
             const unread = !isNotificationRead(n)
-            const body = getNotificationBody(n)
+            const display = resolveAppNotificationDisplay(n, tApp, locale)
             const meta = (n.meta || {}) as Record<string, unknown>
             const shippingStatus = String(
               (n as any).shippingStatus || meta.shippingStatus || ""
@@ -198,10 +199,10 @@ export default function NotificationsPage() {
                   <Icon className="mt-0.5 h-6 w-6 shrink-0 text-servido-700" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-base font-semibold leading-snug">{n.title}</h3>
+                      <h3 className="text-base font-semibold leading-snug">{display.title}</h3>
                       {unread && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-servido-600" />}
                     </div>
-                    {body && <p className="mt-1 text-sm text-muted-foreground">{body}</p>}
+                    {display.body && <p className="mt-1 text-sm text-muted-foreground">{display.body}</p>}
                     <p className="mt-1 text-xs text-muted-foreground">
                       {formatNotificationTime(n.createdAt, t, locale)}
                     </p>

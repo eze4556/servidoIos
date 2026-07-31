@@ -160,7 +160,16 @@ export async function POST(request: NextRequest) {
         body: `${buyerName || "Un cliente"} pidió turno para "${serviceName}" el ${when}.`,
         link: "/dashboard/seller?tab=agenda",
         dedupeKey: `service_appt_created_${apptRef.id}`,
-        meta: { appointmentId: apptRef.id, serviceId },
+        meta: {
+          appointmentId: apptRef.id,
+          serviceId,
+          i18nKey: "service.sellerNew",
+          i18nParams: {
+            serviceName,
+            buyerName: buyerName || "",
+            whenIso: start.toISOString(),
+          },
+        },
       })
       notificationIds.push(sellerNotif)
 
@@ -171,7 +180,12 @@ export async function POST(request: NextRequest) {
         body: `Pediste turno para "${serviceName}" el ${when}. Te avisamos cuando el prestador confirme.`,
         link: "/dashboard/buyer?tab=appointments",
         dedupeKey: `service_appt_buyer_${apptRef.id}_pending`,
-        meta: { appointmentId: apptRef.id, serviceId },
+        meta: {
+          appointmentId: apptRef.id,
+          serviceId,
+          i18nKey: "service.buyerPending",
+          i18nParams: { serviceName, whenIso: start.toISOString() },
+        },
       })
       notificationIds.push(buyerNotif)
     } catch (notifErr) {

@@ -60,6 +60,16 @@ const MESSAGE_TO_KEY: Record<string, string> = {
   "El prestador no acepta reservas online": "appointmentBookingDisabled",
   "Ese horario ya no está disponible": "appointmentSlotTakenShort",
   "Error interno": "internalError",
+  "Servicio de email no configurado": "emailNotConfigured",
+  "Datos inválidos": "emailInvalidData",
+  "No se pudo enviar el email": "emailSendFailed",
+  "Error inesperado": "emailUnexpectedError",
+  "Faltan buyerId o buyerEmail": "mpBuyerMissing",
+  "El array de productos es inválido o está vacío": "mpProductsInvalid",
+  "sessionId requerido": "mpSessionRequired",
+  "Sesión de checkout no encontrada": "mpSessionNotFound",
+  "createSellerPreferencePayment requiere productos de un solo vendedor": "mpSingleSellerOnly",
+  "Compra pendiente no encontrada": "mpPendingPurchaseNotFound",
 }
 
 type ApiErrorTranslate = (key: string, values?: Record<string, string | number>) => string
@@ -89,6 +99,24 @@ export function translateClientError(message: string, t: ApiErrorTranslate): str
 
   const comboEmpty = /^El combo (.+) no tiene productos$/.exec(trimmed)
   if (comboEmpty) return t("foodComboEmpty", { name: comboEmpty[1] })
+
+  const invalidProductData = /^Datos inválidos en el producto (\d+)$/.exec(trimmed)
+  if (invalidProductData) return t("mpInvalidProductData")
+
+  if (trimmed.startsWith("Producto no encontrado:")) return t("mpProductNotFound")
+
+  const productUnavailable = /^El producto (.+) no está disponible$/.exec(trimmed)
+  if (productUnavailable) return t("mpProductUnavailable", { name: productUnavailable[1] })
+
+  const insufficientStock = /^Stock insuficiente para el producto (.+)$/.exec(trimmed)
+  if (insufficientStock) return t("mpInsufficientStock", { name: insufficientStock[1] })
+
+  const noSeller = /^El producto (.+) no tiene vendedor asociado$/.exec(trimmed)
+  if (noSeller) return t("mpProductNoSeller")
+
+  if (trimmed.startsWith("MERCADOPAGO_ACCESS_TOKEN")) return t("mpNotConfigured")
+
+  if (trimmed.startsWith("Error consultando pago en MercadoPago:")) return t("mpPaymentQueryFailed")
 
   return message
 }

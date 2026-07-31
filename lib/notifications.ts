@@ -165,6 +165,8 @@ export async function notifySubscriptionReminder(params: {
   if (days > 7) return
 
   const today = new Date().toISOString().slice(0, 10)
+  const i18nKey = days <= 0 ? "subscription.expired" : days === 1 ? "subscription.tomorrow" : "subscription.days"
+
   const title =
     days <= 0
       ? "Tu suscripción venció"
@@ -186,7 +188,12 @@ export async function notifySubscriptionReminder(params: {
     body,
     link: params.link || "/dashboard/seller",
     dedupeKey: `subscription_reminder_${params.userId}_${today}`,
-    meta: { daysRemaining: days },
+    meta: {
+      daysRemaining: days,
+      planLabel: params.planLabel || "",
+      i18nKey,
+      i18nParams: { days, planLabel: params.planLabel || "" },
+    },
   })
 }
 
@@ -211,10 +218,12 @@ export async function notifyFoodOrderStatus(params: {
     entregado: "Pedido entregado",
     cancelado: "Pedido cancelado",
   }
-  const title = labels[params.status] || "Actualización de tu pedido"
+  const status = params.status
+  const i18nKey = labels[status] ? `foodOrder.${status}` : "foodOrder.fallback"
+  const title = labels[status] || "Actualización de tu pedido"
   const place = params.restaurantName ? ` en ${params.restaurantName}` : ""
   const body =
-    params.status === "entregado"
+    status === "entregado"
       ? `Tu comida${place} ya fue entregada. ¡Buen provecho!`
       : `${title}${place}.`
 
@@ -224,7 +233,13 @@ export async function notifyFoodOrderStatus(params: {
     title,
     body,
     link: "/pedidos/comida",
-    dedupeKey: `food_order_${params.orderId}_${params.status}`,
-    meta: { orderId: params.orderId, status: params.status },
+    dedupeKey: `food_order_${params.orderId}_${status}`,
+    meta: {
+      orderId: params.orderId,
+      status,
+      restaurantName: params.restaurantName ?? null,
+      i18nKey,
+      i18nParams: { restaurantName: params.restaurantName ?? "" },
+    },
   })
 }

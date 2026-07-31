@@ -207,6 +207,23 @@
     "appointmentOwnService": "No podés reservar tu propio servicio",
     "appointmentBookingDisabled": "El prestador no acepta reservas online",
     "appointmentSlotTakenShort": "Ese horario ya no está disponible",
+    "mpInvalidProductData": "Hay datos inválidos en uno de los productos",
+    "mpProductNotFound": "Producto no encontrado",
+    "mpProductUnavailable": "El producto {name} no está disponible",
+    "mpInsufficientStock": "Stock insuficiente para {name}",
+    "mpProductNoSeller": "Un producto no tiene vendedor asociado",
+    "mpSingleSellerOnly": "Solo podés pagar productos de un vendedor a la vez",
+    "mpBuyerMissing": "Faltan datos del comprador",
+    "mpProductsInvalid": "El carrito de productos es inválido o está vacío",
+    "mpSessionRequired": "Falta la sesión de checkout",
+    "mpSessionNotFound": "Sesión de checkout no encontrada",
+    "mpNotConfigured": "Mercado Pago no está configurado en el servidor",
+    "mpPaymentQueryFailed": "No se pudo consultar el pago en Mercado Pago",
+    "mpPendingPurchaseNotFound": "Compra pendiente no encontrada",
+    "emailNotConfigured": "Servicio de email no configurado",
+    "emailInvalidData": "Datos inválidos para enviar el email",
+    "emailSendFailed": "No se pudo enviar el email",
+    "emailUnexpectedError": "Error inesperado al enviar el email",
     "internalError": "Error interno. Intentá de nuevo."
   },
   "signupCadete": {
@@ -1417,6 +1434,105 @@
     "panelMenuTitle": "Menú del panel",
     "backHomeAria": "Volver al inicio",
     "myPanelLabel": "Mi panel"
+  },
+  "appNotifications": {
+    "foodOrder": {
+      "placeSuffix": " en {restaurantName}",
+      "genericBody": "{title}{place}.",
+      "recibido": { "title": "Pedido recibido", "body": "" },
+      "confirmado": { "title": "Pedido confirmado", "body": "" },
+      "en_preparacion": { "title": "Tu pedido se está preparando", "body": "" },
+      "listo": { "title": "Tu pedido está listo", "body": "" },
+      "despachado": { "title": "Tu pedido fue despachado", "body": "" },
+      "en_camino": { "title": "Tu pedido va en camino", "body": "" },
+      "llegando": { "title": "El repartidor está llegando", "body": "" },
+      "afuera": { "title": "El repartidor está afuera", "body": "" },
+      "entregado": { "title": "Pedido entregado", "body": "Tu comida{place} ya fue entregada. ¡Buen provecho!" },
+      "cancelado": { "title": "Pedido cancelado", "body": "" },
+      "fallback": { "title": "Actualización de tu pedido", "body": "" },
+      "fallbackTitle": "Actualización de tu pedido"
+    },
+    "subscription": {
+      "expired": {
+        "title": "Tu suscripción venció",
+        "body": "Renovala para seguir publicando y recibiendo pedidos."
+      },
+      "tomorrow": {
+        "title": "Tu suscripción vence mañana",
+        "body": "Podés renovar desde tu panel de vendedor."
+      },
+      "days": {
+        "title": "Tu suscripción vence en {days} días",
+        "body": "Te quedan {days} días de acceso{planSuffix}. Podés renovar desde tu panel."
+      },
+      "planSuffix": " ({planLabel})"
+    },
+    "service": {
+      "whenFallback": "fecha acordada",
+      "defaultBuyerName": "Un cliente",
+      "buyerPending": {
+        "title": "Reserva enviada",
+        "body": "Pediste turno para \"{serviceName}\" el {when}. Te avisamos cuando el prestador confirme."
+      },
+      "sellerNew": {
+        "title": "Nueva reserva de servicio",
+        "body": "{buyerName} pidió turno para \"{serviceName}\" el {when}."
+      },
+      "syncBuyerPending": {
+        "title": "Reserva enviada",
+        "body": "Pediste turno para \"{serviceName}\" ({when}). Esperá la confirmación del prestador."
+      },
+      "syncBuyerConfirmed": {
+        "title": "Turno confirmado",
+        "body": "Tu turno para \"{serviceName}\" ({when}) está confirmado."
+      },
+      "status": {
+        "pending": {
+          "title": "Reserva pendiente",
+          "body": "Tu turno para \"{serviceName}\" quedó pendiente."
+        },
+        "confirmed": {
+          "title": "Turno confirmado",
+          "body": "Tu turno para \"{serviceName}\" el {when} fue confirmado."
+        },
+        "completed": {
+          "title": "Turno completado",
+          "body": "El servicio \"{serviceName}\" quedó marcado como completado."
+        },
+        "cancelled": {
+          "title": "Turno cancelado",
+          "body": "Se canceló el turno de \"{serviceName}\" ({when})."
+        },
+        "rejected": {
+          "title": "Turno rechazado",
+          "body": "El prestador no pudo aceptar el turno de \"{serviceName}\" ({when})."
+        }
+      }
+    },
+    "shipping": {
+      "carrierSuffix": " ({carrierName})",
+      "pending": {
+        "title": "Pedido pendiente",
+        "body": "Tu pedido está pendiente de procesamiento — {productName}"
+      },
+      "preparing": {
+        "title": "Preparando envío",
+        "body": "Tu pedido está siendo preparado para envío — {productName}"
+      },
+      "shipped": {
+        "title": "Pedido enviado",
+        "body": "Tu pedido fue enviado — {productName}",
+        "bodyWithTracking": "Tu pedido fue enviado — {productName}. Número de seguimiento: {trackingNumber}{carrierSuffix}"
+      },
+      "delivered": {
+        "title": "Pedido entregado",
+        "body": "Tu pedido fue entregado — {productName}"
+      },
+      "cancelled": {
+        "title": "Pedido cancelado",
+        "body": "Tu pedido fue cancelado — {productName}"
+      }
+    }
   },
   "notifications": {
     "title": "Notificaciones",

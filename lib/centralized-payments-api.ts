@@ -811,7 +811,19 @@ async function createCentralizedShippingNotification(
       carrierName: carrierName || null,
       read: false,
       isRead: false,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
+      meta: {
+        shippingStatus: status,
+        productName,
+        trackingNumber: trackingNumber || "",
+        carrierName: carrierName || "",
+        i18nKey: `shipping.${status}`,
+        i18nParams: {
+          productName,
+          trackingNumber: trackingNumber || "",
+          carrierName: carrierName || "",
+        },
+      },
     }
 
     await addDoc(collection(db, "notifications"), notificationData)

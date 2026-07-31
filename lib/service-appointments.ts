@@ -431,7 +431,12 @@ async function requestServiceAppointmentClient(input: {
     body: `Pediste turno para "${input.serviceName}" el ${when}. Te avisamos cuando el prestador confirme.`,
     link: "/dashboard/buyer?tab=appointments",
     dedupeKey: `service_appt_buyer_${apptRef.id}_pending`,
-    meta: { appointmentId: apptRef.id, serviceId: input.serviceId },
+    meta: {
+      appointmentId: apptRef.id,
+      serviceId: input.serviceId,
+      i18nKey: "service.buyerPending",
+      i18nParams: { serviceName: input.serviceName, whenIso: input.start.toISOString() },
+    },
   })
 
   await createAppNotification({
@@ -441,7 +446,16 @@ async function requestServiceAppointmentClient(input: {
     body: `${input.buyerName || "Un cliente"} pidió turno para "${input.serviceName}" el ${when}.`,
     link: "/dashboard/seller?tab=agenda",
     dedupeKey: `service_appt_created_${apptRef.id}`,
-    meta: { appointmentId: apptRef.id, serviceId: input.serviceId },
+    meta: {
+      appointmentId: apptRef.id,
+      serviceId: input.serviceId,
+      i18nKey: "service.sellerNew",
+      i18nParams: {
+        serviceName: input.serviceName,
+        buyerName: input.buyerName || "",
+        whenIso: input.start.toISOString(),
+      },
+    },
   })
 
   return apptRef.id
@@ -518,6 +532,9 @@ export async function syncAppointmentNotificationsForUser(userId: string): Promi
   for (const appt of asBuyer) {
     if (appt.status !== "pending" && appt.status !== "confirmed") continue
     const when = formatAppointmentWhen(appt)
+    const whenIso = appointmentStartDate(appt)?.toISOString() || ""
+    const i18nKey =
+      appt.status === "confirmed" ? "service.syncBuyerConfirmed" : "service.syncBuyerPending"
     const id = await createAppNotification({
       userId,
       type: "service",
@@ -528,7 +545,14 @@ export async function syncAppointmentNotificationsForUser(userId: string): Promi
           : `Pediste turno para "${appt.serviceName}" (${when}). Esperá la confirmación del prestador.`,
       link: "/dashboard/buyer?tab=appointments",
       dedupeKey: `service_appt_buyer_${appt.id}_${appt.status}`,
-      meta: { appointmentId: appt.id, serviceId: appt.serviceId, status: appt.status },
+      meta: {
+        appointmentId: appt.id,
+        serviceId: appt.serviceId,
+        status: appt.status,
+        serviceName: appt.serviceName,
+        i18nKey,
+        i18nParams: { serviceName: appt.serviceName, whenIso },
+      },
     })
     if (id) created += 1
   }
@@ -536,6 +560,7 @@ export async function syncAppointmentNotificationsForUser(userId: string): Promi
   for (const appt of asSeller) {
     if (appt.status !== "pending") continue
     const when = formatAppointmentWhen(appt)
+    const whenIso = appointmentStartDate(appt)?.toISOString() || ""
     const id = await createAppNotification({
       userId,
       type: "service",
@@ -543,7 +568,17 @@ export async function syncAppointmentNotificationsForUser(userId: string): Promi
       body: `${appt.buyerName || "Un cliente"} pidió turno para "${appt.serviceName}" (${when}).`,
       link: "/dashboard/seller?tab=agenda",
       dedupeKey: `service_appt_created_${appt.id}`,
-      meta: { appointmentId: appt.id, serviceId: appt.serviceId },
+      meta: {
+        appointmentId: appt.id,
+        serviceId: appt.serviceId,
+        serviceName: appt.serviceName,
+        i18nKey: "service.sellerNew",
+        i18nParams: {
+          serviceName: appt.serviceName,
+          buyerName: appt.buyerName || "",
+          whenIso,
+        },
+      },
     })
     if (id) created += 1
   }
@@ -635,7 +670,16 @@ export async function updateAppointmentStatus(params: {
         body: msg.body,
         link,
         dedupeKey: `service_appt_${params.appointmentId}_${params.status}`,
-        meta: { appointmentId: params.appointmentId, status: params.status },
+        meta: {
+          appointmentId: params.appointmentId,
+          status: params.status,
+          serviceName: data.serviceName,
+          i18nKey: `service.status.${params.status}`,
+          i18nParams: {
+            serviceName: data.serviceName,
+            whenIso: start ? start.toISOString() : "",
+          },
+        },
       },
     ])
   } catch (err) {
