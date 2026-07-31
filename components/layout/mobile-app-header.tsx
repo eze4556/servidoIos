@@ -137,6 +137,15 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
     ? tc("detecting")
     : shortLocation || userLocation || tc("chooseLocation")
 
+  const profilePhoto =
+    currentUser?.photoURL || currentUser?.firebaseUser.photoURL || undefined
+  const profileLabel =
+    currentUser?.name ||
+    currentUser?.firebaseUser.displayName ||
+    currentUser?.firebaseUser.email?.split("@")[0] ||
+    tc("user")
+  const profileInitial = profileLabel.charAt(0).toUpperCase()
+
   const closeMenu = () => setMenuOpen(false)
 
   return (
@@ -146,17 +155,16 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
         className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-gradient-to-br from-servido-950 via-servido-800 to-servido-700 px-4 pb-3 pt-3 shadow-lg shadow-servido-950/50 lg:hidden"
       >
         <div className="flex items-center justify-between gap-2">
-          <Link href="/" className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-md ring-2 ring-white/30">
-              <Image
-                src="/images/logo-128.png"
-                alt="Servido"
-                width={28}
-                height={28}
-                className="h-7 w-7 object-contain"
-                priority
-              />
-            </span>
+          <Link
+            href={currentUser ? getDashboardLink() : "/login"}
+            className="flex min-w-0 items-center gap-2.5"
+          >
+            <Avatar className="h-9 w-9 shrink-0 shadow-md ring-2 ring-white/30">
+              <AvatarImage src={profilePhoto} alt="" className="object-cover" />
+              <AvatarFallback className="bg-white text-sm font-bold text-servido-800">
+                {authLoading ? "…" : profileInitial}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0">
               <span className="block text-lg font-bold leading-tight tracking-tight text-white">Servido</span>
               <UserGreeting variant="mobile" className="mt-0.5" />

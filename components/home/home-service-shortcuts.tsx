@@ -35,6 +35,15 @@ export function HomeServiceShortcuts() {
       iconAnim: "home-shortcut-float-delay-1",
     },
     {
+      id: "internacional",
+      label: th("shortcutInternational"),
+      emoji: "🇨🇳",
+      href: "/compras-internacionales",
+      circle: "bg-gradient-to-br from-red-500 via-rose-600 to-amber-600",
+      shadow: "shadow-rose-500/40",
+      iconAnim: "home-shortcut-float-delay-2",
+    },
+    {
       id: "super",
       label: th("shortcutSuper"),
       emoji: "🛒",

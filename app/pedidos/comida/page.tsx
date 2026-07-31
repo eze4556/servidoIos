@@ -8,11 +8,12 @@ import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Loader2, UtensilsCrossed } from "lucide-react"
+import { Loader2, MessageCircle, UtensilsCrossed } from "lucide-react"
 import type { FoodOrder } from "@/types/restaurant"
 import { formatOrderItemSelections } from "@/types/restaurant"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
+import { getDeliveryChatId } from "@/lib/delivery-chat"
 
 export default function FoodOrdersPage() {
   const t = useTranslations("foodOrders")
@@ -118,6 +119,17 @@ export default function FoodOrdersPage() {
                   })}
                 </ul>
                 <p className="mt-3 font-bold text-servido-800">{formatPrice(order.total)}</p>
+                {order.cadeteId &&
+                  order.deliveryMode !== "retiro_en_local" &&
+                  order.status !== "entregado" &&
+                  order.status !== "cancelado" && (
+                    <Button asChild size="sm" variant="outline" className="mt-3 rounded-full">
+                      <Link href={`/chat/${getDeliveryChatId(order.id)}`}>
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        {t("chatCadete")}
+                      </Link>
+                    </Button>
+                  )}
               </div>
             ))}
           </div>

@@ -15,6 +15,9 @@ import {
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import type { Story } from "@/types/story"
+import { assertChatMessageAllowed, CHAT_CONTENT_BLOCKED } from "@/lib/chat-content-guard"
+
+export { CHAT_CONTENT_BLOCKED }
 
 export const STORY_REPLY_ERROR = {
   EMPTY: "STORY_REPLY_EMPTY",
@@ -122,6 +125,11 @@ export async function replyToStory(params: {
 }): Promise<string> {
   const text = params.text.trim()
   if (!text) throw new Error(STORY_REPLY_ERROR.EMPTY)
+  try {
+    assertChatMessageAllowed(text)
+  } catch {
+    throw new Error(CHAT_CONTENT_BLOCKED)
+  }
   if (params.senderId === params.story.authorId) {
     throw new Error(STORY_REPLY_ERROR.SELF)
   }

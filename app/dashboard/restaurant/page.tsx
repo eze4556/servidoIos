@@ -48,27 +48,10 @@ import {
 } from "@/lib/i18n/restaurant-labels"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { cn } from "@/lib/utils"
+import { getNextFoodOrderStatus, setFoodOrderStatus } from "@/lib/food-order-tracking"
 import { notifyFoodOrderStatus } from "@/lib/notifications"
 
 type RestaurantTab = "orders" | "menu" | "profile"
-
-function getNextRestaurantStatus(order: FoodOrder): FoodOrderStatus | null {
-  if (order.status === "entregado" || order.status === "cancelado") return null
-
-  // Delivery: restaurant advances until listo; cadete claim moves to en_camino
-  if (order.deliveryMode !== "retiro_en_local") {
-    if (order.status === "recibido") return "en_preparacion"
-    if (order.status === "en_preparacion") return "listo"
-    if (order.status === "listo" || order.status === "en_camino") return null
-    return null
-  }
-
-  // Pickup: skip en_camino
-  if (order.status === "recibido") return "en_preparacion"
-  if (order.status === "en_preparacion") return "listo"
-  if (order.status === "listo") return "entregado"
-  return null
-}
 
 export default function RestaurantDashboardPage() {
   const { formatPrice, formatPriceNumber } = usePriceFormat()
@@ -233,17 +216,13 @@ export default function RestaurantDashboardPage() {
       setPaymentMsg(t("needSubscription"))
       return
     }
-    const nextStatus = getNextRestaurantStatus(order)
-    if (!nextStatus) return
-    await updateDoc(doc(db, "foodOrders", order.id), {
-      status: nextStatus,
-      updatedAt: serverTimestamp(),
-    })
-    void notifyFoodOrderStatus({
-      buyerId: order.buyerId,
+    const nextStatus = getNextFoodOrderStatus(order, "restaurant")
+    if (!nextStatus || !currentUser) return
+    await setFoodOrderStatus({
       orderId: order.id,
       status: nextStatus,
-      restaurantName: order.restaurantName,
+      actor: "restaurant",
+      actorUserId: currentUser.firebaseUser.uid,
     })
   }
 
@@ -252,10 +231,21 @@ export default function RestaurantDashboardPage() {
       setPaymentMsg(t("needSubscription"))
       return
     }
+    const statusPatch =
+      order.status === "recibido" ? { status: "confirmado" as FoodOrderStatus } : {}
     await updateDoc(doc(db, "foodOrders", order.id), {
       paymentStatus: "approved",
+      ...statusPatch,
       updatedAt: serverTimestamp(),
     })
+    if (statusPatch.status) {
+      void notifyFoodOrderStatus({
+        buyerId: order.buyerId,
+        orderId: order.id,
+        status: "confirmado",
+        restaurantName: order.restaurantName,
+      })
+    }
   }
 
   const handleSubscribe = async () => {
@@ -579,7 +569,7 @@ export default function RestaurantDashboardPage() {
               </div>
             ) : (
               visibleOrders.map((order) => {
-                const next = getNextRestaurantStatus(order)
+                const next = getNextFoodOrderStatus(order, "restaurant")
                 const isDelivery = order.deliveryMode !== "retiro_en_local"
                 return (
                   <div key={order.id} className="rounded-2xl bg-white p-5 ring-1 ring-gray-100">
@@ -695,13 +685,17 @@ export default function RestaurantDashboardPage() {
                               ? t("actionPrepare")
                               : next === "listo"
                                 ? t("actionReady")
-                                : next === "entregado"
-                                  ? t("actionPickupDone")
-                                  : t("actionAdvance")}
+                                : next === "despachado"
+                                  ? t("actionDispatch")
+                                  : next === "entregado"
+                                    ? t("actionPickupDone")
+                                    : t("actionAdvance")}
                           </Button>
                         )}
                       </div>
-                      {order.status === "listo" && isDelivery && !order.cadeteId && (
+                      {((order.status === "listo" || order.status === "despachado") &&
+                        isDelivery &&
+                        !order.cadeteId) && (
                         <span className="w-full text-xs text-sky-700">{t("waitingCadete")}</span>
                       )}
                     </div>

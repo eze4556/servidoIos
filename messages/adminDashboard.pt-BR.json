@@ -23,6 +23,7 @@
       "sales": "Ventas",
       "banners": "Banners",
       "alerts": "Alertas",
+      "servidoBroadcast": "Mensagens Servido",
       "coupons": "Cupones",
       "subscriptionPricing": "Preços de Assinatura"
     },
@@ -35,6 +36,7 @@
       "sales": "Vendas e Comissões",
       "banners": "Banners",
       "alerts": "Alertas",
+      "servidoBroadcast": "Mensagens Servido",
       "coupons": "Cupones",
       "subscriptionPricing": "Preços de Assinatura"
     },
@@ -452,6 +454,39 @@
       "systemInfoImpactDesc": "As alterações se aplicam imediatamente a novas assinaturas",
       "systemInfoMarketplace": "Marketplace:",
       "systemInfoMarketplaceDesc": "Este precio permite a los vendedores crear y gestionar productos y serviços"
+    },
+    "servidoBroadcast": {
+      "title": "Mensagens do Servido",
+      "description": "Envie promoções, novidades e avisos como notificações no app para audiências específicas.",
+      "typeLabel": "Tipo",
+      "types": {
+        "promo": "Promoção / desconto",
+        "news": "Novidade",
+        "important": "Aviso importante"
+      },
+      "audienceLabel": "Audiência",
+      "audiences": {
+        "all": "Todos os usuários",
+        "buyers": "Compradores",
+        "sellers": "Vendedores",
+        "resellers": "Revendedores",
+        "cadetes": "Entregadores",
+        "city": "Cidade / região",
+        "country": "País"
+      },
+      "cityLabel": "Cidade ou região (texto no perfil)",
+      "cityPlaceholder": "Ex: são paulo, curitiba",
+      "countryLabel": "País (campo no perfil)",
+      "countryPlaceholder": "Ex: brasil, argentina",
+      "titleLabel": "Título",
+      "bodyLabel": "Mensagem",
+      "bodyPlaceholder": "Texto que o usuário verá na notificação…",
+      "linkLabel": "Link opcional",
+      "sendButton": "Enviar notificações",
+      "sending": "Enviando…",
+      "sendSuccess": "Enviado para {count} usuários.",
+      "sendFailed": "Não foi possível enviar.",
+      "notLoggedIn": "Você precisa entrar como admin."
     }
   }
 }

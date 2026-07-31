@@ -201,9 +201,13 @@ export async function notifyFoodOrderStatus(params: {
 
   const labels: Record<string, string> = {
     recibido: "Pedido recibido",
+    confirmado: "Pedido confirmado",
     en_preparacion: "Tu pedido se está preparando",
     listo: "Tu pedido está listo",
+    despachado: "Tu pedido fue despachado",
     en_camino: "Tu pedido va en camino",
+    llegando: "El repartidor está llegando",
+    afuera: "El repartidor está afuera",
     entregado: "Pedido entregado",
     cancelado: "Pedido cancelado",
   }
@@ -219,7 +223,7 @@ export async function notifyFoodOrderStatus(params: {
     type: "food_order",
     title,
     body,
-    link: "/dashboard/buyer",
+    link: "/pedidos/comida",
     dedupeKey: `food_order_${params.orderId}_${params.status}`,
     meta: { orderId: params.orderId, status: params.status },
   })

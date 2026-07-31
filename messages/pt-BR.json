@@ -253,7 +253,11 @@
     "hasNote": " · Tem observação",
     "payOutsideApp": "Pagamento com o restaurante, fora do app",
     "takeOrder": "Aceitar",
-    "defaultName": "Entregador"
+    "defaultName": "Entregador",
+    "actionArriving": "Estou chegando",
+    "actionOutside": "Estou na porta",
+    "actionAdvance": "Atualizar status",
+    "chatWithBuyer": "Chat com comprador"
   },
   "restaurantOnboarding": {
     "title": "Complete seu perfil",
@@ -332,6 +336,7 @@
     "confirmPayment": "Confirmar pagamento",
     "actionPrepare": "Preparar",
     "actionReady": "Marcar pronto",
+    "actionDispatch": "Marcar despachado",
     "actionPickupDone": "Entregue (retirada)",
     "actionAdvance": "Avançar status",
     "waitingCadete": "Aguardando entregador do pool",
@@ -459,7 +464,8 @@
     "deleteFailed": "Não foi possível excluir. Tente novamente.",
     "errors": {
       "emptyMessage": "Escreva uma mensagem",
-      "selfReply": "Você não pode responder a si mesmo"
+      "selfReply": "Você não pode responder a si mesmo",
+      "blockedContent": "Por segurança, não envie contatos ou links. Converse dentro do Servido."
     },
     "relativeTime": {
       "now": "agora",
@@ -583,6 +589,7 @@
     "chipOffers": "Ofertas",
     "shortcutProducts": "Produtos",
     "shortcutDelivery": "Delivery",
+    "shortcutInternational": "Compras internacionais",
     "shortcutSuper": "Mercado",
     "shortcutPharmacy": "Farmácia",
     "shortcutShipping": "Entregas",
@@ -1138,7 +1145,24 @@
     "exploreToChat": "Explorar produtos para iniciar um chat",
     "sellerEmptyHint": "Os compradores iniciarão conversas com você.",
     "noMessagesYet": "Ainda não há mensagens.",
-    "dateUnknown": "N/D"
+    "dateUnknown": "N/D",
+    "securityNotice": "Por segurança, converse só dentro do Servido. Não são permitidos telefones, e-mails, links ou redes externas.",
+    "blockedContact": "Por segurança, você não pode enviar dados de contato. Toda comunicação deve ser feita dentro do Servido.",
+    "blockedLink": "Por segurança, você não pode enviar links. Compartilhe publicações do Servido com o botão abaixo.",
+    "blockedPhone": "Por segurança, você não pode enviar números de telefone no chat.",
+    "blockedEmail": "Por segurança, você não pode enviar e-mails no chat.",
+    "shareListingAria": "Compartilhar publicação do Servido",
+    "shareListingSending": "Compartilhando…",
+    "sharedListingLabel": "Publicação no Servido",
+    "viewListing": "Ver publicação",
+    "shareListingError": "Não foi possível compartilhar a publicação.",
+    "sharePickerTitle": "Compartilhar publicação",
+    "sharePickerHint": "Escolha um produto do Servido para enviar no chat (sem fotos do celular).",
+    "sharePickerEmpty": "Este vendedor não tem produtos para compartilhar.",
+    "sharePickerSend": "Enviar",
+    "viewProduct": "Ver produto",
+    "buyNow": "Comprar",
+    "deliveryBanner": "Chat de entrega com seu entregador"
   },
   "buyerDashboard": {
     "panelTitle": "Painel do comprador",
@@ -1337,7 +1361,25 @@
       "mercados": "Mercados",
       "farmacias": "Farmácias",
       "envios": "Entregas",
-      "mas": "Mais comércios"
+      "mas": "Mais comércios",
+      "china": "Compras da China"
+    }
+  },
+  "internationalPurchases": {
+    "title": "Compras internacionais",
+    "subtitle": "Escolha a origem da compra. Por enquanto liberamos países aos poucos.",
+    "backHome": "Voltar ao início",
+    "comingSoonBadge": "Em breve",
+    "browseLocal": "Ver produtos locais",
+    "chooseOther": "Escolher outro país",
+    "pickCountry": "Selecione um país para continuar.",
+    "countries": {
+      "china": {
+        "name": "China",
+        "hint": "Importação direta — em desenvolvimento",
+        "comingTitle": "Compras da China — em breve",
+        "comingBody": "Estamos preparando a experiência de compra internacional da China. Por enquanto você pode explorar produtos e lojas locais no Servido."
+      }
     }
   },
   "foodOrders": {
@@ -1349,12 +1391,17 @@
     "exploreRestaurants": "Explorar restaurantes",
     "status": {
       "recibido": "Recebido",
+      "confirmado": "Pedido confirmado",
       "en_preparacion": "Em preparação",
       "listo": "Pronto para retirada",
+      "despachado": "Pedido despachado",
       "en_camino": "A caminho",
+      "llegando": "Estou chegando",
+      "afuera": "Estou na porta",
       "entregado": "Entregue",
       "cancelado": "Cancelado"
-    }
+    },
+    "chatCadete": "Chat com entregador"
   },
   "restaurants": {
     "bannerAlt": "Os melhores sabores, direto na sua mesa",

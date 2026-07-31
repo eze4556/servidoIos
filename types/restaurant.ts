@@ -4,9 +4,13 @@ export type RestaurantStatus = "pending" | "approved" | "active" | "inactive"
 
 export type FoodOrderStatus =
   | "recibido"
+  | "confirmado"
   | "en_preparacion"
   | "listo"
+  | "despachado"
   | "en_camino"
+  | "llegando"
+  | "afuera"
   | "entregado"
   | "cancelado"
 
@@ -185,10 +189,14 @@ export interface FoodOrder {
 
 export const FOOD_ORDER_STATUS_LABELS: Record<FoodOrderStatus, string> = {
   recibido: "Recibido",
+  confirmado: "Pedido confirmado",
   en_preparacion: "En preparación",
-  listo: "Listo para retirar",
-  en_camino: "En camino",
-  entregado: "Entregado",
+  listo: "Pedido listo",
+  despachado: "Pedido despachado",
+  en_camino: "Estoy en camino",
+  llegando: "Estoy llegando",
+  afuera: "Estoy afuera",
+  entregado: "Pedido entregado",
   cancelado: "Cancelado",
 }
 

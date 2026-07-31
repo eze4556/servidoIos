@@ -23,6 +23,7 @@
       "sales": "Ventas",
       "banners": "Banners",
       "alerts": "Alertas",
+      "servidoBroadcast": "Mensajes Servido",
       "coupons": "Cupones",
       "subscriptionPricing": "Precios Suscripción"
     },
@@ -35,6 +36,7 @@
       "sales": "Ventas y Comisiones",
       "banners": "Banners",
       "alerts": "Alertas",
+      "servidoBroadcast": "Mensajes Servido",
       "coupons": "Cupones",
       "subscriptionPricing": "Precios Suscripción"
     },
@@ -452,6 +454,39 @@
       "systemInfoImpactDesc": "Los cambios se aplican inmediatamente a nuevas suscripciones",
       "systemInfoMarketplace": "Marketplace:",
       "systemInfoMarketplaceDesc": "Este precio permite a los vendedores crear y gestionar productos y servicios"
+    },
+    "servidoBroadcast": {
+      "title": "Mensajes de Servido",
+      "description": "Enviá promociones, novedades y avisos como notificaciones in-app a audiencias específicas.",
+      "typeLabel": "Tipo",
+      "types": {
+        "promo": "Promoción / descuento",
+        "news": "Novedad",
+        "important": "Aviso importante"
+      },
+      "audienceLabel": "Audiencia",
+      "audiences": {
+        "all": "Todos los usuarios",
+        "buyers": "Compradores",
+        "sellers": "Vendedores",
+        "resellers": "Revendedores",
+        "cadetes": "Repartidores",
+        "city": "Ciudad / zona",
+        "country": "País"
+      },
+      "cityLabel": "Ciudad o zona (texto en perfil)",
+      "cityPlaceholder": "Ej: rosario, buenos aires",
+      "countryLabel": "País (campo en perfil)",
+      "countryPlaceholder": "Ej: argentina, brasil",
+      "titleLabel": "Título",
+      "bodyLabel": "Mensaje",
+      "bodyPlaceholder": "Texto que verá el usuario en la notificación…",
+      "linkLabel": "Link opcional",
+      "sendButton": "Enviar notificaciones",
+      "sending": "Enviando…",
+      "sendSuccess": "Enviado a {count} usuarios.",
+      "sendFailed": "No se pudo enviar.",
+      "notLoggedIn": "Tenés que iniciar sesión como admin."
     }
   }
 }

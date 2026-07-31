@@ -33,12 +33,17 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Check, CheckCheck, Info, Loader2, Send, Trash2 } from "lucide-react"
+import { ArrowLeft, Check, CheckCheck, Info, Loader2, Package, Send, Trash2 } from "lucide-react"
+import { validateChatMessageText } from "@/lib/chat-content-guard"
+import { fetchProductListingForChat } from "@/lib/chat-listing-share"
+import { ChatListingMessageCard } from "@/components/chat/chat-listing-message-card"
+import { ChatShareProductSheet } from "@/components/chat/chat-share-product-sheet"
 
 interface Chat {
   id: string
-  type?: "product" | "story"
+  type?: "product" | "story" | "delivery"
   productId?: string
+  foodOrderId?: string
   storyId?: string
   buyerId: string
   sellerId: string
@@ -61,6 +66,12 @@ interface Message {
   senderName: string
   text: string
   timestamp: any
+  messageType?: "text" | "listing"
+  listingKind?: "product" | "story"
+  listingId?: string
+  listingTitle?: string
+  listingImageUrl?: string | null
+  listingPrice?: number | null
 }
 
 export default function ChatPage() {
@@ -76,6 +87,9 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [sharingListing, setSharingListing] = useState(false)
+  const [sharingProductId, setSharingProductId] = useState<string | null>(null)
+  const [shareSheetOpen, setShareSheetOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [otherLastSeen, setOtherLastSeen] = useState<unknown>(null)
@@ -270,10 +284,24 @@ export default function ChatPage() {
     e.preventDefault()
     if (!newMessage.trim() || !currentUser || !chat) return
 
+    const text = newMessage.trim()
+    const guard = validateChatMessageText(text)
+    if (!guard.allowed) {
+      setError(
+        guard.reason === "email"
+          ? t("blockedEmail")
+          : guard.reason === "phone"
+            ? t("blockedPhone")
+            : guard.reason === "link"
+              ? t("blockedLink")
+              : t("blockedContact")
+      )
+      return
+    }
+
     setSending(true)
     setError(null)
     try {
-      const text = newMessage.trim()
       await addDoc(collection(db, "chats", chatId, "messages"), {
         senderId: currentUser.firebaseUser.uid,
         senderName:
@@ -282,6 +310,7 @@ export default function ChatPage() {
           currentUser.firebaseUser.email?.split("@")[0] ||
           t("defaultUser"),
         text,
+        messageType: "text",
         timestamp: serverTimestamp(),
       })
       await updateDoc(doc(db, "chats", chatId), {
@@ -297,6 +326,58 @@ export default function ChatPage() {
     } finally {
       setSending(false)
     }
+  }
+
+  const sendListingMessage = async (productId: string) => {
+    if (!currentUser) return
+    setSharingProductId(productId)
+    setSharingListing(true)
+    setError(null)
+    try {
+      const listing = await fetchProductListingForChat(productId)
+      if (!listing) {
+        setError(t("shareListingError"))
+        return
+      }
+      const preview = t("sharedListingLabel")
+      await addDoc(collection(db, "chats", chatId, "messages"), {
+        senderId: currentUser.firebaseUser.uid,
+        senderName:
+          currentUser.name ||
+          currentUser.firebaseUser.displayName ||
+          currentUser.firebaseUser.email?.split("@")[0] ||
+          t("defaultUser"),
+        text: preview,
+        messageType: "listing",
+        listingKind: "product",
+        listingId: listing.listingId,
+        listingTitle: listing.listingTitle,
+        listingImageUrl: listing.listingImageUrl,
+        listingPrice: listing.listingPrice,
+        timestamp: serverTimestamp(),
+      })
+      await updateDoc(doc(db, "chats", chatId), {
+        lastMessage: preview,
+        lastMessageSenderId: currentUser.firebaseUser.uid,
+        lastMessageTimestamp: serverTimestamp(),
+      })
+      setShareSheetOpen(false)
+    } catch (err) {
+      console.error(err)
+      setError(t("shareListingError"))
+    } finally {
+      setSharingListing(false)
+      setSharingProductId(null)
+    }
+  }
+
+  const handleShareListing = async () => {
+    if (!currentUser || !chat) return
+    if (chat.productId) {
+      await sendListingMessage(chat.productId)
+      return
+    }
+    setShareSheetOpen(true)
   }
 
   const handleDeleteChat = async () => {
@@ -343,6 +424,8 @@ export default function ChatPage() {
   const otherName = uid === chat.buyerId ? chat.sellerName : chat.buyerName
   const otherPhoto = uid === chat.buyerId ? chat.sellerPhotoURL : chat.buyerPhotoURL
   const isStory = chat.type === "story"
+  const isDelivery = chat.type === "delivery"
+  const canShareProducts = !isStory && !isDelivery && Boolean(chat.sellerId)
   const online = isUserOnline(otherLastSeen, nowTick)
   const presenceLabel = formatLastSeenLocalized(otherLastSeen, t, locale, nowTick)
   const otherLastReadMs = getOtherLastReadMs(chat.lastReadAt, otherId)
@@ -401,9 +484,24 @@ export default function ChatPage() {
             {t("storyBanner")}
           </p>
         )}
+        {isDelivery && (
+          <p className="mx-auto mb-3 max-w-[85%] rounded-lg bg-sky-900/10 px-3 py-2 text-center text-[11px] text-sky-900">
+            {t("deliveryBanner")}
+          </p>
+        )}
+        <p className="mx-auto mb-3 max-w-[95%] rounded-lg bg-servido-800/5 px-3 py-2 text-center text-[11px] leading-snug text-gray-700">
+          {t("securityNotice")}
+        </p>
         {messages.map((message) => {
           const mine = message.senderId === uid
           const seen = isMessageSeen(message, uid, otherLastReadMs)
+          const isListing = message.messageType === "listing" && message.listingId
+          const listingHref =
+            message.listingKind === "product"
+              ? `/product/${message.listingId}`
+              : message.listingKind === "story"
+                ? `/historias`
+                : null
           return (
             <div key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div
@@ -413,7 +511,40 @@ export default function ChatPage() {
                     : "rounded-2xl rounded-bl-md bg-white text-gray-900"
                 }`}
               >
-                <p className="whitespace-pre-wrap text-[15px] leading-snug">{message.text}</p>
+                {isListing && message.listingKind === "product" && message.listingId ? (
+                  <ChatListingMessageCard
+                    title={message.listingTitle || message.text}
+                    imageUrl={message.listingImageUrl}
+                    price={message.listingPrice}
+                    productId={message.listingId}
+                    labels={{
+                      badge: t("sharedListingLabel"),
+                      viewProduct: t("viewProduct"),
+                      buyNow: t("buyNow"),
+                    }}
+                  />
+                ) : isListing && listingHref ? (
+                  <Link href={listingHref} className="block">
+                    {message.listingImageUrl && (
+                      <div className="relative mb-2 h-28 w-full overflow-hidden rounded-lg bg-gray-100">
+                        <Image
+                          src={message.listingImageUrl}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                    <p className="text-xs font-medium uppercase tracking-wide text-servido-800">
+                      {t("sharedListingLabel")}
+                    </p>
+                    <p className="text-[15px] font-semibold leading-snug">{message.listingTitle || message.text}</p>
+                    <p className="mt-1 text-xs font-medium text-servido-700">{t("viewListing")} →</p>
+                  </Link>
+                ) : (
+                  <p className="whitespace-pre-wrap text-[15px] leading-snug">{message.text}</p>
+                )}
                 <p className="mt-0.5 flex items-center justify-end gap-1 text-[10px] text-gray-500">
                   <span>
                     {message.timestamp?.toDate
@@ -448,6 +579,22 @@ export default function ChatPage() {
         onSubmit={(e) => void handleSendMessage(e)}
         className="flex shrink-0 items-end gap-2 border-t border-black/5 bg-[#f0f2f5] px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2"
       >
+        {canShareProducts && (
+          <button
+            type="button"
+            disabled={sharingListing || sending}
+            onClick={() => void handleShareListing()}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-servido-800 shadow-sm disabled:opacity-40"
+            aria-label={t("shareListingAria")}
+            title={t("shareListingAria")}
+          >
+            {sharingListing ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Package className="h-5 w-5" />
+            )}
+          </button>
+        )}
         <input
           ref={inputRef}
           type="text"
@@ -468,6 +615,15 @@ export default function ChatPage() {
           {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
         </button>
       </form>
+      {chat.sellerId && (
+        <ChatShareProductSheet
+          open={shareSheetOpen}
+          onOpenChange={setShareSheetOpen}
+          sellerId={chat.sellerId}
+          sharingId={sharingProductId}
+          onShare={(productId) => sendListingMessage(productId)}
+        />
+      )}
     </div>
   )
 }

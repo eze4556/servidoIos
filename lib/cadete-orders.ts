@@ -12,7 +12,11 @@ import {
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { notifyFoodOrderStatus } from "@/lib/notifications"
-import type { FoodOrder } from "@/types/restaurant"
+import { ensureDeliveryChatForOrder } from "@/lib/delivery-chat"
+import { getNextFoodOrderStatus, setFoodOrderStatus } from "@/lib/food-order-tracking"
+import type { FoodOrder, FoodOrderStatus } from "@/types/restaurant"
+
+const CADETE_ACTIVE_STATUSES: FoodOrderStatus[] = ["en_camino", "llegando", "afuera"]
 
 export function normalizeZone(zone?: string | null): string {
   return (zone || "")
@@ -32,8 +36,9 @@ export function zonesMatch(a?: string | null, b?: string | null): boolean {
 }
 
 export function isOrderAvailableForPool(order: FoodOrder): boolean {
+  const readyStatus = order.status === "listo" || order.status === "despachado"
   return (
-    order.status === "listo" &&
+    readyStatus &&
     order.paymentStatus === "approved" &&
     order.deliveryMode !== "retiro_en_local" &&
     !order.cadeteId
@@ -77,7 +82,7 @@ export function filterOrdersByCadeteZone(orders: FoodOrder[], cadeteZone?: strin
 }
 
 export async function fetchAvailableFoodOrders(cadeteZone?: string | null): Promise<FoodOrder[]> {
-  const snap = await getDocs(query(collection(db, "foodOrders"), where("status", "==", "listo")))
+  const snap = await getDocs(collection(db, "foodOrders"))
   const base = snap.docs
     .map((d) => ({ id: d.id, ...d.data() } as FoodOrder))
     .filter(isOrderAvailableForPool)
@@ -99,7 +104,7 @@ export function subscribeAvailableFoodOrders(
   const zoneCache = new Map<string, string>()
 
   return onSnapshot(
-    query(collection(db, "foodOrders"), where("status", "==", "listo")),
+    collection(db, "foodOrders"),
     async (snap) => {
       try {
         let orders = snap.docs
@@ -153,12 +158,39 @@ export async function fetchCadeteDeliveries(cadeteId: string): Promise<FoodOrder
   const snap = await getDocs(query(collection(db, "foodOrders"), where("cadeteId", "==", cadeteId)))
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() } as FoodOrder))
-    .filter((o) => o.status === "en_camino" || o.status === "entregado")
+    .filter(
+      (o) =>
+        CADETE_ACTIVE_STATUSES.includes(o.status) ||
+        o.status === "entregado"
+    )
     .sort((a, b) => {
-      if (a.status === "en_camino" && b.status !== "en_camino") return -1
-      if (b.status === "en_camino" && a.status !== "en_camino") return 1
+      const aActive = CADETE_ACTIVE_STATUSES.includes(a.status)
+      const bActive = CADETE_ACTIVE_STATUSES.includes(b.status)
+      if (aActive && !bActive) return -1
+      if (bActive && !aActive) return 1
       return String(b.id).localeCompare(String(a.id))
     })
+}
+
+export async function advanceCadeteFoodOrder(
+  orderId: string,
+  cadeteId: string
+): Promise<FoodOrderStatus | null> {
+  const snap = await getDoc(doc(db, "foodOrders", orderId))
+  if (!snap.exists()) throw new Error("El pedido no existe.")
+  const order = { id: snap.id, ...snap.data() } as FoodOrder
+  if (order.cadeteId !== cadeteId) throw new Error("Este pedido no te pertenece.")
+
+  const next = getNextFoodOrderStatus(order, "cadete")
+  if (!next) throw new Error("No hay más estados para avanzar.")
+
+  await setFoodOrderStatus({
+    orderId,
+    status: next,
+    actor: "cadete",
+    actorUserId: cadeteId,
+  })
+  return next
 }
 
 export async function claimFoodOrder(
@@ -178,7 +210,7 @@ export async function claimFoodOrder(
 
     const data = snap.data() as Omit<FoodOrder, "id">
 
-    if (data.status !== "listo") {
+    if (data.status !== "listo" && data.status !== "despachado") {
       throw new Error("Este pedido ya no está disponible.")
     }
     if (data.paymentStatus !== "approved") {
@@ -209,6 +241,15 @@ export async function claimFoodOrder(
     status: "en_camino",
     restaurantName,
   })
+
+  try {
+    const orderSnap = await getDoc(orderRef)
+    if (orderSnap.exists()) {
+      await ensureDeliveryChatForOrder({ id: orderId, ...orderSnap.data() } as FoodOrder)
+    }
+  } catch (err) {
+    console.warn("ensureDeliveryChatForOrder:", err)
+  }
 }
 
 export async function markFoodOrderDelivered(orderId: string, cadeteId: string): Promise<void> {

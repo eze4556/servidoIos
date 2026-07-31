@@ -22,9 +22,12 @@ import { isCadeteApproved } from "@/types/cadete"
 import {
   claimFoodOrder,
   fetchCadeteDeliveries,
-  markFoodOrderDelivered,
+  advanceCadeteFoodOrder,
   subscribeAvailableFoodOrders,
 } from "@/lib/cadete-orders"
+import { getDeliveryChatId } from "@/lib/delivery-chat"
+import { getNextFoodOrderStatus } from "@/lib/food-order-tracking"
+import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
 import type { FoodOrder } from "@/types/restaurant"
 import { usePriceFormat } from "@/hooks/use-price-format"
 
@@ -57,6 +60,7 @@ function vibrateNewOrder() {
 export default function CadeteDashboardPage() {
   const { formatPrice, formatPriceNumber } = usePriceFormat()
   const t = useTranslations("cadeteDashboard")
+  const tFood = useTranslations("foodOrders")
   const { currentUser, handleLogout } = useAuth()
   const [available, setAvailable] = useState<FoodOrder[]>([])
   const [active, setActive] = useState<FoodOrder | null>(null)
@@ -98,7 +102,9 @@ export default function CadeteDashboardPage() {
     if (!uid || !approved) return
     try {
       const mine = await fetchCadeteDeliveries(uid)
-      const current = mine.find((o) => o.status === "en_camino") || null
+      const activeStatuses = ["en_camino", "llegando", "afuera"] as const
+      const current =
+        mine.find((o) => (activeStatuses as readonly string[]).includes(o.status)) || null
       setActive(current)
       await resolveRestaurantAddress(current)
     } catch (err) {
@@ -173,14 +179,18 @@ export default function CadeteDashboardPage() {
     }
   }
 
-  const handleDelivered = async () => {
+  const handleAdvanceDelivery = async () => {
     if (!uid || !active || busy) return
     setBusy(true)
     setError(null)
     try {
-      await markFoodOrderDelivered(active.id, uid)
-      setActive(null)
-      setRestaurantAddress(null)
+      const next = await advanceCadeteFoodOrder(active.id, uid)
+      if (next === "entregado") {
+        setActive(null)
+        setRestaurantAddress(null)
+      } else {
+        setActive({ ...active, status: next! })
+      }
       await loadActive()
     } catch (err) {
       setError(err instanceof Error ? err.message : t("errorDelivered"))
@@ -225,6 +235,16 @@ export default function CadeteDashboardPage() {
     const dropoffAddress = active.address || null
     const fullRoute =
       pickupAddress && dropoffAddress ? routeUrl(pickupAddress, dropoffAddress) : null
+    const nextCadeteStatus = getNextFoodOrderStatus(active, "cadete")
+    const advanceLabel =
+      nextCadeteStatus === "llegando"
+        ? t("actionArriving")
+        : nextCadeteStatus === "afuera"
+          ? t("actionOutside")
+          : nextCadeteStatus === "entregado"
+            ? t("delivered")
+            : t("actionAdvance")
+    const deliveryChatId = getDeliveryChatId(active.id)
 
     return (
       <div className="flex min-h-[100dvh] flex-col bg-slate-950 text-white">
@@ -234,7 +254,7 @@ export default function CadeteDashboardPage() {
             <span className="text-sm font-medium text-slate-300">{t("enRoute")}</span>
           </div>
           <span className="rounded-full bg-sky-500/20 px-3 py-1 text-xs font-bold text-sky-300">
-            #{active.id.slice(-6)}
+            {getFoodOrderStatusLabel(tFood, active.status)}
           </span>
         </header>
 
@@ -305,6 +325,13 @@ export default function CadeteDashboardPage() {
             </a>
           )}
 
+          <Link
+            href={`/chat/${deliveryChatId}`}
+            className="mt-3 flex h-14 items-center justify-center gap-2 rounded-2xl bg-violet-600 text-base font-bold active:bg-violet-500"
+          >
+            {t("chatWithBuyer")}
+          </Link>
+
           <div className="mt-4 rounded-2xl bg-amber-500/10 p-4 ring-1 ring-amber-500/30">
             <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">{t("yourPayTitle")}</p>
             {active.deliveryFee > 0 ? (
@@ -335,21 +362,23 @@ export default function CadeteDashboardPage() {
           </div>
 
           <div className="mt-auto pt-6">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void handleDelivered()}
-              className="flex h-20 w-full items-center justify-center gap-3 rounded-2xl bg-emerald-500 text-2xl font-black text-slate-950 shadow-lg shadow-emerald-500/30 active:scale-[0.98] disabled:opacity-60"
-            >
-              {busy ? (
-                <Loader2 className="h-8 w-8 animate-spin" />
-              ) : (
-                <>
-                  <CheckCircle2 className="h-8 w-8" />
-                  {t("delivered")}
-                </>
-              )}
-            </button>
+            {nextCadeteStatus && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void handleAdvanceDelivery()}
+                className="flex h-20 w-full items-center justify-center gap-3 rounded-2xl bg-emerald-500 text-2xl font-black text-slate-950 shadow-lg shadow-emerald-500/30 active:scale-[0.98] disabled:opacity-60"
+              >
+                {busy ? (
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-8 w-8" />
+                    {advanceLabel}
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

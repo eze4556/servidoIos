@@ -8,7 +8,7 @@ import { Check, ExternalLink, Eye, Loader2, Send, Trash2, X } from "lucide-react
 import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { recordStoryView, softDeleteStory } from "@/lib/stories"
-import { replyToStory, STORY_REPLY_ERROR } from "@/lib/story-chat"
+import { replyToStory, STORY_REPLY_ERROR, CHAT_CONTENT_BLOCKED } from "@/lib/story-chat"
 import { formatStoryRelativeTime } from "@/lib/story-time"
 import { FollowButton } from "@/components/follows/follow-button"
 import { STORY_VIEW_MS, type StoryAuthorGroup } from "@/types/story"
@@ -262,6 +262,8 @@ export function StoryViewer({
         setReplyError(t("errors.emptyMessage"))
       } else if (err instanceof Error && err.message === STORY_REPLY_ERROR.SELF) {
         setReplyError(t("errors.selfReply"))
+      } else if (err instanceof Error && err.message === CHAT_CONTENT_BLOCKED) {
+        setReplyError(t("errors.blockedContent"))
       } else {
         setReplyError(err instanceof Error ? err.message : t("replySendError"))
       }
