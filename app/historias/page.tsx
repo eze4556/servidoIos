@@ -21,7 +21,6 @@ import type { StoryAuthorGroup } from "@/types/story"
 
 export default function HistoriasPage() {
   const t = useTranslations("storiesPage")
-  const tHeader = useTranslations("header")
   const { currentUser } = useAuth()
   const { coordinates, hasValidLocation, loadingLocation, openLocationPicker, shortLocation } =
     useLocation()
@@ -115,7 +114,7 @@ export default function HistoriasPage() {
                 >
                   <Link href="/mensajes">
                     <MessageSquare className="mr-1 h-3.5 w-3.5" />
-                    {tHeader("messages")}
+                    {t("messages")}
                   </Link>
                 </Button>
               </>
