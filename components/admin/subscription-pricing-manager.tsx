@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { useLocale, useTranslations } from 'next-intl'
+import { describeApiError, translateClientError } from '@/lib/i18n/translate-client-error'
 import type { SubscriptionPricing, SubscriptionPricingHistory } from '@/types/subscription'
 
 interface SubscriptionPricingManagerProps {
@@ -31,6 +32,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
   const t = useTranslations('adminDashboard.subscriptionPricing')
   const tAlerts = useTranslations('adminDashboard.alerts')
   const tCommon = useTranslations('adminDashboard.common')
+  const tApi = useTranslations('apiErrors')
   const locale = useLocale()
   const dateLocale = locale === 'pt-BR' ? 'pt-BR' : 'es-AR'
   const [currentPricing, setCurrentPricing] = useState<SubscriptionPricing | null>(null)
@@ -155,7 +157,9 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
           handleCancel()
         } else {
           const error = await response.json()
-          throw new Error(error.error || t('createError'))
+          throw new Error(
+            error.error ? translateClientError(String(error.error), tApi) : t('createError')
+          )
         }
       } else if (isEditing && currentPricing) {
         // Actualizar precio existente
@@ -182,14 +186,16 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
           handleCancel()
         } else {
           const error = await response.json()
-          throw new Error(error.error || t('updateError'))
+          throw new Error(
+            error.error ? translateClientError(String(error.error), tApi) : t('updateError')
+          )
         }
       }
     } catch (error) {
       console.error('Error al guardar:', error)
       toast({
         title: tAlerts('errorTitle'),
-        description: error instanceof Error ? error.message : t('saveError'),
+        description: describeApiError(error, tApi, t('saveError')),
         variant: 'destructive'
       })
     } finally {

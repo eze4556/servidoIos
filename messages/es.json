@@ -46,9 +46,22 @@
     "navFavorites": "Favoritos",
     "hideChatFab": "Ocultar chat",
     "languageMenu": "Idioma",
-    "languageAria": "Cambiar idioma",
+    "languageAria": "Elegir país e idioma",
     "languageEs": "Español",
-    "languagePtBr": "Português (Brasil)"
+    "languagePtBr": "Português (Brasil)",
+    "localePicker": {
+      "countriesActive": "Países donde estamos",
+      "comingSoonSection": "Próximamente",
+      "badgeNew": "Nuevo",
+      "badgeComingSoon": "Próximamente",
+      "footerTitle": "¡Vamos por más!",
+      "footerSubtitle": "Seguimos trabajando para llegar a más países.",
+      "countryArgentina": "Argentina",
+      "countryBrazil": "Brasil",
+      "countryUruguay": "Uruguay",
+      "countryChile": "Chile",
+      "countryMexico": "México"
+    }
   },
   "tabBar": {
     "home": "Inicio",
@@ -224,6 +237,17 @@
     "emailInvalidData": "Datos inválidos para enviar el email",
     "emailSendFailed": "No se pudo enviar el email",
     "emailUnexpectedError": "Error inesperado al enviar el email",
+    "adminAccessDenied": "Acceso denegado",
+    "adminRoleRequired": "Se requiere rol de administrador",
+    "adminStoragePathForbidden": "Ruta de archivo no permitida",
+    "adminStorageDeleteFailed": "No se pudo eliminar el archivo",
+    "broadcastTitleBodyRequired": "Título y mensaje son obligatorios",
+    "subscriptionPriceNotConfigured": "No hay precio de suscripción configurado",
+    "subscriptionInvalidPrice": "Precio inválido",
+    "subscriptionCreatorRequired": "Usuario creador requerido",
+    "subscriptionUpdaterRequired": "Usuario actualizador requerido",
+    "subscriptionPriceNotFound": "Precio no encontrado",
+    "adminServerError": "Error interno del servidor",
     "internalError": "Error interno. Intentá de nuevo."
   },
   "signupCadete": {

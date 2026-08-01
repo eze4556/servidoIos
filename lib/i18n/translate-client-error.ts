@@ -70,6 +70,19 @@ const MESSAGE_TO_KEY: Record<string, string> = {
   "Sesión de checkout no encontrada": "mpSessionNotFound",
   "createSellerPreferencePayment requiere productos de un solo vendedor": "mpSingleSellerOnly",
   "Compra pendiente no encontrada": "mpPendingPurchaseNotFound",
+  "Acceso denegado": "adminAccessDenied",
+  "Se requiere rol admin": "adminRoleRequired",
+  "Ruta de archivo no permitida": "adminStoragePathForbidden",
+  "No se pudo eliminar el archivo": "adminStorageDeleteFailed",
+  "Título y mensaje son obligatorios": "broadcastTitleBodyRequired",
+  "No hay precio de suscripción configurado": "subscriptionPriceNotConfigured",
+  "Error interno del servidor": "adminServerError",
+  "Precio inválido": "subscriptionInvalidPrice",
+  "Usuario creador requerido": "subscriptionCreatorRequired",
+  "Usuario actualizador requerido": "subscriptionUpdaterRequired",
+  "Precio no encontrado": "subscriptionPriceNotFound",
+  "not_authenticated": "noSession",
+  "storage_delete_failed": "adminStorageDeleteFailed",
 }
 
 type ApiErrorTranslate = (key: string, values?: Record<string, string | number>) => string

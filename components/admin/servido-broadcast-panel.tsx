@@ -16,11 +16,13 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Megaphone } from "lucide-react"
+import { describeApiError } from "@/lib/i18n/translate-client-error"
 
 type Audience = "all" | "buyers" | "sellers" | "resellers" | "cadetes" | "city" | "country"
 
 export function ServidoBroadcastPanel() {
   const t = useTranslations("adminDashboard.servidoBroadcast")
+  const tApi = useTranslations("apiErrors")
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
   const [link, setLink] = useState("")
@@ -63,7 +65,7 @@ export function ServidoBroadcastPanel() {
       setBody("")
       setLink("")
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("sendFailed"))
+      setError(describeApiError(err, tApi, t("sendFailed")))
     } finally {
       setSending(false)
     }
