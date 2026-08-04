@@ -11,6 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { CountryFlag, type CountryFlagCode } from "@/components/ui/country-flag"
 
 type LocaleFlagToggleProps = {
   className?: string
@@ -21,25 +22,25 @@ type LocaleFlagToggleProps = {
 
 type ActiveMarket = {
   locale: AppLocale
-  flag: string
+  flagCode: CountryFlagCode
   countryKey: "countryArgentina" | "countryBrazil"
   showNewBadge?: boolean
 }
 
 type SoonMarket = {
-  flag: string
+  flagCode: CountryFlagCode
   countryKey: "countryUruguay" | "countryChile" | "countryMexico"
 }
 
 const ACTIVE_MARKETS: ActiveMarket[] = [
-  { locale: "es", flag: "🇦🇷", countryKey: "countryArgentina" },
-  { locale: "pt-BR", flag: "🇧🇷", countryKey: "countryBrazil", showNewBadge: true },
+  { locale: "es", flagCode: "ar", countryKey: "countryArgentina" },
+  { locale: "pt-BR", flagCode: "br", countryKey: "countryBrazil", showNewBadge: true },
 ]
 
 const COMING_SOON_MARKETS: SoonMarket[] = [
-  { flag: "🇺🇾", countryKey: "countryUruguay" },
-  { flag: "🇨🇱", countryKey: "countryChile" },
-  { flag: "🇲🇽", countryKey: "countryMexico" },
+  { flagCode: "uy", countryKey: "countryUruguay" },
+  { flagCode: "cl", countryKey: "countryChile" },
+  { flagCode: "mx", countryKey: "countryMexico" },
 ]
 
 function setLocaleCookie(locale: AppLocale) {
@@ -56,8 +57,7 @@ export function LocaleFlagToggle({
   const t = useTranslations("header")
   const tp = useTranslations("header.localePicker")
 
-  const current =
-    ACTIVE_MARKETS.find((m) => m.locale === locale) ?? ACTIVE_MARKETS[0]
+  const current = ACTIVE_MARKETS.find((m) => m.locale === locale) ?? ACTIVE_MARKETS[0]
 
   const switchTo = (next: AppLocale) => {
     if (next === locale) return
@@ -77,6 +77,7 @@ export function LocaleFlagToggle({
         )
 
   const countryLabel = tp(current.countryKey)
+  const triggerFlagSize = compact ? 22 : 20
 
   return (
     <DropdownMenu>
@@ -91,9 +92,7 @@ export function LocaleFlagToggle({
           )}
           aria-label={compact ? `${t("languageAria")}: ${countryLabel}` : t("languageAria")}
         >
-          <span className={cn("leading-none", compact ? "text-xl" : "text-lg")} aria-hidden>
-            {current.flag}
-          </span>
+          <CountryFlag code={current.flagCode} size={triggerFlagSize} rounded={compact ? "full" : "sm"} />
           {!compact && <span className="truncate">{countryLabel}</span>}
           <ChevronDown
             className={cn("shrink-0 opacity-80", compact ? "h-3.5 w-3.5" : "h-4 w-4")}
@@ -123,9 +122,7 @@ export function LocaleFlagToggle({
                       selected && "bg-purple-50/80"
                     )}
                   >
-                    <span className="text-2xl leading-none" aria-hidden>
-                      {market.flag}
-                    </span>
+                    <CountryFlag code={market.flagCode} size={28} />
                     <span className="flex-1 text-base font-semibold text-purple-900">
                       {tp(market.countryKey)}
                     </span>
@@ -157,9 +154,7 @@ export function LocaleFlagToggle({
                   href="/proximamente"
                   className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-purple-50/60"
                 >
-                  <span className="text-2xl leading-none opacity-90" aria-hidden>
-                    {market.flag}
-                  </span>
+                  <CountryFlag code={market.flagCode} size={28} className="opacity-90" />
                   <span className="flex-1 text-base font-semibold text-purple-900/90">
                     {tp(market.countryKey)}
                   </span>
