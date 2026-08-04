@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import {
@@ -13,6 +14,14 @@ import {
 import { db } from "@/lib/firebase"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   BellRing,
   CreditCard,
@@ -32,8 +41,20 @@ import {
   markNotificationRead,
 } from "@/lib/notifications"
 import { resolveAppNotificationDisplay } from "@/lib/i18n/resolve-app-notification"
+import { isServidoOfficialNotification } from "@/lib/servido-official"
+import { ServidoOfficialAvatar } from "@/components/chat/servido-official-avatar"
 import { syncAppointmentNotificationsForUser } from "@/lib/service-appointments"
 import type { AppNotification } from "@/types/notifications"
+
+function normalizeNotificationLink(link: unknown): string | null {
+  if (typeof link !== "string") return null
+  const trimmed = link.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/")) {
+    return trimmed
+  }
+  return `/${trimmed.replace(/^\//, "")}`
+}
 
 function formatNotificationTime(
   timestamp: unknown,
@@ -81,10 +102,13 @@ export default function NotificationsPage() {
   const tApp = useTranslations("appNotifications")
   const tAuth = useTranslations("auth")
   const locale = useLocale()
+  const router = useRouter()
   const { currentUser } = useAuth()
   const [items, setItems] = useState<AppNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [markingAll, setMarkingAll] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [detailItem, setDetailItem] = useState<AppNotification | null>(null)
   const uid = currentUser?.firebaseUser?.uid
 
   useEffect(() => {
@@ -133,6 +157,24 @@ export default function NotificationsPage() {
       }
     }
   }
+
+  const handleViewDetail = (n: AppNotification) => {
+    const target = normalizeNotificationLink(n.link)
+    void handleOpen(n)
+    if (target) {
+      router.push(target)
+      return
+    }
+    setDetailItem(n)
+    setDetailOpen(true)
+  }
+
+  const detailDisplay = useMemo(() => {
+    if (!detailItem) return null
+    return resolveAppNotificationDisplay(detailItem, tApp, locale)
+  }, [detailItem, tApp, locale])
+
+  const detailLink = detailItem ? normalizeNotificationLink(detailItem.link) : null
 
   const handleMarkAll = async () => {
     if (!uid || unreadCount === 0) return
@@ -188,7 +230,7 @@ export default function NotificationsPage() {
               (n as any).shippingStatus || meta.shippingStatus || ""
             )
             const Icon = iconFor(String(n.type), shippingStatus)
-            const href = n.link || "/dashboard/buyer"
+            const servidoOfficial = isServidoOfficialNotification(meta)
 
             return (
               <Card
@@ -196,7 +238,11 @@ export default function NotificationsPage() {
                 className={`transition-shadow hover:shadow-md ${unread ? "ring-2 ring-servido-200" : ""}`}
               >
                 <CardContent className="flex items-start gap-4 p-4">
-                  <Icon className="mt-0.5 h-6 w-6 shrink-0 text-servido-700" />
+                  {servidoOfficial ? (
+                    <ServidoOfficialAvatar size={28} className="mt-0.5 shrink-0" />
+                  ) : (
+                    <Icon className="mt-0.5 h-6 w-6 shrink-0 text-servido-700" />
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-base font-semibold leading-snug">{display.title}</h3>
@@ -206,13 +252,14 @@ export default function NotificationsPage() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       {formatNotificationTime(n.createdAt, t, locale)}
                     </p>
-                    <Link
-                      href={href}
-                      className="mt-2 inline-block text-sm font-medium text-servido-700 hover:underline"
-                      onClick={() => void handleOpen(n)}
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="mt-2 h-auto p-0 text-sm font-medium text-servido-700"
+                      onClick={() => handleViewDetail(n)}
                     >
                       {t("viewDetail")}
-                    </Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -220,6 +267,38 @@ export default function NotificationsPage() {
           })}
         </div>
       )}
+
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{detailDisplay?.title || t("detailTitle")}</DialogTitle>
+            <DialogDescription className="sr-only">{t("detailTitle")}</DialogDescription>
+          </DialogHeader>
+          {detailDisplay?.body ? (
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{detailDisplay.body}</p>
+          ) : null}
+          {detailItem && (
+            <p className="text-xs text-muted-foreground">
+              {formatNotificationTime(detailItem.createdAt, t, locale)}
+            </p>
+          )}
+          {!detailLink && (
+            <p className="text-xs text-muted-foreground">{t("detailNoLinkHint")}</p>
+          )}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setDetailOpen(false)}>
+              {t("detailClose")}
+            </Button>
+            {detailLink && (
+              <Button asChild>
+                <Link href={detailLink} onClick={() => setDetailOpen(false)}>
+                  {t("detailGoTo")}
+                </Link>
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

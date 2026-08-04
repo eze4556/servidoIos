@@ -1,8 +1,12 @@
 /** ID fijo del remitente oficial (no es un usuario Firebase Auth real). */
 export const SERVIDO_OFFICIAL_USER_ID = "servido_official"
 
-/** Logo PNG (el .svg referencia logo.png y en avatares suele verse solo el círculo violeta). */
-export const SERVIDO_OFFICIAL_LOGO_PATH = "/images/logo-192.png"
+/** Logo del canal oficial (ícono app morado «Servido»). */
+export const SERVIDO_OFFICIAL_LOGO_PATH = "/images/servido-official-avatar.jpg"
+
+export function isServidoOfficialNotification(meta: Record<string, unknown> | null | undefined): boolean {
+  return meta?.fromServidoOfficial === true
+}
 
 export function servidoChatIdForUser(userId: string): string {
   return `servido_${userId}`

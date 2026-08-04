@@ -220,7 +220,7 @@ export default function ChatPage() {
               prev
                 ? {
                     ...prev,
-                    sellerPhotoURL: prev.sellerPhotoURL || SERVIDO_OFFICIAL_LOGO_PATH,
+                    sellerPhotoURL: SERVIDO_OFFICIAL_LOGO_PATH,
                   }
                 : prev
             )

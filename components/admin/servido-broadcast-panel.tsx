@@ -161,8 +161,9 @@ export function ServidoBroadcastPanel() {
             id="broadcast-link"
             value={link}
             onChange={(e) => setLink(e.target.value)}
-            placeholder="/products"
+            placeholder={t("linkPlaceholder")}
           />
+          <p className="text-xs text-muted-foreground">{t("linkHint")}</p>
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
