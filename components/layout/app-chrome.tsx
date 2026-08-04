@@ -52,8 +52,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             isChatThread
               ? "pb-0"
               : isMessagingList
-                ? "pb-[4.75rem] lg:pb-0"
-                : `pb-[4.75rem] ${isHomeRoute ? "lg:pb-16" : ""}`
+                ? "pb-16 lg:pb-0"
+                : `pb-16 ${isHomeRoute ? "lg:pb-16" : ""}`
           }`}
         >
           {children}

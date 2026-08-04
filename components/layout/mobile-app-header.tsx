@@ -176,8 +176,8 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
             </div>
           </Link>
 
-          <div className="flex shrink-0 items-center gap-0.5">
-            <LocaleFlagToggle variant="dark" className="mr-0.5" />
+          <div className="flex shrink-0 items-center gap-1">
+            <LocaleFlagToggle variant="dark" compact className="shrink-0" />
             <NotificationBell className="h-10 w-10 text-white/90 hover:bg-white/10" />
             <div className="[&_button]:text-white [&_button]:hover:bg-white/10">
               <CartDrawer />

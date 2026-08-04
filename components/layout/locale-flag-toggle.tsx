@@ -15,6 +15,8 @@ import {
 type LocaleFlagToggleProps = {
   className?: string
   variant?: "light" | "dark"
+  /** Solo bandera + chevron (header mobile) */
+  compact?: boolean
 }
 
 type ActiveMarket = {
@@ -44,7 +46,11 @@ function setLocaleCookie(locale: AppLocale) {
   document.cookie = `${LOCALE_COOKIE}=${locale};path=/;max-age=31536000;SameSite=Lax`
 }
 
-export function LocaleFlagToggle({ className, variant = "light" }: LocaleFlagToggleProps) {
+export function LocaleFlagToggle({
+  className,
+  variant = "light",
+  compact = false,
+}: LocaleFlagToggleProps) {
   const locale = useLocale() as AppLocale
   const router = useRouter()
   const t = useTranslations("header")
@@ -61,8 +67,16 @@ export function LocaleFlagToggle({ className, variant = "light" }: LocaleFlagTog
 
   const triggerClass =
     variant === "dark"
-      ? "rounded-full border border-white/25 bg-white/5 px-2.5 text-white hover:bg-white/10"
-      : "rounded-full border border-purple-200/80 bg-white px-2.5 text-purple-900 shadow-sm hover:bg-purple-50"
+      ? cn(
+          "rounded-full border border-white/25 bg-white/5 text-white hover:bg-white/10",
+          compact ? "h-9 gap-0.5 px-1.5" : "px-2.5"
+        )
+      : cn(
+          "rounded-full border border-purple-200/80 bg-white text-purple-900 shadow-sm hover:bg-purple-50",
+          compact ? "h-9 justify-center px-2" : "px-2.5"
+        )
+
+  const countryLabel = tp(current.countryKey)
 
   return (
     <DropdownMenu>
@@ -70,17 +84,21 @@ export function LocaleFlagToggle({ className, variant = "light" }: LocaleFlagTog
         <button
           type="button"
           className={cn(
-            "flex h-9 max-w-[9.5rem] items-center gap-1.5 text-sm font-semibold transition outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-1 sm:max-w-none",
+            "flex items-center gap-1 text-sm font-semibold transition outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-1",
+            !compact && "h-9 max-w-[9.5rem] gap-1.5 sm:max-w-none",
             triggerClass,
             className
           )}
-          aria-label={t("languageAria")}
+          aria-label={compact ? `${t("languageAria")}: ${countryLabel}` : t("languageAria")}
         >
-          <span className="text-lg leading-none" aria-hidden>
+          <span className={cn("leading-none", compact ? "text-xl" : "text-lg")} aria-hidden>
             {current.flag}
           </span>
-          <span className="truncate">{tp(current.countryKey)}</span>
-          <ChevronDown className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
+          {!compact && <span className="truncate">{countryLabel}</span>}
+          <ChevronDown
+            className={cn("shrink-0 opacity-80", compact ? "h-3.5 w-3.5" : "h-4 w-4")}
+            aria-hidden
+          />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
