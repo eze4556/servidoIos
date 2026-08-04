@@ -1,7 +1,8 @@
 /** ID fijo del remitente oficial (no es un usuario Firebase Auth real). */
 export const SERVIDO_OFFICIAL_USER_ID = "servido_official"
 
-export const SERVIDO_OFFICIAL_LOGO_PATH = "/images/logo-512.svg"
+/** Logo PNG (el .svg referencia logo.png y en avatares suele verse solo el círculo violeta). */
+export const SERVIDO_OFFICIAL_LOGO_PATH = "/images/logo-192.png"
 
 export function servidoChatIdForUser(userId: string): string {
   return `servido_${userId}`

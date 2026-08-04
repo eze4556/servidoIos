@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { hideChatForUser } from "@/lib/story-chat"
 import { isServidoOfficialChat, SERVIDO_OFFICIAL_LOGO_PATH } from "@/lib/servido-official"
 import { ServidoOfficialLabel } from "@/components/chat/servido-official-label"
+import { ServidoOfficialAvatar } from "@/components/chat/servido-official-avatar"
 import {
   formatLastSeenLocalized,
   getOtherLastReadMs,
@@ -468,12 +469,16 @@ export default function ChatPage() {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="relative">
+          {isServido ? (
+            <ServidoOfficialAvatar size={40} className="ring-2 ring-white/30" />
+          ) : (
           <Avatar className="h-10 w-10 ring-2 ring-white/20">
-            <AvatarImage src={otherPhoto || undefined} className={isServido ? "object-cover" : undefined} />
+            <AvatarImage src={otherPhoto || undefined} />
             <AvatarFallback className="bg-white/20 text-white">
-              {isServido ? "S" : otherName?.charAt(0) || "?"}
+              {otherName?.charAt(0) || "?"}
             </AvatarFallback>
           </Avatar>
+          )}
           {online && !isServido && (
             <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#075e54] bg-emerald-400" />
           )}

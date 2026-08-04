@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { subscribeUserChats, type ChatListItem } from "@/lib/story-chat"
-import { isServidoOfficialChat, SERVIDO_OFFICIAL_LOGO_PATH } from "@/lib/servido-official"
+import { isServidoOfficialChat } from "@/lib/servido-official"
 import { ServidoOfficialLabel } from "@/components/chat/servido-official-label"
+import { ServidoOfficialAvatar } from "@/components/chat/servido-official-avatar"
 import { isChatUnread, useChatUnread } from "@/components/chat/chat-unread-context"
 import { Button } from "@/components/ui/button"
 import { Loader2, MessageCircle, Search } from "lucide-react"
@@ -140,21 +141,19 @@ export default function MensajesPage() {
                       unread ? "bg-servido-50/60" : ""
                     }`}
                   >
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-gray-100 ring-2 ring-servido-100">
+                    <div className="relative shrink-0">
                       {isServido ? (
-                        <Image
-                          src={chat.sellerPhotoURL || SERVIDO_OFFICIAL_LOGO_PATH}
-                          alt=""
-                          width={56}
-                          height={56}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : chat.type === "story" && chat.storyImageUrl ? (
-                        <Image src={chat.storyImageUrl} alt="" fill className="object-cover" />
+                        <ServidoOfficialAvatar size={56} />
                       ) : (
-                        <span className="flex h-full w-full items-center justify-center text-lg font-bold text-servido-800">
-                          {other?.charAt(0)?.toUpperCase() || "?"}
-                        </span>
+                        <div className="relative h-14 w-14 overflow-hidden rounded-full bg-gray-100 ring-2 ring-servido-100">
+                          {chat.type === "story" && chat.storyImageUrl ? (
+                            <Image src={chat.storyImageUrl} alt="" fill className="object-cover" />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-lg font-bold text-servido-800">
+                              {other?.charAt(0)?.toUpperCase() || "?"}
+                            </span>
+                          )}
+                        </div>
                       )}
                       {unread && (
                         <span className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-red-500" />
