@@ -18,7 +18,7 @@ export function CountryFlag({ code, size = 20, className, rounded = "sm" }: Coun
       className={cn(
         "relative inline-block shrink-0 overflow-hidden bg-gray-100",
         rounded === "full" && "rounded-full",
-        rounded === "sm" && "rounded-[3px]",
+        rounded === "sm" && "rounded-md shadow-sm ring-1 ring-black/5",
         className
       )}
       style={{ width: size, height: rounded === "full" ? size : height }}
@@ -29,7 +29,7 @@ export function CountryFlag({ code, size = 20, className, rounded = "sm" }: Coun
         alt=""
         width={size}
         height={height}
-        className={cn("h-full w-full object-cover", rounded === "full" && "scale-150")}
+        className={cn("h-full w-full object-cover")}
         unoptimized
       />
     </span>

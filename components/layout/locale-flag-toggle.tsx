@@ -68,16 +68,18 @@ export function LocaleFlagToggle({
   const triggerClass =
     variant === "dark"
       ? cn(
-          "rounded-full border border-white/25 bg-white/5 text-white hover:bg-white/10",
-          compact ? "h-9 gap-0.5 px-1.5" : "px-2.5"
+          compact
+            ? "h-9 gap-1 rounded-lg border border-white/20 bg-white/10 px-2 text-white hover:bg-white/15"
+            : "rounded-full border border-white/25 bg-white/5 px-2.5 text-white hover:bg-white/10"
         )
       : cn(
-          "rounded-full border border-purple-200/80 bg-white text-purple-900 shadow-sm hover:bg-purple-50",
-          compact ? "h-9 justify-center px-2" : "px-2.5"
+          compact
+            ? "h-9 gap-1 rounded-lg border border-purple-200/80 bg-white px-2 shadow-sm hover:bg-purple-50"
+            : "rounded-full border border-purple-200/80 bg-white px-2.5 text-purple-900 shadow-sm hover:bg-purple-50"
         )
 
   const countryLabel = tp(current.countryKey)
-  const triggerFlagSize = compact ? 22 : 20
+  const triggerFlagSize = compact ? 26 : 20
 
   return (
     <DropdownMenu>
@@ -92,7 +94,7 @@ export function LocaleFlagToggle({
           )}
           aria-label={compact ? `${t("languageAria")}: ${countryLabel}` : t("languageAria")}
         >
-          <CountryFlag code={current.flagCode} size={triggerFlagSize} rounded={compact ? "full" : "sm"} />
+          <CountryFlag code={current.flagCode} size={triggerFlagSize} rounded="sm" />
           {!compact && <span className="truncate">{countryLabel}</span>}
           <ChevronDown
             className={cn("shrink-0 opacity-80", compact ? "h-3.5 w-3.5" : "h-4 w-4")}
