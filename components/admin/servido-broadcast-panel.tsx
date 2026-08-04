@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Megaphone } from "lucide-react"
 import { describeApiError } from "@/lib/i18n/translate-client-error"
 
-type Audience = "all" | "buyers" | "sellers" | "resellers" | "cadetes" | "city" | "country"
+type Audience = "all" | "buyers" | "sellers" | "restaurants" | "resellers" | "cadetes" | "city" | "country"
 
 export function ServidoBroadcastPanel() {
   const t = useTranslations("adminDashboard.servidoBroadcast")
@@ -105,6 +105,7 @@ export function ServidoBroadcastPanel() {
                 <SelectItem value="all">{t("audiences.all")}</SelectItem>
                 <SelectItem value="buyers">{t("audiences.buyers")}</SelectItem>
                 <SelectItem value="sellers">{t("audiences.sellers")}</SelectItem>
+                <SelectItem value="restaurants">{t("audiences.restaurants")}</SelectItem>
                 <SelectItem value="resellers">{t("audiences.resellers")}</SelectItem>
                 <SelectItem value="cadetes">{t("audiences.cadetes")}</SelectItem>
                 <SelectItem value="city">{t("audiences.city")}</SelectItem>

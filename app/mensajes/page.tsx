@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { subscribeUserChats, type ChatListItem } from "@/lib/story-chat"
+import { isServidoOfficialChat, SERVIDO_OFFICIAL_LOGO_PATH } from "@/lib/servido-official"
+import { ServidoOfficialLabel } from "@/components/chat/servido-official-label"
 import { isChatUnread, useChatUnread } from "@/components/chat/chat-unread-context"
 import { Button } from "@/components/ui/button"
 import { Loader2, MessageCircle, Search } from "lucide-react"
@@ -121,6 +123,7 @@ export default function MensajesPage() {
         ) : (
           <ul>
             {filtered.map((chat) => {
+              const isServido = isServidoOfficialChat(chat)
               const other = uid === chat.buyerId ? chat.sellerName : chat.buyerName
               const unread = unreadByChatId[chat.id] ?? isChatUnread(chat, uid)
               const time = chat.lastMessageTimestamp?.toMillis
@@ -137,8 +140,16 @@ export default function MensajesPage() {
                       unread ? "bg-servido-50/60" : ""
                     }`}
                   >
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-gray-100">
-                      {chat.type === "story" && chat.storyImageUrl ? (
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-gray-100 ring-2 ring-servido-100">
+                      {isServido ? (
+                        <Image
+                          src={chat.sellerPhotoURL || SERVIDO_OFFICIAL_LOGO_PATH}
+                          alt=""
+                          width={56}
+                          height={56}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : chat.type === "story" && chat.storyImageUrl ? (
                         <Image src={chat.storyImageUrl} alt="" fill className="object-cover" />
                       ) : (
                         <span className="flex h-full w-full items-center justify-center text-lg font-bold text-servido-800">
@@ -151,13 +162,17 @@ export default function MensajesPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
-                        <p
-                          className={`truncate ${
-                            unread ? "font-bold text-gray-900" : "font-semibold text-gray-900"
-                          }`}
-                        >
-                          {other}
-                        </p>
+                        {isServido ? (
+                          <ServidoOfficialLabel nameClassName="text-base" />
+                        ) : (
+                          <p
+                            className={`truncate ${
+                              unread ? "font-bold text-gray-900" : "font-semibold text-gray-900"
+                            }`}
+                          >
+                            {other}
+                          </p>
+                        )}
                         <span
                           className={`shrink-0 text-[11px] ${
                             unread ? "font-semibold text-servido-800" : "text-gray-400"
@@ -172,7 +187,12 @@ export default function MensajesPage() {
                             unread ? "font-semibold text-gray-800" : "text-gray-500"
                           }`}
                         >
-                          {chat.lastMessage || (chat.type === "story" ? t("storyChat") : t("genericChat"))}
+                          {chat.lastMessage ||
+                            (isServido
+                              ? t("servidoChat")
+                              : chat.type === "story"
+                                ? t("storyChat")
+                                : t("genericChat"))}
                         </p>
                         {unread && (
                           <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-servido-800 px-1.5 text-[11px] font-bold text-white">

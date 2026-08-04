@@ -65,9 +65,13 @@
   },
   "tabBar": {
     "home": "Início",
+    "search": "Buscar",
+    "publish": "Publicar",
     "follow": "Seguir",
     "stories": "Histórias",
+    "chats": "Chats",
     "chat": "Chat",
+    "profile": "Perfil",
     "account": "Minha conta"
   },
   "footer": {
@@ -1253,6 +1257,12 @@
     "emptyHintSearch": "Tente outro nome.",
     "viewStories": "Ver histórias",
     "storyChat": "Chat da história",
+    "servidoChat": "Servido",
+    "servidoOfficialName": "Servido",
+    "servidoVerifiedAria": "Conta oficial verificada",
+    "servidoOfficialSubtitle": "Conta oficial da Servido",
+    "servidoChannelBanner": "Canal oficial da Servido. Aqui você recebe novidades, promoções e avisos importantes.",
+    "servidoBroadcastOpenLink": "Ver mais",
     "genericChat": "Chat",
     "notFound": "Chat não encontrado.",
     "noPermission": "Você não tem permissão para ver este chat.",

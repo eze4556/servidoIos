@@ -26,7 +26,7 @@ export const STORY_REPLY_ERROR = {
 
 export interface ChatListItem {
   id: string
-  type?: "product" | "story"
+  type?: "product" | "story" | "delivery" | "servido"
   buyerId: string
   sellerId: string
   buyerName: string

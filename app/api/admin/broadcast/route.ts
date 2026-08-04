@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth as adminAuth, db } from "@/lib/firebase-admin"
 import { isFirestoreAdmin } from "@/lib/admin-auth-server"
 import { createNotificationAdmin } from "@/lib/notifications-server"
+import { sendServidoBroadcastChatMessage } from "@/lib/servido-chat-server"
 
 export type BroadcastAudience =
   | "all"
   | "buyers"
   | "sellers"
+  | "restaurants"
   | "resellers"
   | "cadetes"
   | "city"
@@ -71,6 +73,11 @@ export async function POST(request: NextRequest) {
         continue
       }
 
+      if (audience === "restaurants") {
+        if (role === "seller" && data.businessType === "restaurant") targetIds.push(uid)
+        continue
+      }
+
       const roles = ROLE_MAP[audience] || []
       if (roles.includes(role)) targetIds.push(uid)
     }
@@ -78,6 +85,7 @@ export async function POST(request: NextRequest) {
     const uniqueIds = [...new Set(targetIds)]
     const batchId = `broadcast_${Date.now()}`
     let sent = 0
+    let chatMessages = 0
 
     for (const userId of uniqueIds) {
       await createNotificationAdmin({
@@ -87,13 +95,27 @@ export async function POST(request: NextRequest) {
         body: message,
         link,
         dedupeKey: `${batchId}_${userId}`,
-        meta: { audience, batchId, city: cityFilter || null },
+        meta: { audience, batchId, city: cityFilter || null, fromServidoOfficial: true },
       })
       sent += 1
+
+      try {
+        await sendServidoBroadcastChatMessage({
+          userId,
+          title,
+          body: message,
+          link,
+          batchId,
+        })
+        chatMessages += 1
+      } catch (chatErr) {
+        console.error("broadcast chat message failed", userId, chatErr)
+      }
+
       if (sent >= 2000) break
     }
 
-    return NextResponse.json({ ok: true, sent, audience, batchId })
+    return NextResponse.json({ ok: true, sent, chatMessages, audience, batchId })
   } catch (error) {
     console.error("POST /api/admin/broadcast", error)
     const msg = error instanceof Error ? error.message : "Error interno"

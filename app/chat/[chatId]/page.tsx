@@ -20,6 +20,8 @@ import {
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
 import { hideChatForUser } from "@/lib/story-chat"
+import { isServidoOfficialChat, SERVIDO_OFFICIAL_LOGO_PATH } from "@/lib/servido-official"
+import { ServidoOfficialLabel } from "@/components/chat/servido-official-label"
 import {
   formatLastSeenLocalized,
   getOtherLastReadMs,
@@ -41,7 +43,7 @@ import { ChatShareProductSheet } from "@/components/chat/chat-share-product-shee
 
 interface Chat {
   id: string
-  type?: "product" | "story" | "delivery"
+  type?: "product" | "story" | "delivery" | "servido"
   productId?: string
   foodOrderId?: string
   storyId?: string
@@ -66,6 +68,9 @@ interface Message {
   senderName: string
   text: string
   timestamp: any
+  broadcastTitle?: string | null
+  link?: string | null
+  source?: string
   messageType?: "text" | "listing"
   listingKind?: "product" | "story"
   listingId?: string
@@ -422,10 +427,15 @@ export default function ChatPage() {
   const uid = currentUser.firebaseUser.uid
   const otherId = uid === chat.buyerId ? chat.sellerId : chat.buyerId
   const otherName = uid === chat.buyerId ? chat.sellerName : chat.buyerName
-  const otherPhoto = uid === chat.buyerId ? chat.sellerPhotoURL : chat.buyerPhotoURL
+  const otherPhoto = isServido
+    ? chat.sellerPhotoURL || SERVIDO_OFFICIAL_LOGO_PATH
+    : uid === chat.buyerId
+      ? chat.sellerPhotoURL
+      : chat.buyerPhotoURL
   const isStory = chat.type === "story"
   const isDelivery = chat.type === "delivery"
-  const canShareProducts = !isStory && !isDelivery && Boolean(chat.sellerId)
+  const isServido = isServidoOfficialChat(chat)
+  const canShareProducts = !isStory && !isDelivery && !isServido && Boolean(chat.sellerId)
   const online = isUserOnline(otherLastSeen, nowTick)
   const presenceLabel = formatLastSeenLocalized(otherLastSeen, t, locale, nowTick)
   const otherLastReadMs = getOtherLastReadMs(chat.lastReadAt, otherId)
@@ -443,19 +453,23 @@ export default function ChatPage() {
         </button>
         <div className="relative">
           <Avatar className="h-10 w-10 ring-2 ring-white/20">
-            <AvatarImage src={otherPhoto || undefined} />
+            <AvatarImage src={otherPhoto || undefined} className={isServido ? "object-cover" : undefined} />
             <AvatarFallback className="bg-white/20 text-white">
-              {otherName?.charAt(0) || "?"}
+              {isServido ? "S" : otherName?.charAt(0) || "?"}
             </AvatarFallback>
           </Avatar>
-          {online && (
+          {online && !isServido && (
             <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#075e54] bg-emerald-400" />
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-semibold leading-tight">{otherName}</p>
-          <p className={`truncate text-[11px] ${online ? "text-emerald-200" : "text-white/75"}`}>
-            {presenceLabel}
+          {isServido ? (
+            <ServidoOfficialLabel inverted nameClassName="text-[15px] text-white" iconClassName="h-4 w-4" />
+          ) : (
+            <p className="truncate text-[15px] font-semibold leading-tight">{otherName}</p>
+          )}
+          <p className={`truncate text-[11px] ${online && !isServido ? "text-emerald-200" : "text-white/75"}`}>
+            {isServido ? t("servidoOfficialSubtitle") : presenceLabel}
           </p>
         </div>
         {isStory && chat.storyImageUrl && (
@@ -489,9 +503,16 @@ export default function ChatPage() {
             {t("deliveryBanner")}
           </p>
         )}
+        {isServido && (
+          <p className="mx-auto mb-3 max-w-[95%] rounded-lg bg-servido-800/10 px-3 py-2 text-center text-[11px] leading-snug text-servido-900">
+            {t("servidoChannelBanner")}
+          </p>
+        )}
+        {!isServido && (
         <p className="mx-auto mb-3 max-w-[95%] rounded-lg bg-servido-800/5 px-3 py-2 text-center text-[11px] leading-snug text-gray-700">
           {t("securityNotice")}
         </p>
+        )}
         {messages.map((message) => {
           const mine = message.senderId === uid
           const seen = isMessageSeen(message, uid, otherLastReadMs)
@@ -543,7 +564,25 @@ export default function ChatPage() {
                     <p className="mt-1 text-xs font-medium text-servido-700">{t("viewListing")} →</p>
                   </Link>
                 ) : (
-                  <p className="whitespace-pre-wrap text-[15px] leading-snug">{message.text}</p>
+                  <>
+                    {message.broadcastTitle && (
+                      <p className="text-[15px] font-bold leading-snug text-servido-900">{message.broadcastTitle}</p>
+                    )}
+                    <p className="whitespace-pre-wrap text-[15px] leading-snug">{message.text}</p>
+                    {message.link && (
+                      <Button asChild size="sm" className="mt-2 h-8 rounded-full bg-servido-800 text-xs hover:bg-servido-900">
+                        <Link
+                          href={
+                            message.link.startsWith("http") || message.link.startsWith("/")
+                              ? message.link
+                              : `/${message.link}`
+                          }
+                        >
+                          {t("servidoBroadcastOpenLink")}
+                        </Link>
+                      </Button>
+                    )}
+                  </>
                 )}
                 <p className="mt-0.5 flex items-center justify-end gap-1 text-[10px] text-gray-500">
                   <span>
@@ -575,6 +614,7 @@ export default function ChatPage() {
 
       {error && <p className="bg-red-50 px-3 py-1.5 text-center text-xs text-red-700">{error}</p>}
 
+      {!isServido && (
       <form
         onSubmit={(e) => void handleSendMessage(e)}
         className="flex shrink-0 items-end gap-2 border-t border-black/5 bg-[#f0f2f5] px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2"
@@ -615,7 +655,8 @@ export default function ChatPage() {
           {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
         </button>
       </form>
-      {chat.sellerId && (
+      )}
+      {chat.sellerId && !isServido && (
         <ChatShareProductSheet
           open={shareSheetOpen}
           onOpenChange={setShareSheetOpen}

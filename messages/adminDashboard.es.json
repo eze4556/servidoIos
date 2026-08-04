@@ -457,7 +457,7 @@
     },
     "servidoBroadcast": {
       "title": "Mensajes de Servido",
-      "description": "Enviá promociones, novedades y avisos como notificaciones in-app a audiencias específicas.",
+      "description": "Enviá promociones y avisos. Llegan en notificaciones y en el chat oficial de Servido (logo y cuenta verificada).",
       "typeLabel": "Tipo",
       "types": {
         "promo": "Promoción / descuento",
@@ -468,7 +468,8 @@
       "audiences": {
         "all": "Todos los usuarios",
         "buyers": "Compradores",
-        "sellers": "Vendedores",
+        "sellers": "Vendedores (tiendas)",
+        "restaurants": "Restaurantes",
         "resellers": "Revendedores",
         "cadetes": "Repartidores",
         "city": "Ciudad / zona",
