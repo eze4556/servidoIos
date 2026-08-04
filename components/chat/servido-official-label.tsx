@@ -25,10 +25,11 @@ export function ServidoOfficialLabel({
       <span className={cn("truncate font-semibold", nameClassName)}>{t("servidoOfficialName")}</span>
       <BadgeCheck
         className={cn(
-          "h-4 w-4 shrink-0",
-          inverted ? "text-sky-300" : "text-sky-500",
+          "h-4 w-4 shrink-0 fill-purple-600 text-purple-600",
+          inverted && "fill-purple-300 text-purple-300",
           iconClassName
         )}
+        strokeWidth={2}
         aria-label={t("servidoVerifiedAria")}
       />
     </span>

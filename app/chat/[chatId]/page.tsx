@@ -136,13 +136,17 @@ export default function ChatPage() {
     }
   }, [currentUser])
 
-  // Other user last seen
+  // Other user last seen (skip Servido system account)
   useEffect(() => {
     if (!chat || !currentUser) return
+    if (isServidoOfficialChat(chat)) {
+      setOtherLastSeen(null)
+      return
+    }
     const uid = currentUser.firebaseUser.uid
     const otherId = uid === chat.buyerId ? chat.sellerId : chat.buyerId
     return subscribeUserPresence(otherId, setOtherLastSeen)
-  }, [chat?.buyerId, chat?.sellerId, currentUser])
+  }, [chat, currentUser])
 
   // Mark as read when viewing
   useEffect(() => {
@@ -209,21 +213,33 @@ export default function ChatPage() {
 
         if (!photosLoaded) {
           photosLoaded = true
-          void Promise.all([
-            getDoc(doc(db, "users", chatData.buyerId)),
-            getDoc(doc(db, "users", chatData.sellerId)),
-          ]).then(([buyerDoc, sellerDoc]) => {
-            if (cancelled) return
+          const servidoChat = isServidoOfficialChat(chatData)
+          if (servidoChat) {
             setChat((prev) =>
               prev
                 ? {
                     ...prev,
-                    buyerPhotoURL: buyerDoc.exists() ? buyerDoc.data().photoURL : undefined,
-                    sellerPhotoURL: sellerDoc.exists() ? sellerDoc.data().photoURL : undefined,
+                    sellerPhotoURL: prev.sellerPhotoURL || SERVIDO_OFFICIAL_LOGO_PATH,
                   }
                 : prev
             )
-          })
+          } else {
+            void Promise.all([
+              getDoc(doc(db, "users", chatData.buyerId)),
+              getDoc(doc(db, "users", chatData.sellerId)),
+            ]).then(([buyerDoc, sellerDoc]) => {
+              if (cancelled) return
+              setChat((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      buyerPhotoURL: buyerDoc.exists() ? buyerDoc.data().photoURL : undefined,
+                      sellerPhotoURL: sellerDoc.exists() ? sellerDoc.data().photoURL : undefined,
+                    }
+                  : prev
+              )
+            })
+          }
         }
 
         if (!unsubscribeMessages) {
@@ -425,6 +441,9 @@ export default function ChatPage() {
   if (!chat) return null
 
   const uid = currentUser.firebaseUser.uid
+  const isStory = chat.type === "story"
+  const isDelivery = chat.type === "delivery"
+  const isServido = isServidoOfficialChat(chat)
   const otherId = uid === chat.buyerId ? chat.sellerId : chat.buyerId
   const otherName = uid === chat.buyerId ? chat.sellerName : chat.buyerName
   const otherPhoto = isServido
@@ -432,9 +451,6 @@ export default function ChatPage() {
     : uid === chat.buyerId
       ? chat.sellerPhotoURL
       : chat.buyerPhotoURL
-  const isStory = chat.type === "story"
-  const isDelivery = chat.type === "delivery"
-  const isServido = isServidoOfficialChat(chat)
   const canShareProducts = !isStory && !isDelivery && !isServido && Boolean(chat.sellerId)
   const online = isUserOnline(otherLastSeen, nowTick)
   const presenceLabel = formatLastSeenLocalized(otherLastSeen, t, locale, nowTick)
@@ -569,13 +585,13 @@ export default function ChatPage() {
                       <p className="text-[15px] font-bold leading-snug text-servido-900">{message.broadcastTitle}</p>
                     )}
                     <p className="whitespace-pre-wrap text-[15px] leading-snug">{message.text}</p>
-                    {message.link && (
+                    {message.link && typeof message.link === "string" && message.link.trim() && (
                       <Button asChild size="sm" className="mt-2 h-8 rounded-full bg-servido-800 text-xs hover:bg-servido-900">
                         <Link
                           href={
                             message.link.startsWith("http") || message.link.startsWith("/")
                               ? message.link
-                              : `/${message.link}`
+                              : `/${message.link.replace(/^\//, "")}`
                           }
                         >
                           {t("servidoBroadcastOpenLink")}
