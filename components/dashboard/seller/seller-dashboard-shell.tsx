@@ -21,6 +21,7 @@ export type SellerDashboardTab =
   | "shipping"
   | "earnings"
   | "create-coupons"
+  | "resellerProgram"
   | "profile"
 
 interface SellerDashboardShellProps {

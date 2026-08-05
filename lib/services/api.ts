@@ -71,6 +71,7 @@ export class ApiService {
       zipCode?: string
       additionalInfo?: string
     }
+    productReferrals?: Record<string, string>
   }): Promise<ApiResponse<{
     mode?: "single_seller" | "multi_seller"
     id: string | null
@@ -274,13 +275,15 @@ export class ApiService {
       zipCode: string
       additionalInfo?: string
     }
+    productReferrals?: Record<string, string>
   }) {
     return this.createProductPreference({
       products: [{ productId: data.productId, quantity: data.quantity }],
       buyerId: data.buyerId,
       buyerEmail: data.buyerEmail,
       shippingCost: data.shippingCost, 
-      shippingAddress: data.shippingAddress
+      shippingAddress: data.shippingAddress,
+      productReferrals: data.productReferrals,
     })
   }
 
@@ -304,8 +307,23 @@ export class ApiService {
       zipCode?: string
       additionalInfo?: string
     }
+    productReferrals?: Record<string, string>
   }) {
     return this.createProductPreference(data)
+  }
+
+  static async getResellerPayoutInfo() {
+    return this.fetchApi<{ payoutInfo: Record<string, unknown> | null }>("/api/reseller/payout-info", {}, true)
+  }
+
+  static async saveResellerPayoutInfo(body: {
+    titular: string
+    cbu?: string
+    alias?: string
+    banco?: string
+    dni?: string
+  }) {
+    return this.fetchApi("/api/reseller/payout-info", { method: "PUT", body: JSON.stringify(body) }, true)
   }
 
   // ============================================================================

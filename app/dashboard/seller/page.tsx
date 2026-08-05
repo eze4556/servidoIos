@@ -108,6 +108,7 @@ import {
 import { BuyerStatCard } from "@/components/dashboard/buyer/buyer-stat-card"
 import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
 import { SellerAgendaPanel } from "@/components/dashboard/seller/seller-agenda-panel"
+import { SellerResellerProgramPanel } from "@/components/seller/seller-reseller-program-panel"
 import type { ServiceSchedule } from "@/types/service-appointments"
 
 interface UserProfile {
@@ -147,6 +148,7 @@ interface Product {
   couponEndDate?: any | null
   condition?: 'nuevo' | 'usado'
   freeShipping?: boolean
+  allowResellerShare?: boolean
   shippingCost?: number
 }
 
@@ -451,6 +453,7 @@ export default function SellerDashboardPage() {
   // Estados para condición y envío del producto
   const [productCondition, setProductCondition] = useState<'nuevo' | 'usado'>('nuevo')
   const [freeShipping, setFreeShipping] = useState(false)
+  const [allowResellerShare, setAllowResellerShare] = useState(false)
   const [shippingCost, setShippingCost] = useState("")
 
   const [isDraggingOver, setIsDraggingOver] = useState(false)
@@ -1677,6 +1680,7 @@ export default function SellerDashboardPage() {
     setMediaValidationErrors([])
     setProductCondition('nuevo')
     setFreeShipping(false)
+    setAllowResellerShare(false)
     setShippingCost('')
   }
 
@@ -1706,6 +1710,7 @@ export default function SellerDashboardPage() {
     setProductStock(product.stock?.toString() || "")
     setProductCondition(product.condition || 'nuevo')
     setFreeShipping(product.freeShipping || false)
+    setAllowResellerShare(Boolean(product.allowResellerShare))
     setShippingCost(product.shippingCost ? product.shippingCost.toString() : '')
     if (product.isService) {
       setActiveAddTab("service")
@@ -1816,6 +1821,7 @@ export default function SellerDashboardPage() {
         condition: productCondition,
         freeShipping: freeShipping,
         shippingCost: freeShipping ? 0 : Number.parseFloat(shippingCost || '0'),
+        allowResellerShare: !productIsService && allowResellerShare,
       }
 
       // Solo agregar brand si tiene valor
@@ -2957,6 +2963,23 @@ export default function SellerDashboardPage() {
                       />
                       <Label htmlFor="freeShipping" className="text-sm">{t("productForm.freeShipping")}</Label>
                     </div>
+                    {!productIsService && (
+                      <div className="mt-4 space-y-2 rounded-xl border border-purple-100 bg-purple-50/40 p-4">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            id="allowResellerShare"
+                            checked={allowResellerShare}
+                            onCheckedChange={(v) => setAllowResellerShare(v === true)}
+                          />
+                          <div>
+                            <Label htmlFor="allowResellerShare" className="text-sm font-medium">
+                              {t("productForm.allowResellerShare")}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">{t("productForm.allowResellerShareHint")}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {!freeShipping && (
                       <div>
                         <Input
@@ -4227,6 +4250,18 @@ export default function SellerDashboardPage() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {activeTab === "resellerProgram" && currentUser?.firebaseUser?.uid && (
+            <SellerResellerProgramPanel
+              sellerId={currentUser.firebaseUser.uid}
+              products={myProducts.map((p) => ({
+                id: p.id,
+                name: p.name,
+                allowResellerShare: p.allowResellerShare,
+                isService: p.isService,
+              }))}
+            />
           )}
 
           {activeTab === "agenda" && currentUser?.firebaseUser?.uid && (

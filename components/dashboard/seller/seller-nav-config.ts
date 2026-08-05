@@ -6,6 +6,7 @@ import {
   Settings,
   ShoppingBag,
   Tag,
+  Share2,
   Truck,
 } from "lucide-react"
 import type { DashboardNavItem } from "@/components/dashboard/dashboard-sidebar"
@@ -18,6 +19,7 @@ const navTabIds: SellerDashboardTab[] = [
   "addService",
   "agenda",
   "create-coupons",
+  "resellerProgram",
   "shipping",
   "earnings",
   "profile",
@@ -30,6 +32,7 @@ const navIcons = {
   addService: PlusCircle,
   agenda: CalendarDays,
   "create-coupons": Tag,
+  resellerProgram: Share2,
   shipping: Truck,
   earnings: DollarSign,
   profile: Settings,
@@ -42,6 +45,7 @@ const navGroups: Record<SellerDashboardTab, string> = {
   addService: "tienda",
   agenda: "operaciones",
   "create-coupons": "tienda",
+  resellerProgram: "tienda",
   shipping: "operaciones",
   earnings: "operaciones",
   profile: "cuenta",

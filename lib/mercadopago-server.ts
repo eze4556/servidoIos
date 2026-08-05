@@ -20,6 +20,9 @@ import {
   updateDoc,
 } from "firebase/firestore"
 import { COMMISSION_RATE } from "@/types/centralized-payments"
+import { resolveReferralsForCheckout } from "@/lib/reseller/resolve-referrals"
+import { processResellerAttributionAfterPurchase } from "@/lib/reseller/process-purchase"
+import type { ResellerAttributionLine } from "@/types/reseller"
 
 export type ShippingAddress = {
   fullName: string
@@ -45,6 +48,8 @@ export type CreatePreferencePayload = {
   /** Envío por vendedor (checkout multi-vendedor). Clave = sellerId */
   shippingBySeller?: Record<string, number>
   shippingAddress?: ShippingAddress
+  /** productId → código de link revendedor */
+  productReferrals?: Record<string, string>
 }
 
 export type CheckoutSellerPayment = {
@@ -313,6 +318,7 @@ async function createSellerPreferencePayment(params: {
   checkoutSessionId?: string | null
   paymentIndex?: number
   paymentTotal?: number
+  resellerAttribution?: ResellerAttributionLine[]
 }) {
   const {
     request,
@@ -324,6 +330,7 @@ async function createSellerPreferencePayment(params: {
     checkoutSessionId = null,
     paymentIndex,
     paymentTotal,
+    resellerAttribution = [],
   } = params
 
   const sellerIds = [...new Set(validatedProducts.map((p) => p.vendedorId))]
@@ -436,6 +443,7 @@ async function createSellerPreferencePayment(params: {
     sellerId,
     billingMode: "seller_account_with_fee",
     checkoutSessionId: checkoutSessionId || null,
+    resellerAttribution: resellerAttribution.length > 0 ? resellerAttribution : null,
   })
 
   batch.set(doc(db, "centralizedPurchases", purchaseId), {
@@ -460,6 +468,7 @@ async function createSellerPreferencePayment(params: {
     checkoutSessionId: checkoutSessionId || null,
     marketplaceFeeApplied: marketplaceFee > 0,
     commissionRate: COMMISSION_RATE,
+    resellerAttribution: resellerAttribution.length > 0 ? resellerAttribution : null,
   })
 
   await batch.commit()
@@ -505,7 +514,8 @@ async function createSellerPreferencePayment(params: {
  * - N vendedores → sesión de checkout con un pago independiente por vendedor
  */
 export async function createMercadoPagoProductPreference(request: Request, body: CreatePreferencePayload) {
-  const { products, buyerId, buyerEmail, shippingCost, shippingBySeller, shippingAddress } = body
+  const { products, buyerId, buyerEmail, shippingCost, shippingBySeller, shippingAddress, productReferrals } =
+    body
 
   if (!buyerId || !buyerEmail) {
     throw new Error("Faltan buyerId o buyerEmail")
@@ -518,6 +528,19 @@ export async function createMercadoPagoProductPreference(request: Request, body:
   await requireAuthenticatedUser(request, buyerId)
 
   const validatedProducts = await validateCheckoutProducts(products)
+  const referralLines = await resolveReferralsForCheckout({
+    buyerId,
+    validatedProductIds: validatedProducts.map((p) => ({
+      productId: p.productoId,
+      quantity: p.cantidad,
+      sellerId: p.vendedorId,
+    })),
+    productReferrals,
+  })
+
+  const referralForProductIds = (ids: string[]) =>
+    referralLines.filter((line) => ids.includes(line.productId))
+
   const productsBySeller = new Map<string, ValidatedCheckoutProduct[]>()
   for (const product of validatedProducts) {
     const list = productsBySeller.get(product.vendedorId) || []
@@ -541,6 +564,7 @@ export async function createMercadoPagoProductPreference(request: Request, body:
       validatedProducts: sellerProducts,
       shippingCost: sellerShipping,
       shippingAddress,
+      resellerAttribution: referralForProductIds(sellerProducts.map((p) => p.productoId)),
     })
 
     return {
@@ -579,6 +603,7 @@ export async function createMercadoPagoProductPreference(request: Request, body:
       checkoutSessionId: sessionId,
       paymentIndex: payments.length + 1,
       paymentTotal: productsBySeller.size,
+      resellerAttribution: referralForProductIds(sellerProducts.map((p) => p.productoId)),
     })
 
     payments.push({
@@ -836,6 +861,11 @@ function normalizePurchaseSourceData(sourceData: any) {
 async function handleApprovedPurchase(paymentInfo: any, purchaseId: string) {
   logFirestoreAccess("doc", "pending_purchases", purchaseId)
   const pendingPurchaseRef = doc(db, "pending_purchases", purchaseId)
+  const pendingPreRead = await getDoc(pendingPurchaseRef)
+  const preAttribution = (pendingPreRead.data()?.resellerAttribution ||
+    null) as ResellerAttributionLine[] | null
+  const preBuyerId = pendingPreRead.data()?.buyerId as string | undefined
+
   logFirestoreAccess("doc", "centralizedPurchases", purchaseId)
   const centralizedPurchaseRef = doc(db, "centralizedPurchases", purchaseId)
   logFirestoreAccess("doc", "failed_purchases", paymentInfo.id)
@@ -944,6 +974,18 @@ async function handleApprovedPurchase(paymentInfo: any, purchaseId: string) {
     logFirestoreAccess("transaction.delete", "pending_purchases", purchaseId)
     transaction.delete(pendingPurchaseRef)
   })
+
+  if (preAttribution?.length && preBuyerId) {
+    try {
+      await processResellerAttributionAfterPurchase(db, {
+        purchaseId,
+        buyerId: preBuyerId,
+        lines: preAttribution,
+      })
+    } catch (resellerErr) {
+      console.error("reseller attribution failed", purchaseId, resellerErr)
+    }
+  }
 }
 
 async function handleRejectedPurchase(paymentInfo: any, purchaseId: string) {

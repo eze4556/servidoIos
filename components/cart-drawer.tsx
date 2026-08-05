@@ -13,6 +13,7 @@ import { useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/components/ui/use-toast"
 import { ApiService } from "@/lib/services/api"
+import { buildReferralPayloadForProducts } from "@/lib/reseller/attribution-storage"
 import type { CartItem } from "@/contexts/cart-context"
 import { getCartItemImage } from "@/lib/image-utils"
 import { usePriceFormat } from "@/hooks/use-price-format"
@@ -186,7 +187,8 @@ export function CartDrawer() {
         buyerId: currentUser.firebaseUser.uid,
         buyerEmail: currentUser.firebaseUser.email || '',
         shippingCost: totalShippingCost, // 🆕 Agregado: costo total de envío
-        shippingAddress: address
+        shippingAddress: address,
+        productReferrals: buildReferralPayloadForProducts(products.map((p) => p.productId)),
       })
 
       if (response.error) {
@@ -285,7 +287,8 @@ export function CartDrawer() {
         buyerId: currentUser.firebaseUser.uid,
         buyerEmail: currentUser.firebaseUser.email || '',
         shippingBySeller,
-        shippingAddress: address
+        shippingAddress: address,
+        productReferrals: buildReferralPayloadForProducts(products.map((p) => p.productId)),
       })
 
       if (response.error) {

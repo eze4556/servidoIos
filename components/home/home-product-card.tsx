@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { SimpleImage } from "@/components/ui/simple-image"
 import { usePriceFormat } from "@/hooks/use-price-format"
+import { useTranslations } from "next-intl"
 import { ShoppingBag, Sparkles, Star } from "lucide-react"
 
 interface HomeProductCardProps {
@@ -16,6 +17,7 @@ interface HomeProductCardProps {
   condition?: "nuevo" | "usado"
   freeShipping?: boolean
   shippingCost?: number
+  allowResellerShare?: boolean
   badge?: "featured" | "new"
 }
 
@@ -29,9 +31,11 @@ export function HomeProductCard({
   condition,
   freeShipping,
   shippingCost,
+  allowResellerShare,
   badge,
 }: HomeProductCardProps) {
   const { formatPrice } = usePriceFormat()
+  const tReseller = useTranslations("resellerProgram")
   const src =
     (media && media.length > 0 && media[0].url) ||
     imageUrl ||
@@ -87,6 +91,11 @@ export function HomeProductCard({
                 ENVÍO ${shippingCost}
               </span>
             ) : null}
+            {allowResellerShare && (
+              <span className="max-w-[92%] truncate rounded-full bg-violet-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">
+                {tReseller("badgeShort")}
+              </span>
+            )}
           </div>
         </div>
         <CardContent className="flex h-[120px] flex-col justify-between border-t border-gray-50 p-4">

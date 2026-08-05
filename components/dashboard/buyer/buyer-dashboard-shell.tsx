@@ -18,6 +18,7 @@ export type BuyerDashboardTab =
   | "purchases"
   | "appointments"
   | "favorites"
+  | "reseller"
   | "profile"
 
 

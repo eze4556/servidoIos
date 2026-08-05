@@ -40,6 +40,7 @@ import {
   MessageSquare,
   FileText,
   HelpCircle,
+  Share2,
 } from "lucide-react"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
@@ -56,6 +57,8 @@ import { ProductGallery } from "@/components/product/product-gallery"
 import { ProductDetailSection } from "@/components/product/product-detail-section"
 import { HomeProductCard } from "@/components/home/home-product-card"
 import { HomeSectionHeader } from "@/components/home/home-section-header"
+import { RecommendProductDialog } from "@/components/reseller/recommend-product-dialog"
+import { saveResellerAttribution, buildReferralPayloadForProducts } from "@/lib/reseller/attribution-storage"
 
 interface ProductMedia {
   type: "image" | "video"
@@ -85,6 +88,7 @@ interface Product {
   condition?: 'nuevo' | 'usado' | null;
   freeShipping?: boolean;
   shippingCost?: number;
+  allowResellerShare?: boolean;
 }
 
 interface Category {
@@ -145,6 +149,7 @@ interface Coupon {
 export default function ProductDetailPage() {
   const { formatPrice, formatPriceNumber } = usePriceFormat()
   const tp = useTranslations("product")
+  const tReseller = useTranslations("resellerProgram")
   const tc = useTranslations("cart")
   const tr = useTranslations("reviews")
   const tApi = useTranslations("apiErrors")
@@ -185,6 +190,7 @@ export default function ProductDetailPage() {
 
   // Direct purchase state
   const [buyingNow, setBuyingNow] = useState(false)
+  const [recommendOpen, setRecommendOpen] = useState(false)
 
   // Hooks
   const { toast } = useToast()
@@ -219,6 +225,18 @@ export default function ProductDetailPage() {
       setSelectedMediaIndex(0)
     }
   }, [productMedia, selectedMediaIndex])
+
+  useEffect(() => {
+    if (!product?.id || typeof window === "undefined") return
+    const ref = new URLSearchParams(window.location.search).get("ref")?.trim()
+    if (!ref) return
+    saveResellerAttribution(product.id, ref)
+    void fetch("/api/reseller/click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: ref }),
+    })
+  }, [product?.id])
 
   const fetchProductDetails = async (productId: string) => {
     setLoading(true)
@@ -707,7 +725,8 @@ export default function ProductDetailPage() {
         quantity: quantity,
         buyerId: currentUser.firebaseUser.uid,
         buyerEmail: currentUser.firebaseUser.email || '',
-        shippingCost: product.shippingCost // <--- AGREGADO
+        shippingCost: product.shippingCost,
+        productReferrals: buildReferralPayloadForProducts([product.id]),
       })
 
       if (response.error) {
@@ -891,6 +910,9 @@ export default function ProductDetailPage() {
                   {product.freeShipping && (
                     <Badge className="rounded-full bg-green-600 text-white">{tp("freeShipping")}</Badge>
                   )}
+                  {product.allowResellerShare && !product.isService && (
+                    <Badge className="rounded-full bg-violet-600 text-white">{tReseller("badge")}</Badge>
+                  )}
                 </div>
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{product.name}</h1>
                 <div className="mt-3 flex items-center gap-2">
@@ -1020,6 +1042,17 @@ export default function ProductDetailPage() {
               )}
 
               <div className="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-100">
+                {product.allowResellerShare && !product.isService && currentUser && (
+                  <Button
+                    type="button"
+                    variant="default"
+                    className="mb-3 w-full rounded-full bg-violet-700 hover:bg-violet-800"
+                    onClick={() => setRecommendOpen(true)}
+                  >
+                    <Share2 className="mr-2 h-4 w-4" />
+                    {tReseller("recommend")}
+                  </Button>
+                )}
                 <ShareButtons
                   productName={product.name}
                   productUrl={typeof window !== "undefined" ? window.location.href : ""}
@@ -1354,6 +1387,7 @@ export default function ProductDetailPage() {
                     condition={relatedProduct.condition}
                     freeShipping={relatedProduct.freeShipping}
                     shippingCost={relatedProduct.shippingCost}
+                    allowResellerShare={relatedProduct.allowResellerShare}
                   />
                 ))}
               </div>
@@ -1361,6 +1395,15 @@ export default function ProductDetailPage() {
           )}
         </div>
       </div>
+
+      {product.allowResellerShare && !product.isService && (
+        <RecommendProductDialog
+          open={recommendOpen}
+          onOpenChange={setRecommendOpen}
+          productId={product.id}
+          productName={product.name}
+        />
+      )}
     </div>
   )
 }

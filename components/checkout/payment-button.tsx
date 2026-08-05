@@ -10,6 +10,7 @@ import { ApiService } from "@/lib/services/api"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useTranslations } from "next-intl"
 import { translateClientError } from "@/lib/i18n/translate-client-error"
+import { buildReferralPayloadForProducts } from "@/lib/reseller/attribution-storage"
 
 interface PaymentButtonProps {
   items: PaymentItem[]
@@ -65,6 +66,7 @@ export function PaymentButton({ items, sellerId, className = "" }: PaymentButton
         buyerId: currentUser.firebaseUser.uid,
         buyerEmail: currentUser.firebaseUser.email || "",
         shippingCost: totalShippingCost,
+        productReferrals: buildReferralPayloadForProducts(products.map((p) => p.productId)),
       })
 
       if (response.error) {

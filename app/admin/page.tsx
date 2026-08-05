@@ -102,6 +102,7 @@ import { getCadeteStatusLabel } from "@/lib/i18n/cadete-labels"
 import { getPurchaseStatusLabel, getShippingStatusLabel } from "@/lib/i18n/shipping-status-label"
 import SubscriptionPricingManager from "@/components/admin/subscription-pricing-manager"
 import { ServidoBroadcastPanel } from "@/components/admin/servido-broadcast-panel"
+import { AdminResellerPayoutsPanel } from "@/components/admin/admin-reseller-payouts-panel"
 import type { CadeteStatus } from "@/types/cadete"
 import { sendCadeteStatusEmail } from "@/lib/email-service"
 
@@ -262,6 +263,7 @@ export default function AdminDashboard() {
         { tab: "banners", label: t("nav.banners"), icon: ImageIcon },
         { tab: "alerts", label: t("nav.alerts"), icon: Megaphone },
         { tab: "servidoBroadcast", label: t("nav.servidoBroadcast"), icon: Megaphone },
+        { tab: "resellerPayouts", label: t("nav.resellerPayouts"), icon: TrendingUp },
         { tab: "coupons", label: t("nav.coupons"), icon: Percent },
         { tab: "subscriptionPricing", label: t("nav.subscriptionPricing"), icon: Percent },
       ] as const,
@@ -2153,6 +2155,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="banners">{t("tabs.banners")}</TabsTrigger>
               <TabsTrigger value="alerts">{t("tabs.alerts")}</TabsTrigger>
               <TabsTrigger value="servidoBroadcast">{t("tabs.servidoBroadcast")}</TabsTrigger>
+              <TabsTrigger value="resellerPayouts">{t("tabs.resellerPayouts")}</TabsTrigger>
               <TabsTrigger value="coupons">{t("tabs.coupons")}</TabsTrigger>
               <TabsTrigger value="subscriptionPricing">{t("tabs.subscriptionPricing")}</TabsTrigger>
             </TabsList>
@@ -3687,6 +3690,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="servidoBroadcast" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <ServidoBroadcastPanel />
+            </TabsContent>
+
+            <TabsContent value="resellerPayouts" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+              <AdminResellerPayoutsPanel />
             </TabsContent>
 
             {/* Cupones Tab */}

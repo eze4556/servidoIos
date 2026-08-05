@@ -35,6 +35,7 @@ interface Product {
   condition?: "nuevo" | "usado"
   freeShipping?: boolean
   shippingCost?: number
+  allowResellerShare?: boolean
 }
 
 interface Category {
@@ -431,6 +432,7 @@ export default function ProductsPage() {
                       condition={product.condition}
                       freeShipping={product.freeShipping}
                       shippingCost={product.shippingCost}
+                      allowResellerShare={product.allowResellerShare}
                     />
                   ))}
                 </div>

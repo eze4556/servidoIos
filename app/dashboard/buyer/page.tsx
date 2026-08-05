@@ -7,6 +7,7 @@ import {
   BuyerDashboardShell,
   type BuyerDashboardTab,
 } from "@/components/dashboard/buyer/buyer-dashboard-shell"
+import { ResellerDashboardPanel } from "@/components/reseller/reseller-dashboard-panel"
 import { BuyerDashboardTabs } from "@/components/dashboard/buyer/buyer-dashboard-tabs"
 
 import { useState, useEffect, type ChangeEvent } from "react"
@@ -111,6 +112,7 @@ export default function BuyerDashboardPage() {
       tab === "purchases" ||
       tab === "appointments" ||
       tab === "favorites" ||
+      tab === "reseller" ||
       tab === "profile" ||
       tab === "dashboard"
     ) {
@@ -599,6 +601,9 @@ export default function BuyerDashboardPage() {
         </div>
       )}
 
+      {activeTab === "reseller" && <ResellerDashboardPanel />}
+
+      {activeTab !== "reseller" && (
       <BuyerDashboardTabs
         activeTab={activeTab}
         loadingData={loadingData}
@@ -635,6 +640,7 @@ export default function BuyerDashboardPage() {
           setProfileImagePreviewUrl(currentUser?.photoURL || null)
         }}
       />
+      )}
     </BuyerDashboardShell>
   )
 }

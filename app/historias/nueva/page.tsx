@@ -14,6 +14,8 @@ function NuevaHistoriaContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialProductId = searchParams.get("product")
+  const initialRefCode = searchParams.get("ref")
+  const isResellerStory = Boolean(initialProductId && initialRefCode)
 
   useEffect(() => {
     if (authLoading) return
@@ -21,12 +23,12 @@ function NuevaHistoriaContent() {
       router.replace("/login")
       return
     }
-    if (currentUser.role !== "seller") {
+    if (currentUser.role !== "seller" && !isResellerStory) {
       router.replace("/historias")
     }
-  }, [currentUser, authLoading, router])
+  }, [currentUser, authLoading, router, isResellerStory])
 
-  if (authLoading || !currentUser || currentUser.role !== "seller") {
+  if (authLoading || !currentUser || (currentUser.role !== "seller" && !isResellerStory)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-servido-700" />
@@ -53,7 +55,7 @@ function NuevaHistoriaContent() {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        <StoryComposer initialProductId={initialProductId} />
+        <StoryComposer initialProductId={initialProductId} initialRefCode={initialRefCode} />
       </div>
     </div>
   )

@@ -20,6 +20,7 @@ export interface Product {
   sellerId: string
   /** Horarios de turnos (solo servicios) */
   serviceSchedule?: ServiceSchedule | null
+  allowResellerShare?: boolean
   createdAt: any
   updatedAt?: any
 }

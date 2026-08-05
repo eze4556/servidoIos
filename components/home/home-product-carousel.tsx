@@ -14,6 +14,7 @@ interface ProductItem {
   condition?: "nuevo" | "usado"
   freeShipping?: boolean
   shippingCost?: number
+  allowResellerShare?: boolean
 }
 
 interface HomeProductCarouselProps {

@@ -11,6 +11,7 @@ interface Product {
   condition?: "nuevo" | "usado"
   freeShipping?: boolean
   shippingCost?: number
+  allowResellerShare?: boolean
 }
 
 interface HomeProductGridProps {

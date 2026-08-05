@@ -154,7 +154,11 @@
     "groupTienda": "Loja",
     "groupOperaciones": "Operações",
     "groupGuardado": "Salvos",
-    "groupCuenta": "Conta"
+    "groupCuenta": "Conta",
+    "openPanelMenu": "Abrir menu do painel",
+    "panelMenuTitle": "Menu do painel",
+    "backHomeAria": "Voltar ao início",
+    "myPanelLabel": "Meu painel"
   },
   "apiErrors": {
     "unauthorized": "Não autorizado",
@@ -1327,6 +1331,7 @@
       "purchases": { "label": "Histórico de pagamentos", "description": "Transações" },
       "appointments": { "label": "Meus horários", "description": "Reservas de serviços" },
       "favorites": { "label": "Favoritos", "description": "Salvos para depois" },
+      "reseller": { "label": "Revendedor", "description": "Indicações e cobranças" },
       "profile": { "label": "Meu perfil", "description": "Conta e dados" }
     },
     "pages": {
@@ -1335,6 +1340,7 @@
       "purchases": { "title": "Histórico de pagamentos", "subtitle": "Detalhe de todas as transações" },
       "appointments": { "title": "Meus horários", "subtitle": "Reservas de serviços solicitadas" },
       "favorites": { "title": "Favoritos", "subtitle": "Produtos salvos para mais tarde" },
+      "reseller": { "title": "Revendedor", "subtitle": "Suas indicações, vendas e cobranças" },
       "profile": { "title": "Meu perfil", "subtitle": "Gerencie sua conta e preferências" }
     },
     "statsTotalPurchases": "Compras totais",
@@ -1462,12 +1468,6 @@
     "excelColShippingStatus": "Status envio",
     "excelColTracking": "Rastreio",
     "excelColCarrier": "Transportadora"
-  },
-  "dashboardShell": {
-    "openPanelMenu": "Abrir menu do painel",
-    "panelMenuTitle": "Menu do painel",
-    "backHomeAria": "Voltar ao início",
-    "myPanelLabel": "Meu painel"
   },
   "appNotifications": {
     "foodOrder": {
@@ -1909,7 +1909,8 @@
       "create-coupons": { "label": "Criar cupons", "description": "Promoções" },
       "shipping": { "label": "Envios", "description": "Status das entregas" },
       "earnings": { "label": "Minhas vendas", "description": "Receitas e pagamentos" },
-      "profile": { "label": "Configurações", "description": "Perfil e assinatura" }
+      "profile": { "label": "Configurações", "description": "Perfil e assinatura" },
+      "resellerProgram": { "label": "Revendedores", "description": "Programa de divulgação Servido" }
     },
     "pages": {
       "dashboard": { "title": "Resumo", "subtitle": "Sua loja e atividade em um relance" },
@@ -1921,7 +1922,29 @@
       "shipping": { "title": "Envios", "subtitle": "Gerencie o status dos seus envios" },
       "earnings": { "title": "Minhas vendas", "subtitle": "Receitas e transações" },
       "create-coupons": { "title": "Cupons", "subtitle": "Crie promoções para seus clientes" },
-      "profile": { "title": "Configurações", "subtitle": "Perfil, assinatura e Mercado Pago" }
+      "profile": { "title": "Configurações", "subtitle": "Perfil, assinatura e Mercado Pago" },
+      "resellerProgram": {
+        "title": "Programa revendedores",
+        "subtitle": "Cliques e vendas por recomendação nos seus produtos"
+      }
+    },
+    "resellerProgram": {
+      "title": "Programa revendedores Servido",
+      "description": "Métricas dos produtos que aceitam recomendação. A Servido paga comissão ao revendedor; você só autoriza a divulgação.",
+      "statEnabled": "Produtos ativos",
+      "statClicks": "Cliques totais",
+      "statUnitsSold": "Unidades vendidas",
+      "statServidoCommission": "Comissão Servido (referência)",
+      "tableTitle": "Por produto",
+      "tableDesc": "Ative «Permitir revendedores» ao publicar ou editar cada produto.",
+      "colProduct": "Produto",
+      "colProgram": "Programa",
+      "colLinks": "Links",
+      "colClicks": "Cliques",
+      "colSales": "Vendas",
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "empty": "Publique produtos para ver métricas aqui."
     },
     "alerts": {
       "errorTitle": "Erro",
@@ -2250,6 +2273,8 @@
       "conditionUsed": "Usado",
       "shipping": "Envio",
       "freeShipping": "Frete grátis",
+      "allowResellerShare": "Permitir revendedores Servido",
+      "allowResellerShareHint": "Quem recomendar poderá compartilhar este produto. A Servido paga comissão por vendas (o comprador não vê valores).",
       "shippingCostPlaceholder": "Custo de envio (ARS)",
       "submitAdd": "Adicionar produto",
       "submitUpdate": "Atualizar produto",
@@ -2461,6 +2486,66 @@
       "exampleFull": "Preço inteiro:",
       "exampleWithDecimals": "Com decimais:",
       "note": "Observação: esta configuração vale para todos os preços exibidos no aplicativo. As alterações são salvas automaticamente no seu navegador."
+    }
+  },
+  "resellerProgram": {
+    "badge": "Recomendável em histórias",
+    "badgeShort": "Revendedores",
+    "recommend": "Recomendar",
+    "recommendTitle": "Recomendar produto",
+    "recommendDesc": "Compartilhe «{name}» com seu link. A Servido paga comissão por vendas confirmadas.",
+    "shareStory": "Histórias Servido",
+    "copyLink": "Copiar link",
+    "copyForInstagram": "Copiar link (Instagram)",
+    "shareText": "Veja na Servido: {name}",
+    "linkCopied": "Link copiado",
+    "generatingLink": "Gerando seu link…",
+    "loginRequired": "Entre para recomendar",
+    "linkError": "Não foi possível criar o link",
+    "error": "Erro",
+    "payoutRequired": "Complete seus dados de cobrança para recomendar.",
+    "payoutFormHint": "A Servido transfere manualmente ao atingir 25 vendas com seu link.",
+    "titular": "Titular da conta",
+    "cbu": "CBU / CVU",
+    "alias": "Alias",
+    "bank": "Banco",
+    "dni": "CPF / CNPJ",
+    "savePayout": "Salvar dados",
+    "payoutSaved": "Dados salvos",
+    "payoutSavedDesc": "Seus dados de cobrança foram salvos. Ao atingir 25 vendas, o administrador poderá transferir.",
+    "payoutSaveError": "Não foi possível salvar. Verifique permissões ou tente novamente.",
+    "titularRequired": "O titular é obrigatório.",
+    "cbuOrAliasRequired": "Informe CBU/CVU ou alias.",
+    "goResellerPanel": "Ir ao painel revendedor",
+    "panelTitle": "Revendedor Servido",
+    "panelSubtitle": "Acompanhe vendas, cliques e cobranças.",
+    "progressLabel": "{current} / {total} vendas neste ciclo",
+    "salesRemaining": "Faltam {count} vendas para cobrar",
+    "thresholdReached": "Você atingiu o mínimo deste ciclo!",
+    "statLifetimeSales": "Vendas totais",
+    "statClicks": "Cliques",
+    "statAccrued": "Acumulado (ciclo)",
+    "statPendingPayout": "Pronto para transferir",
+    "statPaid": "Total recebido",
+    "statPaidBatches": "Cobranças feitas",
+    "commissionNote": "A Servido paga {amount} por unidade vendida com seu link. Cobrança a cada {threshold} vendas.",
+    "motivatorStart": "Comece a compartilhar produtos com a insígnia «Recomendável em histórias».",
+    "motivatorProgress": "Você tem {current}/{total} vendas · {amount} acumulados · faltam {remaining} para cobrar.",
+    "motivatorAlmost": "Quase lá! Faltam só {count} vendas.",
+    "motivatorReadyPayout": "Você tem {amount} prontos para cobrar.",
+    "payoutDataTitle": "Dados para cobrar",
+    "payoutDataDesc": "CBU/alias e titular para transferência do admin.",
+    "admin": {
+      "title": "Pagamentos a revendedores",
+      "description": "Lotes de 25 vendas · transferência manual.",
+      "empty": "Nenhum lote pendente.",
+      "colReseller": "Revendedor",
+      "colBank": "Dados bancários",
+      "colUnits": "Unidades",
+      "colAmount": "Valor",
+      "markPaid": "Marcar pago",
+      "markedPaid": "Transferência registrada",
+      "error": "Não foi possível atualizar"
     }
   },
   "notFound": {

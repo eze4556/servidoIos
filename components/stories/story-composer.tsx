@@ -45,9 +45,10 @@ function getProductThumb(data: Record<string, unknown>): string | null {
 
 interface StoryComposerProps {
   initialProductId?: string | null
+  initialRefCode?: string | null
 }
 
-export function StoryComposer({ initialProductId }: StoryComposerProps) {
+export function StoryComposer({ initialProductId, initialRefCode }: StoryComposerProps) {
   const t = useTranslations("storyComposer")
   const locale = useLocale()
   const priceLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
@@ -156,11 +157,16 @@ export function StoryComposer({ initialProductId }: StoryComposerProps) {
   }, [currentUser, t])
 
   useEffect(() => {
-    if (!initialProductId || products.length === 0) return
+    if (!initialProductId) return
+    if (initialRefCode) {
+      setLinkUrl(`/product/${initialProductId}?ref=${encodeURIComponent(initialRefCode)}`)
+      return
+    }
+    if (products.length === 0) return
     if (products.some((p) => p.id === initialProductId)) {
       setLinkUrl(productStoryLink(initialProductId))
     }
-  }, [initialProductId, products])
+  }, [initialProductId, initialRefCode, products])
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.files?.[0]
@@ -231,9 +237,7 @@ export function StoryComposer({ initialProductId }: StoryComposerProps) {
     }
   }
 
-  const selectedProductId = linkUrl.startsWith("/product/")
-    ? linkUrl.replace(/^\/product\//, "")
-    : null
+  const selectedProductId = linkUrl.match(/\/product\/([^/?]+)/)?.[1] ?? null
   const restaurantSelected = Boolean(restaurantLink && linkUrl === restaurantLink)
 
   return (
