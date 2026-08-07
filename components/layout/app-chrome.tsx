@@ -52,8 +52,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
           <main
             className={`min-w-0 max-w-full flex-1 overflow-x-hidden ${
               isMessagingRoute
-                ? "pb-[4.75rem] lg:pb-0"
-                : `pb-[4.75rem] ${isHomeRoute ? "lg:pb-16" : ""}`
+                ? "pb-[7rem] lg:pb-0"
+                : `pb-[7rem] ${isHomeRoute ? "lg:pb-16" : ""}`
             }`}
           >
             {children}

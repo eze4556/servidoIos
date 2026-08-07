@@ -172,7 +172,7 @@ export function FoodCartDrawer({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button className="fixed bottom-20 right-4 z-40 h-14 rounded-full bg-servido-800 px-6 shadow-lg hover:bg-servido-900 lg:bottom-8">
+        <Button className="fixed bottom-[7.5rem] right-4 z-40 h-14 rounded-full bg-servido-800 px-6 shadow-lg hover:bg-servido-900 lg:bottom-8">
           <ShoppingBag className="mr-2 h-5 w-5" />
           {t("viewOrder", { count: itemCount })}
         </Button>

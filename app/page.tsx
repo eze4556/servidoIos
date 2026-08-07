@@ -326,7 +326,7 @@ export default function HomePage() {
       {activeAlert && !showAlert && (
         <button
           onClick={handleOpenAlert}
-          className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-servido-700 to-servido-950 text-white shadow-lg shadow-servido-700/40 transition-all duration-300 hover:scale-110 hover:shadow-xl lg:bottom-6 lg:right-6"
+          className="fixed bottom-[7.5rem] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-servido-700 to-servido-950 text-white shadow-lg shadow-servido-700/40 transition-all duration-300 hover:scale-110 hover:shadow-xl lg:bottom-6 lg:right-6"
           aria-label={th("viewAlert")}
         >
           <AlertCircle className="h-8 w-8 animate-pulse" />
