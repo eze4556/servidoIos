@@ -1,19 +1,18 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
-import { Home, MessageCircle, Plus, Search, User } from "lucide-react"
+import { useMemo } from "react"
+import { Heart, Home, MessageCircle, Plus, User } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { useChatUnread } from "@/components/chat/chat-unread-context"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
-import { listActiveStories } from "@/lib/stories"
 
 const TAB_ICON_BOX = "flex h-7 w-7 shrink-0 items-center justify-center"
 
-function getPublishHref(user: { role?: string; businessType?: string } | null): string {
-  if (!user) return "/products"
+function getSellHref(user: { role?: string; businessType?: string } | null): string {
+  if (!user) return "/signup?role=seller"
   switch (user.role) {
     case "admin":
       return "/admin"
@@ -21,51 +20,37 @@ function getPublishHref(user: { role?: string; businessType?: string } | null): 
       return "/dashboard/cadete"
     case "seller":
       if (user.businessType === "restaurant") return "/dashboard/restaurant"
-      return "/historias/nueva"
+      return "/dashboard/seller?tab=addProduct"
     default:
-      return "/products"
+      return "/dashboard/buyer?tab=reseller"
   }
 }
 
-function HistoriasTabIcon({ active, hasStories }: { active: boolean; hasStories: boolean }) {
+function SellTabButton({ active, href, label }: { active: boolean; href: string; label: string }) {
   return (
-    <span className={TAB_ICON_BOX}>
-      {hasStories ? (
-        <span
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-fuchsia-500 via-purple-600 to-indigo-500 p-[2px]"
-          aria-hidden
-        >
-          <span className="flex h-full w-full items-center justify-center rounded-full bg-white">
-            <Plus className="h-3.5 w-3.5 text-purple-700" strokeWidth={2.5} />
-          </span>
-        </span>
-      ) : (
-        <span
-          className={cn(
-            "flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed",
-            active ? "border-purple-600" : "border-purple-400/90"
-          )}
-          aria-hidden
-        >
-          <Plus className="h-3.5 w-3.5 text-purple-600" strokeWidth={2.5} />
-        </span>
-      )}
-    </span>
-  )
-}
-
-function PublishTabIcon({ active }: { active: boolean }) {
-  return (
-    <span
-      className={cn(
-        TAB_ICON_BOX,
-        "rounded-full bg-gradient-to-br from-purple-600 to-purple-800 text-white shadow-md shadow-purple-900/20",
-        active && "ring-2 ring-purple-300 ring-offset-1"
-      )}
-      aria-hidden
+    <Link
+      href={href}
+      className="relative flex min-w-0 flex-1 basis-0 flex-col items-center justify-end pb-1.5 pt-6"
+      aria-current={active ? "page" : undefined}
     >
-      <Plus className="h-4 w-4" strokeWidth={2.5} />
-    </span>
+      <span
+        className={cn(
+          "absolute -top-3 flex h-[3.25rem] w-[3.25rem] items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-purple-800 text-white shadow-[0_6px_20px_rgba(88,28,135,0.45)] ring-4 ring-white transition-transform",
+          active && "scale-[1.03] ring-purple-100"
+        )}
+        aria-hidden
+      >
+        <Plus className="h-7 w-7" strokeWidth={2.25} />
+      </span>
+      <span
+        className={cn(
+          "max-w-full truncate px-0.5 text-[10px] font-semibold leading-tight",
+          active ? "text-purple-700" : "text-purple-600"
+        )}
+      >
+        {label}
+      </span>
+    </Link>
   )
 }
 
@@ -73,47 +58,33 @@ export function TabBar() {
   const t = useTranslations("tabBar")
   const { authLoading, currentUser, getDashboardLink } = useAuth()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { unreadCount } = useChatUnread()
-  const [hasStories, setHasStories] = useState(false)
 
-  const publishHref = useMemo(() => getPublishHref(currentUser), [currentUser])
+  const sellHref = useMemo(() => getSellHref(currentUser), [currentUser])
   const profileHref = getDashboardLink()
-
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      try {
-        const stories = await listActiveStories()
-        if (!cancelled) setHasStories(stories.length > 0)
-      } catch {
-        if (!cancelled) setHasStories(false)
-      }
-    }
-    void load()
-    const id = window.setInterval(() => void load(), 60_000)
-    return () => {
-      cancelled = true
-      window.clearInterval(id)
-    }
-  }, [pathname])
+  const favoritesHref = currentUser ? "/favorites" : "/login?redirect=/favorites"
 
   if (authLoading) {
     return null
   }
 
+  const tabParam = searchParams.get("tab")
   const isHome = pathname === "/"
-  const isSearch = pathname.startsWith("/search")
-  const isPublish =
-    pathname === publishHref ||
-    (publishHref === "/products" && pathname.startsWith("/products")) ||
+  const isFavorites = pathname.startsWith("/favorites")
+  const isSell =
+    pathname === sellHref ||
+    (pathname.startsWith("/dashboard/buyer") && tabParam === "reseller") ||
+    (pathname.startsWith("/dashboard/seller") &&
+      (tabParam === "addProduct" || tabParam === "addService")) ||
     pathname.startsWith("/historias/nueva")
   const isChat = pathname.startsWith("/mensajes") || pathname.startsWith("/chat")
-  const isStories = pathname.startsWith("/historias")
   const isProfile =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/admin") ||
-    pathname === "/login" ||
-    pathname === "/signup"
+    !isSell &&
+    (pathname.startsWith("/dashboard") ||
+      pathname.startsWith("/admin") ||
+      pathname === "/login" ||
+      pathname.startsWith("/signup"))
 
   const tabClass = (active: boolean) =>
     cn(
@@ -126,22 +97,29 @@ export function TabBar() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
-      <nav className="mx-auto max-w-screen-sm rounded-t-[1.35rem] border-t border-purple-100/80 bg-white px-0.5 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-1 shadow-[0_-8px_32px_rgba(76,29,149,0.12)]">
-        <div className="flex items-stretch">
-          <Link href="/" className={tabClass(isHome)}>
+      <nav className="mx-auto max-w-screen-sm rounded-t-[1.35rem] border-t border-purple-100/80 bg-white px-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_32px_rgba(76,29,149,0.12)]">
+        <div className="flex items-end">
+          <Link
+            href="/"
+            className={cn(tabClass(isHome), isHome && "rounded-2xl bg-purple-100/90 py-2")}
+          >
             <Home className={lineIconClass(isHome)} strokeWidth={isHome ? 2.25 : 2} />
             <span className="max-w-full truncate px-0.5">{t("home")}</span>
           </Link>
 
-          <Link href="/search" className={tabClass(isSearch)}>
-            <Search className={lineIconClass(isSearch)} strokeWidth={isSearch ? 2.25 : 2} />
-            <span className="max-w-full truncate px-0.5">{t("search")}</span>
+          <Link
+            href={favoritesHref}
+            className={cn(tabClass(isFavorites), isFavorites && "rounded-2xl bg-purple-100/90 py-2")}
+          >
+            <Heart
+              className={lineIconClass(isFavorites)}
+              strokeWidth={isFavorites ? 2.25 : 2}
+              fill={isFavorites ? "currentColor" : "none"}
+            />
+            <span className="max-w-full truncate px-0.5">{t("favorites")}</span>
           </Link>
 
-          <Link href={publishHref} className={tabClass(isPublish)} aria-current={isPublish ? "page" : undefined}>
-            <PublishTabIcon active={isPublish} />
-            <span className="max-w-full truncate px-0.5">{t("publish")}</span>
-          </Link>
+          <SellTabButton active={isSell} href={sellHref} label={t("sell")} />
 
           <Link href="/mensajes" className={tabClass(isChat)}>
             <span className={`relative ${TAB_ICON_BOX}`}>
@@ -155,12 +133,10 @@ export function TabBar() {
             <span className="max-w-full truncate px-0.5">{t("chats")}</span>
           </Link>
 
-          <Link href="/historias" className={tabClass(isStories)}>
-            <HistoriasTabIcon active={isStories} hasStories={hasStories} />
-            <span className={cn("max-w-full truncate px-0.5", isStories && "text-purple-700")}>{t("stories")}</span>
-          </Link>
-
-          <Link href={profileHref} className={tabClass(isProfile)}>
+          <Link
+            href={profileHref}
+            className={cn(tabClass(isProfile), isProfile && "rounded-2xl bg-purple-100/90 py-2")}
+          >
             <User className={lineIconClass(isProfile)} strokeWidth={isProfile ? 2.25 : 2} />
             <span className="max-w-full truncate px-0.5">{t("profile")}</span>
           </Link>

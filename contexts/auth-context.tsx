@@ -221,11 +221,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getVenderLink = useCallback(() => {
     if (!currentUser) return "/signup?role=seller"
-    if (currentUser.role === "seller") {
-      if (currentUser.businessType === "restaurant") return "/dashboard/restaurant"
-      return "/dashboard/seller"
+    switch (currentUser.role) {
+      case "admin":
+        return "/admin"
+      case "cadete":
+        return "/dashboard/cadete"
+      case "seller":
+        if (currentUser.businessType === "restaurant") return "/dashboard/restaurant"
+        return "/dashboard/seller?tab=addProduct"
+      default:
+        return "/dashboard/buyer?tab=reseller"
     }
-    return "/signup?role=seller&prompt=true"
   }, [currentUser])
 
   return (

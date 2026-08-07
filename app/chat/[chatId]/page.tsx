@@ -418,7 +418,7 @@ export default function ChatPage() {
 
   if (authLoading || (loading && !chat)) {
     return (
-      <div className="flex h-[100dvh] items-center justify-center bg-[#f0f2f5]">
+      <div className="flex h-[calc(100dvh-4rem)] items-center justify-center bg-[#f0f2f5] lg:h-[100dvh]">
         <Loader2 className="h-8 w-8 animate-spin text-servido-800" />
       </div>
     )
@@ -426,7 +426,7 @@ export default function ChatPage() {
 
   if ((error && !chat) || !currentUser) {
     return (
-      <div className="flex h-[100dvh] flex-col items-center justify-center bg-[#f0f2f5] p-4">
+      <div className="flex h-[calc(100dvh-4rem)] flex-col items-center justify-center bg-[#f0f2f5] p-4 lg:h-[100dvh]">
         <Alert variant="destructive" className="max-w-md">
           <Info className="h-4 w-4" />
           <AlertTitle>{t("alertTitle")}</AlertTitle>
@@ -458,7 +458,7 @@ export default function ChatPage() {
   const otherLastReadMs = getOtherLastReadMs(chat.lastReadAt, otherId)
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-[#ece5dd]">
+    <div className="fixed inset-x-0 top-0 bottom-16 z-40 flex flex-col bg-[#ece5dd] lg:inset-0">
       <header className="flex shrink-0 items-center gap-2 border-b border-black/5 bg-[#075e54] px-2 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] text-white">
         <button
           type="button"

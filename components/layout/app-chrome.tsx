@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { Suspense } from "react"
 import { usePathname } from "next/navigation"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
@@ -49,11 +50,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
         )}
         <main
           className={`min-w-0 max-w-full flex-1 overflow-x-hidden ${
-            isChatThread
-              ? "pb-0"
-              : isMessagingList
-                ? "pb-16 lg:pb-0"
-                : `pb-16 ${isHomeRoute ? "lg:pb-16" : ""}`
+            isMessagingRoute
+              ? "pb-16 lg:pb-0"
+              : `pb-16 ${isHomeRoute ? "lg:pb-16" : ""}`
           }`}
         >
           {children}
@@ -68,7 +67,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             <Footer />
           </div>
         )}
-        {!isChatThread && <TabBar />}
+        <Suspense fallback={null}>
+          <TabBar />
+        </Suspense>
         <DesktopChatFab />
         <LocationPickerSheet />
       </div>
