@@ -41,38 +41,40 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <ChatUnreadProvider>
-      <div className="flex min-h-full max-w-[100vw] flex-1 flex-col overflow-x-hidden">
-        {showMobileHeader && <MobileAppHeader />}
-        {!isChatThread && (
-          <div className="hidden lg:block">
-            <Header />
-          </div>
-        )}
-        <main
-          className={`min-w-0 max-w-full flex-1 overflow-x-hidden ${
-            isMessagingRoute
-              ? "pb-16 lg:pb-0"
-              : `pb-16 ${isHomeRoute ? "lg:pb-16" : ""}`
-          }`}
-        >
-          {children}
-        </main>
-        {!isHomeRoute && !isMessagingRoute && (
-          <div>
-            <Footer />
-          </div>
-        )}
-        {isHomeRoute && (
-          <div className="hidden lg:block">
-            <Footer />
-          </div>
-        )}
+      <>
+        <div className="flex min-h-full max-w-[100vw] flex-1 flex-col overflow-x-hidden">
+          {showMobileHeader && <MobileAppHeader />}
+          {!isChatThread && (
+            <div className="hidden lg:block">
+              <Header />
+            </div>
+          )}
+          <main
+            className={`min-w-0 max-w-full flex-1 overflow-x-hidden ${
+              isMessagingRoute
+                ? "pb-[4.75rem] lg:pb-0"
+                : `pb-[4.75rem] ${isHomeRoute ? "lg:pb-16" : ""}`
+            }`}
+          >
+            {children}
+          </main>
+          {!isHomeRoute && !isMessagingRoute && (
+            <div>
+              <Footer />
+            </div>
+          )}
+          {isHomeRoute && (
+            <div className="hidden lg:block">
+              <Footer />
+            </div>
+          )}
+          <DesktopChatFab />
+          <LocationPickerSheet />
+        </div>
         <Suspense fallback={null}>
           <TabBar />
         </Suspense>
-        <DesktopChatFab />
-        <LocationPickerSheet />
-      </div>
+      </>
     </ChatUnreadProvider>
   )
 }

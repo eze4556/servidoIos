@@ -458,7 +458,7 @@ export default function ChatPage() {
   const otherLastReadMs = getOtherLastReadMs(chat.lastReadAt, otherId)
 
   return (
-    <div className="fixed inset-x-0 top-0 bottom-16 z-40 flex flex-col bg-[#ece5dd] lg:inset-0">
+    <div className="fixed inset-x-0 top-0 bottom-[4.75rem] z-40 flex flex-col bg-[#ece5dd] lg:inset-0">
       <header className="flex shrink-0 items-center gap-2 border-b border-black/5 bg-[#075e54] px-2 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] text-white">
         <button
           type="button"
