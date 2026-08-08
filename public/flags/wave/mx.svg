@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 64" fill="none">
+  <defs>
+    <path id="ribbon" d="M6 17 C22 9 34 21 48 15 S82 9 90 17 L90 45 C74 53 62 41 48 47 S14 53 6 45 Z"/>
+    <clipPath id="clip"><use href="#ribbon"/></clipPath>
+  </defs>
+  <g clip-path="url(#clip)">
+    <rect width="32" height="64" fill="#006847"/>
+    <rect x="32" width="32" height="64" fill="#fff"/>
+    <rect x="64" width="32" height="64" fill="#ce1126"/>
+  </g>
+  <use href="#ribbon" fill="none" stroke="rgba(0,0,0,0.12)" stroke-width="1"/>
+</svg>

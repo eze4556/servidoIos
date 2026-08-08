@@ -69,17 +69,18 @@ export function LocaleFlagToggle({
     variant === "dark"
       ? cn(
           compact
-            ? "h-9 gap-1 rounded-lg border border-white/20 bg-white/10 px-2 text-white hover:bg-white/15"
+            ? "h-auto gap-0.5 border-0 bg-transparent p-0 text-white shadow-none hover:bg-transparent"
             : "rounded-full border border-white/25 bg-white/5 px-2.5 text-white hover:bg-white/10"
         )
       : cn(
           compact
-            ? "h-9 gap-1 rounded-lg border border-purple-200/80 bg-white px-2 shadow-sm hover:bg-purple-50"
+            ? "h-auto gap-0.5 border-0 bg-transparent p-0 text-purple-900 shadow-none hover:bg-transparent"
             : "rounded-full border border-purple-200/80 bg-white px-2.5 text-purple-900 shadow-sm hover:bg-purple-50"
         )
 
   const countryLabel = tp(current.countryKey)
-  const triggerFlagSize = compact ? 26 : 20
+  const triggerFlagSize = compact ? 34 : 30
+  const flagTone = variant === "dark" ? "onDark" : "onLight"
 
   return (
     <DropdownMenu>
@@ -87,14 +88,19 @@ export function LocaleFlagToggle({
         <button
           type="button"
           className={cn(
-            "flex items-center gap-1 text-sm font-semibold transition outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-1",
-            !compact && "h-9 max-w-[9.5rem] gap-1.5 sm:max-w-none",
+            "flex items-center text-sm font-semibold transition outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-1",
+            compact ? "gap-0.5" : "h-9 max-w-[9.5rem] gap-1.5 sm:max-w-none",
             triggerClass,
             className
           )}
           aria-label={compact ? `${t("languageAria")}: ${countryLabel}` : t("languageAria")}
         >
-          <CountryFlag code={current.flagCode} size={triggerFlagSize} rounded="sm" />
+          <CountryFlag
+            code={current.flagCode}
+            size={triggerFlagSize}
+            variant="glass"
+            tone={flagTone}
+          />
           {!compact && <span className="truncate">{countryLabel}</span>}
           <ChevronDown
             className={cn("shrink-0 opacity-80", compact ? "h-3.5 w-3.5" : "h-4 w-4")}
@@ -107,11 +113,11 @@ export function LocaleFlagToggle({
         sideOffset={8}
         className="w-[min(100vw-2rem,20rem)] overflow-hidden rounded-2xl border border-purple-100/80 p-0 shadow-xl"
       >
-        <div className="px-4 pb-2 pt-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-purple-400">
+        <div className="px-3 pb-1.5 pt-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-purple-400">
             {tp("countriesActive")}
           </p>
-          <ul className="mt-2 space-y-0.5">
+          <ul className="mt-1 space-y-0">
             {ACTIVE_MARKETS.map((market) => {
               const selected = market.locale === locale
               return (
@@ -120,22 +126,22 @@ export function LocaleFlagToggle({
                     type="button"
                     onClick={() => switchTo(market.locale)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-purple-50",
+                      "flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left transition hover:bg-purple-50",
                       selected && "bg-purple-50/80"
                     )}
                   >
-                    <CountryFlag code={market.flagCode} size={28} />
-                    <span className="flex-1 text-base font-semibold text-purple-900">
+                    <CountryFlag code={market.flagCode} size={30} variant="glass" tone="onLight" />
+                    <span className="flex-1 text-sm font-semibold text-purple-900">
                       {tp(market.countryKey)}
                     </span>
                     {market.showNewBadge && !selected && (
-                      <span className="rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
+                      <span className="rounded-md bg-purple-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-purple-700">
                         {tp("badgeNew")}
                       </span>
                     )}
                     {selected && (
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-600 text-white">
-                        <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-white">
+                        <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
                       </span>
                     )}
                   </button>
@@ -156,7 +162,13 @@ export function LocaleFlagToggle({
                   href="/proximamente"
                   className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-purple-50/60"
                 >
-                  <CountryFlag code={market.flagCode} size={28} className="opacity-90" />
+                  <CountryFlag
+                    code={market.flagCode}
+                    size={30}
+                    variant="glass"
+                    tone="onLight"
+                    className="opacity-95"
+                  />
                   <span className="flex-1 text-base font-semibold text-purple-900/90">
                     {tp(market.countryKey)}
                   </span>

@@ -1,10 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2">
   <rect width="3" height="2" fill="#fff"/>
-  <rect width="3" height="0.222" fill="#0038a8"/>
-  <rect width="3" height="0.222" y="0.444" fill="#fff"/>
-  <rect width="3" height="0.222" y="0.888" fill="#0038a8"/>
-  <rect width="3" height="0.222" y="1.333" fill="#fff"/>
-  <rect width="3" height="0.222" y="1.777" fill="#0038a8"/>
-  <rect width="0.75" height="1.111" fill="#fcd116"/>
-  <circle cx="0.375" cy="0.556" r="0.18" fill="#fcd116" stroke="#000" stroke-width="0.02"/>
+  <rect width="3" height="0.2222" y="0.2222" fill="#0038a8"/>
+  <rect width="3" height="0.2222" y="0.6667" fill="#0038a8"/>
+  <rect width="3" height="0.2222" y="1.1111" fill="#0038a8"/>
+  <rect width="3" height="0.2222" y="1.5556" fill="#0038a8"/>
+  <rect width="1.6667" height="1.1111" fill="#fff"/>
+  <circle cx="0.8333" cy="0.5556" r="0.2" fill="#fcd116" stroke="#c9a000" stroke-width="0.03"/>
+  <g stroke="#fcd116" stroke-width="0.04" stroke-linecap="round">
+    <line x1="0.8333" y1="0.32" x2="0.8333" y2="0.79"/>
+    <line x1="0.65" y1="0.5556" x2="1.0167" y2="0.5556"/>
+    <line x1="0.71" y1="0.39" x2="0.9567" y2="0.72"/>
+    <line x1="0.71" y1="0.72" x2="0.9567" y2="0.39"/>
+  </g>
 </svg>
