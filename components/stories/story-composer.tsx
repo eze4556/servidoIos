@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { urlToImageFile } from "@/lib/url-to-image-file"
+import { fetchProductImageFile } from "@/lib/reseller/fetch-product-image-file"
 
 interface SellerProductOption {
   id: string
@@ -196,11 +197,28 @@ export function StoryComposer({
           setResellerProductName(name)
           setCaption((prev) => (prev.trim() ? prev : tReseller("shareText", { name })))
         }
-        if (imageUrl && initialAuto) {
-          const fileFromUrl = await urlToImageFile(imageUrl, `${initialProductId}.jpg`)
-          if (!cancelled) {
-            setFile(fileFromUrl)
-            setPreview(URL.createObjectURL(fileFromUrl))
+        if (initialAuto) {
+          try {
+            const fileFromUrl = await fetchProductImageFile(initialProductId)
+            if (!cancelled) {
+              setFile(fileFromUrl)
+              setPreview(URL.createObjectURL(fileFromUrl))
+            }
+          } catch {
+            if (imageUrl) {
+              try {
+                const fileFromUrl = await urlToImageFile(imageUrl, `${initialProductId}.jpg`)
+                if (!cancelled) {
+                  setFile(fileFromUrl)
+                  setPreview(URL.createObjectURL(fileFromUrl))
+                }
+              } catch (err) {
+                console.warn("reseller story image fallback failed:", err)
+                if (!cancelled) setError(t("errors.productImageFailed"))
+              }
+            } else if (!cancelled) {
+              setError(t("errors.productImageFailed"))
+            }
           }
         }
       } catch (err) {
@@ -418,8 +436,13 @@ export function StoryComposer({
       </div>
 
       {isResellerRecommendMode && linkUrl && (
-        <p className="rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 ring-1 ring-gray-100">
-          Link: <span className="font-medium text-purple-800">{linkUrl}</span>
+        <p className="rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 ring-1 ring-gray-100 break-all">
+          Link:{" "}
+          <span className="font-medium text-purple-800">
+            {typeof window !== "undefined" && linkUrl.startsWith("/")
+              ? `${window.location.origin}${linkUrl}`
+              : linkUrl}
+          </span>
         </p>
       )}
 
