@@ -558,14 +558,19 @@
     "publishButton": "Publicar história (24 h)",
     "defaultProduct": "Produto",
     "defaultSeller": "Vendedor",
+    "resellerBanner": "Você recomenda: {name}",
+    "resellerBannerHint": "A foto do produto e seu link já estão prontos. Toque em publicar para compartilhar nas Histórias (24 h).",
+    "resellerLoadingProduct": "Preparando sua história com o produto…",
     "errors": {
       "imagesOnly": "Somente imagens são permitidas.",
       "imageSize": "A imagem não pode passar de 8 MB.",
       "sellersOnly": "Somente vendedores e restaurantes podem publicar histórias.",
+      "resellersOnly": "Entre para publicar sua recomendação.",
       "dailyLimit": "Você atingiu o limite de {limit} histórias por dia.",
       "pickImage": "Escolha uma imagem.",
       "locationRequired": "Escolha a localização do seu estabelecimento para aparecer por perto.",
-      "publishFailed": "Não foi possível publicar a história. Tente novamente."
+      "publishFailed": "Não foi possível publicar a história. Tente novamente.",
+      "productImageFailed": "Não foi possível carregar a foto do produto. Envie uma imagem manualmente."
     }
   },
   "storiesRail": {
@@ -577,7 +582,8 @@
   "storyViewer": {
     "authorType": {
       "restaurant": "Restaurante",
-      "store": "Loja"
+      "store": "Loja",
+      "reseller": "Revendedor"
     },
     "deleteStory": "Excluir história",
     "close": "Fechar",
@@ -2501,6 +2507,8 @@
     "copyForInstagram": "Copiar link (Instagram)",
     "shareText": "Veja na Servido: {name}",
     "linkCopied": "Link copiado",
+    "instagramCopied": "Texto copiado para o Instagram",
+    "copyFailed": "Não foi possível copiar. Segure o link e copie manualmente.",
     "generatingLink": "Gerando seu link…",
     "loginRequired": "Entre para recomendar",
     "linkError": "Não foi possível criar o link",

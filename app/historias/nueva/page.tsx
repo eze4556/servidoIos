@@ -15,6 +15,7 @@ function NuevaHistoriaContent() {
   const searchParams = useSearchParams()
   const initialProductId = searchParams.get("product")
   const initialRefCode = searchParams.get("ref")
+  const initialAuto = searchParams.get("auto") === "1"
   const isResellerStory = Boolean(initialProductId && initialRefCode)
 
   useEffect(() => {
@@ -55,7 +56,11 @@ function NuevaHistoriaContent() {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        <StoryComposer initialProductId={initialProductId} initialRefCode={initialRefCode} />
+        <StoryComposer
+          initialProductId={initialProductId}
+          initialRefCode={initialRefCode}
+          initialAuto={initialAuto}
+        />
       </div>
     </div>
   )

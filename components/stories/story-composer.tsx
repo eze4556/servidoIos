@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore"
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from "firebase/firestore"
 import { Check, ImagePlus, Loader2, Store, X } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
+import { useLocation } from "@/contexts/location-context"
 import { db } from "@/lib/firebase"
 import {
   getBusinessLocation,
@@ -25,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { urlToImageFile } from "@/lib/url-to-image-file"
 
 interface SellerProductOption {
   id: string
@@ -46,13 +48,20 @@ function getProductThumb(data: Record<string, unknown>): string | null {
 interface StoryComposerProps {
   initialProductId?: string | null
   initialRefCode?: string | null
+  initialAuto?: boolean
 }
 
-export function StoryComposer({ initialProductId, initialRefCode }: StoryComposerProps) {
+export function StoryComposer({
+  initialProductId,
+  initialRefCode,
+  initialAuto = false,
+}: StoryComposerProps) {
   const t = useTranslations("storyComposer")
+  const tReseller = useTranslations("resellerProgram")
   const locale = useLocale()
   const priceLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
   const { currentUser, getDashboardLink } = useAuth()
+  const { coordinates, userLocation } = useLocation()
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -65,6 +74,10 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
   const [todayCount, setTodayCount] = useState(0)
   const [businessLocation, setBusinessLocation] = useState<BusinessLocation | null>(null)
   const [loadingLocation, setLoadingLocation] = useState(true)
+  const [resellerProductName, setResellerProductName] = useState<string | null>(null)
+  const [loadingResellerProduct, setLoadingResellerProduct] = useState(false)
+
+  const isResellerRecommendMode = Boolean(initialProductId && initialRefCode)
 
   const isRestaurant = currentUser?.businessType === "restaurant"
   const restaurantId = currentUser?.restaurantId || currentUser?.firebaseUser.uid
@@ -81,6 +94,13 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
     if (!currentUser?.firebaseUser.uid) {
       setLoadingProducts(false)
       setLoadingLocation(false)
+      return
+    }
+
+    if (isResellerRecommendMode) {
+      setLoadingProducts(false)
+      setLoadingLocation(false)
+      void countStoriesCreatedToday(currentUser.firebaseUser.uid).then(setTodayCount)
       return
     }
 
@@ -154,7 +174,47 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
     return () => {
       cancelled = true
     }
-  }, [currentUser, t])
+  }, [currentUser, t, isResellerRecommendMode])
+
+  useEffect(() => {
+    if (!isResellerRecommendMode || !initialProductId) return
+    let cancelled = false
+
+    void (async () => {
+      setLoadingResellerProduct(true)
+      setError(null)
+      try {
+        const snap = await getDoc(doc(db, "products", initialProductId))
+        if (!snap.exists()) {
+          if (!cancelled) setError(t("errors.productImageFailed"))
+          return
+        }
+        const data = snap.data() as Record<string, unknown>
+        const name = String(data.name || t("defaultProduct"))
+        const imageUrl = getProductThumb(data)
+        if (!cancelled) {
+          setResellerProductName(name)
+          setCaption((prev) => (prev.trim() ? prev : tReseller("shareText", { name })))
+        }
+        if (imageUrl && initialAuto) {
+          const fileFromUrl = await urlToImageFile(imageUrl, `${initialProductId}.jpg`)
+          if (!cancelled) {
+            setFile(fileFromUrl)
+            setPreview(URL.createObjectURL(fileFromUrl))
+          }
+        }
+      } catch (err) {
+        console.warn("reseller story preload failed:", err)
+        if (!cancelled) setError(t("errors.productImageFailed"))
+      } finally {
+        if (!cancelled) setLoadingResellerProduct(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isResellerRecommendMode, initialProductId, initialAuto, t, tReseller])
 
   useEffect(() => {
     if (!initialProductId) return
@@ -186,7 +246,11 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!currentUser || currentUser.role !== "seller") {
+    if (!currentUser) {
+      setError(t("errors.resellersOnly"))
+      return
+    }
+    if (!isResellerRecommendMode && currentUser.role !== "seller") {
       setError(t("errors.sellersOnly"))
       return
     }
@@ -198,17 +262,29 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
       setError(t("errors.pickImage"))
       return
     }
-    if (!hasBusinessLocation || !businessLocation) {
+    if (!isResellerRecommendMode && (!hasBusinessLocation || !businessLocation)) {
       setError(t("errors.locationRequired"))
       return
     }
 
+    const resellerLocation =
+      coordinates && hasValidCoordinates(coordinates.latitude, coordinates.longitude)
+        ? {
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            label: userLocation || "Argentina",
+            city: null as string | null,
+          }
+        : null
+
     setLoading(true)
     setError(null)
     try {
-      await saveBusinessLocation(currentUser.firebaseUser.uid, businessLocation, {
-        restaurantId: isRestaurant ? restaurantId : null,
-      })
+      if (!isResellerRecommendMode && businessLocation) {
+        await saveBusinessLocation(currentUser.firebaseUser.uid, businessLocation, {
+          restaurantId: isRestaurant ? restaurantId : null,
+        })
+      }
       await createStory({
         authorId: currentUser.firebaseUser.uid,
         authorName:
@@ -216,11 +292,11 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
           currentUser.firebaseUser.email?.split("@")[0] ||
           t("defaultSeller"),
         authorPhotoURL: currentUser.photoURL || currentUser.firebaseUser.photoURL,
-        authorType: isRestaurant ? "restaurant" : "store",
+        authorType: isResellerRecommendMode ? "reseller" : isRestaurant ? "restaurant" : "store",
         file,
         caption,
         linkUrl: linkUrl || undefined,
-        businessLocation,
+        businessLocation: isResellerRecommendMode ? resellerLocation : businessLocation,
       })
       router.push("/historias")
       router.refresh()
@@ -240,8 +316,27 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
   const selectedProductId = linkUrl.match(/\/product\/([^/?]+)/)?.[1] ?? null
   const restaurantSelected = Boolean(restaurantLink && linkUrl === restaurantLink)
 
+  const canPublish = isResellerRecommendMode
+    ? Boolean(file) && !atLimit
+    : Boolean(file) && !atLimit && hasBusinessLocation
+
   return (
     <form onSubmit={(e) => void handleSubmit(e)} className="mx-auto max-w-lg space-y-5">
+      {isResellerRecommendMode && (
+        <div className="rounded-2xl bg-purple-50 px-4 py-3 text-sm text-purple-900 ring-1 ring-purple-100">
+          <p className="font-semibold">
+            {t("resellerBanner", { name: resellerProductName || t("defaultProduct") })}
+          </p>
+          <p className="mt-1 text-xs text-purple-800/90">{t("resellerBannerHint")}</p>
+          {loadingResellerProduct && (
+            <p className="mt-2 flex items-center gap-2 text-xs text-purple-700">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {t("resellerLoadingProduct")}
+            </p>
+          )}
+        </div>
+      )}
+
       <p className="text-center text-xs text-gray-500">
         {t("dailyCount", { count: todayCount, limit: STORY_DAILY_LIMIT })}
         {!atLimit && t("dailyRemaining", { remaining: remainingToday })}
@@ -256,6 +351,7 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
         </div>
       )}
 
+      {!isResellerRecommendMode && (
       <div className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
         {loadingLocation ? (
           <div className="flex items-center gap-2 py-4 text-sm text-gray-500">
@@ -271,6 +367,7 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
           />
         )}
       </div>
+      )}
 
       {atLimit && (
         <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">
@@ -320,6 +417,13 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
         />
       </div>
 
+      {isResellerRecommendMode && linkUrl && (
+        <p className="rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 ring-1 ring-gray-100">
+          Link: <span className="font-medium text-purple-800">{linkUrl}</span>
+        </p>
+      )}
+
+      {!isResellerRecommendMode && (
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <Label>{t("linkLabel")}</Label>
@@ -416,6 +520,7 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
           </div>
         )}
       </div>
+      )}
 
       {error && (
         <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">{error}</p>
@@ -423,7 +528,7 @@ export function StoryComposer({ initialProductId, initialRefCode }: StoryCompose
 
       <Button
         type="submit"
-        disabled={loading || !file || atLimit || !hasBusinessLocation}
+        disabled={loading || !canPublish}
         className="h-12 w-full rounded-full bg-servido-800 text-base font-semibold hover:bg-servido-900"
       >
         {loading ? (

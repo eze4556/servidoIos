@@ -1,4 +1,4 @@
-export type StoryAuthorType = "store" | "restaurant"
+export type StoryAuthorType = "store" | "restaurant" | "reseller"
 
 export interface Story {
   id: string

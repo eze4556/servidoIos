@@ -12,11 +12,11 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useTranslations } from "next-intl"
-import { useToast } from "@/hooks/use-toast"
-import { ApiService } from "@/lib/services/api"
+import { useToast } from "@/components/ui/use-toast"
 import { auth } from "@/lib/firebase"
 import { ResellerPayoutForm } from "@/components/reseller/reseller-payout-form"
 import { productUrlWithRef } from "@/lib/reseller/attribution-storage"
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard"
 import {
   Copy,
   Facebook,
@@ -34,6 +34,8 @@ type RecommendProductDialogProps = {
   productName: string
 }
 
+type ResellerLinkResult = { url: string; code: string }
+
 export function RecommendProductDialog({
   open,
   onOpenChange,
@@ -47,60 +49,75 @@ export function RecommendProductDialog({
   const [loadingLink, setLoadingLink] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [code, setCode] = useState<string | null>(null)
+  const [storyLoading, setStoryLoading] = useState(false)
 
-  const ensureLink = async (): Promise<string | null> => {
-    if (shareUrl && code) return shareUrl
+  const ensureLink = async (): Promise<ResellerLinkResult | null> => {
+    if (shareUrl && code) return { url: shareUrl, code }
     const user = auth.currentUser
     if (!user) {
       toast({ title: t("loginRequired"), variant: "destructive" })
       return null
     }
     setLoadingLink(true)
-    const token = await user.getIdToken()
-    const res = await fetch("/api/reseller/link", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ productId }),
-    })
-    const data = await res.json()
-    setLoadingLink(false)
-    if (!res.ok) {
-      if (data.error === "missing_payout_info") {
-        setStep("payout")
+    try {
+      const token = await user.getIdToken()
+      const res = await fetch("/api/reseller/link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId }),
+      })
+      const data = (await res.json()) as { code?: string; error?: string }
+      if (!res.ok) {
+        if (data.error === "missing_payout_info") {
+          setStep("payout")
+          return null
+        }
+        toast({
+          title: t("error"),
+          description: data.error || t("linkError"),
+          variant: "destructive",
+        })
         return null
       }
-      toast({ title: t("error"), description: data.error || t("linkError"), variant: "destructive" })
+      if (!data.code) {
+        toast({ title: t("error"), description: t("linkError"), variant: "destructive" })
+        return null
+      }
+      const origin = typeof window !== "undefined" ? window.location.origin : ""
+      const url = productUrlWithRef(origin, productId, data.code)
+      setCode(data.code)
+      setShareUrl(url)
+      void fetch("/api/reseller/click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: data.code }),
+      })
+      return { url, code: data.code }
+    } catch {
+      toast({ title: t("error"), description: t("linkError"), variant: "destructive" })
       return null
+    } finally {
+      setLoadingLink(false)
     }
-    const origin = typeof window !== "undefined" ? window.location.origin : ""
-    const url = productUrlWithRef(origin, productId, data.code)
-    setCode(data.code)
-    setShareUrl(url)
-    void fetch("/api/reseller/click", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: data.code }),
-    })
-    return url
   }
 
   const openShare = async (platform: string) => {
-    const url = await ensureLink()
-    if (!url) return
+    const link = await ensureLink()
+    if (!link) return
     const text = t("shareText", { name: productName })
     let external = ""
     switch (platform) {
       case "whatsapp":
-        external = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`
+        external = `https://wa.me/?text=${encodeURIComponent(`${text} ${link.url}`)}`
         break
       case "facebook":
-        external = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+        external = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link.url)}`
         break
       case "telegram":
-        external = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`
+        external = `https://t.me/share/url?url=${encodeURIComponent(link.url)}&text=${encodeURIComponent(text)}`
         break
       default:
         return
@@ -108,18 +125,41 @@ export function RecommendProductDialog({
     window.open(external, "_blank", "width=600,height=520")
   }
 
-  const copyLink = async () => {
-    const url = await ensureLink()
-    if (!url) return
-    await navigator.clipboard.writeText(url)
-    toast({ title: t("linkCopied") })
+  const copyShareUrl = async () => {
+    const link = await ensureLink()
+    if (!link) return
+    const ok = await copyTextToClipboard(link.url)
+    if (ok) {
+      toast({ title: t("linkCopied") })
+    } else {
+      toast({ title: t("error"), description: t("copyFailed"), variant: "destructive" })
+    }
+  }
+
+  const copyForInstagram = async () => {
+    const link = await ensureLink()
+    if (!link) return
+    const text = `${t("shareText", { name: productName })}\n${link.url}`
+    const ok = await copyTextToClipboard(text)
+    if (ok) {
+      toast({ title: t("instagramCopied") })
+    } else {
+      toast({ title: t("error"), description: t("copyFailed"), variant: "destructive" })
+    }
   }
 
   const goStory = async () => {
-    const url = await ensureLink()
-    if (!url || !code) return
+    setStoryLoading(true)
+    const link = await ensureLink()
+    setStoryLoading(false)
+    if (!link) return
     onOpenChange(false)
-    router.push(`/historias/nueva?product=${encodeURIComponent(productId)}&ref=${encodeURIComponent(code)}`)
+    const params = new URLSearchParams({
+      product: productId,
+      ref: link.code,
+      auto: "1",
+    })
+    router.push(`/historias/nueva?${params.toString()}`)
   }
 
   const handlePayoutSaved = () => {
@@ -142,13 +182,19 @@ export function RecommendProductDialog({
           </div>
         ) : (
           <div className="grid gap-2">
-            {loadingLink && (
+            {(loadingLink || storyLoading) && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {t("generatingLink")}
               </div>
             )}
-            <Button type="button" variant="outline" className="justify-start gap-2" onClick={() => void goStory()}>
+            <Button
+              type="button"
+              variant="outline"
+              className="justify-start gap-2"
+              disabled={loadingLink || storyLoading}
+              onClick={() => void goStory()}
+            >
               <Sparkles className="h-4 w-4 text-purple-600" />
               {t("shareStory")}
             </Button>
@@ -164,11 +210,11 @@ export function RecommendProductDialog({
               <Facebook className="h-4 w-4 text-blue-600" />
               Facebook
             </Button>
-            <Button type="button" variant="outline" className="justify-start gap-2" onClick={() => void copyLink()}>
+            <Button type="button" variant="outline" className="justify-start gap-2" onClick={() => void copyForInstagram()}>
               <Instagram className="h-4 w-4" />
               {t("copyForInstagram")}
             </Button>
-            <Button type="button" variant="secondary" className="justify-start gap-2" onClick={() => void copyLink()}>
+            <Button type="button" variant="secondary" className="justify-start gap-2" onClick={() => void copyShareUrl()}>
               <Copy className="h-4 w-4" />
               {t("copyLink")}
             </Button>

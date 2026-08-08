@@ -459,7 +459,11 @@ export function StoryViewer({
                 t: (key, values) => tTime(key, values),
               })}
               <span className="mx-1 opacity-50">·</span>
-              {group.authorType === "restaurant" ? t("authorType.restaurant") : t("authorType.store")}
+              {group.authorType === "restaurant"
+                ? t("authorType.restaurant")
+                : group.authorType === "reseller"
+                  ? t("authorType.reseller")
+                  : t("authorType.store")}
             </p>
           </div>
           {!isAuthor && (
