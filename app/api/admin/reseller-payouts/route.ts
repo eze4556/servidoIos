@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth as adminAuth, db as adminDb } from "@/lib/firebase-admin"
 import { isFirestoreAdmin } from "@/lib/admin-auth-server"
+import { notifyResellerPayoutPaid } from "@/lib/reseller/reseller-notifications"
 import { FieldValue } from "firebase-admin/firestore"
 
 export async function GET(request: NextRequest) {
@@ -96,6 +97,16 @@ export async function PATCH(request: NextRequest) {
           },
           { merge: true }
         )
+
+      try {
+        await notifyResellerPayoutPaid({
+          referrerUserId,
+          amount: Number(data.amount || 0),
+          batchId,
+        })
+      } catch (notifyErr) {
+        console.error("notifyResellerPayoutPaid failed", notifyErr)
+      }
     }
 
     return NextResponse.json({ ok: true })

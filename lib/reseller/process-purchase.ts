@@ -11,6 +11,8 @@ import {
   type ResellerAttributionLine,
   type ResellerPayoutInfo,
 } from "@/types/reseller"
+import type { ResellerNotificationIntent } from "@/lib/reseller/reseller-notifications"
+import { batchReadyIntent } from "@/lib/reseller/reseller-notifications"
 
 function applyUnitsToCycle(
   currentUnits: number,
@@ -29,9 +31,11 @@ export async function processResellerAttributionAfterPurchase(
     buyerId: string
     lines: ResellerAttributionLine[]
   }
-) {
+): Promise<ResellerNotificationIntent[]> {
   const { purchaseId, buyerId, lines } = params
-  if (!lines.length) return
+  if (!lines.length) return []
+
+  const notificationIntents: ResellerNotificationIntent[] = []
 
   const byReferrer = new Map<string, { units: number; lines: ResellerAttributionLine[] }>()
   for (const line of lines) {
@@ -101,6 +105,21 @@ export async function processResellerAttributionAfterPurchase(
         },
         { merge: true }
       )
+
+      const salesLeft = RESELLER_UNITS_PAYOUT_THRESHOLD - remainder
+      if (salesLeft > 0 && salesLeft <= 3) {
+        notificationIntents.push({
+          kind: "almost_threshold",
+          referrerUserId,
+          salesLeft,
+        })
+      }
+
+      for (let i = 0; i < completedBatches; i++) {
+        notificationIntents.push(batchReadyIntent(referrerUserId, purchaseId, i))
+      }
     }
   })
+
+  return notificationIntents
 }

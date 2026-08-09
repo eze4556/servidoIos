@@ -6,6 +6,7 @@ export type AppNotificationType =
   | "service"
   | "payment"
   | "promo"
+  | "reseller"
   | "system"
 
 export interface AppNotification {

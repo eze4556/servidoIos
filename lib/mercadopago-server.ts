@@ -22,6 +22,7 @@ import {
 import { COMMISSION_RATE } from "@/types/centralized-payments"
 import { resolveReferralsForCheckout } from "@/lib/reseller/resolve-referrals"
 import { processResellerAttributionAfterPurchase } from "@/lib/reseller/process-purchase"
+import { sendResellerNotifications } from "@/lib/reseller/reseller-notifications"
 import type { ResellerAttributionLine } from "@/types/reseller"
 
 export type ShippingAddress = {
@@ -977,11 +978,16 @@ async function handleApprovedPurchase(paymentInfo: any, purchaseId: string) {
 
   if (preAttribution?.length && preBuyerId) {
     try {
-      await processResellerAttributionAfterPurchase(db, {
+      const intents = await processResellerAttributionAfterPurchase(db, {
         purchaseId,
         buyerId: preBuyerId,
         lines: preAttribution,
       })
+      if (intents.length > 0) {
+        void sendResellerNotifications(intents).catch((err) =>
+          console.error("reseller notifications failed", purchaseId, err)
+        )
+      }
     } catch (resellerErr) {
       console.error("reseller attribution failed", purchaseId, resellerErr)
     }
