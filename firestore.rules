@@ -1,0 +1,15 @@
+rules_version = '2';
+// IMPORTANTE: fusioná estas reglas con las de producción antes de `firebase deploy --only firestore:rules`.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /vehicleListings/{listingId} {
+      allow read: if resource.data.status == 'active'
+        || (request.auth != null && request.auth.uid == resource.data.sellerId);
+      allow create: if request.auth != null
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.status in ['active', 'paused'];
+      allow update, delete: if request.auth != null
+        && resource.data.sellerId == request.auth.uid;
+    }
+  }
+}

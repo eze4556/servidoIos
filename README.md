@@ -27,6 +27,16 @@ FIREBASE_ADMIN_CLIENT_EMAIL=tu_client_email
 MERCADOPAGO_ACCESS_TOKEN=tu_access_token
 MERCADOPAGO_PUBLIC_KEY=tu_public_key
 
+### Reglas de Storage (módulo Autos)
+
+Si al subir fotos de vehículos ves **403 Forbidden**, en Firebase Console → **Storage** → **Rules** agregá (o fusioná) el bloque de [`storage.rules`](storage.rules) y publicá. O desde CLI:
+
+```bash
+firebase deploy --only storage --project servidodb-a1eda
+```
+
+La ruta de archivos es `vehicles/{tuUserId}/{listingId}/...`.
+
 # EmailJS (opcional)
 NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=tu_emailjs_key
 NEXT_PUBLIC_EMAILJS_SERVICE_ID=tu_service_id

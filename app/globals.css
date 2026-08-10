@@ -431,6 +431,62 @@ body {
   animation: shortcut-float 2.8s ease-in-out 0.8s infinite;
 }
 
+@keyframes vehicles-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes vehicles-hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes vehicles-gentle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.vehicles-animate-in {
+  animation: vehicles-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.vehicles-hero-enter {
+  animation: vehicles-hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.vehicles-hero-enter-delay-1 {
+  animation: vehicles-hero-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.vehicles-hero-enter-delay-2 {
+  animation: vehicles-hero-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
+}
+
+.vehicles-card-enter {
+  animation: vehicles-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.vehicles-float {
+  animation: vehicles-gentle-float 5s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-hero-glow,
   .home-animated-gradient,
@@ -440,7 +496,13 @@ body {
   .home-shortcut-float-delay-1,
   .home-shortcut-float-delay-2,
   .home-shortcut-float-delay-3,
-  .home-shortcut-float-delay-4 {
+  .home-shortcut-float-delay-4,
+  .vehicles-animate-in,
+  .vehicles-hero-enter,
+  .vehicles-hero-enter-delay-1,
+  .vehicles-hero-enter-delay-2,
+  .vehicles-card-enter,
+  .vehicles-float {
     animation: none;
   }
 }

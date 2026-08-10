@@ -4,6 +4,15 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts")
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Evita chunks server rotos (vendor-chunks/@firebase.js) en dev tras builds parciales
+  serverExternalPackages: [
+    "firebase",
+    "firebase-admin",
+    "@firebase/app",
+    "@firebase/auth",
+    "@firebase/firestore",
+    "@firebase/storage",
+  ],
   eslint: {
     ignoreDuringBuilds: true,
   },

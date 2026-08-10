@@ -20,6 +20,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     pathname === "/signup" ||
     pathname?.startsWith("/signup/")
   const isDashboardRoute = pathname?.startsWith("/dashboard")
+  const isAutosRoute = pathname?.startsWith("/autos")
   const isMessagingList = pathname?.startsWith("/mensajes")
   const isChatThread = pathname?.startsWith("/chat/")
   const isMessagingRoute = isMessagingList || isChatThread
@@ -53,13 +54,15 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             className={`min-w-0 max-w-full flex-1 overflow-x-hidden ${
               isMessagingRoute
                 ? "pb-[7rem] lg:pb-0"
-                : `pb-[7rem] ${isHomeRoute ? "lg:pb-16" : ""}`
+                : isAutosRoute
+                  ? "bg-servido-950 pb-[7rem] lg:pb-0"
+                  : `pb-[7rem] ${isHomeRoute ? "lg:pb-16" : ""}`
             }`}
           >
             {children}
           </main>
           {!isHomeRoute && !isMessagingRoute && (
-            <div>
+            <div className={isAutosRoute ? "hidden lg:block" : undefined}>
               <Footer />
             </div>
           )}

@@ -37,6 +37,15 @@ export function HomeServiceShortcuts() {
       iconAnim: "home-shortcut-float-delay-1",
     },
     {
+      id: "autos",
+      label: th("shortcutAutos"),
+      emoji: "🚗",
+      href: "/autos",
+      circle: "bg-gradient-to-br from-servido-700 via-servido-800 to-servido-950 ring-2 ring-servido-gold/35",
+      shadow: "shadow-servido-800/50",
+      iconAnim: "home-shortcut-float-delay-1",
+    },
+    {
       id: "internacional",
       label: th("shortcutInternational"),
       globeIcon: true,

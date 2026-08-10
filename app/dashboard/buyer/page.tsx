@@ -450,7 +450,7 @@ export default function BuyerDashboardPage() {
     setProfileUpdateError(null)
     setProfileUpdateSuccess(null)
 
-    const filePath = `users/${currentUser.firebaseUser.uid}/profile.jpg` // Consistent file name
+    const filePath = `users/${currentUser.firebaseUser.uid}/profile/${Date.now()}-${profileImageFile.name}`
     const storageRef = ref(storage, filePath)
 
     try {

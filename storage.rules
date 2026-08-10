@@ -1,0 +1,19 @@
+rules_version = '2';
+// Fusioná con las reglas actuales de Storage en Firebase Console antes de deploy.
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Publicación de autos: solo el dueño (sellerId en la ruta) puede escribir
+    match /vehicles/{sellerId}/{listingId}/{fileName} {
+      allow read: if true;
+      allow write, delete: if request.auth != null && request.auth.uid == sellerId;
+    }
+
+    // Compatibilidad con rutas anteriores (solo listingId en el path)
+    match /vehicles/{listingId}/{fileName} {
+      allow read: if true;
+      allow write, delete: if request.auth != null
+        && firestore.exists(/databases/(default)/documents/vehicleListings/$(listingId))
+        && firestore.get(/databases/(default)/documents/vehicleListings/$(listingId)).data.sellerId == request.auth.uid;
+    }
+  }
+}
