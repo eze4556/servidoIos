@@ -43,6 +43,7 @@
     "navFollow": "Seguir",
     "navRestaurants": "Restaurantes",
     "navAutos": "Carros",
+    "navPropiedades": "Imóveis",
     "navServices": "Serviços",
     "navFavorites": "Favoritos",
     "hideChatFab": "Esconder chat",
@@ -739,9 +740,13 @@
     "shortcutShipping": "Entregas",
     "shortcutServices": "Serviços",
     "shortcutAutos": "Carros",
+    "shortcutPropiedades": "Servido Imóveis",
     "vehiclesSpotlightTitle": "Servido Veículos",
     "vehiclesSpotlightDesc": "Um espaço só para o setor automotivo: fotos, filtros por marca e modelo, preço em pesos ou dólares e contato direto no chat.",
     "vehiclesSpotlightCta": "Explorar veículos",
+    "propertiesSpotlightTitle": "Servido Imóveis",
+    "propertiesSpotlightDesc": "Casas, apartamentos e terrenos com fotos e vídeos. Venda ou aluguel, filtros por região e chat direto.",
+    "propertiesSpotlightCta": "Explorar imóveis",
     "seeAllCategories": "Ver todas as categorias",
     "noBrands": "Não há marcas para exibir.",
     "bannerAlt1": "Encontre a tecnologia ideal para você",
@@ -1222,7 +1227,15 @@
     "pickSlot": "Escolha um horário.",
     "success": "Horário solicitado. Avisaremos quando o prestador confirmar.",
     "bookError": "Não foi possível solicitar o horário.",
-    "weekdays": ["Se", "Te", "Qu", "Qu", "Se", "Sá", "Do"]
+    "weekdays": [
+      "Se",
+      "Te",
+      "Qu",
+      "Qu",
+      "Se",
+      "Sá",
+      "Do"
+    ]
   },
   "purchase": {
     "successTitle": "Parabéns!",
@@ -1339,22 +1352,64 @@
     "footerChat": "Chat / mensagens",
     "footerCatalog": "Explorar catálogo",
     "nav": {
-      "dashboard": { "label": "Resumo", "description": "Atividade geral" },
-      "orders": { "label": "Minhas compras", "description": "Pedidos e entregas" },
-      "purchases": { "label": "Histórico de pagamentos", "description": "Transações" },
-      "appointments": { "label": "Meus horários", "description": "Reservas de serviços" },
-      "favorites": { "label": "Favoritos", "description": "Salvos para depois" },
-      "reseller": { "label": "Revendedor", "description": "Indicações e cobranças" },
-      "profile": { "label": "Meu perfil", "description": "Conta e dados" }
+      "dashboard": {
+        "label": "Resumo",
+        "description": "Atividade geral"
+      },
+      "orders": {
+        "label": "Minhas compras",
+        "description": "Pedidos e entregas"
+      },
+      "purchases": {
+        "label": "Histórico de pagamentos",
+        "description": "Transações"
+      },
+      "appointments": {
+        "label": "Meus horários",
+        "description": "Reservas de serviços"
+      },
+      "favorites": {
+        "label": "Favoritos",
+        "description": "Salvos para depois"
+      },
+      "reseller": {
+        "label": "Revendedor",
+        "description": "Indicações e cobranças"
+      },
+      "profile": {
+        "label": "Meu perfil",
+        "description": "Conta e dados"
+      }
     },
     "pages": {
-      "dashboard": { "title": "Resumo", "subtitle": "Sua atividade de compras em um relance" },
-      "orders": { "title": "Minhas compras", "subtitle": "Acompanhe pedidos e entregas" },
-      "purchases": { "title": "Histórico de pagamentos", "subtitle": "Detalhe de todas as transações" },
-      "appointments": { "title": "Meus horários", "subtitle": "Reservas de serviços solicitadas" },
-      "favorites": { "title": "Favoritos", "subtitle": "Produtos salvos para mais tarde" },
-      "reseller": { "title": "Revendedor", "subtitle": "Suas indicações, vendas e cobranças" },
-      "profile": { "title": "Meu perfil", "subtitle": "Gerencie sua conta e preferências" }
+      "dashboard": {
+        "title": "Resumo",
+        "subtitle": "Sua atividade de compras em um relance"
+      },
+      "orders": {
+        "title": "Minhas compras",
+        "subtitle": "Acompanhe pedidos e entregas"
+      },
+      "purchases": {
+        "title": "Histórico de pagamentos",
+        "subtitle": "Detalhe de todas as transações"
+      },
+      "appointments": {
+        "title": "Meus horários",
+        "subtitle": "Reservas de serviços solicitadas"
+      },
+      "favorites": {
+        "title": "Favoritos",
+        "subtitle": "Produtos salvos para mais tarde"
+      },
+      "reseller": {
+        "title": "Revendedor",
+        "subtitle": "Suas indicações, vendas e cobranças"
+      },
+      "profile": {
+        "title": "Meu perfil",
+        "subtitle": "Gerencie sua conta e preferências"
+      }
     },
     "statsTotalPurchases": "Compras totais",
     "statsTotalSpent": "Total gasto",
@@ -1486,17 +1541,50 @@
     "foodOrder": {
       "placeSuffix": " em {restaurantName}",
       "genericBody": "{title}{place}.",
-      "recibido": { "title": "Pedido recebido", "body": "" },
-      "confirmado": { "title": "Pedido confirmado", "body": "" },
-      "en_preparacion": { "title": "Seu pedido está sendo preparado", "body": "" },
-      "listo": { "title": "Seu pedido está pronto", "body": "" },
-      "despachado": { "title": "Pedido despachado", "body": "" },
-      "en_camino": { "title": "Seu pedido está a caminho", "body": "" },
-      "llegando": { "title": "O entregador está chegando", "body": "" },
-      "afuera": { "title": "O entregador está na porta", "body": "" },
-      "entregado": { "title": "Pedido entregue", "body": "Sua comida{place} foi entregue. Bom apetite!" },
-      "cancelado": { "title": "Pedido cancelado", "body": "" },
-      "fallback": { "title": "Atualização do seu pedido", "body": "" },
+      "recibido": {
+        "title": "Pedido recebido",
+        "body": ""
+      },
+      "confirmado": {
+        "title": "Pedido confirmado",
+        "body": ""
+      },
+      "en_preparacion": {
+        "title": "Seu pedido está sendo preparado",
+        "body": ""
+      },
+      "listo": {
+        "title": "Seu pedido está pronto",
+        "body": ""
+      },
+      "despachado": {
+        "title": "Pedido despachado",
+        "body": ""
+      },
+      "en_camino": {
+        "title": "Seu pedido está a caminho",
+        "body": ""
+      },
+      "llegando": {
+        "title": "O entregador está chegando",
+        "body": ""
+      },
+      "afuera": {
+        "title": "O entregador está na porta",
+        "body": ""
+      },
+      "entregado": {
+        "title": "Pedido entregue",
+        "body": "Sua comida{place} foi entregue. Bom apetite!"
+      },
+      "cancelado": {
+        "title": "Pedido cancelado",
+        "body": ""
+      },
+      "fallback": {
+        "title": "Atualização do seu pedido",
+        "body": ""
+      },
       "fallbackTitle": "Atualização do seu pedido"
     },
     "subscription": {
@@ -1769,9 +1857,18 @@
     "title": "Conectamos pessoas, produtos e serviços",
     "subtitle": "Servido é o marketplace onde compradores e vendedores se encontram em um espaço seguro, moderno e fácil de usar.",
     "highlights": {
-      "marketplace": { "label": "Marketplace", "value": "Produtos e serviços" },
-      "community": { "label": "Comunidade", "value": "Compradores e vendedores" },
-      "security": { "label": "Segurança", "value": "Compra protegida" }
+      "marketplace": {
+        "label": "Marketplace",
+        "value": "Produtos e serviços"
+      },
+      "community": {
+        "label": "Comunidade",
+        "value": "Compradores e vendedores"
+      },
+      "security": {
+        "label": "Segurança",
+        "value": "Compra protegida"
+      }
     },
     "missionTitle": "Nossa missão",
     "missionBody": "Conectar quem busca produtos e serviços com quem os oferece, criando uma comunidade vibrante e um mercado eficiente. Facilitamos transações justas e seguras, empoderando pessoas e pequenos negócios na economia digital.",
@@ -1779,11 +1876,26 @@
     "visionBody": "Ser a plataforma de referência para comprar e vender produtos e serviços, reconhecida pela facilidade, segurança e confiança. Inovamos para oferecer a melhor experiência à comunidade.",
     "valuesTitle": "Nossos valores",
     "values": [
-      { "title": "Confiança", "description": "Relações sólidas com transparência, segurança e honestidade em cada transação." },
-      { "title": "Inovação", "description": "Melhoramos a plataforma constantemente para uma experiência cada vez mais simples." },
-      { "title": "Comunidade", "description": "Conectamos compradores e vendedores em um ambiente de apoio e colaboração." },
-      { "title": "Integridade", "description": "Operamos com ética e responsabilidade em tudo o que fazemos." },
-      { "title": "Excelência", "description": "Buscamos qualidade de serviço em cada detalhe." }
+      {
+        "title": "Confiança",
+        "description": "Relações sólidas com transparência, segurança e honestidade em cada transação."
+      },
+      {
+        "title": "Inovação",
+        "description": "Melhoramos a plataforma constantemente para uma experiência cada vez mais simples."
+      },
+      {
+        "title": "Comunidade",
+        "description": "Conectamos compradores e vendedores em um ambiente de apoio e colaboração."
+      },
+      {
+        "title": "Integridade",
+        "description": "Operamos com ética e responsabilidade em tudo o que fazemos."
+      },
+      {
+        "title": "Excelência",
+        "description": "Buscamos qualidade de serviço em cada detalhe."
+      }
     ],
     "teamTitle": "Nossa equipe",
     "teamBody": "Somos um time dedicado, comprometido com uma plataforma que atenda de verdade às necessidades dos usuários. Valorizamos diversidade, criatividade e trabalho em equipe.",
@@ -1912,31 +2024,95 @@
     "accountLabel": "Conta de vendedor",
     "footerStore": "Minha loja",
     "footerVehicles": "Anunciar carros",
+    "footerProperties": "Anunciar imóveis",
     "viewCatalog": "Ver catálogo",
     "nav": {
-      "dashboard": { "label": "Resumo", "description": "Métricas da sua loja" },
-      "products": { "label": "Meus produtos", "description": "Anúncios ativos" },
-      "addProduct": { "label": "Adicionar produto", "description": "Nova publicação" },
-      "addProductEditing": { "label": "Editar produto", "description": "Nova publicação" },
-      "addService": { "label": "Adicionar serviço", "description": "Oferecer um serviço" },
-      "agenda": { "label": "Agenda", "description": "Horários e turnos" },
-      "create-coupons": { "label": "Criar cupons", "description": "Promoções" },
-      "shipping": { "label": "Envios", "description": "Status das entregas" },
-      "earnings": { "label": "Minhas vendas", "description": "Receitas e pagamentos" },
-      "profile": { "label": "Configurações", "description": "Perfil e assinatura" },
-      "resellerProgram": { "label": "Revendedores", "description": "Programa de divulgação Servido" }
+      "dashboard": {
+        "label": "Resumo",
+        "description": "Métricas da sua loja"
+      },
+      "products": {
+        "label": "Meus produtos",
+        "description": "Anúncios ativos"
+      },
+      "addProduct": {
+        "label": "Adicionar produto",
+        "description": "Nova publicação"
+      },
+      "addProductEditing": {
+        "label": "Editar produto",
+        "description": "Nova publicação"
+      },
+      "addService": {
+        "label": "Adicionar serviço",
+        "description": "Oferecer um serviço"
+      },
+      "agenda": {
+        "label": "Agenda",
+        "description": "Horários e turnos"
+      },
+      "create-coupons": {
+        "label": "Criar cupons",
+        "description": "Promoções"
+      },
+      "shipping": {
+        "label": "Envios",
+        "description": "Status das entregas"
+      },
+      "earnings": {
+        "label": "Minhas vendas",
+        "description": "Receitas e pagamentos"
+      },
+      "profile": {
+        "label": "Configurações",
+        "description": "Perfil e assinatura"
+      },
+      "resellerProgram": {
+        "label": "Revendedores",
+        "description": "Programa de divulgação Servido"
+      }
     },
     "pages": {
-      "dashboard": { "title": "Resumo", "subtitle": "Sua loja e atividade em um relance" },
-      "products": { "title": "Meus produtos", "subtitle": "Gerencie o que você publicou" },
-      "addProduct": { "title": "Publicar produto", "subtitle": "Adicione um novo produto à sua loja" },
-      "addProductEditing": { "title": "Editar produto", "subtitle": "Altere os dados da sua publicação" },
-      "addService": { "title": "Publicar serviço", "subtitle": "Ofereça um novo serviço" },
-      "agenda": { "title": "Agenda de serviços", "subtitle": "Horários e turnos dos seus clientes" },
-      "shipping": { "title": "Envios", "subtitle": "Gerencie o status dos seus envios" },
-      "earnings": { "title": "Minhas vendas", "subtitle": "Receitas e transações" },
-      "create-coupons": { "title": "Cupons", "subtitle": "Crie promoções para seus clientes" },
-      "profile": { "title": "Configurações", "subtitle": "Perfil, assinatura e Mercado Pago" },
+      "dashboard": {
+        "title": "Resumo",
+        "subtitle": "Sua loja e atividade em um relance"
+      },
+      "products": {
+        "title": "Meus produtos",
+        "subtitle": "Gerencie o que você publicou"
+      },
+      "addProduct": {
+        "title": "Publicar produto",
+        "subtitle": "Adicione um novo produto à sua loja"
+      },
+      "addProductEditing": {
+        "title": "Editar produto",
+        "subtitle": "Altere os dados da sua publicação"
+      },
+      "addService": {
+        "title": "Publicar serviço",
+        "subtitle": "Ofereça um novo serviço"
+      },
+      "agenda": {
+        "title": "Agenda de serviços",
+        "subtitle": "Horários e turnos dos seus clientes"
+      },
+      "shipping": {
+        "title": "Envios",
+        "subtitle": "Gerencie o status dos seus envios"
+      },
+      "earnings": {
+        "title": "Minhas vendas",
+        "subtitle": "Receitas e transações"
+      },
+      "create-coupons": {
+        "title": "Cupons",
+        "subtitle": "Crie promoções para seus clientes"
+      },
+      "profile": {
+        "title": "Configurações",
+        "subtitle": "Perfil, assinatura e Mercado Pago"
+      },
       "resellerProgram": {
         "title": "Programa revendedores",
         "subtitle": "Cliques e vendas por recomendação nos seus produtos"
@@ -2692,6 +2868,12 @@
     "pauseListing": "Pausar",
     "resumeListing": "Reativar",
     "markSold": "Marcar vendido",
+    "deleteListing": "Excluir",
+    "deleteListingTitle": "Excluir anúncio?",
+    "deleteListingDesc": "O anúncio e as fotos serão removidos. Esta ação não pode ser desfeita.",
+    "deleteListingConfirm": "Sim, excluir",
+    "deleteListingError": "Não foi possível excluir. Tente novamente.",
+    "ownerBannerTitle": "Este é o seu anúncio",
     "formVehicleType": "Tipo",
     "formCurrency": "Moeda",
     "formMake": "Marca",
@@ -2723,5 +2905,134 @@
     "heading": "Esta função não existe ou está em desenvolvimento",
     "description": "A página que você tentou visitar não está disponível. Se achar que é um erro, confira a URL ou volte ao seu painel principal.",
     "backDashboard": "Ir ao meu painel"
+  },
+  "properties": {
+    "verticalName": "Servido Imóveis",
+    "zoneBadge": "Servido Imóveis",
+    "publishCtaShort": "Publicar",
+    "browseCatalog": "Ver catálogo",
+    "heroTrustFree": "Publicación gratuita",
+    "heroTrustOps": "Venta y alquiler",
+    "heroTrustLocal": "Por ciudad y barrio",
+    "heroCardTagline": "Publicaciones activas",
+    "heroCardListings": "en el catálogo",
+    "quickTypes": "Explorar por tipo",
+    "catalogTitle": "Catálogo",
+    "catalogSubtitle": "Encontrá tu próximo hogar o inversión. Fotos y videos en cada aviso.",
+    "loadingListings": "Cargando propiedades…",
+    "emptyListHint": "Sé el primero en publicar o probá otros filtros.",
+    "heroTitle": "Servido Imóveis",
+    "heroSubtitle": "Venta y alquiler con fotos y videos. Filtros por tipo, operación, precio y ubicación en pesos o dólares.",
+    "publishFreeNote": "Publicá gratis — sin suscripción.",
+    "publishCta": "Publicar propiedad",
+    "filtersTitle": "Filtros",
+    "filtersApply": "Ver {count} resultados",
+    "resultsCount": "{count} resultados",
+    "filterCurrency": "Moneda del precio",
+    "filterOperation": "Operación",
+    "filterSearch": "Buscar",
+    "filterSearchPlaceholder": "Palabras clave…",
+    "filterPropertyType": "Tipo de propiedad",
+    "filterAll": "Todos",
+    "filterMinPrice": "Precio mínimo",
+    "filterMaxPrice": "Precio máximo",
+    "filterProvince": "Provincia",
+    "filterCity": "Ciudad",
+    "filterCityPlaceholder": "Ej. La Plata",
+    "filterMinRooms": "Mín. ambientes",
+    "filterMinM2": "Mín. m² cubiertos",
+    "filterSort": "Ordenar",
+    "sortRecent": "Más recientes",
+    "sortPriceAsc": "Menor precio",
+    "sortPriceDesc": "Mayor precio",
+    "sortM2Desc": "Mayor superficie",
+    "clearFilters": "Limpiar filtros",
+    "emptyList": "No hay publicaciones con estos filtros.",
+    "backToCatalog": "Volver al catálogo",
+    "notFound": "Esta publicación no está disponible.",
+    "descriptionTitle": "Descripción",
+    "noDescription": "Sin descripción.",
+    "specsTitle": "Características",
+    "contactCta": "Consultar por chat",
+    "chatInitialMessage": "Hola, consulto por: {title} — {price}",
+    "chatBuyerFallback": "Comprador",
+    "chatSelfError": "No podés consultar tu propia publicación.",
+    "chatError": "No se pudo abrir el chat.",
+    "cardRooms": "amb.",
+    "specOperation": "Operación",
+    "specType": "Tipo",
+    "specRooms": "Ambientes",
+    "specBathrooms": "Baños",
+    "specCoveredM2": "M² cubiertos",
+    "specTotalM2": "M² totales",
+    "specExpenses": "Expensas",
+    "specLocation": "Ubicación",
+    "propertyType": {
+      "casa": "Casa",
+      "departamento": "Depto",
+      "terreno": "Terreno",
+      "local": "Local",
+      "galpon": "Galpón",
+      "campo": "Campo",
+      "ph": "PH",
+      "otro": "Otro"
+    },
+    "operation": {
+      "venta": "Venta",
+      "alquiler": "Alquiler",
+      "alquiler_temporario": "Temporario"
+    },
+    "status": {
+      "active": "Activa",
+      "paused": "Pausada",
+      "sold": "Vendida",
+      "rented": "Alquilada"
+    },
+    "sellerPanelTitle": "Mis propiedades",
+    "sellerPanelDesc": "Gerencie seus anúncios no Servido Imóveis.",
+    "sellerEmpty": "Todavía no publicaste ninguna propiedad.",
+    "backToSeller": "Volver al panel vendedor",
+    "viewPublic": "Ver publicación",
+    "editListing": "Editar",
+    "pauseListing": "Pausar",
+    "resumeListing": "Reactivar",
+    "markSold": "Marcar vendida",
+    "markRented": "Marcar alquilada",
+    "deleteListing": "Excluir",
+    "deleteListingTitle": "Excluir anúncio?",
+    "deleteListingDesc": "O anúncio, fotos e vídeos serão removidos. Esta ação não pode ser desfeita.",
+    "deleteListingConfirm": "Sim, excluir",
+    "deleteListingError": "Não foi possível excluir. Tente novamente.",
+    "ownerBannerTitle": "Este é o seu anúncio",
+    "formOperation": "Operación",
+    "formPropertyType": "Tipo",
+    "formRooms": "Ambientes",
+    "formBathrooms": "Baños",
+    "formCoveredM2": "M² cubiertos",
+    "formTotalM2": "M² totales",
+    "formPrice": "Precio",
+    "formCurrency": "Moneda",
+    "formExpenses": "Expensas (opc.)",
+    "formProvince": "Provincia",
+    "formCity": "Ciudad",
+    "formNeighborhood": "Barrio",
+    "formDescription": "Descripción",
+    "formPhotos": "Fotos",
+    "formPhotosHint": "Hasta {max} imágenes (JPG, PNG, WebP).",
+    "formVideos": "Videos",
+    "formVideosHint": "Hasta {max} videos (MP4, MOV, WebM, máx. 80 MB c/u).",
+    "formExistingMedia": "{count} archivo(s) ya cargados",
+    "formPublish": "Publicar",
+    "formSave": "Guardar cambios",
+    "formCancel": "Cancelar",
+    "formSelect": "Elegir…",
+    "formValidationRequired": "Completá precio, provincia y ciudad.",
+    "formValidationMedia": "Subí al menos una foto o un video.",
+    "formValidationMaxImages": "Máximo {max} imágenes.",
+    "formValidationMaxVideos": "Máximo {max} videos.",
+    "formErrorLimit": "Llegaste al máximo de publicaciones activas.",
+    "formErrorVideo": "Revisá el formato o tamaño del video.",
+    "formErrorImage": "Revisá el formato o tamaño de la imagen.",
+    "formErrorGeneric": "No se pudo guardar. Intentá de nuevo."
   }
 }

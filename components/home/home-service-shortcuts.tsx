@@ -46,6 +46,15 @@ export function HomeServiceShortcuts() {
       iconAnim: "home-shortcut-float-delay-1",
     },
     {
+      id: "propiedades",
+      label: th("shortcutPropiedades"),
+      emoji: "🏠",
+      href: "/propiedades",
+      circle: "bg-gradient-to-br from-indigo-600 via-servido-900 to-[#1e1b4b]",
+      shadow: "shadow-indigo-600/40",
+      iconAnim: "home-shortcut-float-delay-2",
+    },
+    {
       id: "internacional",
       label: th("shortcutInternational"),
       globeIcon: true,

@@ -1,19 +1,77 @@
 rules_version = '2';
-// Fusioná con las reglas actuales de Storage en Firebase Console antes de deploy.
+
 service firebase.storage {
   match /b/{bucket}/o {
-    // Publicación de autos: solo el dueño (sellerId en la ruta) puede escribir
-    match /vehicles/{sellerId}/{listingId}/{fileName} {
-      allow read: if true;
-      allow write, delete: if request.auth != null && request.auth.uid == sellerId;
+
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Compatibilidad con rutas anteriores (solo listingId en el path)
-    match /vehicles/{listingId}/{fileName} {
+    function isAdmin() {
+      return isSignedIn()
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Catálogo admin (categorías, marcas, banners)
+    match /categories/{fileName} {
       allow read: if true;
-      allow write, delete: if request.auth != null
-        && firestore.exists(/databases/(default)/documents/vehicleListings/$(listingId))
-        && firestore.get(/databases/(default)/documents/vehicleListings/$(listingId)).data.sellerId == request.auth.uid;
+      allow write: if isAdmin();
+    }
+
+    match /brands/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /banners/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Productos del vendedor
+    match /products/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // Fotos de perfil (comprador / vendedor)
+    match /users/{userId}/profile/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // Historias
+    match /stories/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // Restaurantes (menú, logo, etc.)
+    match /restaurants/{restaurantId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Vehículos (módulo /autos) — ruta: vehicles/{userId}/{listingId}/archivo
+    match /vehicles/{userId}/{listingId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // Propiedades (Servido Inmuebles) — ruta: properties/{userId}/{listingId}/archivo (fotos y videos)
+    match /properties/{userId}/{listingId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // Cualquier otra ruta: solo lectura pública
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

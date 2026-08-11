@@ -5,6 +5,7 @@ import { HomeBannerCarousel } from "@/components/home/home-banner-carousel"
 import { MobileAppHeader } from "@/components/layout/mobile-app-header"
 import { HomeStoriesSection } from "@/components/stories/home-stories-section"
 import { HomeVehiclesSpotlight } from "@/components/home/home-vehicles-spotlight"
+import { HomePropertiesSpotlight } from "@/components/home/home-properties-spotlight"
 
 /** Orden fijo del home mobile: navbar → historias → banner → categorías */
 export function HomeMobileHero() {
@@ -24,6 +25,9 @@ export function HomeMobileHero() {
 
       <div className="px-4 pb-2 pt-4">
         <HomeVehiclesSpotlight />
+      </div>
+      <div className="px-4 pb-4 pt-2">
+        <HomePropertiesSpotlight />
       </div>
     </section>
   )

@@ -5,12 +5,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,42 +17,36 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ArrowLeft, Plus, Car, Trash2 } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { Loader2, ArrowLeft, Plus, Building2, Trash2 } from "lucide-react"
+import { useTranslations, useLocale } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
-import { VehicleListingForm } from "@/components/vehicles/vehicle-listing-form"
-import { fetchSellerVehicleListings, updateVehicleListing, deleteVehicleListing } from "@/lib/vehicles/vehicle-listings"
-import { formatVehiclePrice } from "@/lib/vehicles/format-vehicle-price"
-import type { VehicleListing, VehicleListingStatus } from "@/types/vehicle-listing"
-import { useLocale } from "next-intl"
-
+import { PropertyListingForm } from "@/components/properties/property-listing-form"
+import { fetchSellerPropertyListings, updatePropertyListing, deletePropertyListing } from "@/lib/properties/property-listings"
+import { formatPropertyPrice } from "@/lib/properties/format-property-price"
+import type { PropertyListing, PropertyListingStatus } from "@/types/property-listing"
 import { cn } from "@/lib/utils"
 
-export default function SellerVehiclesPage() {
-  const t = useTranslations("vehicles")
+export default function SellerPropertiesPage() {
+  const t = useTranslations("properties")
   const locale = useLocale()
   const searchParams = useSearchParams()
   const { currentUser } = useAuth()
   const uid = currentUser?.firebaseUser?.uid
   const displayName =
-    currentUser?.displayName ||
-    currentUser?.businessName ||
-    currentUser?.email ||
-    "Vendedor"
+    currentUser?.displayName || currentUser?.businessName || currentUser?.email || "Vendedor"
 
-  const [listings, setListings] = useState<VehicleListing[]>([])
+  const [listings, setListings] = useState<PropertyListing[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<VehicleListing | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<VehicleListing | null>(null)
+  const [editing, setEditing] = useState<PropertyListing | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<PropertyListing | null>(null)
   const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     if (!uid) return
     setLoading(true)
     try {
-      const rows = await fetchSellerVehicleListings(uid)
-      setListings(rows)
+      setListings(await fetchSellerPropertyListings(uid))
     } finally {
       setLoading(false)
     }
@@ -77,13 +66,13 @@ export default function SellerVehiclesPage() {
     }
   }, [searchParams, listings])
 
-  const setStatus = async (listing: VehicleListing, status: VehicleListingStatus) => {
+  const setStatus = async (listing: PropertyListing, status: PropertyListingStatus) => {
     if (!uid) return
     try {
-      await updateVehicleListing(listing.id, uid, { status })
+      await updatePropertyListing(listing.id, uid, { status })
       await load()
     } catch {
-      // limit etc.
+      // ignore
     }
   }
 
@@ -91,7 +80,7 @@ export default function SellerVehiclesPage() {
     if (!uid || !deleteTarget) return
     setDeleting(true)
     try {
-      await deleteVehicleListing(deleteTarget.id, uid)
+      await deletePropertyListing(deleteTarget.id, uid)
       setDeleteTarget(null)
       await load()
     } catch {
@@ -114,7 +103,7 @@ export default function SellerVehiclesPage() {
         <CardHeader className="flex flex-col gap-4 space-y-0 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             <CardTitle className="flex flex-wrap items-center gap-2 text-lg sm:text-2xl">
-              <Car className="h-5 w-5 text-servido-800" />
+              <Building2 className="h-5 w-5 text-servido-800" />
               {t("sellerPanelTitle")}
             </CardTitle>
             <CardDescription>{t("sellerPanelDesc")}</CardDescription>
@@ -141,27 +130,24 @@ export default function SellerVehiclesPage() {
           ) : (
             <ul className="space-y-3">
               {listings.map((row) => (
-                <li
-                  key={row.id}
-                  className="flex flex-col gap-3 rounded-xl border bg-white p-3 sm:p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
+                <li key={row.id} className="flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-gray-900">{row.title}</p>
                     <p className="text-sm text-servido-800">
-                      {formatVehiclePrice(row.price, row.priceCurrency, locale)}
+                      {formatPropertyPrice(row.price, row.priceCurrency, locale)}
                     </p>
                     <Badge variant="outline" className="mt-1">
                       {t(`status.${row.status}`)}
                     </Badge>
                   </div>
                   <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
-                    <Button asChild size="sm" variant="outline" className="h-9 min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
-                      <Link href={`/autos/${row.id}`}>{t("viewPublic")}</Link>
+                    <Button asChild size="sm" variant="outline" className="h-9 text-xs sm:text-sm">
+                      <Link href={`/propiedades/${row.id}`}>{t("viewPublic")}</Link>
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-9 min-w-0 px-2 text-xs sm:px-3 sm:text-sm"
+                      className="h-9 text-xs sm:text-sm"
                       onClick={() => {
                         setEditing(row)
                         setFormOpen(true)
@@ -170,33 +156,23 @@ export default function SellerVehiclesPage() {
                       {t("editListing")}
                     </Button>
                     {row.status === "active" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 min-w-0 px-2 text-xs sm:px-3 sm:text-sm"
-                        onClick={() => void setStatus(row, "paused")}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => void setStatus(row, "paused")}>
                         {t("pauseListing")}
                       </Button>
                     )}
                     {row.status === "paused" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 min-w-0 px-2 text-xs sm:px-3 sm:text-sm"
-                        onClick={() => void setStatus(row, "active")}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => void setStatus(row, "active")}>
                         {t("resumeListing")}
                       </Button>
                     )}
-                    {row.status !== "sold" && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="col-span-2 h-9 sm:col-span-1"
-                        onClick={() => void setStatus(row, "sold")}
-                      >
+                    {row.status !== "sold" && row.status !== "rented" && row.operation === "venta" && (
+                      <Button size="sm" variant="secondary" onClick={() => void setStatus(row, "sold")}>
                         {t("markSold")}
+                      </Button>
+                    )}
+                    {row.status !== "sold" && row.status !== "rented" && row.operation !== "venta" && (
+                      <Button size="sm" variant="secondary" onClick={() => void setStatus(row, "rented")}>
+                        {t("markRented")}
                       </Button>
                     )}
                     <Button
@@ -225,28 +201,26 @@ export default function SellerVehiclesPage() {
           )}
         >
           <DialogHeader className="shrink-0 border-b px-4 py-3 pr-12 text-left sm:border-0 sm:px-0 sm:py-0">
-            <DialogTitle className="text-base leading-snug sm:text-lg">
-              {editing ? t("editListing") : t("publishCta")}
-            </DialogTitle>
+            <DialogTitle>{editing ? t("editListing") : t("publishCta")}</DialogTitle>
           </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-0 sm:py-0">
-          {uid && (
-            <VehicleListingForm
-              sellerId={uid}
-              sellerDisplayName={displayName}
-              listingId={editing?.id}
-              initial={editing ?? undefined}
-              onSuccess={() => {
-                setFormOpen(false)
-                setEditing(null)
-                void load()
-              }}
-              onCancel={() => {
-                setFormOpen(false)
-                setEditing(null)
-              }}
-            />
-          )}
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-0">
+            {uid && (
+              <PropertyListingForm
+                sellerId={uid}
+                sellerDisplayName={displayName}
+                listingId={editing?.id}
+                initial={editing ?? undefined}
+                onSuccess={() => {
+                  setFormOpen(false)
+                  setEditing(null)
+                  void load()
+                }}
+                onCancel={() => {
+                  setFormOpen(false)
+                  setEditing(null)
+                }}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

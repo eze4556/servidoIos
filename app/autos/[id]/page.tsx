@@ -4,12 +4,22 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Loader2, ArrowLeft, MessageCircle } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Loader2, ArrowLeft, MessageCircle, Trash2 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { VehicleDetailGallery } from "@/components/vehicles/vehicle-detail-gallery"
 import { VehicleSpecsTable } from "@/components/vehicles/vehicle-specs-table"
-import { fetchVehicleListingById } from "@/lib/vehicles/vehicle-listings"
+import { deleteVehicleListing, fetchVehicleListingById } from "@/lib/vehicles/vehicle-listings"
 import { formatVehiclePrice } from "@/lib/vehicles/format-vehicle-price"
 import { startVehicleListingChat } from "@/lib/chat-start"
 import type { VehicleListing } from "@/types/vehicle-listing"
@@ -27,6 +37,11 @@ export default function VehicleDetailPage() {
   const [listing, setListing] = useState<VehicleListing | null>(null)
   const [loading, setLoading] = useState(true)
   const [contacting, setContacting] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const uid = currentUser?.firebaseUser?.uid
+  const isOwner = !!uid && !!listing && uid === listing.sellerId
 
   useEffect(() => {
     if (!id) return
@@ -40,12 +55,11 @@ export default function VehicleDetailPage() {
 
   const handleContact = async () => {
     if (!listing) return
-    if (!currentUser?.firebaseUser?.uid) {
+    if (!uid) {
       router.push(`/login?redirect=/autos/${listing.id}`)
       return
     }
-    const buyerId = currentUser.firebaseUser.uid
-    if (buyerId === listing.sellerId) {
+    if (uid === listing.sellerId) {
       toast({ title: t("chatSelfError"), variant: "destructive" })
       return
     }
@@ -59,7 +73,7 @@ export default function VehicleDetailPage() {
       })
       const chatId = await startVehicleListingChat({
         listingId: listing.id,
-        buyerId,
+        buyerId: uid,
         buyerName: currentUser.displayName || currentUser.email || t("chatBuyerFallback"),
         sellerId: listing.sellerId,
         sellerName: listing.sellerDisplayName,
@@ -75,6 +89,20 @@ export default function VehicleDetailPage() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!uid || !listing) return
+    setDeleting(true)
+    try {
+      await deleteVehicleListing(listing.id, uid)
+      router.push("/autos")
+    } catch {
+      toast({ title: t("deleteListingError"), variant: "destructive" })
+    } finally {
+      setDeleting(false)
+      setDeleteOpen(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -83,7 +111,7 @@ export default function VehicleDetailPage() {
     )
   }
 
-  if (!listing || (listing.status !== "active" && listing.sellerId !== currentUser?.firebaseUser?.uid)) {
+  if (!listing || (listing.status !== "active" && listing.sellerId !== uid)) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
         <p className="text-slate-400">{t("notFound")}</p>
@@ -118,7 +146,30 @@ export default function VehicleDetailPage() {
             <p className="mt-1 text-sm text-servido-600">{listing.locationLabel}</p>
           </div>
 
-          {listing.allowChat && (
+          {isOwner && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-amber-900">{t("ownerBannerTitle")}</p>
+              {listing.status !== "active" && (
+                <p className="mt-1 text-xs font-medium text-amber-800">{t(`status.${listing.status}`)}</p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="outline" className="border-amber-300 bg-white hover:bg-amber-100">
+                  <Link href={`/dashboard/seller/vehicles?edit=${listing.id}`}>{t("editListing")}</Link>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-red-200 bg-white text-red-700 hover:bg-red-50 hover:text-red-800"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                  {t("deleteListing")}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {listing.allowChat && !isOwner && (
             <Button
               size="lg"
               className="w-full bg-white font-semibold text-servido-800 shadow-md hover:bg-purple-50 sm:w-auto"
@@ -147,6 +198,28 @@ export default function VehicleDetailPage() {
         <h2 className="mb-4 text-lg font-semibold text-white">{t("specsTitle")}</h2>
         <VehicleSpecsTable listing={listing} />
       </section>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteListingTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("deleteListingDesc")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{t("formCancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault()
+                void handleDelete()
+              }}
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t("deleteListingConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react"
 import { useMemo } from "react"
 import { useTranslations } from "next-intl"
-import { Store, Car } from "lucide-react"
+import { Store, Car, Building2 } from "lucide-react"
 import {
   DashboardMobileSidebar,
   DashboardSidebar,
@@ -66,6 +66,7 @@ export function SellerDashboardShell({
     footerLinks: [
       { label: t("footerStore"), href: storeHref || "/dashboard/seller", icon: Store },
       { label: t("footerVehicles"), href: "/dashboard/seller/vehicles", icon: Car },
+      { label: t("footerProperties"), href: "/dashboard/seller/properties", icon: Building2 },
     ],
   }
 

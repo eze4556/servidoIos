@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  deleteDoc,
   getCountFromServer,
   getDoc,
   getDocs,
@@ -21,6 +22,7 @@ import {
   type VehicleListingInput,
   type VehicleListingStatus,
 } from "@/types/vehicle-listing"
+import { deleteVehicleStoragePath } from "@/lib/vehicles/vehicle-storage"
 
 export function parseVehicleListing(id: string, data: Record<string, unknown>): VehicleListing {
   return {
@@ -173,4 +175,17 @@ export async function fetchActiveVehicleListings(options?: {
 
 export function buildVehicleTitle(make: string, model: string, year: number): string {
   return `${make} ${model} ${year}`.trim()
+}
+
+export async function deleteVehicleListing(listingId: string, sellerId: string): Promise<void> {
+  const ref = doc(db, VEHICLE_LISTINGS_COLLECTION, listingId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error("NOT_FOUND")
+  const data = snap.data()
+  if (data.sellerId !== sellerId) throw new Error("FORBIDDEN")
+
+  const media = Array.isArray(data.media) ? (data.media as { path?: string }[]) : []
+  await Promise.all(media.filter((m) => m.path).map((m) => deleteVehicleStoragePath(m.path!)))
+
+  await deleteDoc(ref)
 }

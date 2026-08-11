@@ -16,6 +16,7 @@ import {
   UserPlus,
   UtensilsCrossed,
   Car,
+  Building2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -435,6 +436,7 @@ export function Header() {
               { href: "/mensajes", icon: MessageCircle, label: t("chat") },
               { href: "/restaurantes", icon: UtensilsCrossed, label: t("navRestaurants") },
               { href: "/autos", icon: Car, label: t("navAutos") },
+              { href: "/propiedades", icon: Building2, label: t("navPropiedades") },
               { href: "/services", icon: Package, label: t("navServices") },
               { href: "/favorites", icon: Heart, label: t("navFavorites") },
             ].map(({ href, icon: Icon, label }) => {

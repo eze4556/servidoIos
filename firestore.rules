@@ -11,5 +11,14 @@ service cloud.firestore {
       allow update, delete: if request.auth != null
         && resource.data.sellerId == request.auth.uid;
     }
+    match /propertyListings/{listingId} {
+      allow read: if resource.data.status == 'active'
+        || (request.auth != null && request.auth.uid == resource.data.sellerId);
+      allow create: if request.auth != null
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.status in ['active', 'paused'];
+      allow update, delete: if request.auth != null
+        && resource.data.sellerId == request.auth.uid;
+    }
   }
 }
