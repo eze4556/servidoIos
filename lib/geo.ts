@@ -32,3 +32,15 @@ export function distanceKm(
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
+
+/** Distancia aproximada por calle (Haversine × factor). Default 1.25. */
+export function roadDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+  factor = 1.25
+): number {
+  if (!hasValidCoordinates(lat1, lon1) || !hasValidCoordinates(lat2, lon2)) return 0
+  return Math.round(distanceKm(lat1, lon1, lat2, lon2) * factor * 100) / 100
+}

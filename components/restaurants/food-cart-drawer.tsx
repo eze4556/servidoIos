@@ -9,6 +9,14 @@ import { useFoodCart } from "@/contexts/food-cart-context"
 import { ApiService } from "@/lib/services/api"
 import { getRestaurantPaymentMethodLabel } from "@/lib/i18n/restaurant-labels"
 import { describeApiError } from "@/lib/i18n/translate-client-error"
+import {
+  DEFAULT_DELIVERY_PRICING,
+  fetchDeliveryPricing,
+  quoteDeliveryAmounts,
+  type DeliveryPricing,
+} from "@/lib/delivery-pricing"
+import { hasValidCoordinates, type BusinessLocation } from "@/lib/geo"
+import { BusinessLocationPicker } from "@/components/location/business-location-picker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,25 +30,19 @@ import {
 } from "@/components/ui/sheet"
 import { Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react"
 import { usePriceFormat } from "@/hooks/use-price-format"
-import type {
-  DeliveryMode,
-  RestaurantPaymentMethod,
-  RestaurantTransferInfo,
-} from "@/types/restaurant"
+import type { DeliveryMode, RestaurantPaymentMethod } from "@/types/restaurant"
 
 interface FoodCartDrawerProps {
   deliveryMode: DeliveryMode
-  /** Precio de envío configurado por el restaurante */
-  restaurantDeliveryFee?: number
+  restaurantCoordinates?: { latitude: number; longitude: number } | null
+  /** Métodos del restaurante (retiro). Delivery siempre fuerza Mercado Pago. */
   paymentMethods?: RestaurantPaymentMethod[]
-  transferInfo?: RestaurantTransferInfo
 }
 
 export function FoodCartDrawer({
   deliveryMode,
-  restaurantDeliveryFee = 300,
-  paymentMethods = ["cash", "transfer"],
-  transferInfo,
+  restaurantCoordinates = null,
+  paymentMethods = ["cash", "mercadopago"],
 }: FoodCartDrawerProps) {
   const t = useTranslations("foodCart")
   const tApi = useTranslations("apiErrors")
@@ -51,29 +53,68 @@ export function FoodCartDrawer({
   const { items, restaurantName, itemCount, subtotal, updateQuantity, removeItem, clearCart, restaurantId } =
     useFoodCart()
   const [open, setOpen] = useState(false)
-  const [address, setAddress] = useState("")
+  const [deliveryLocation, setDeliveryLocation] = useState<BusinessLocation | null>(null)
   const [phone, setPhone] = useState("")
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<RestaurantPaymentMethod | null>(null)
+  const [pricing, setPricing] = useState<DeliveryPricing>(DEFAULT_DELIVERY_PRICING)
+
+  const isPickup = deliveryMode === "retiro_en_local"
 
   const enabledMethods = useMemo(() => {
-    const list = paymentMethods?.length ? paymentMethods : (["cash", "transfer"] as RestaurantPaymentMethod[])
-    return list.filter((m) => m !== "transfer" || Boolean(transferInfo?.alias || transferInfo?.cbu))
-  }, [paymentMethods, transferInfo])
+    if (!isPickup) return ["mercadopago"] as RestaurantPaymentMethod[]
+    const list = (paymentMethods?.length ? paymentMethods : ["cash", "mercadopago"]).filter(
+      (m) => m === "mercadopago" || m === "cash"
+    )
+    return list.length ? list : (["mercadopago", "cash"] as RestaurantPaymentMethod[])
+  }, [isPickup, paymentMethods])
 
   useEffect(() => {
     if (enabledMethods.length === 1) setPaymentMethod(enabledMethods[0])
     else if (paymentMethod && !enabledMethods.includes(paymentMethod)) setPaymentMethod(null)
   }, [enabledMethods, paymentMethod])
 
-  const configuredFee =
-    Number.isFinite(restaurantDeliveryFee) && restaurantDeliveryFee >= 0
-      ? restaurantDeliveryFee
-      : 300
-  const deliveryFee = deliveryMode === "retiro_en_local" ? 0 : configuredFee
+  useEffect(() => {
+    void fetchDeliveryPricing().then(setPricing)
+  }, [])
+
+  const restaurantLat = Number(restaurantCoordinates?.latitude)
+  const restaurantLng = Number(restaurantCoordinates?.longitude)
+  const restaurantHasCoords = hasValidCoordinates(restaurantLat, restaurantLng)
+
+  const quote = useMemo(() => {
+    if (isPickup) {
+      return quoteDeliveryAmounts({
+        subtotal,
+        restaurantLat: 0,
+        restaurantLng: 0,
+        deliveryLat: 0,
+        deliveryLng: 0,
+        pricing,
+        isPickup: true,
+      })
+    }
+    if (
+      !restaurantHasCoords ||
+      !deliveryLocation ||
+      !hasValidCoordinates(deliveryLocation.latitude, deliveryLocation.longitude)
+    ) {
+      return null
+    }
+    return quoteDeliveryAmounts({
+      subtotal,
+      restaurantLat,
+      restaurantLng,
+      deliveryLat: deliveryLocation.latitude,
+      deliveryLng: deliveryLocation.longitude,
+      pricing,
+    })
+  }, [isPickup, subtotal, pricing, restaurantHasCoords, restaurantLat, restaurantLng, deliveryLocation])
+
+  const deliveryFee = quote?.deliveryFee ?? 0
   const total = subtotal + deliveryFee
 
   const handleCheckout = async () => {
@@ -82,12 +123,23 @@ export function FoodCartDrawer({
       return
     }
     if (!restaurantId || items.length === 0) return
-    if (deliveryMode !== "retiro_en_local" && !address.trim()) {
-      setError(t("errorAddress"))
-      return
+
+    if (!isPickup) {
+      if (!restaurantHasCoords) {
+        setError(t("errorRestaurantLocation"))
+        return
+      }
+      if (!deliveryLocation || !hasValidCoordinates(deliveryLocation.latitude, deliveryLocation.longitude)) {
+        setError(t("errorLocation"))
+        return
+      }
     }
     if (!paymentMethod) {
       setError(t("errorPayment"))
+      return
+    }
+    if (!isPickup && paymentMethod !== "mercadopago") {
+      setError(t("errorDeliveryOnlyMp"))
       return
     }
 
@@ -109,11 +161,12 @@ export function FoodCartDrawer({
           promotionId: i.promotionId,
         })),
         deliveryMode,
-        address: address.trim() || undefined,
+        address: deliveryLocation?.label || undefined,
         phone: phone.trim() || undefined,
         notes: notes.trim() || undefined,
-        deliveryFee,
         paymentMethod,
+        deliveryLat: deliveryLocation?.latitude,
+        deliveryLng: deliveryLocation?.longitude,
       })
 
       if (response.error) {
@@ -130,23 +183,7 @@ export function FoodCartDrawer({
       }
 
       clearCart()
-      if (paymentMethod === "transfer") {
-        const info = response.data?.transferInfo || transferInfo
-        setSuccessMsg(
-          [
-            t("successTransferIntro"),
-            info?.alias ? t("transferAlias", { alias: info.alias }) : null,
-            info?.cbu ? t("transferCbu", { cbu: info.cbu }) : null,
-            info?.holderName ? t("transferHolder", { name: info.holderName }) : null,
-            info?.bankName ? t("transferBank", { bank: info.bankName }) : null,
-            info?.instructions || null,
-          ]
-            .filter(Boolean)
-            .join("\n")
-        )
-      } else {
-        setSuccessMsg(t("successCash"))
-      }
+      setSuccessMsg(t("successCashPickup"))
       setTimeout(() => {
         setOpen(false)
         router.push("/pedidos/comida")
@@ -163,11 +200,9 @@ export function FoodCartDrawer({
   const ctaLabel =
     paymentMethod === "mercadopago"
       ? t("ctaMercadopago")
-      : paymentMethod === "transfer"
-        ? t("ctaTransfer")
-        : paymentMethod === "cash"
-          ? t("ctaCash")
-          : t("ctaDefault")
+      : paymentMethod === "cash"
+        ? t("ctaCashPickup")
+        : t("ctaDefault")
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -186,9 +221,7 @@ export function FoodCartDrawer({
             <div key={item.lineId} className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3">
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-gray-900">{item.name}</p>
-                {item.subtitle && (
-                  <p className="line-clamp-2 text-xs text-gray-500">{item.subtitle}</p>
-                )}
+                {item.subtitle && <p className="line-clamp-2 text-xs text-gray-500">{item.subtitle}</p>}
                 <p className="text-sm text-gray-500">{formatPrice(item.price)}</p>
               </div>
               <div className="flex items-center gap-2">
@@ -216,18 +249,37 @@ export function FoodCartDrawer({
             </div>
           ))}
 
-          {deliveryMode !== "retiro_en_local" && (
+          {!isPickup && (
             <div className="space-y-3 pt-2">
-              <div className="space-y-2">
-                <Label>{t("deliveryAddress")}</Label>
-                <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("addressPlaceholder")} />
-              </div>
+              {!restaurantHasCoords && (
+                <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{t("errorRestaurantLocation")}</p>
+              )}
+              <BusinessLocationPicker
+                value={deliveryLocation}
+                onChange={setDeliveryLocation}
+                label={t("deliveryAddress")}
+                helperText={t("locationHelper")}
+              />
+              {quote && (
+                <p className="text-sm text-servido-800">
+                  {t("deliveryQuote", {
+                    km: formatPriceNumber(quote.distanceKm),
+                    fee: formatPrice(quote.deliveryFee),
+                  })}
+                </p>
+              )}
               <div className="space-y-2">
                 <Label>{t("phone")}</Label>
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t("phonePlaceholder")} />
               </div>
+              <p className="text-xs text-gray-500">{t("deliveryMpOnlyHint")}</p>
             </div>
           )}
+
+          {isPickup && (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-gray-600">{t("pickupHint")}</p>
+          )}
+
           <div className="space-y-2">
             <Label>{t("notesOptional")}</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("notesPlaceholder")} />
@@ -251,12 +303,8 @@ export function FoodCartDrawer({
                     }`}
                   >
                     {getRestaurantPaymentMethodLabel(tRestaurants, method)}
-                    {method === "transfer" && (transferInfo?.alias || transferInfo?.cbu) && (
-                      <span className="mt-1 block text-xs font-normal text-gray-500">
-                        {transferInfo.alias
-                          ? t("aliasPrefix", { alias: transferInfo.alias })
-                          : t("cbuPrefix", { cbu: transferInfo.cbu! })}
-                      </span>
+                    {method === "cash" && isPickup && (
+                      <span className="mt-1 block text-xs font-normal text-gray-500">{t("cashPickupHint")}</span>
                     )}
                   </button>
                 ))}
@@ -290,7 +338,12 @@ export function FoodCartDrawer({
             <Button
               className="w-full rounded-full bg-servido-800"
               onClick={() => void handleCheckout()}
-              disabled={loading || enabledMethods.length === 0 || !paymentMethod}
+              disabled={
+                loading ||
+                enabledMethods.length === 0 ||
+                !paymentMethod ||
+                (!isPickup && !quote)
+              }
             >
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {ctaLabel}

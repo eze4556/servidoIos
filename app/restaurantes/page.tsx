@@ -21,8 +21,7 @@ type RestaurantMenuMeta = {
 type RestaurantSort = "recommended" | "price-asc" | "delivery-asc"
 
 function isRestaurantOperative(restaurant: Restaurant) {
-  // Nuevos: subscriptionActive === true. Legacy sin campo: no aparecen hasta suscribirse.
-  return restaurant.subscriptionActive === true && (restaurant.status === "active" || restaurant.status === "approved")
+  return restaurant.status === "active" || restaurant.status === "approved"
 }
 
 export default function RestaurantesPage() {
@@ -42,7 +41,6 @@ export default function RestaurantesPage() {
         const snap = await getDocs(
           query(
             collection(db, "restaurants"),
-            where("subscriptionActive", "==", true),
             where("status", "in", ["active", "approved"]),
             orderBy("name")
           )

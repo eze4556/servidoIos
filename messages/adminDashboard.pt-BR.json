@@ -25,6 +25,7 @@
       "alerts": "Alertas",
       "servidoBroadcast": "Mensagens Servido",
       "resellerPayouts": "Revendedores",
+      "deliverySettlements": "Liquidações",
       "coupons": "Cupones",
       "subscriptionPricing": "Preços de Assinatura"
     },
@@ -39,6 +40,7 @@
       "alerts": "Alertas",
       "servidoBroadcast": "Mensagens Servido",
       "resellerPayouts": "Revendedores",
+      "deliverySettlements": "Liquidações",
       "coupons": "Cupones",
       "subscriptionPricing": "Preços de Assinatura"
     },
@@ -492,6 +494,29 @@
       "sendSuccess": "Enviado para {count} usuários.",
       "sendFailed": "Não foi possível enviar.",
       "notLoggedIn": "Você precisa entrar como admin."
+    },
+    "deliverySettlements": {
+      "cadetesTitle": "Liquidação cadetes (terça)",
+      "cadetesDesc": "Gere o lote da semana e marque pago depois da transferência.",
+      "generateCadetes": "Gerar lotes cadetes",
+      "generatedCadetes": "{count} lote(s) de cadetes criados",
+      "cadetesEmpty": "Não há lotes pendentes. Gere a liquidação se houver entregas acumuladas.",
+      "colCadete": "Cadete",
+      "colBank": "Dados bancários",
+      "colOrders": "Pedidos",
+      "colAmount": "Valor",
+      "markPaid": "Marcar pago",
+      "markedPaid": "Marcado como pago",
+      "missingBank": "Sem CBU/alias",
+      "restaurantsTitle": "Comissões retirada em dinheiro",
+      "restaurantsDesc": "O restaurante deve transferir à Servido os 12% das retiradas em dinheiro.",
+      "generateRestaurants": "Gerar lotes restaurantes",
+      "generatedRestaurants": "{count} lote(s) de restaurantes criados",
+      "restaurantsEmpty": "Não há comissões pendentes de cobrança.",
+      "colRestaurant": "Restaurante",
+      "markCollected": "Marcar cobrada",
+      "markedCollected": "Marcada como cobrada",
+      "error": "Não foi possível concluir a ação"
     }
   }
 }

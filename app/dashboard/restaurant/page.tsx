@@ -16,8 +16,9 @@ import {
   serverTimestamp,
   onSnapshot,
 } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
+import type { RestaurantCommissionBatch } from "@/types/delivery-settlements"
 import { ApiService } from "@/lib/services/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -73,8 +74,7 @@ export default function RestaurantDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [showOtherPayments, setShowOtherPayments] = useState(false)
 
-  const [paymentMethods, setPaymentMethods] = useState<RestaurantPaymentMethod[]>(["cash", "transfer"])
-  const [deliveryFeeInput, setDeliveryFeeInput] = useState("300")
+  const [paymentMethods, setPaymentMethods] = useState<RestaurantPaymentMethod[]>(["cash", "mercadopago"])
   const [transferAlias, setTransferAlias] = useState("")
   const [transferCbu, setTransferCbu] = useState("")
   const [transferBank, setTransferBank] = useState("")
@@ -85,6 +85,8 @@ export default function RestaurantDashboardPage() {
   const [paymentMsg, setPaymentMsg] = useState<string | null>(null)
   const [subscribing, setSubscribing] = useState(false)
   const [cancellingSubscription, setCancellingSubscription] = useState(false)
+  const [pendingCommissionAmount, setPendingCommissionAmount] = useState(0)
+  const [commissionBatches, setCommissionBatches] = useState<RestaurantCommissionBatch[]>([])
 
   const restaurantId = currentUser?.restaurantId
   const mpConnected = currentUser?.mercadoPagoStatus === "connected"
@@ -116,6 +118,28 @@ export default function RestaurantDashboardPage() {
     }
   }, [refreshUserProfile, t, tApi])
 
+  useEffect(() => {
+    if (!restaurantId) return
+    const pending = orders.filter(
+      (o) => o.paymentMethod === "cash" && o.commissionStatus === "pending"
+    )
+    const amount = pending.reduce((sum, o) => sum + (Number(o.servidoCommission) || 0), 0)
+    setPendingCommissionAmount(Math.round(amount * 100) / 100)
+    void (async () => {
+      try {
+        const token = await auth.currentUser?.getIdToken()
+        if (!token) return
+        const res = await fetch("/api/restaurant/commission-batches", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const data = await res.json()
+        setCommissionBatches(Array.isArray(data.batches) ? data.batches : [])
+      } catch {
+        setCommissionBatches([])
+      }
+    })()
+  }, [restaurantId, orders])
+
   // Si ya tiene suscripción activa pero el flag del local no, sincronizar
   useEffect(() => {
     if (!restaurantId || !hasActiveSubscription) return
@@ -143,11 +167,9 @@ export default function RestaurantDashboardPage() {
         const data = { id: restSnap.id, ...restSnap.data() } as Restaurant
         setRestaurant(data)
         const methods = data.paymentMethods?.length
-          ? data.paymentMethods
-          : (["cash", "transfer"] as RestaurantPaymentMethod[])
-        setPaymentMethods(methods)
-        const fee = Number(data.deliveryFee)
-        setDeliveryFeeInput(Number.isFinite(fee) && fee >= 0 ? String(fee) : "300")
+          ? data.paymentMethods.filter((m) => m === "cash" || m === "mercadopago")
+          : (["cash", "mercadopago"] as RestaurantPaymentMethod[])
+        setPaymentMethods(methods.length ? methods : ["cash", "mercadopago"])
         setTransferAlias(data.transferInfo?.alias || "")
         setTransferCbu(data.transferInfo?.cbu || "")
         setTransferBank(data.transferInfo?.bankName || "")
@@ -217,10 +239,6 @@ export default function RestaurantDashboardPage() {
   }, [restaurantId])
 
   const advanceOrderStatus = async (order: FoodOrder) => {
-    if (!hasActiveSubscription) {
-      setPaymentMsg(t("needSubscription"))
-      return
-    }
     const nextStatus = getNextFoodOrderStatus(order, "restaurant")
     if (!nextStatus || !currentUser) return
     try {
@@ -236,10 +254,6 @@ export default function RestaurantDashboardPage() {
   }
 
   const confirmOrderPayment = async (order: FoodOrder) => {
-    if (!hasActiveSubscription) {
-      setPaymentMsg(t("needSubscription"))
-      return
-    }
     const statusPatch =
       order.status === "recibido" ? { status: "confirmado" as FoodOrderStatus } : {}
     try {
@@ -317,25 +331,13 @@ export default function RestaurantDashboardPage() {
 
   const savePaymentSettings = async () => {
     if (!restaurantId) return
-    if (!hasActiveSubscription) {
-      setPaymentMsg(t("needSubscriptionPayments"))
-      return
-    }
-    if (paymentMethods.includes("mercadopago") && !mpConnected) {
+    const methods = paymentMethods.filter((m) => m === "mercadopago" || m === "cash")
+    if (methods.includes("mercadopago") && !mpConnected) {
       setPaymentMsg(t("mpConnectBeforeEnable"))
       return
     }
-    if (paymentMethods.includes("transfer") && !transferAlias.trim() && !transferCbu.trim()) {
-      setPaymentMsg(t("transferNeedsAlias"))
-      return
-    }
-    if (paymentMethods.length === 0) {
+    if (methods.length === 0) {
       setPaymentMsg(t("pickPaymentMethod"))
-      return
-    }
-    const feeNum = Number(deliveryFeeInput)
-    if (!Number.isFinite(feeNum) || feeNum < 0) {
-      setPaymentMsg(t("invalidDeliveryFee"))
       return
     }
 
@@ -343,8 +345,7 @@ export default function RestaurantDashboardPage() {
     setPaymentMsg(null)
     try {
       await updateDoc(doc(db, "restaurants", restaurantId), {
-        paymentMethods,
-        deliveryFee: feeNum,
+        paymentMethods: methods,
         transferInfo: {
           alias: transferAlias.trim() || null,
           cbu: transferCbu.trim() || null,
@@ -358,8 +359,7 @@ export default function RestaurantDashboardPage() {
         prev
           ? {
               ...prev,
-              paymentMethods,
-              deliveryFee: feeNum,
+              paymentMethods: methods,
               transferInfo: {
                 alias: transferAlias.trim() || undefined,
                 cbu: transferCbu.trim() || undefined,
@@ -370,6 +370,7 @@ export default function RestaurantDashboardPage() {
             }
           : prev
       )
+      setPaymentMethods(methods)
       setPaymentMsg(t("paymentsSaved"))
     } catch (err) {
       setPaymentMsg(paymentApiError(err, t("saveError")))
@@ -491,24 +492,15 @@ export default function RestaurantDashboardPage() {
         </div>
       </header>
 
-      {!hasActiveSubscription && (
-        <div className="border-b border-amber-200 bg-amber-50">
-          <div className="container mx-auto flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-semibold text-amber-950">{t("subRequiredTitle")}</p>
-              <p className="text-sm text-amber-800">{t("subRequiredBody")}</p>
-            </div>
-            <Button
-              className="shrink-0 rounded-full bg-amber-600 hover:bg-amber-700"
-              disabled={subscribing}
-              onClick={() => void handleSubscribe()}
-            >
-              {subscribing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {t("activateSubscription")}
-            </Button>
-          </div>
+      <div className="border-b border-servido-100 bg-servido-50/80">
+        <div className="container mx-auto px-4 py-4">
+          <p className="font-semibold text-servido-900">{t("commissionModelBanner")}</p>
+          <p className="text-sm text-servido-800">{t("commissionModelBody")}</p>
+          {!mpConnected && (
+            <p className="mt-2 text-sm font-medium text-amber-800">{t("mpNotConnectedHint")}</p>
+          )}
         </div>
-      )}
+      </div>
 
       {hasActiveSubscription && cancelAtPeriodEnd && (
         <div className="border-b border-sky-200 bg-sky-50">
@@ -643,14 +635,23 @@ export default function RestaurantDashboardPage() {
                     {order.cadeteId && isDelivery && (
                       <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
                         {t("cadeteDisclaimer", {
-                          name: order.cadeteName || t("cadeteDefaultName"),
                           feeRef:
-                            order.deliveryFee > 0
+                            (order.cadetePayAmount ?? 0) > 0
                               ? t("cadeteFeeRef", {
-                                  amount: formatPrice(order.deliveryFee),
+                                  amount: formatPrice(order.cadetePayAmount!),
                                 })
-                              : "",
+                              : order.deliveryFee > 0
+                                ? t("cadeteFeeRef", {
+                                    amount: formatPrice(order.deliveryFee),
+                                  })
+                                : "",
                         })}
+                      </p>
+                    )}
+                    {(order.servidoCommission ?? 0) > 0 && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        {t("servidoCommissionLabel")} {formatPrice(order.servidoCommission!)}
+                        {order.commissionStatus === "pending" ? " · pendiente" : ""}
                       </p>
                     )}
 
@@ -681,7 +682,6 @@ export default function RestaurantDashboardPage() {
                               size="sm"
                               variant="outline"
                               className="rounded-full"
-                              disabled={!hasActiveSubscription}
                               onClick={() => void confirmOrderPayment(order)}
                             >
                               {t("confirmPayment")}
@@ -691,7 +691,6 @@ export default function RestaurantDashboardPage() {
                           <Button
                             size="sm"
                             className="rounded-full bg-servido-800"
-                            disabled={!hasActiveSubscription}
                             onClick={() => void advanceOrderStatus(order)}
                           >
                             {next === "en_preparacion"
@@ -722,7 +721,7 @@ export default function RestaurantDashboardPage() {
         {activeTab === "menu" && restaurantId && (
           <MenuAdminPanel
             restaurantId={restaurantId}
-            enabled={hasActiveSubscription}
+            enabled
             onNeedSubscription={() => setPaymentMsg(t("needSubscriptionMenu"))}
           />
         )}
@@ -753,9 +752,37 @@ export default function RestaurantDashboardPage() {
               <RestaurantBrandingForm
                 restaurant={restaurant}
                 onUpdated={setRestaurant}
-                disabled={!hasActiveSubscription}
+                disabled={false}
               />
             )}
+
+            <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
+              <h2 className="font-semibold text-gray-900">{t("pendingCommissionsTitle")}</h2>
+              {pendingCommissionAmount > 0 ? (
+                <>
+                  <p className="text-2xl font-bold text-servido-800">{formatPrice(pendingCommissionAmount)}</p>
+                  <p className="text-sm text-gray-500">{t("pendingCommissionsHint")}</p>
+                </>
+              ) : (
+                <p className="text-sm text-gray-500">{t("pendingCommissionsEmpty")}</p>
+              )}
+              {commissionBatches.length > 0 && (
+                <div className="space-y-2 border-t border-gray-100 pt-3">
+                  <p className="text-sm font-medium text-gray-800">{t("commissionBatchesTitle")}</p>
+                  <ul className="space-y-1 text-sm">
+                    {commissionBatches.slice(0, 8).map((batch) => (
+                      <li key={batch.id} className="flex justify-between gap-2 text-gray-600">
+                        <span>
+                          {batch.status === "paid" ? t("commissionBatchPaid") : t("commissionBatchPending")}
+                          {` · ${batch.orderCount} pedidos`}
+                        </span>
+                        <span className="font-medium text-gray-900">{formatPrice(batch.amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
 
             <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
               <h2 className="font-semibold text-gray-900">{t("howYouCharge")}</h2>
@@ -765,21 +792,13 @@ export default function RestaurantDashboardPage() {
                 <p className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">{paymentMsg}</p>
               )}
 
-              <div className="space-y-2 rounded-xl border border-gray-100 p-4">
-                <Label>{t("deliveryFeeLabel")}</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={deliveryFeeInput}
-                  onChange={(e) => setDeliveryFeeInput(e.target.value)}
-                  className="rounded-xl"
-                />
-                <p className="text-xs text-gray-500">{t("deliveryFeeProfileHint")}</p>
+              <div className="rounded-xl border border-servido-100 bg-servido-50/50 p-4">
+                <p className="text-sm font-medium text-servido-900">{t("deliveryFeeLabel")}</p>
+                <p className="mt-1 text-xs text-gray-600">{t("deliveryFeeProfileHint")}</p>
               </div>
 
               <div className="space-y-3">
-                {(["cash", "transfer", "mercadopago"] as RestaurantPaymentMethod[]).map((method) => (
+                {(["mercadopago", "cash"] as RestaurantPaymentMethod[]).map((method) => (
                   <label
                     key={method}
                     className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-3"
@@ -858,7 +877,7 @@ export default function RestaurantDashboardPage() {
 
               <Button
                 className="w-full rounded-full bg-servido-800"
-                disabled={savingPayments || !hasActiveSubscription}
+                disabled={savingPayments}
                 onClick={() => void savePaymentSettings()}
               >
                 {savingPayments ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

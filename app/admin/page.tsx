@@ -33,6 +33,7 @@ import {
   X,
   Search,
   Bike,
+  Banknote,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -103,6 +104,7 @@ import { getPurchaseStatusLabel, getShippingStatusLabel } from "@/lib/i18n/shipp
 import SubscriptionPricingManager from "@/components/admin/subscription-pricing-manager"
 import { ServidoBroadcastPanel } from "@/components/admin/servido-broadcast-panel"
 import { AdminResellerPayoutsPanel } from "@/components/admin/admin-reseller-payouts-panel"
+import { AdminDeliverySettlementsPanel } from "@/components/admin/admin-delivery-settlements-panel"
 import type { CadeteStatus } from "@/types/cadete"
 import { sendCadeteStatusEmail } from "@/lib/email-service"
 
@@ -264,6 +266,7 @@ export default function AdminDashboard() {
         { tab: "alerts", label: t("nav.alerts"), icon: Megaphone },
         { tab: "servidoBroadcast", label: t("nav.servidoBroadcast"), icon: Megaphone },
         { tab: "resellerPayouts", label: t("nav.resellerPayouts"), icon: TrendingUp },
+        { tab: "deliverySettlements", label: t("nav.deliverySettlements"), icon: Banknote },
         { tab: "coupons", label: t("nav.coupons"), icon: Percent },
         { tab: "subscriptionPricing", label: t("nav.subscriptionPricing"), icon: Percent },
       ] as const,
@@ -2156,6 +2159,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="alerts">{t("tabs.alerts")}</TabsTrigger>
               <TabsTrigger value="servidoBroadcast">{t("tabs.servidoBroadcast")}</TabsTrigger>
               <TabsTrigger value="resellerPayouts">{t("tabs.resellerPayouts")}</TabsTrigger>
+              <TabsTrigger value="deliverySettlements">{t("tabs.deliverySettlements")}</TabsTrigger>
               <TabsTrigger value="coupons">{t("tabs.coupons")}</TabsTrigger>
               <TabsTrigger value="subscriptionPricing">{t("tabs.subscriptionPricing")}</TabsTrigger>
             </TabsList>
@@ -3694,6 +3698,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="resellerPayouts" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
               <AdminResellerPayoutsPanel />
+            </TabsContent>
+
+            <TabsContent value="deliverySettlements" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+              <AdminDeliverySettlementsPanel />
             </TabsContent>
 
             {/* Cupones Tab */}

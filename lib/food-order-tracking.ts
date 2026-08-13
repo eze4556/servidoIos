@@ -109,6 +109,14 @@ export async function setFoodOrderStatus(params: {
   await updateDoc(orderRef, {
     status: nextStatus,
     updatedAt: serverTimestamp(),
+    ...(nextStatus === "entregado" &&
+    params.actor === "cadete" &&
+    Number(order.cadetePayAmount) > 0
+      ? {
+          cadetePayoutStatus: "accrued",
+          servidoPayoutAmount: Number(order.cadetePayAmount) || 0,
+        }
+      : {}),
   })
 
   void notifyFoodOrderStatus({

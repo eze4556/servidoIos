@@ -159,6 +159,8 @@ export class ApiService {
     notes?: string
     deliveryFee?: number
     paymentMethod: "mercadopago" | "cash" | "transfer"
+    deliveryLat?: number
+    deliveryLng?: number
   }): Promise<ApiResponse<{
     id: string | null
     init_point: string | null

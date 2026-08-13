@@ -48,16 +48,26 @@ export interface Restaurant {
   logoUrl?: string | null
   logoPath?: string | null
   phone?: string
-  /** Precio de envío que cobra el restaurante (0 = gratis). No aplica a retiro. */
+  /**
+   * @deprecated El envío se calcula por km (Servido). Se mantiene por compatibilidad.
+   */
   deliveryFee?: number
-  /** Métodos habilitados. Si está vacío, el checkout no puede completar. */
+  /**
+   * Métodos habilitados para retiro en local.
+   * Delivery siempre usa Mercado Pago (forzado en servidor).
+   */
   paymentMethods?: RestaurantPaymentMethod[]
   transferInfo?: RestaurantTransferInfo
-  /** Si el dueño tiene suscripción activa (para listados / operación pública) */
+  /**
+   * @deprecated Modelo comisión 12% — ya no se usa para listar/operar.
+   */
   subscriptionActive?: boolean
   createdAt?: unknown
   updatedAt?: unknown
 }
+
+export type FoodCommissionStatus = "collected" | "pending" | "batched" | "paid"
+export type CadetePayoutStatus = "accrued" | "batched" | "paid" | "none"
 
 export interface MenuCategory {
   id: string
@@ -183,6 +193,27 @@ export interface FoodOrder {
   restaurantZone?: string | null
   /** Dirección del local (para navegación del cadete) */
   restaurantAddress?: string | null
+  restaurantLat?: number | null
+  restaurantLng?: number | null
+  deliveryLat?: number | null
+  deliveryLng?: number | null
+  /** Distancia estimada restaurante → cliente (km, con factor calles) */
+  distanceKm?: number
+  /** Ganancia del cadete por este pedido */
+  cadetePayAmount?: number
+  /** 12% sobre subtotal de comida */
+  servidoCommission?: number
+  restaurantNetAmount?: number
+  /** Fee MP a Servido (comisión + envío en delivery) */
+  marketplaceFee?: number
+  /** Margen Servido en envío (deliveryFee − cadetePayAmount) */
+  servidoDeliveryMargin?: number
+  /** MP: collected · Retiro cash: pending hasta liquidación martes */
+  commissionStatus?: FoodCommissionStatus
+  /** Delivery entregado: accrued → batched → paid */
+  cadetePayoutStatus?: CadetePayoutStatus
+  cadetePayoutBatchId?: string | null
+  servidoPayoutAmount?: number
   createdAt?: unknown
   updatedAt?: unknown
 }

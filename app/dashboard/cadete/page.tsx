@@ -17,7 +17,7 @@ import {
   Store,
   XCircle,
 } from "lucide-react"
-import { db } from "@/lib/firebase"
+import { auth, db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
 import { isCadeteApproved } from "@/types/cadete"
 import {
@@ -26,7 +26,10 @@ import {
   advanceCadeteFoodOrder,
   subscribeAvailableFoodOrders,
 } from "@/lib/cadete-orders"
+import { fetchCadeteAccruedPayout } from "@/lib/delivery-settlements"
+import { CadetePayoutForm } from "@/components/cadete/cadete-payout-form"
 import { getDeliveryChatId } from "@/lib/delivery-chat"
+import type { CadetePayoutBatch } from "@/types/delivery-settlements"
 import { getNextFoodOrderStatus } from "@/lib/food-order-tracking"
 import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
 import type { FoodOrder } from "@/types/restaurant"
@@ -70,6 +73,8 @@ export default function CadeteDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [accruedAmount, setAccruedAmount] = useState(0)
+  const [payoutBatches, setPayoutBatches] = useState<CadetePayoutBatch[]>([])
   const prevAvailableCount = useRef<number | null>(null)
 
   const approved = isCadeteApproved(currentUser?.status, currentUser?.isActive)
@@ -109,6 +114,20 @@ export default function CadeteDashboardPage() {
         mine.find((o) => (activeStatuses as readonly string[]).includes(o.status)) || null
       setActive(current)
       await resolveRestaurantAddress(current)
+      const accrued = await fetchCadeteAccruedPayout(uid)
+      setAccruedAmount(accrued.amount)
+      try {
+        const token = await auth.currentUser?.getIdToken()
+        if (token) {
+          const res = await fetch("/api/cadete/payout-batches", {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          const data = await res.json()
+          setPayoutBatches(Array.isArray(data.batches) ? data.batches : [])
+        }
+      } catch {
+        // historial opcional
+      }
     } catch (err) {
       console.error(err)
       setError(t("errorLoadOrder"))
@@ -336,7 +355,21 @@ export default function CadeteDashboardPage() {
 
           <div className="mt-4 rounded-2xl bg-amber-500/10 p-4 ring-1 ring-amber-500/30">
             <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">{t("yourPayTitle")}</p>
-            {active.deliveryFee > 0 ? (
+            {(active.cadetePayAmount ?? 0) > 0 ? (
+              <>
+                <p className="mt-1 text-2xl font-bold text-amber-200">
+                  {t("cadetePayAmount", { amount: formatPrice(active.cadetePayAmount!) })}
+                </p>
+                {typeof active.distanceKm === "number" && active.distanceKm > 0 && (
+                  <p className="mt-1 text-sm text-amber-100/80">
+                    {t("distanceKm", { km: active.distanceKm.toFixed(1) })}
+                    {active.deliveryFee > 0
+                      ? ` · ${t("deliveryFee", { amount: formatPrice(active.deliveryFee) })}`
+                      : ""}
+                  </p>
+                )}
+              </>
+            ) : active.deliveryFee > 0 ? (
               <p className="mt-1 text-2xl font-bold text-amber-200">
                 {t("deliveryFee", { amount: formatPrice(active.deliveryFee) })}
               </p>
@@ -395,6 +428,11 @@ export default function CadeteDashboardPage() {
           <h1 className="text-xl font-bold">
             {available.length > 0 ? t("ordersReady") : t("waiting")}
           </h1>
+          {accruedAmount > 0 && (
+            <p className="mt-1 text-xs font-medium text-emerald-400">
+              {t("weeklyAccrued", { amount: formatPrice(accruedAmount) })}
+            </p>
+          )}
         </div>
         {cadeteZone && (
           <span className="max-w-[40%] truncate rounded-full bg-slate-800 px-3 py-1.5 text-xs text-slate-300">
@@ -451,12 +489,17 @@ export default function CadeteDashboardPage() {
                     {t("itemsCount", {
                       count: order.items.reduce((n, i) => n + i.quantity, 0),
                     })}
-                    {order.deliveryFee > 0
-                      ? t("deliveryFeeShort", { amount: formatPrice(order.deliveryFee) })
+                    {(order.cadetePayAmount ?? 0) > 0
+                      ? ` · ${formatPrice(order.cadetePayAmount!)}`
+                      : order.deliveryFee > 0
+                        ? t("deliveryFeeShort", { amount: formatPrice(order.deliveryFee) })
+                        : ""}
+                    {typeof order.distanceKm === "number" && order.distanceKm > 0
+                      ? ` · ${order.distanceKm.toFixed(1)} km`
                       : ""}
                     {order.notes ? t("hasNote") : ""}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">{t("payOutsideApp")}</p>
+                  <p className="mt-1 text-xs text-emerald-400/90">{t("payOutsideApp")}</p>
                 </div>
 
                 <button
@@ -470,6 +513,31 @@ export default function CadeteDashboardPage() {
               </li>
             ))}
           </ul>
+        )}
+
+        {!active && (
+          <section className="mt-8 space-y-4 rounded-3xl bg-slate-900 p-5 ring-1 ring-slate-700">
+            <h2 className="text-lg font-bold">{t("payoutSectionTitle")}</h2>
+            <CadetePayoutForm />
+            <div className="border-t border-slate-800 pt-4">
+              <h3 className="mb-2 text-sm font-semibold text-slate-300">{t("payoutHistoryTitle")}</h3>
+              {payoutBatches.length === 0 ? (
+                <p className="text-sm text-slate-500">{t("payoutHistoryEmpty")}</p>
+              ) : (
+                <ul className="space-y-2">
+                  {payoutBatches.slice(0, 8).map((batch) => (
+                    <li key={batch.id} className="flex items-center justify-between text-sm">
+                      <span className="text-slate-300">
+                        {batch.status === "paid" ? t("payoutStatusPaid") : t("payoutStatusPending")}
+                        {typeof batch.orderCount === "number" ? ` · ${batch.orderCount}` : ""}
+                      </span>
+                      <span className="font-semibold text-emerald-400">{formatPrice(batch.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
         )}
       </div>
     </div>

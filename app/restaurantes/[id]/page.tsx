@@ -137,7 +137,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
     )
   }
 
-  const canOrder = restaurant.subscriptionActive === true
+  const canOrder = restaurant.status === "active" || restaurant.status === "approved"
   const coverUrl = getRestaurantCoverUrl(restaurant)
   const logoUrl = getRestaurantLogoUrl(restaurant)
 
@@ -188,12 +188,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
               </Badge>
               {restaurant.deliveryMode !== "retiro_en_local" && (
                 <Badge className="bg-orange-50 text-orange-800 hover:bg-orange-50">
-                  {t("shippingLabel")}{" "}
-                  {Number(restaurant.deliveryFee) > 0
-                    ? formatPrice(restaurant.deliveryFee || 0)
-                    : Number(restaurant.deliveryFee) === 0
-                      ? t("shippingFree")
-                      : formatPrice(300)}
+                  {t("shippingLabel")} {t("shippingByKm")}
                 </Badge>
               )}
             </div>
@@ -375,9 +370,8 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
       {canOrder && (
         <FoodCartDrawer
           deliveryMode={restaurant.deliveryMode}
-          restaurantDeliveryFee={restaurant.deliveryFee}
+          restaurantCoordinates={restaurant.coordinates || null}
           paymentMethods={restaurant.paymentMethods}
-          transferInfo={restaurant.transferInfo}
         />
       )}
     </div>

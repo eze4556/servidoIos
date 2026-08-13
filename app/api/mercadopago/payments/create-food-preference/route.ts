@@ -17,6 +17,10 @@ export async function POST(request: NextRequest) {
             message.includes("no tiene") ||
             message.includes("no acepta") ||
             message.includes("Elegí") ||
+            message.includes("delivery") ||
+            message.includes("Mercado Pago") ||
+            message.includes("ubicación") ||
+            message.includes("efectivo") ||
             message.includes("conectar") ||
             message.includes("transferencia") ||
             message.includes("Faltan") ||

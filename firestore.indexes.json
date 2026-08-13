@@ -520,6 +520,56 @@
         { "fieldPath": "sellerId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "foodOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "cadetePayoutStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "foodOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "cadeteId", "order": "ASCENDING" },
+        { "fieldPath": "cadetePayoutStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "foodOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "cadeteId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "cadetePayoutStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "foodOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "paymentMethod", "order": "ASCENDING" },
+        { "fieldPath": "commissionStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "foodOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "restaurantId", "order": "ASCENDING" },
+        { "fieldPath": "commissionStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "foodOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "restaurantId", "order": "ASCENDING" },
+        { "fieldPath": "commissionStatus", "order": "ASCENDING" },
+        { "fieldPath": "paymentMethod", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

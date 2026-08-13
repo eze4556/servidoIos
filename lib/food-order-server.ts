@@ -2,15 +2,19 @@ import { auth as adminAuth } from "@/lib/firebase-admin"
 import { db } from "@/lib/firebase"
 import { configureMercadoPago, getMercadoPagoSiteUrl } from "@/lib/mercadopago"
 import { getMercadoPagoSellerAccessToken } from "@/lib/mercadopago-oauth"
-import {
-  mapMenuItemDoc,
-} from "@/lib/restaurant-menu"
+import { mapMenuItemDoc } from "@/lib/restaurant-menu"
 import {
   mapMenuPromotionDoc,
   resolveComboPromotion,
   resolveMenuItemSelections,
   type SelectionInput,
 } from "@/lib/restaurant-options"
+import {
+  fetchDeliveryPricing,
+  quoteDeliveryAmounts,
+  quotePickupCommission,
+} from "@/lib/delivery-pricing"
+import { hasValidCoordinates } from "@/lib/geo"
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore"
 import type {
   DeliveryMode,
@@ -34,8 +38,11 @@ export type CreateFoodOrderPayload = {
   address?: string
   phone?: string
   notes?: string
+  /** Ignorado en servidor; el fee se calcula por km */
   deliveryFee?: number
   paymentMethod: RestaurantPaymentMethod
+  deliveryLat?: number
+  deliveryLng?: number
 }
 
 /** @deprecated use CreateFoodOrderPayload */
@@ -61,9 +68,24 @@ function roundMoney(amount: number) {
   return Math.round(amount * 100) / 100
 }
 
+function isPickupMode(deliveryMode: DeliveryMode) {
+  return deliveryMode === "retiro_en_local"
+}
+
 async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
-  const { restaurantId, buyerId, buyerEmail, items, deliveryMode, address, phone, notes, paymentMethod } =
-    body
+  const {
+    restaurantId,
+    buyerId,
+    buyerEmail,
+    items,
+    deliveryMode,
+    address,
+    phone,
+    notes,
+    paymentMethod,
+    deliveryLat,
+    deliveryLng,
+  } = body
 
   if (!restaurantId || !buyerId || !buyerEmail) {
     throw new Error("Faltan datos del pedido")
@@ -75,6 +97,15 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
     throw new Error("Elegí un método de pago")
   }
 
+  // Delivery: solo Mercado Pago. Retiro: MP o efectivo (sin transferencia).
+  const pickup = isPickupMode(deliveryMode)
+  if (!pickup && paymentMethod !== "mercadopago") {
+    throw new Error("El delivery solo se paga con Mercado Pago")
+  }
+  if (pickup && paymentMethod === "transfer") {
+    throw new Error("La transferencia no está disponible. Usá Mercado Pago o efectivo.")
+  }
+
   const restaurantDoc = await getDoc(doc(db, "restaurants", restaurantId))
   if (!restaurantDoc.exists()) {
     throw new Error("Restaurante no encontrado")
@@ -82,35 +113,39 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
   const restaurantData = restaurantDoc.data()
   const ownerId = (restaurantData.ownerId as string) || restaurantId
 
-  // Suscripción activa del dueño (misma regla que vendedores)
   const ownerSnap = await getDoc(doc(db, "users", ownerId))
   if (!ownerSnap.exists()) {
     throw new Error("Dueño del restaurante no encontrado")
   }
-  const ownerData = ownerSnap.data() as any
-  const subStatus = ownerData.subscription_status || ownerData.subscription?.status
-  const isSubscribed = ownerData.isSubscribed === true || subStatus === "active"
-  if (!isSubscribed) {
-    throw new Error("Este restaurante no tiene suscripción activa en Servido")
-  }
 
-  const enabledMethods = Array.isArray(restaurantData.paymentMethods)
-    ? (restaurantData.paymentMethods as RestaurantPaymentMethod[])
-    : (["cash", "transfer"] as RestaurantPaymentMethod[])
-
-  if (!enabledMethods.includes(paymentMethod)) {
-    throw new Error("Este restaurante no acepta ese método de pago")
-  }
-
+  // Retiro en efectivo: ok sin MP. Delivery y retiro MP: exigir cuenta MP del dueño.
   if (paymentMethod === "mercadopago") {
-    // Fuerza token válido del dueño (falla claro si no conectó MP)
     await getMercadoPagoSellerAccessToken(ownerId)
   }
 
-  if (paymentMethod === "transfer") {
-    const info = restaurantData.transferInfo || {}
-    if (!info.alias && !info.cbu) {
-      throw new Error("El restaurante todavía no cargó datos de transferencia")
+  // Retiro cash: el restaurante debe tener cash habilitado (o permitir por defecto en retiro)
+  if (pickup && paymentMethod === "cash") {
+    const enabledMethods = Array.isArray(restaurantData.paymentMethods)
+      ? (restaurantData.paymentMethods as RestaurantPaymentMethod[])
+      : (["cash", "mercadopago"] as RestaurantPaymentMethod[])
+    if (!enabledMethods.includes("cash") && !enabledMethods.includes("mercadopago")) {
+      // Si solo tenía transfer, igual permitir cash en retiro (nuevo modelo)
+    }
+  }
+
+  const coords = restaurantData.coordinates as { latitude?: number; longitude?: number } | null | undefined
+  const restaurantLat = Number(coords?.latitude)
+  const restaurantLng = Number(coords?.longitude)
+
+  if (!pickup) {
+    if (!address?.trim()) {
+      throw new Error("Ingresá la dirección de entrega")
+    }
+    if (!hasValidCoordinates(restaurantLat, restaurantLng)) {
+      throw new Error("El restaurante no tiene ubicación cargada. Pedile que actualice su perfil.")
+    }
+    if (!hasValidCoordinates(deliveryLat, deliveryLng)) {
+      throw new Error("Seleccioná una ubicación válida para la entrega")
     }
   }
 
@@ -183,14 +218,24 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
   }
 
   subtotal = roundMoney(subtotal)
-  // El precio de envío lo define el restaurante (no el client)
-  const configuredFee = Number(restaurantData.deliveryFee)
-  const restaurantDeliveryFee =
-    Number.isFinite(configuredFee) && configuredFee >= 0 ? configuredFee : 300
-  const fee =
-    deliveryMode === "retiro_en_local" ? 0 : roundMoney(restaurantDeliveryFee)
+  const pricing = await fetchDeliveryPricing()
+
+  const quote = pickup
+    ? quotePickupCommission(subtotal, pricing)
+    : quoteDeliveryAmounts({
+        subtotal,
+        restaurantLat,
+        restaurantLng,
+        deliveryLat: Number(deliveryLat),
+        deliveryLng: Number(deliveryLng),
+        pricing,
+      })
+
+  const fee = quote.deliveryFee
   const total = roundMoney(subtotal + fee)
   const orderId = `food_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+
+  // Retiro cash → pending hasta liquidación martes. MP → collected al aprobar el pago.
 
   const baseOrder = {
     id: orderId,
@@ -201,6 +246,20 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
     restaurantZone: restaurantData.zone || restaurantData.locationLabel || null,
     restaurantAddress: restaurantData.address || null,
     restaurantOwnerId: ownerId,
+    restaurantLat: hasValidCoordinates(restaurantLat, restaurantLng) ? restaurantLat : null,
+    restaurantLng: hasValidCoordinates(restaurantLat, restaurantLng) ? restaurantLng : null,
+    deliveryLat: !pickup && hasValidCoordinates(deliveryLat, deliveryLng) ? Number(deliveryLat) : null,
+    deliveryLng: !pickup && hasValidCoordinates(deliveryLat, deliveryLng) ? Number(deliveryLng) : null,
+    distanceKm: quote.distanceKm,
+    cadetePayAmount: quote.cadetePayAmount,
+    servidoCommission: quote.servidoCommission,
+    restaurantNetAmount: quote.restaurantNetAmount,
+    marketplaceFee: quote.marketplaceFee,
+    servidoDeliveryMargin: quote.servidoDeliveryMargin,
+    servidoPayoutAmount: quote.cadetePayAmount,
+    commissionStatus: "pending" as const,
+    cadetePayoutStatus: "none" as const,
+    cadetePayoutBatchId: null,
     items: validatedItems,
     subtotal,
     deliveryFee: fee,
@@ -211,32 +270,58 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
     notes: notes || null,
     paymentMethod,
     status: "recibido" as const,
-    paymentStatus: "pending" as const,
+    paymentStatus: paymentMethod === "cash" ? ("approved" as const) : ("pending" as const),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   }
 
-  return { baseOrder, restaurantData, ownerId, orderId, validatedItems, fee, total, paymentMethod }
+  return {
+    baseOrder,
+    restaurantData,
+    ownerId,
+    orderId,
+    validatedItems,
+    fee,
+    total,
+    paymentMethod,
+    marketplaceFee: quote.marketplaceFee,
+    pickup,
+  }
 }
 
 export async function createFoodOrder(request: Request, body: CreateFoodOrderPayload) {
   const { buyerId } = body
   await requireAuthenticatedUser(request, buyerId)
 
-  const { baseOrder, ownerId, orderId, validatedItems, fee, paymentMethod } = await validateAndBuildOrder(body)
+  const {
+    baseOrder,
+    ownerId,
+    orderId,
+    validatedItems,
+    fee,
+    paymentMethod,
+    marketplaceFee,
+    pickup,
+  } = await validateAndBuildOrder(body)
 
-  if (paymentMethod === "cash" || paymentMethod === "transfer") {
+  // Retiro en efectivo: sin MP, comisión pending
+  if (paymentMethod === "cash") {
+    if (!pickup) {
+      throw new Error("El delivery solo se paga con Mercado Pago")
+    }
     await setDoc(doc(db, "foodOrders", orderId), {
       ...baseOrder,
       preferenceId: null,
       paymentId: null,
+      commissionStatus: "pending",
+      paymentStatus: "approved",
     })
     return {
       orderId,
       paymentMethod,
       init_point: null as string | null,
       id: null as string | null,
-      transferInfo: paymentMethod === "transfer" ? (await getDoc(doc(db, "restaurants", body.restaurantId))).data()?.transferInfo || null : null,
+      transferInfo: null,
     }
   }
 
@@ -261,6 +346,13 @@ export async function createFoodOrder(request: Request, body: CreateFoodOrderPay
     })
   }
 
+  // Comisión 12% (+ envío en delivery) → Servido vía marketplace_fee
+  let mpFee = roundMoney(marketplaceFee)
+  const orderTotal = roundMoney((baseOrder as { total: number }).total)
+  if (mpFee >= orderTotal) {
+    mpFee = Math.max(0, roundMoney(orderTotal - 0.01))
+  }
+
   const siteUrl = getMercadoPagoSiteUrl(request)
   const preferenceData: Record<string, unknown> = {
     items: mpItems,
@@ -278,7 +370,13 @@ export async function createFoodOrder(request: Request, body: CreateFoodOrderPay
       restaurant_id: body.restaurantId,
       owner_id: ownerId,
       type: "food",
+      marketplace_fee: mpFee,
+      food_commission_rate: 0.12,
     },
+  }
+
+  if (mpFee > 0) {
+    preferenceData.marketplace_fee = mpFee
   }
 
   const result = (await preference.preferences.create(preferenceData)) as { id?: string; init_point?: string }
@@ -287,6 +385,7 @@ export async function createFoodOrder(request: Request, body: CreateFoodOrderPay
     ...baseOrder,
     preferenceId: result.id || null,
     paymentId: null,
+    marketplaceFee: mpFee,
   })
 
   return {
@@ -312,12 +411,25 @@ export async function updateFoodOrderPaymentStatus(
   const orderSnap = await getDoc(orderRef)
   if (!orderSnap.exists()) return false
 
+  const data = orderSnap.data()
+  const isDelivery =
+    data.deliveryMode === "delivery_propio" ||
+    (data.deliveryMode === "ambos" && Number(data.deliveryFee) > 0)
+
   await updateDoc(orderRef, {
     paymentStatus,
     paymentId: paymentId || null,
     updatedAt: serverTimestamp(),
-    ...(paymentStatus === "approved" ? { status: "recibido" } : {}),
+    ...(paymentStatus === "approved"
+      ? {
+          status: "recibido",
+          commissionStatus: "collected",
+        }
+      : {}),
     ...(paymentStatus === "cancelled" || paymentStatus === "rejected" ? { status: "cancelado" } : {}),
   })
+
+  // Silenciar unused — isDelivery se usará cuando accrue al entregar
+  void isDelivery
   return true
 }
