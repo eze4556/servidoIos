@@ -218,7 +218,7 @@ export default function PropertyDetailPage() {
 
       <div className="flex min-h-[50vh] items-center justify-center">
 
-        <Loader2 className="h-10 w-10 animate-spin text-white" />
+        <Loader2 className="h-10 w-10 animate-spin text-servido-700" />
 
       </div>
 
@@ -234,9 +234,9 @@ export default function PropertyDetailPage() {
 
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
 
-        <p className="text-indigo-200/70">{t("notFound")}</p>
+        <p className="text-slate-500">{t("notFound")}</p>
 
-        <Button asChild className="mt-4 border-white/20 bg-white/10 text-white hover:bg-white/20" variant="outline">
+        <Button asChild className="mt-4" variant="outline">
 
           <Link href="/propiedades">{t("backToCatalog")}</Link>
 
@@ -254,7 +254,7 @@ export default function PropertyDetailPage() {
 
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 pb-8 md:py-8">
 
-      <Button asChild variant="ghost" size="sm" className="-ml-2 text-indigo-100 hover:bg-white/10 hover:text-white">
+      <Button asChild variant="ghost" size="sm" className="-ml-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
 
         <Link href="/propiedades">
 
@@ -350,7 +350,7 @@ export default function PropertyDetailPage() {
 
               size="lg"
 
-              className="w-full bg-white font-semibold text-servido-800 shadow-md hover:bg-indigo-50 sm:w-auto"
+              className="w-full bg-servido-800 font-semibold text-white shadow-md hover:bg-servido-900 sm:w-auto"
 
               onClick={() => void handleContact()}
 
@@ -396,7 +396,7 @@ export default function PropertyDetailPage() {
 
       <section>
 
-        <h2 className="mb-4 text-lg font-semibold text-white">{t("specsTitle")}</h2>
+        <h2 className="mb-4 text-lg font-semibold text-slate-800">{t("specsTitle")}</h2>
 
         <PropertySpecsTable listing={listing} />
 

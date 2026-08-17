@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Loader2 } from "lucide-react"
+import { Bike, Landmark, Loader2, Store, Wallet } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useToast } from "@/hooks/use-toast"
@@ -39,6 +39,18 @@ type RestaurantRow = {
   amount: number
 }
 
+type SettlementsSummary = {
+  accruedCadeteAmount: number
+  accruedCadeteOrders: number
+  accruedKm: number
+  cadeteBatchesPending: number
+  cadeteToPay: number
+  pendingCashCommission: number
+  pendingCashOrders: number
+  restaurantBatchesPending: number
+  restaurantToCollect: number
+}
+
 export function AdminDeliverySettlementsPanel() {
   const t = useTranslations("adminDashboard.deliverySettlements")
   const { formatPriceNumber } = usePriceFormat()
@@ -49,6 +61,8 @@ export function AdminDeliverySettlementsPanel() {
   const [marking, setMarking] = useState<string | null>(null)
   const [cadetes, setCadetes] = useState<CadeteRow[]>([])
   const [restaurants, setRestaurants] = useState<RestaurantRow[]>([])
+  const [summary, setSummary] = useState<SettlementsSummary | null>(null)
+  const [loadingSummary, setLoadingSummary] = useState(true)
 
   const authHeaders = async () => {
     const user = auth.currentUser
@@ -56,6 +70,22 @@ export function AdminDeliverySettlementsPanel() {
     const token = await user.getIdToken()
     return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
   }
+
+  const loadSummary = useCallback(async () => {
+    const user = auth.currentUser
+    if (!user) return
+    setLoadingSummary(true)
+    try {
+      const token = await user.getIdToken()
+      const res = await fetch("/api/admin/delivery-settlements/summary", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (res.ok) setSummary(data)
+    } finally {
+      setLoadingSummary(false)
+    }
+  }, [])
 
   const loadCadetes = useCallback(async () => {
     const user = auth.currentUser
@@ -90,9 +120,10 @@ export function AdminDeliverySettlementsPanel() {
   }, [])
 
   useEffect(() => {
+    void loadSummary()
     void loadCadetes()
     void loadRestaurants()
-  }, [loadCadetes, loadRestaurants])
+  }, [loadSummary, loadCadetes, loadRestaurants])
 
   const generateCadetes = async () => {
     setGenerating("cadetes")
@@ -107,6 +138,7 @@ export function AdminDeliverySettlementsPanel() {
         title: t("generatedCadetes", { count: data.created?.length || 0 }),
       })
       await loadCadetes()
+      await loadSummary()
     } catch {
       toast({ title: t("error"), variant: "destructive" })
     } finally {
@@ -127,6 +159,7 @@ export function AdminDeliverySettlementsPanel() {
         title: t("generatedRestaurants", { count: data.created?.length || 0 }),
       })
       await loadRestaurants()
+      await loadSummary()
     } catch {
       toast({ title: t("error"), variant: "destructive" })
     } finally {
@@ -145,6 +178,7 @@ export function AdminDeliverySettlementsPanel() {
       if (!res.ok) throw new Error("fail")
       toast({ title: t("markedPaid") })
       await loadCadetes()
+      await loadSummary()
     } catch {
       toast({ title: t("error"), variant: "destructive" })
     } finally {
@@ -163,6 +197,7 @@ export function AdminDeliverySettlementsPanel() {
       if (!res.ok) throw new Error("fail")
       toast({ title: t("markedCollected") })
       await loadRestaurants()
+      await loadSummary()
     } catch {
       toast({ title: t("error"), variant: "destructive" })
     } finally {
@@ -172,6 +207,74 @@ export function AdminDeliverySettlementsPanel() {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("reportTitle")}</CardTitle>
+          <CardDescription>{t("reportDesc")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingSummary ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Bike className="h-4 w-4" />
+                  {t("toPayCadetes")}
+                </div>
+                <p className="text-2xl font-semibold tabular-nums">
+                  {formatPriceNumber(summary?.cadeteToPay ?? 0)}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("toPayCadetesHint", { count: summary?.cadeteBatchesPending ?? 0 })}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Store className="h-4 w-4" />
+                  {t("toCollectRestaurants")}
+                </div>
+                <p className="text-2xl font-semibold tabular-nums">
+                  {formatPriceNumber(summary?.restaurantToCollect ?? 0)}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("toCollectRestaurantsHint", { count: summary?.restaurantBatchesPending ?? 0 })}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Wallet className="h-4 w-4" />
+                  {t("accruedCadetes")}
+                </div>
+                <p className="text-2xl font-semibold tabular-nums">
+                  {formatPriceNumber(summary?.accruedCadeteAmount ?? 0)}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("accruedCadetesHint", {
+                    orders: summary?.accruedCadeteOrders ?? 0,
+                    km: (summary?.accruedKm ?? 0).toFixed(1),
+                  })}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Landmark className="h-4 w-4" />
+                  {t("pendingCash")}
+                </div>
+                <p className="text-2xl font-semibold tabular-nums">
+                  {formatPriceNumber(summary?.pendingCashCommission ?? 0)}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("pendingCashHint", { orders: summary?.pendingCashOrders ?? 0 })}
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

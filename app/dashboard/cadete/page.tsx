@@ -17,7 +17,7 @@ import {
   Store,
   XCircle,
 } from "lucide-react"
-import { auth, db } from "@/lib/firebase"
+import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
 import { isCadeteApproved } from "@/types/cadete"
 import {
@@ -26,20 +26,27 @@ import {
   advanceCadeteFoodOrder,
   subscribeAvailableFoodOrders,
 } from "@/lib/cadete-orders"
-import { fetchCadeteAccruedPayout } from "@/lib/delivery-settlements"
+import { fetchCadeteAccruedPayout, fetchCadetePayoutBatches } from "@/lib/delivery-settlements"
 import { CadetePayoutForm } from "@/components/cadete/cadete-payout-form"
 import { getDeliveryChatId } from "@/lib/delivery-chat"
 import type { CadetePayoutBatch } from "@/types/delivery-settlements"
 import { getNextFoodOrderStatus } from "@/lib/food-order-tracking"
 import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
 import type { FoodOrder } from "@/types/restaurant"
+import { useCadeteLiveTracking } from "@/hooks/use-cadete-live-tracking"
 import { usePriceFormat } from "@/hooks/use-price-format"
 
 const DEFAULT_TITLE_KEY = "defaultTitle" as const
 
-/** Navegación a un destino (usa la ubicación actual del cadete como origen). */
-function navigationUrl(destination: string) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`
+/** Navegación a un destino (usa GPS del cadete como origen si está disponible). */
+function navigationUrl(destination: string, origin?: { lat: number; lng: number } | null) {
+  const params = new URLSearchParams({
+    api: "1",
+    destination,
+    travelmode: "driving",
+  })
+  if (origin) params.set("origin", `${origin.lat},${origin.lng}`)
+  return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 
 /** Ruta completa: local → cliente. */
@@ -83,6 +90,12 @@ export default function CadeteDashboardPage() {
   const cadeteName = currentUser?.name || currentUser?.firebaseUser.displayName || t("defaultName")
   const cadeteZone = currentUser?.zone
 
+  const { lastCoords } = useCadeteLiveTracking({
+    orderId: active?.id || null,
+    status: active?.status || null,
+    enabled: Boolean(uid && approved && active),
+  })
+
   const resolveRestaurantAddress = useCallback(async (order: FoodOrder | null) => {
     if (!order) {
       setRestaurantAddress(null)
@@ -117,14 +130,8 @@ export default function CadeteDashboardPage() {
       const accrued = await fetchCadeteAccruedPayout(uid)
       setAccruedAmount(accrued.amount)
       try {
-        const token = await auth.currentUser?.getIdToken()
-        if (token) {
-          const res = await fetch("/api/cadete/payout-batches", {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          const data = await res.json()
-          setPayoutBatches(Array.isArray(data.batches) ? data.batches : [])
-        }
+        const batches = await fetchCadetePayoutBatches(uid)
+        setPayoutBatches(batches)
       } catch {
         // historial opcional
       }
@@ -303,7 +310,7 @@ export default function CadeteDashboardPage() {
           <div className="mt-3 grid gap-3">
             {pickupAddress && (
               <a
-                href={navigationUrl(pickupAddress)}
+                href={navigationUrl(pickupAddress, lastCoords)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-sky-600 text-base font-bold active:bg-sky-500"
@@ -314,7 +321,7 @@ export default function CadeteDashboardPage() {
             )}
             {dropoffAddress && (
               <a
-                href={navigationUrl(dropoffAddress)}
+                href={navigationUrl(dropoffAddress, lastCoords)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-amber-500 text-base font-bold text-slate-950 active:bg-amber-400"
@@ -378,6 +385,7 @@ export default function CadeteDashboardPage() {
             )}
             <p className="mt-2 text-sm leading-snug text-amber-100/80">{t("cadetePayDisclaimer")}</p>
           </div>
+          <p className="mt-3 text-center text-xs text-sky-300/90">{t("sharingLocation")}</p>
 
           <div className="mt-4 rounded-2xl bg-slate-900/80 p-4 ring-1 ring-slate-800">
             <p className="text-xs uppercase text-slate-500">{t("orderLabel")}</p>

@@ -122,7 +122,14 @@ npx @capacitor/assets generate --iconPath=./public/images/logo-512.png
 
 ## 🔐 **Permisos que vas a necesitar**
 
-### **En tu Info.plist:**
+### **Android** (`native/android/AndroidManifest.xml`)
+Después de `npx cap add android`, copiá los `<uses-permission>` de ese archivo a:
+
+`android/app/src/main/AndroidManifest.xml`
+
+Incluye ubicación precisa y segundo plano (cadete en entrega).
+
+### **En tu Info.plist** (`native/ios/Info.plist`):
 ```xml
 <!-- Cámara -->
 <key>NSCameraUsageDescription</key>
@@ -132,9 +139,15 @@ npx @capacitor/assets generate --iconPath=./public/images/logo-512.png
 <key>NSPhotoLibraryUsageDescription</key>
 <string>Servido necesita acceso a tus fotos para seleccionar imágenes</string>
 
-<!-- Ubicación -->
+<!-- Ubicación (cadete / entregas) -->
 <key>NSLocationWhenInUseUsageDescription</key>
-<string>Servido necesita tu ubicación para mostrar productos cercanos</string>
+<string>Servido usa tu ubicación durante la entrega para que el cliente vea dónde va el cadete.</string>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>Servido usa tu ubicación durante entregas activas, también con la app en segundo plano.</string>
+<key>UIBackgroundModes</key>
+<array>
+  <string>location</string>
+</array>
 
 <!-- Notificaciones -->
 <key>NSUserNotificationUsageDescription</key>

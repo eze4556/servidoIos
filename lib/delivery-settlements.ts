@@ -6,7 +6,7 @@ import {
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import type { FoodOrder } from "@/types/restaurant"
-import type { RestaurantCommissionBatch } from "@/types/delivery-settlements"
+import type { RestaurantCommissionBatch, CadetePayoutBatch } from "@/types/delivery-settlements"
 
 /** Período de liquidación: martes 00:00 → lunes 23:59 (hora local). */
 export function getTuesdaySettlementWindow(now = new Date()): { start: Date; end: Date; nextTuesday: Date } {
@@ -101,5 +101,22 @@ export async function fetchRestaurantCommissionBatches(restaurantId: string): Pr
   )
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() } as RestaurantCommissionBatch))
-    .sort((a, b) => String(b.id).localeCompare(String(a.id)))
+    .sort((a, b) => {
+      const ta = String((a as { weekStart?: string }).weekStart || a.id)
+      const tb = String((b as { weekStart?: string }).weekStart || b.id)
+      return tb.localeCompare(ta)
+    })
+}
+
+export async function fetchCadetePayoutBatches(cadeteId: string): Promise<CadetePayoutBatch[]> {
+  const snap = await getDocs(
+    query(collection(db, "cadetePayoutBatches"), where("cadeteId", "==", cadeteId))
+  )
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as CadetePayoutBatch))
+    .sort((a, b) => {
+      const ta = String((a as { weekStart?: string }).weekStart || a.id)
+      const tb = String((b as { weekStart?: string }).weekStart || b.id)
+      return tb.localeCompare(ta)
+    })
 }

@@ -308,7 +308,10 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                   ...(currentUser?.role === "seller"
                     ? [
                         {
-                          href: `/seller/${currentUser.firebaseUser.uid}`,
+                          href:
+                            currentUser.businessType === "restaurant" && currentUser.restaurantId
+                              ? `/restaurantes/${currentUser.restaurantId}`
+                              : `/seller/${currentUser.firebaseUser.uid}`,
                           label: tm("myStore"),
                           icon: Store,
                         },

@@ -1,7 +1,5 @@
 import { randomUUID } from "crypto"
-import { auth as adminAuth } from "@/lib/firebase-admin"
-import { db } from "@/lib/firebase"
-import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore"
+import { auth as adminAuth, db as adminDb } from "@/lib/firebase-admin"
 import { getMercadoPagoConnectionSnapshot } from "@/lib/mercadopago-connection"
 
 type MercadoPagoOAuthTokenResponse = {
@@ -109,8 +107,8 @@ async function requireAuthenticatedUserId(request: Request) {
 }
 
 async function readStoredConnection(userId: string) {
-  const userDoc = await getDoc(doc(db, "users", userId))
-  if (!userDoc.exists()) {
+  const userDoc = await adminDb.collection("users").doc(userId).get()
+  if (!userDoc.exists) {
     return null
   }
 
@@ -131,7 +129,7 @@ export async function createMercadoPagoConnectUrl(request: Request) {
     expiresAt,
   }
 
-  await setDoc(doc(db, OAUTH_STATE_COLLECTION, state), stateRecord, { merge: false })
+  await adminDb.collection(OAUTH_STATE_COLLECTION).doc(state).set(stateRecord, { merge: false })
 
   return {
     state,
@@ -159,15 +157,15 @@ export async function completeMercadoPagoConnection(request: Request) {
     throw new Error("Faltan parámetros de conexión")
   }
 
-  const stateDoc = await getDoc(doc(db, OAUTH_STATE_COLLECTION, state))
-  if (!stateDoc.exists()) {
+  const stateDoc = await adminDb.collection(OAUTH_STATE_COLLECTION).doc(state).get()
+  if (!stateDoc.exists) {
     throw new Error("Estado de conexión inválido o expirado")
   }
 
   const stateData = stateDoc.data() as OAuthStateRecord
   const stateExpiresAt = parseDateLike(stateData.expiresAt)
   if (stateExpiresAt && stateExpiresAt.getTime() <= Date.now()) {
-    await deleteDoc(doc(db, OAUTH_STATE_COLLECTION, state))
+    await adminDb.collection(OAUTH_STATE_COLLECTION).doc(state).delete()
     throw new Error("El estado de conexión expiró")
   }
 
@@ -184,8 +182,7 @@ export async function completeMercadoPagoConnection(request: Request) {
   const connectedAt = existingMercadoPago?.connected_at || new Date()
   const expiresAt = new Date(Date.now() + Number(tokenResponse.expires_in || 0) * 1000)
 
-  await setDoc(
-    doc(db, "users", stateData.userId),
+  await adminDb.collection("users").doc(stateData.userId).set(
     {
       mercadopagoConnected: true,
       mpConnected: true,
@@ -211,19 +208,18 @@ export async function completeMercadoPagoConnection(request: Request) {
     { merge: true }
   )
 
-  await deleteDoc(doc(db, OAUTH_STATE_COLLECTION, state))
+  await adminDb.collection(OAUTH_STATE_COLLECTION).doc(state).delete()
 
-  const updatedDoc = await getDoc(doc(db, "users", stateData.userId))
+  const updatedDoc = await adminDb.collection("users").doc(stateData.userId).get()
   return {
     userId: stateData.userId,
-    status: getMercadoPagoConnectionSnapshot(updatedDoc.exists() ? (updatedDoc.data() as any) : null).status,
+    status: getMercadoPagoConnectionSnapshot(updatedDoc.exists ? (updatedDoc.data() as any) : null).status,
   }
 }
 
 export async function disconnectMercadoPagoConnection(request: Request) {
   const userId = await requireAuthenticatedUserId(request)
-  await setDoc(
-    doc(db, "users", userId),
+  await adminDb.collection("users").doc(userId).set(
     {
       mercadopagoConnected: false,
       mpConnected: false,
@@ -243,8 +239,8 @@ export async function disconnectMercadoPagoConnection(request: Request) {
 }
 
 export async function refreshMercadoPagoConnectionToken(userId: string) {
-  const userDoc = await getDoc(doc(db, "users", userId))
-  if (!userDoc.exists()) {
+  const userDoc = await adminDb.collection("users").doc(userId).get()
+  if (!userDoc.exists) {
     throw new Error("Vendedor no encontrado")
   }
 
@@ -264,8 +260,7 @@ export async function refreshMercadoPagoConnectionToken(userId: string) {
   })
 
   const expiresAt = new Date(Date.now() + Number(tokenResponse.expires_in || 0) * 1000)
-  await setDoc(
-    doc(db, "users", userId),
+  await adminDb.collection("users").doc(userId).set(
     {
       mercadopagoConnected: true,
       mpConnected: true,
@@ -291,13 +286,13 @@ export async function refreshMercadoPagoConnectionToken(userId: string) {
     { merge: true }
   )
 
-  const refreshedDoc = await getDoc(doc(db, "users", userId))
-  return getMercadoPagoConnectionSnapshot(refreshedDoc.exists() ? (refreshedDoc.data() as any) : null)
+  const refreshedDoc = await adminDb.collection("users").doc(userId).get()
+  return getMercadoPagoConnectionSnapshot(refreshedDoc.exists ? (refreshedDoc.data() as any) : null)
 }
 
 export async function getMercadoPagoConnectionRecord(userId: string) {
-  const userDoc = await getDoc(doc(db, "users", userId))
-  if (!userDoc.exists()) {
+  const userDoc = await adminDb.collection("users").doc(userId).get()
+  if (!userDoc.exists) {
     return null
   }
 

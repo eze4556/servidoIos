@@ -82,7 +82,13 @@ export function filterOrdersByCadeteZone(orders: FoodOrder[], cadeteZone?: strin
 }
 
 export async function fetchAvailableFoodOrders(cadeteZone?: string | null): Promise<FoodOrder[]> {
-  const snap = await getDocs(collection(db, "foodOrders"))
+  const snap = await getDocs(
+    query(
+      collection(db, "foodOrders"),
+      where("paymentStatus", "==", "approved"),
+      where("status", "in", ["listo", "despachado"])
+    )
+  )
   const base = snap.docs
     .map((d) => ({ id: d.id, ...d.data() } as FoodOrder))
     .filter(isOrderAvailableForPool)
@@ -104,7 +110,11 @@ export function subscribeAvailableFoodOrders(
   const zoneCache = new Map<string, string>()
 
   return onSnapshot(
-    collection(db, "foodOrders"),
+    query(
+      collection(db, "foodOrders"),
+      where("paymentStatus", "==", "approved"),
+      where("status", "in", ["listo", "despachado"])
+    ),
     async (snap) => {
       try {
         let orders = snap.docs

@@ -566,6 +566,14 @@
       "collectionGroup": "foodOrders",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "paymentStatus", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "foodOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "restaurantId", "order": "ASCENDING" },
         { "fieldPath": "commissionStatus", "order": "ASCENDING" },
         { "fieldPath": "paymentMethod", "order": "ASCENDING" }

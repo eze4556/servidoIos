@@ -69,6 +69,15 @@ export interface Restaurant {
 export type FoodCommissionStatus = "collected" | "pending" | "batched" | "paid"
 export type CadetePayoutStatus = "accrued" | "batched" | "paid" | "none"
 
+export type CadeteLiveLocation = {
+  lat: number
+  lng: number
+  accuracy?: number | null
+  heading?: number | null
+  speed?: number | null
+  updatedAt: string
+}
+
 export interface MenuCategory {
   id: string
   restaurantId: string
@@ -214,6 +223,8 @@ export interface FoodOrder {
   cadetePayoutStatus?: CadetePayoutStatus
   cadetePayoutBatchId?: string | null
   servidoPayoutAmount?: number
+  /** Posición en vivo del cadete (solo mientras el pedido está en camino). */
+  liveLocation?: CadeteLiveLocation | null
   createdAt?: unknown
   updatedAt?: unknown
 }

@@ -312,12 +312,16 @@ export function Header() {
                       {currentUser.firebaseUser.displayName || currentUser.firebaseUser.email}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Link href="/dashboard/buyer" className="hover:text-purple-700">
+                      <Link href={getDashboardLink()} className="hover:text-purple-700">
                         {t("myPanel")}
                       </Link>
                       {currentUser.role === "seller" && (
                         <Link
-                          href={`/seller/${currentUser.firebaseUser.uid}`}
+                          href={
+                            currentUser.businessType === "restaurant" && currentUser.restaurantId
+                              ? `/restaurantes/${currentUser.restaurantId}`
+                              : `/seller/${currentUser.firebaseUser.uid}`
+                          }
                           className="hover:text-purple-700"
                         >
                           {t("myStore")}

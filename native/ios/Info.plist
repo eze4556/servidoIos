@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fusionar estas keys en ios/App/App/Info.plist después de:
+    npx cap add ios
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Servido usa tu ubicación durante la entrega para que el cliente vea dónde va el cadete.</string>
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>Servido usa tu ubicación durante entregas activas, también con la app en segundo plano.</string>
+  <key>NSLocationAlwaysUsageDescription</key>
+  <string>Servido usa tu ubicación durante entregas activas, también con la app en segundo plano.</string>
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>location</string>
+  </array>
+</dict>
+</plist>

@@ -23,6 +23,9 @@ FIREBASE_ADMIN_PROJECT_ID=tu_project_id
 FIREBASE_ADMIN_PRIVATE_KEY=tu_private_key
 FIREBASE_ADMIN_CLIENT_EMAIL=tu_client_email
 
+# Cron Vercel (opcional). Si está definido, /api/cron/* y expire exigen Authorization: Bearer …
+CRON_SECRET=tu_cron_secret
+
 # MercadoPago
 MERCADOPAGO_ACCESS_TOKEN=tu_access_token
 MERCADOPAGO_PUBLIC_KEY=tu_public_key

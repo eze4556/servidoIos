@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { completeMercadoPagoConnection } from "@/lib/mercadopago-oauth"
 import { getMercadoPagoSiteUrl } from "@/lib/mercadopago"
-import { doc, getDoc } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { db as adminDb } from "@/lib/firebase-admin"
 
 async function getDashboardPathForUser(userId: string | null | undefined) {
   if (!userId) return "/dashboard/seller"
   try {
-    const snap = await getDoc(doc(db, "users", userId))
-    if (!snap.exists()) return "/dashboard/seller"
+    const snap = await adminDb.collection("users").doc(userId).get()
+    if (!snap.exists) return "/dashboard/seller"
     const data = snap.data()
     if (data.businessType === "restaurant" || data.role === "cadete") {
       return data.businessType === "restaurant" ? "/dashboard/restaurant" : "/dashboard/cadete"

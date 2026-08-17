@@ -1,10 +1,5 @@
-import {
-  collection,
-  doc,
-  type Firestore,
-  runTransaction,
-  serverTimestamp,
-} from "firebase/firestore"
+import { FieldValue } from "firebase-admin/firestore"
+import { db as adminDb } from "@/lib/firebase-admin"
 import {
   RESELLER_COMMISSION_ARS,
   RESELLER_UNITS_PAYOUT_THRESHOLD,
@@ -24,14 +19,11 @@ function applyUnitsToCycle(
   return { remainder, completedBatches }
 }
 
-export async function processResellerAttributionAfterPurchase(
-  firestore: Firestore,
-  params: {
-    purchaseId: string
-    buyerId: string
-    lines: ResellerAttributionLine[]
-  }
-): Promise<ResellerNotificationIntent[]> {
+export async function processResellerAttributionAfterPurchase(params: {
+  purchaseId: string
+  buyerId: string
+  lines: ResellerAttributionLine[]
+}): Promise<ResellerNotificationIntent[]> {
   const { purchaseId, buyerId, lines } = params
   if (!lines.length) return []
 
@@ -45,11 +37,11 @@ export async function processResellerAttributionAfterPurchase(
     byReferrer.set(line.referrerUserId, prev)
   }
 
-  await runTransaction(firestore, async (transaction) => {
+  await adminDb.runTransaction(async (transaction) => {
     for (const [referrerUserId, bundle] of byReferrer.entries()) {
-      const statsRef = doc(firestore, "resellerStats", referrerUserId)
+      const statsRef = adminDb.collection("resellerStats").doc(referrerUserId)
       const statsSnap = await transaction.get(statsRef)
-      const prevStats = statsSnap.exists()
+      const prevStats = statsSnap.exists
         ? (statsSnap.data() as {
             unitsInCurrentCycle?: number
             lifetimeUnits?: number
@@ -60,12 +52,12 @@ export async function processResellerAttributionAfterPurchase(
       const prevCycle = Number(prevStats.unitsInCurrentCycle || 0)
       const { remainder, completedBatches } = applyUnitsToCycle(prevCycle, bundle.units)
 
-      const userRef = doc(firestore, "users", referrerUserId)
+      const userRef = adminDb.collection("users").doc(referrerUserId)
       const userSnap = await transaction.get(userRef)
       const payoutInfo = (userSnap.data()?.resellerPayoutInfo || null) as ResellerPayoutInfo | null
 
       for (const line of bundle.lines) {
-        const saleRef = doc(collection(firestore, "resellerSales"))
+        const saleRef = adminDb.collection("resellerSales").doc()
         transaction.set(saleRef, {
           referrerUserId,
           sellerId: line.sellerId,
@@ -76,12 +68,12 @@ export async function processResellerAttributionAfterPurchase(
           referralCode: line.referralCode,
           commissionPerUnit: line.commissionPerUnit,
           commissionTotal: line.quantity * line.commissionPerUnit,
-          createdAt: serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
         })
       }
 
       for (let i = 0; i < completedBatches; i++) {
-        const batchRef = doc(collection(firestore, "resellerPayoutBatches"))
+        const batchRef = adminDb.collection("resellerPayoutBatches").doc()
         transaction.set(batchRef, {
           referrerUserId,
           units: RESELLER_UNITS_PAYOUT_THRESHOLD,
@@ -89,7 +81,7 @@ export async function processResellerAttributionAfterPurchase(
           status: "pending_payout",
           purchaseIds: [purchaseId],
           payoutInfoSnapshot: payoutInfo,
-          createdAt: serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
         })
       }
 
@@ -101,7 +93,7 @@ export async function processResellerAttributionAfterPurchase(
           referrerUserId,
           unitsInCurrentCycle: remainder,
           lifetimeUnits,
-          updatedAt: serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
       )

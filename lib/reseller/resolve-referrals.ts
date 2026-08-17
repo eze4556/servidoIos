@@ -1,5 +1,4 @@
-import { doc, getDoc, collection, query, where, getDocs, limit } from "firebase/firestore"
-import { db } from "@/lib/firebase"
+import { db as adminDb } from "@/lib/firebase-admin"
 import {
   RESELLER_COMMISSION_ARS,
   type ResellerAttributionLine,
@@ -19,9 +18,7 @@ export async function resolveReferralsForCheckout(params: {
     const code = productReferrals[item.productId]?.trim()
     if (!code) continue
 
-    const linkSnap = await getDocs(
-      query(collection(db, "resellerLinks"), where("code", "==", code), limit(1))
-    )
+    const linkSnap = await adminDb.collection("resellerLinks").where("code", "==", code).limit(1).get()
     if (linkSnap.empty) continue
 
     const link = linkSnap.docs[0].data() as {
@@ -36,8 +33,8 @@ export async function resolveReferralsForCheckout(params: {
     if (link.referrerUserId === buyerId) continue
     if (link.referrerUserId === item.sellerId) continue
 
-    const productSnap = await getDoc(doc(db, "products", item.productId))
-    if (!productSnap.exists()) continue
+    const productSnap = await adminDb.collection("products").doc(item.productId).get()
+    if (!productSnap.exists) continue
     const product = productSnap.data() as {
       allowResellerShare?: boolean
       isService?: boolean

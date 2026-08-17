@@ -82,12 +82,8 @@ export async function listActiveStories(): Promise<Story[]> {
       .map((d) => mapStory(d.id, d.data() as Record<string, unknown>))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
   } catch (error) {
-    console.warn("stories query failed, falling back:", error)
-    const snap = await getDocs(collection(db, "stories"))
-    stories = snap.docs
-      .map((d) => mapStory(d.id, d.data() as Record<string, unknown>))
-      .filter((s) => isStoryActive(s, now))
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    console.warn("stories query failed:", error)
+    return []
   }
 
   const withPhotos = await enrichAuthorPhotos(stories)

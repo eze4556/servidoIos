@@ -1,24 +1,11 @@
-import { auth as adminAuth } from "@/lib/firebase-admin"
-import { db } from "@/lib/firebase"
+import { auth as adminAuth, db as adminDb } from "@/lib/firebase-admin"
+import { FieldValue, type DocumentReference } from "firebase-admin/firestore"
 import { configureMercadoPago, getMercadoPagoSiteUrl } from "@/lib/mercadopago"
 import {
   ensureMercadoPagoSellerConnection,
   getMercadoPagoSellerAccessToken,
 } from "@/lib/mercadopago-oauth"
 import { getMercadoPagoConnectionSnapshot } from "@/lib/mercadopago-connection"
-import {
-  addDoc,
-  type DocumentReference,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  runTransaction,
-  serverTimestamp,
-  setDoc,
-  writeBatch,
-  updateDoc,
-} from "firebase/firestore"
 import { COMMISSION_RATE } from "@/types/centralized-payments"
 import { resolveReferralsForCheckout } from "@/lib/reseller/resolve-referrals"
 import { processResellerAttributionAfterPurchase } from "@/lib/reseller/process-purchase"
@@ -215,8 +202,8 @@ function getProductSellerId(productData: any) {
 async function getSellerInfo(sellerId: string) {
   if (!sellerId) return { name: "Vendedor", email: "" }
 
-  const sellerDoc = await getDoc(doc(db, "users", sellerId))
-  if (!sellerDoc.exists()) {
+  const sellerDoc = await adminDb.collection("users").doc(sellerId).get()
+  if (!sellerDoc.exists) {
     return { name: "Vendedor", email: "" }
   }
 
@@ -238,8 +225,8 @@ async function validateCheckoutProducts(products: CreatePreferenceProduct[]) {
       throw new Error(`Datos inválidos en el producto ${index}`)
     }
 
-    const productDoc = await getDoc(doc(db, "products", productId))
-    if (!productDoc.exists()) {
+    const productDoc = await adminDb.collection("products").doc(productId).get()
+    if (!productDoc.exists) {
       throw new Error(`Producto no encontrado: ${productId}`)
     }
 
@@ -425,9 +412,9 @@ async function createSellerPreferencePayment(params: {
     paidToSeller: false,
   }))
 
-  const batch = writeBatch(db)
+  const batch = adminDb.batch()
 
-  batch.set(doc(db, "pending_purchases", purchaseId), {
+  batch.set(adminDb.collection("pending_purchases").doc(purchaseId), {
     buyerId,
     buyerEmail,
     products: pendingProducts,
@@ -437,7 +424,7 @@ async function createSellerPreferencePayment(params: {
     comisionTotal: totalCommission,
     marketplaceFee,
     status: "pending",
-    createdAt: serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
     preferenceId: result.id,
     externalReference: purchaseId,
     shippingAddress: shippingAddress || null,
@@ -447,7 +434,7 @@ async function createSellerPreferencePayment(params: {
     resellerAttribution: resellerAttribution.length > 0 ? resellerAttribution : null,
   })
 
-  batch.set(doc(db, "centralizedPurchases", purchaseId), {
+  batch.set(adminDb.collection("centralizedPurchases").doc(purchaseId), {
     id: purchaseId,
     compradorId: buyerId,
     fecha: new Date().toISOString(),
@@ -460,8 +447,8 @@ async function createSellerPreferencePayment(params: {
     mediosPago: "mercadopago",
     mercadoPagoPaymentId: "",
     shippingAddress: shippingAddress || null,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     preferenceId: result.id,
     externalReference: purchaseId,
     sellerId,
@@ -624,7 +611,7 @@ export async function createMercadoPagoProductPreference(request: Request, body:
 
   const nextPayment = payments.find((p) => p.init_point) || payments[0]
 
-  await setDoc(doc(db, "checkoutSessions", sessionId), {
+  await adminDb.collection("checkoutSessions").doc(sessionId).set({
     id: sessionId,
     buyerId,
     buyerEmail,
@@ -632,8 +619,8 @@ export async function createMercadoPagoProductPreference(request: Request, body:
     sellerCount: payments.length,
     payments,
     status: "pending",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   })
 
   logMercadoPagoEvent("info", "create_multi_seller_checkout_success", {
@@ -667,8 +654,8 @@ export async function getCheckoutSession(sessionId: string) {
     throw new Error("sessionId requerido")
   }
 
-  const snap = await getDoc(doc(db, "checkoutSessions", sessionId))
-  if (!snap.exists()) {
+  const snap = await adminDb.collection("checkoutSessions").doc(sessionId).get()
+  if (!snap.exists) {
     throw new Error("Sesión de checkout no encontrada")
   }
 
@@ -682,10 +669,10 @@ export async function markCheckoutSessionPurchaseStatus(
 ) {
   if (!checkoutSessionId) return
 
-  const sessionRef = doc(db, "checkoutSessions", checkoutSessionId)
-  await runTransaction(db, async (transaction) => {
+  const sessionRef = adminDb.collection("checkoutSessions").doc(checkoutSessionId)
+  await adminDb.runTransaction(async (transaction) => {
     const snap = await transaction.get(sessionRef)
-    if (!snap.exists()) return
+    if (!snap.exists) return
 
     const data = snap.data() as any
     const payments: CheckoutSellerPayment[] = Array.isArray(data.payments) ? [...data.payments] : []
@@ -718,13 +705,13 @@ async function syncCheckoutSessionForPurchase(
   status: "approved" | "pending" | "rejected" | "cancelled" | "refunded"
 ) {
   try {
-    const pendingSnap = await getDoc(doc(db, "pending_purchases", purchaseId))
-    const centralizedSnap = pendingSnap.exists()
+    const pendingSnap = await adminDb.collection("pending_purchases").doc(purchaseId).get()
+    const centralizedSnap = pendingSnap.exists
       ? null
-      : await getDoc(doc(db, "centralizedPurchases", purchaseId))
-    const data = pendingSnap.exists()
+      : await adminDb.collection("centralizedPurchases").doc(purchaseId).get()
+    const data = pendingSnap.exists
       ? (pendingSnap.data() as any)
-      : centralizedSnap?.exists()
+      : centralizedSnap?.exists
         ? (centralizedSnap.data() as any)
         : null
 
@@ -762,17 +749,12 @@ async function resolveSellerAccessTokenFromMpUserId(mpUserId: string | number | 
   if (mpUserId == null || mpUserId === "") return null
   const target = String(mpUserId)
   try {
-    const { collection, getDocs, query, where, limit } = await import("firebase/firestore")
-    // Prefer top-level account id used by our OAuth save
-    let snap = await getDocs(query(collection(db, "users"), where("mercadopagoAccountId", "==", target), limit(1)))
+    let snap = await adminDb.collection("users").where("mercadopagoAccountId", "==", target).limit(1).get()
     if (snap.empty) {
-      snap = await getDocs(query(collection(db, "users"), where("mercadopagoUserId", "==", target), limit(1)))
+      snap = await adminDb.collection("users").where("mercadopagoUserId", "==", target).limit(1).get()
     }
     if (snap.empty) {
-      // user_id se guarda como string en mercadopago.user_id
-      snap = await getDocs(
-        query(collection(db, "users"), where("mercadopago.user_id", "==", target), limit(1))
-      )
+      snap = await adminDb.collection("users").where("mercadopago.user_id", "==", target).limit(1).get()
     }
     if (snap.empty) return null
     const { getMercadoPagoSellerAccessToken } = await import("@/lib/mercadopago-oauth")
@@ -789,11 +771,11 @@ async function updateCentralizedPurchaseStatus(
   paymentId: string
 ) {
   logFirestoreAccess("doc", "centralizedPurchases", purchaseId)
-  const purchaseRef = doc(db, "centralizedPurchases", purchaseId)
+  const purchaseRef = adminDb.collection("centralizedPurchases").doc(purchaseId)
   logFirestoreAccess("getDoc", "centralizedPurchases", purchaseId)
-  const purchaseSnap = await getDoc(purchaseRef)
+  const purchaseSnap = await purchaseRef.get()
 
-  if (!purchaseSnap.exists()) {
+  if (!purchaseSnap.exists) {
     return
   }
 
@@ -807,20 +789,20 @@ async function updateCentralizedPurchaseStatus(
     : []
 
   logFirestoreAccess("updateDoc", "centralizedPurchases", purchaseId)
-  await updateDoc(purchaseRef, {
+  await purchaseRef.update({
     estadoPago: mapStatusToStoredState(status as MercadoPagoStatus),
     estadoEnvio: status === "approved" ? "pendiente" : "cancelado",
     mercadoPagoPaymentId: paymentId,
     paymentStatusRaw: status,
     items: updatedItems,
-    updatedAt: serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   })
 }
 
 async function syncLegacyPurchaseRecord(purchaseId: string, paymentInfo: any, pendingPurchaseData: any) {
   logFirestoreAccess("doc", "purchases", purchaseId)
   logFirestoreAccess("setDoc", "purchases", purchaseId)
-  await setDoc(doc(db, "purchases", purchaseId), {
+  await adminDb.collection("purchases").doc(purchaseId).set({
     id: purchaseId,
     buyerId: pendingPurchaseData.buyerId,
     buyerEmail: pendingPurchaseData.buyerEmail,
@@ -861,34 +843,34 @@ function normalizePurchaseSourceData(sourceData: any) {
 
 async function handleApprovedPurchase(paymentInfo: any, purchaseId: string) {
   logFirestoreAccess("doc", "pending_purchases", purchaseId)
-  const pendingPurchaseRef = doc(db, "pending_purchases", purchaseId)
-  const pendingPreRead = await getDoc(pendingPurchaseRef)
+  const pendingPurchaseRef = adminDb.collection("pending_purchases").doc(purchaseId)
+  const pendingPreRead = await pendingPurchaseRef.get()
   const preAttribution = (pendingPreRead.data()?.resellerAttribution ||
     null) as ResellerAttributionLine[] | null
   const preBuyerId = pendingPreRead.data()?.buyerId as string | undefined
 
   logFirestoreAccess("doc", "centralizedPurchases", purchaseId)
-  const centralizedPurchaseRef = doc(db, "centralizedPurchases", purchaseId)
+  const centralizedPurchaseRef = adminDb.collection("centralizedPurchases").doc(purchaseId)
   logFirestoreAccess("doc", "failed_purchases", paymentInfo.id)
-  const failedPurchaseRef = doc(db, "failed_purchases", paymentInfo.id)
+  const failedPurchaseRef = adminDb.collection("failed_purchases").doc(paymentInfo.id)
   logFirestoreAccess("doc", "purchases", purchaseId)
-  const legacyPurchaseRef = doc(db, "purchases", purchaseId)
+  const legacyPurchaseRef = adminDb.collection("purchases").doc(purchaseId)
 
   logFirestoreAccess("runTransaction", "pending_purchases", purchaseId)
   logFirestoreAccess("runTransaction", "centralizedPurchases", purchaseId)
   logFirestoreAccess("runTransaction", "failed_purchases", paymentInfo.id)
   logFirestoreAccess("runTransaction", "purchases", purchaseId)
-  await runTransaction(db, async (transaction) => {
+  await adminDb.runTransaction(async (transaction) => {
     logFirestoreAccess("transaction.get", "pending_purchases", purchaseId)
     const pendingPurchaseDoc = await transaction.get(pendingPurchaseRef)
     logFirestoreAccess("transaction.get", "centralizedPurchases", purchaseId)
     const centralizedPurchaseDoc = await transaction.get(centralizedPurchaseRef)
 
-    if (!pendingPurchaseDoc.exists() && !centralizedPurchaseDoc.exists()) {
+    if (!pendingPurchaseDoc.exists && !centralizedPurchaseDoc.exists) {
       throw new Error("Compra pendiente no encontrada")
     }
 
-    const sourceData = (pendingPurchaseDoc.exists() ? pendingPurchaseDoc.data() : centralizedPurchaseDoc.data()) as any
+    const sourceData = (pendingPurchaseDoc.exists ? pendingPurchaseDoc.data() : centralizedPurchaseDoc.data()) as any
     const normalizedPurchase = normalizePurchaseSourceData(sourceData)
     const {
       products,
@@ -902,11 +884,11 @@ async function handleApprovedPurchase(paymentInfo: any, purchaseId: string) {
 
     for (const prod of products) {
       logFirestoreAccess("doc", "products", prod.productId)
-      const productRef = doc(db, "products", prod.productId)
+      const productRef = adminDb.collection("products").doc(prod.productId)
       logFirestoreAccess("transaction.get", "products", prod.productId)
       const productDoc = await transaction.get(productRef)
 
-      if (!productDoc.exists()) continue
+      if (!productDoc.exists) continue
 
       const productData = productDoc.data() as any
       if (typeof productData.stock === "number") {
@@ -978,7 +960,7 @@ async function handleApprovedPurchase(paymentInfo: any, purchaseId: string) {
 
   if (preAttribution?.length && preBuyerId) {
     try {
-      const intents = await processResellerAttributionAfterPurchase(db, {
+      const intents = await processResellerAttributionAfterPurchase({
         purchaseId,
         buyerId: preBuyerId,
         lines: preAttribution,
@@ -996,19 +978,19 @@ async function handleApprovedPurchase(paymentInfo: any, purchaseId: string) {
 
 async function handleRejectedPurchase(paymentInfo: any, purchaseId: string) {
   logFirestoreAccess("doc", "pending_purchases", purchaseId)
-  const pendingPurchaseRef = doc(db, "pending_purchases", purchaseId)
+  const pendingPurchaseRef = adminDb.collection("pending_purchases").doc(purchaseId)
   logFirestoreAccess("doc", "centralizedPurchases", purchaseId)
-  const centralizedPurchaseRef = doc(db, "centralizedPurchases", purchaseId)
+  const centralizedPurchaseRef = adminDb.collection("centralizedPurchases").doc(purchaseId)
   logFirestoreAccess("doc", "purchases", purchaseId)
-  const legacyPurchaseRef = doc(db, "purchases", purchaseId)
+  const legacyPurchaseRef = adminDb.collection("purchases").doc(purchaseId)
 
   logFirestoreAccess("runTransaction", "pending_purchases", purchaseId)
   logFirestoreAccess("runTransaction", "centralizedPurchases", purchaseId)
   logFirestoreAccess("runTransaction", "purchases", purchaseId)
-  await runTransaction(db, async (transaction) => {
+  await adminDb.runTransaction(async (transaction) => {
     logFirestoreAccess("transaction.get", "centralizedPurchases", purchaseId)
     const centralizedPurchaseDoc = await transaction.get(centralizedPurchaseRef)
-    if (centralizedPurchaseDoc.exists()) {
+    if (centralizedPurchaseDoc.exists) {
       const currentData = centralizedPurchaseDoc.data() as any
       const items = Array.isArray(currentData.items)
         ? currentData.items.map((item: any) => ({
@@ -1044,16 +1026,16 @@ async function handleRejectedPurchase(paymentInfo: any, purchaseId: string) {
 
 async function handleRefundedPurchase(paymentInfo: any, purchaseId: string) {
   logFirestoreAccess("doc", "centralizedPurchases", purchaseId)
-  const centralizedPurchaseRef = doc(db, "centralizedPurchases", purchaseId)
+  const centralizedPurchaseRef = adminDb.collection("centralizedPurchases").doc(purchaseId)
   logFirestoreAccess("doc", "purchases", purchaseId)
-  const legacyPurchaseRef = doc(db, "purchases", purchaseId)
+  const legacyPurchaseRef = adminDb.collection("purchases").doc(purchaseId)
 
   logFirestoreAccess("runTransaction", "centralizedPurchases", purchaseId)
   logFirestoreAccess("runTransaction", "purchases", purchaseId)
-  await runTransaction(db, async (transaction) => {
+  await adminDb.runTransaction(async (transaction) => {
     logFirestoreAccess("transaction.get", "centralizedPurchases", purchaseId)
     const centralizedPurchaseDoc = await transaction.get(centralizedPurchaseRef)
-    if (centralizedPurchaseDoc.exists()) {
+    if (centralizedPurchaseDoc.exists) {
       const currentData = centralizedPurchaseDoc.data() as any
       const items = Array.isArray(currentData.items)
         ? currentData.items.map((item: any) => ({
@@ -1096,14 +1078,14 @@ async function reserveWebhookEvent(params: {
   eventType?: string
 }) {
   logFirestoreAccess("doc", WEBHOOK_EVENTS_COLLECTION, params.paymentId)
-  const eventRef = doc(db, WEBHOOK_EVENTS_COLLECTION, params.paymentId)
+  const eventRef = adminDb.collection(WEBHOOK_EVENTS_COLLECTION).doc(params.paymentId)
   const statusPriority = getStatusPriority(params.status)
 
   logFirestoreAccess("runTransaction", WEBHOOK_EVENTS_COLLECTION, params.paymentId)
-  return runTransaction(db, async (transaction) => {
+  return adminDb.runTransaction(async (transaction) => {
     logFirestoreAccess("transaction.get", WEBHOOK_EVENTS_COLLECTION, params.paymentId)
     const eventSnap = await transaction.get(eventRef)
-    const eventData = eventSnap.exists() ? (eventSnap.data() as any) : null
+    const eventData = eventSnap.exists ? (eventSnap.data() as any) : null
     const processedStatuses: string[] = Array.isArray(eventData?.processedStatuses) ? eventData.processedStatuses : []
     const highestStatusRank = typeof eventData?.highestStatusRank === "number" ? eventData.highestStatusRank : 0
 
@@ -1131,7 +1113,7 @@ async function reserveWebhookEvent(params: {
       receivedAt: eventData?.receivedAt || now,
     }
 
-    if (eventSnap.exists()) {
+    if (eventSnap.exists) {
       logFirestoreAccess("transaction.set", WEBHOOK_EVENTS_COLLECTION, params.paymentId)
       transaction.set(eventRef, nextPayload, { merge: true })
     } else {
@@ -1154,10 +1136,10 @@ async function markWebhookEventProcessed(
 ) {
   const statusPriority = getStatusPriority(status)
   logFirestoreAccess("runTransaction", WEBHOOK_EVENTS_COLLECTION, eventRef.id)
-  await runTransaction(db, async (transaction) => {
+  await adminDb.runTransaction(async (transaction) => {
     logFirestoreAccess("transaction.get", WEBHOOK_EVENTS_COLLECTION, eventRef.id)
     const eventSnap = await transaction.get(eventRef)
-    const eventData = eventSnap.exists() ? (eventSnap.data() as any) : null
+    const eventData = eventSnap.exists ? (eventSnap.data() as any) : null
     const processedStatuses: string[] = Array.isArray(eventData?.processedStatuses) ? eventData.processedStatuses : []
     const nextProcessedStatuses = processedStatuses.includes(status) ? processedStatuses : [...processedStatuses, status]
 
@@ -1181,7 +1163,7 @@ async function markWebhookEventProcessed(
 
 async function markWebhookEventFailed(eventRef: DocumentReference, errorMessage: string) {
   logFirestoreAccess("setDoc", WEBHOOK_EVENTS_COLLECTION, eventRef.id)
-  await setDoc(
+  await eventRef.set(
     eventRef,
     {
       state: "error",
@@ -1506,8 +1488,8 @@ export async function getMercadoPagoConnectionStatus(request: Request, userId?: 
   const decodedUser = await requireAuthenticatedUser(request, userId)
   const resolvedUserId = userId || decodedUser.uid
 
-  const userDoc = await getDoc(doc(db, "users", resolvedUserId))
-  if (!userDoc.exists()) {
+  const userDoc = await adminDb.collection("users").doc(resolvedUserId).get()
+  if (!userDoc.exists) {
     return {
       connected: false,
       tokenExpired: false,

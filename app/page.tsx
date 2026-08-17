@@ -16,8 +16,7 @@ import { HomeCategoryPills } from "@/components/home/home-category-pills"
 import { HomeBannerCarousel } from "@/components/home/home-banner-carousel"
 import { HomeStoriesSection } from "@/components/stories/home-stories-section"
 import { HomeProductGrid } from "@/components/home/home-product-grid"
-import { HomeVehiclesSpotlight } from "@/components/home/home-vehicles-spotlight"
-import { HomePropertiesSpotlight } from "@/components/home/home-properties-spotlight"
+import { HomeVerticalSpotlights } from "@/components/home/home-vertical-spotlights"
 import { useTranslations } from "next-intl"
 
 interface Product {
@@ -256,11 +255,7 @@ export default function HomePage() {
         </div>
 
         <HomeSectionShell variant="default" className="home-section-delay-1">
-          <HomeVehiclesSpotlight />
-        </HomeSectionShell>
-
-        <HomeSectionShell variant="default" className="home-section-delay-1">
-          <HomePropertiesSpotlight />
+          <HomeVerticalSpotlights />
         </HomeSectionShell>
 
         <HomeSectionShell variant="default" className="home-section-delay-2">

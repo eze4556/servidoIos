@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/firebase'
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  query, 
-  where, 
-  orderBy, 
-  serverTimestamp,
-  getDoc 
-} from 'firebase/firestore'
-import type { SubscriptionPricing, SubscriptionPricingHistory } from '@/types/subscription'
+import { db as adminDb } from '@/lib/firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
+import type { SubscriptionPricing } from '@/types/subscription'
 
 function normalizeTimestamp(value: any) {
   if (!value) return null
@@ -52,9 +41,7 @@ function serializePricingDoc(docId: string, data: any) {
 // GET - Obtener el precio activo de suscripción
 export async function GET() {
   try {
-    const pricingRef = collection(db, 'subscriptionPricing')
-    const q = query(pricingRef, where('isActive', '==', true))
-    const snapshot = await getDocs(q)
+    const snapshot = await adminDb.collection('subscriptionPricing').where('isActive', '==', true).get()
     
     if (snapshot.empty) {
       return NextResponse.json({ error: 'No hay precio de suscripción configurado' }, { status: 404 })
@@ -93,43 +80,38 @@ export async function POST(request: NextRequest) {
     }
     
     // Desactivar precio anterior si existe
-    const existingPricingRef = collection(db, 'subscriptionPricing')
-    const existingQuery = query(existingPricingRef, where('isActive', '==', true))
-    const existingSnapshot = await getDocs(existingQuery)
+    const existingSnapshot = await adminDb.collection('subscriptionPricing').where('isActive', '==', true).get()
     
     if (!existingSnapshot.empty) {
       const existingDoc = existingSnapshot.docs[0]
       const existingData = existingDoc.data() as SubscriptionPricing
       
-      // Crear registro en el historial
-      await addDoc(collection(db, 'subscriptionPricingHistory'), {
+      await adminDb.collection('subscriptionPricingHistory').add({
         oldPrice: existingData.price,
         newPrice: price,
-        changedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
+        changedAt: FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         changedBy: createdBy,
         reason: notes || 'Cambio de precio por administrador'
       })
       
-      // Desactivar precio anterior
-      await updateDoc(doc(db, 'subscriptionPricing', existingDoc.id), {
+      await existingDoc.ref.update({
         isActive: false,
-        createdAt: existingData.createdAt || serverTimestamp(),
-        updatedAt: serverTimestamp()
+        createdAt: existingData.createdAt || FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
       })
     }
     
-    // Crear nuevo precio
     const newPricing = {
       price,
       isActive: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       createdBy,
       notes: notes || ''
     }
     
-    const docRef = await addDoc(collection(db, 'subscriptionPricing'), newPricing)
+    const docRef = await adminDb.collection('subscriptionPricing').add(newPricing)
     
     return NextResponse.json(
       serializePricingDoc(docRef.id, newPricing),
@@ -156,31 +138,29 @@ export async function PUT(request: NextRequest) {
     }
     
     // Obtener precio actual
-    const pricingRef = doc(db, 'subscriptionPricing', id)
-    const pricingDoc = await getDoc(pricingRef)
+    const pricingRef = adminDb.collection('subscriptionPricing').doc(id)
+    const pricingDoc = await pricingRef.get()
     
-    if (!pricingDoc.exists()) {
+    if (!pricingDoc.exists) {
       return NextResponse.json({ error: 'Precio no encontrado' }, { status: 404 })
     }
     
     const currentData = pricingDoc.data() as SubscriptionPricing
     
-    // Crear registro en el historial
-    await addDoc(collection(db, 'subscriptionPricingHistory'), {
+    await adminDb.collection('subscriptionPricingHistory').add({
       oldPrice: currentData.price,
       newPrice: price,
-      changedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
+      changedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       changedBy: updatedBy,
       reason: notes || 'Actualización de precio por administrador'
     })
     
-    // Actualizar precio
-    await updateDoc(pricingRef, {
+    await pricingRef.update({
       price,
       notes: notes || currentData.notes,
-      createdAt: currentData.createdAt || serverTimestamp(),
-      updatedAt: serverTimestamp()
+      createdAt: currentData.createdAt || FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
     })
     
     return NextResponse.json({ message: 'Precio actualizado correctamente' })

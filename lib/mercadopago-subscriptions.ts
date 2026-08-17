@@ -1,18 +1,6 @@
 import { MercadoPagoConfig, PreApproval } from "mercadopago"
-import { auth as adminAuth } from "@/lib/firebase-admin"
-import { db } from "@/lib/firebase"
+import { auth as adminAuth, db as adminDb } from "@/lib/firebase-admin"
 import { getMercadoPagoSiteUrl } from "@/lib/mercadopago"
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  runTransaction,
-  setDoc,
-  where,
-} from "firebase/firestore"
 import type { SubscriptionPricing } from "@/types/subscription"
 
 export type SubscriptionPlanType = "basic" | "premium" | "enterprise"
@@ -88,9 +76,11 @@ export function resolveSubscriptionDashboardPath(returnPath?: string) {
 }
 
 export async function getActiveSubscriptionPrice(): Promise<number> {
-  const pricingRef = collection(db, "subscriptionPricing")
-  const q = query(pricingRef, where("isActive", "==", true), orderBy("createdAt", "desc"))
-  const snapshot = await getDocs(q)
+  const snapshot = await adminDb
+    .collection("subscriptionPricing")
+    .where("isActive", "==", true)
+    .orderBy("createdAt", "desc")
+    .get()
 
   if (snapshot.empty) return DEFAULT_SUBSCRIPTION_PRICE
 
@@ -101,14 +91,13 @@ export async function getActiveSubscriptionPrice(): Promise<number> {
 
 export async function syncRestaurantSubscriptionFlag(userId: string, active: boolean) {
   try {
-    const userSnap = await getDoc(doc(db, "users", userId))
-    if (!userSnap.exists()) return
+    const userSnap = await adminDb.collection("users").doc(userId).get()
+    if (!userSnap.exists) return
     const userData = userSnap.data() as { restaurantId?: string; businessType?: string }
     const restaurantId = userData.restaurantId
     if (!restaurantId || userData.businessType !== "restaurant") return
 
-    await setDoc(
-      doc(db, "restaurants", restaurantId),
+    await adminDb.collection("restaurants").doc(restaurantId).set(
       {
         subscriptionActive: active,
         updatedAt: new Date(),
@@ -172,8 +161,8 @@ export async function activateUserSubscription(params: {
     paymentDate = null,
   } = params
 
-  const existingUserSnap = await getDoc(doc(db, "users", userId))
-  const existingUser = existingUserSnap.exists() ? (existingUserSnap.data() as any) : {}
+  const existingUserSnap = await adminDb.collection("users").doc(userId).get()
+  const existingUser = existingUserSnap.exists ? (existingUserSnap.data() as any) : {}
   const now = paymentDate instanceof Date ? paymentDate : paymentDate ? new Date(paymentDate) : new Date()
   const startDate = existingUser?.subscription?.startDate
     ? existingUser.subscription.startDate
@@ -181,9 +170,9 @@ export async function activateUserSubscription(params: {
   const endDate = resolvePeriodEnd({ nextPaymentDate, paymentDate: now })
   const paymentDocumentId = paymentId != null ? String(paymentId) : `preapproval_${preapprovalId || userId}_${Date.now()}`
 
-  await runTransaction(db, async (transaction) => {
+  await adminDb.runTransaction(async (transaction) => {
     transaction.set(
-      doc(db, "users", userId),
+      adminDb.collection("users").doc(userId),
       {
         role: existingUser.role || "seller",
         businessType: existingUser.businessType || undefined,
@@ -212,7 +201,7 @@ export async function activateUserSubscription(params: {
     )
 
     transaction.set(
-      doc(db, "subscriptions", paymentDocumentId),
+      adminDb.collection("subscriptions").doc(paymentDocumentId),
       {
         id: paymentDocumentId,
         userId,
@@ -234,7 +223,7 @@ export async function activateUserSubscription(params: {
 
     if (paymentId != null) {
       transaction.set(
-        doc(db, "transactions", paymentDocumentId),
+        adminDb.collection("transactions").doc(paymentDocumentId),
         {
           id: paymentDocumentId,
           userId,
@@ -263,11 +252,10 @@ export async function deactivateUserSubscription(params: {
   preapprovalStatus?: string | null
 }) {
   const { userId, reason = "cancelled", preapprovalId = null, preapprovalStatus = "cancelled" } = params
-  const existingUserSnap = await getDoc(doc(db, "users", userId))
-  const existingUser = existingUserSnap.exists() ? (existingUserSnap.data() as any) : {}
+  const existingUserSnap = await adminDb.collection("users").doc(userId).get()
+  const existingUser = existingUserSnap.exists ? (existingUserSnap.data() as any) : {}
 
-  await setDoc(
-    doc(db, "users", userId),
+  await adminDb.collection("users").doc(userId).set(
     {
       subscription_status: "inactive",
       isSubscribed: false,
@@ -297,8 +285,8 @@ export async function cancelRecurringSubscription(request: Request) {
   const decoded = await requireAuthenticatedUserId(request)
   const userId = decoded.uid
 
-  const userSnap = await getDoc(doc(db, "users", userId))
-  if (!userSnap.exists()) {
+  const userSnap = await adminDb.collection("users").doc(userId).get()
+  if (!userSnap.exists) {
     throw new Error("Usuario no encontrado")
   }
 
@@ -337,8 +325,7 @@ export async function cancelRecurringSubscription(request: Request) {
   }
 
   if (hasRemainingAccess) {
-    await setDoc(
-      doc(db, "users", userId),
+    await adminDb.collection("users").doc(userId).set(
       {
         subscription_status: "active",
         isSubscribed: true,
@@ -358,8 +345,7 @@ export async function cancelRecurringSubscription(request: Request) {
     )
 
     if (preapprovalId) {
-      await setDoc(
-        doc(db, "subscriptionPreapprovals", String(preapprovalId)),
+      await adminDb.collection("subscriptionPreapprovals").doc(String(preapprovalId)).set(
         {
           status: "cancelled",
           cancelAtPeriodEnd: true,
@@ -421,8 +407,8 @@ export async function createRecurringSubscription(request: Request, body: Create
   const dashboardPath = resolveSubscriptionDashboardPath(returnPath)
   const subscriptionPrice = await getActiveSubscriptionPrice()
 
-  const userSnap = await getDoc(doc(db, "users", userId))
-  const userData = userSnap.exists() ? (userSnap.data() as any) : {}
+  const userSnap = await adminDb.collection("users").doc(userId).get()
+  const userData = userSnap.exists ? (userSnap.data() as any) : {}
   const email =
     (typeof payerEmail === "string" && payerEmail.trim()) ||
     (typeof decoded.email === "string" && decoded.email.trim()) ||
@@ -456,8 +442,7 @@ export async function createRecurringSubscription(request: Request, body: Create
     throw new Error("Mercado Pago no devolvió el enlace de suscripción")
   }
 
-  await setDoc(
-    doc(db, "users", userId),
+  await adminDb.collection("users").doc(userId).set(
     {
       subscription: {
         ...(userData.subscription || {}),
@@ -473,8 +458,7 @@ export async function createRecurringSubscription(request: Request, body: Create
     { merge: true }
   )
 
-  await setDoc(
-    doc(db, "subscriptionPreapprovals", result.id),
+  await adminDb.collection("subscriptionPreapprovals").doc(result.id).set(
     {
       id: result.id,
       userId,
@@ -539,8 +523,8 @@ export async function syncSubscriptionFromPreapproval(preapproval: {
   let planType = parsed?.planType || "basic"
 
   if (!userId) {
-    const stored = await getDoc(doc(db, "subscriptionPreapprovals", preapprovalId))
-    if (stored.exists()) {
+    const stored = await adminDb.collection("subscriptionPreapprovals").doc(preapprovalId).get()
+    if (stored.exists) {
       const data = stored.data() as any
       userId = data.userId || null
       planType = data.planType || planType
@@ -553,8 +537,7 @@ export async function syncSubscriptionFromPreapproval(preapproval: {
 
   const status = String(preapproval.status || "").toLowerCase()
 
-  await setDoc(
-    doc(db, "subscriptionPreapprovals", preapprovalId),
+  await adminDb.collection("subscriptionPreapprovals").doc(preapprovalId).set(
     {
       id: preapprovalId,
       userId,
@@ -582,15 +565,14 @@ export async function syncSubscriptionFromPreapproval(preapproval: {
   }
 
   if (status === "paused" || status === "cancelled") {
-    const userSnap = await getDoc(doc(db, "users", userId))
-    const userData = userSnap.exists() ? (userSnap.data() as any) : {}
+    const userSnap = await adminDb.collection("users").doc(userId).get()
+    const userData = userSnap.exists ? (userSnap.data() as any) : {}
     const endsAt = normalizeSubscriptionDate(userData?.subscription?.endDate)
     const now = new Date()
     const hasRemainingAccess = Boolean(endsAt && endsAt.getTime() > now.getTime())
 
     if (hasRemainingAccess) {
-      await setDoc(
-        doc(db, "users", userId),
+      await adminDb.collection("users").doc(userId).set(
         {
           subscription_status: "active",
           isSubscribed: true,
@@ -632,8 +614,8 @@ export async function syncSubscriptionFromAuthorizedPayment(authorizedPayment: a
   let planType = parsed?.planType || "basic"
 
   if (!userId && preapprovalId) {
-    const stored = await getDoc(doc(db, "subscriptionPreapprovals", String(preapprovalId)))
-    if (stored.exists()) {
+    const stored = await adminDb.collection("subscriptionPreapprovals").doc(String(preapprovalId)).get()
+    if (stored.exists) {
       const data = stored.data() as any
       userId = data.userId || null
       planType = data.planType || planType

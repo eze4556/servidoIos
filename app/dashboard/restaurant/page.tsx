@@ -16,8 +16,9 @@ import {
   serverTimestamp,
   onSnapshot,
 } from "firebase/firestore"
-import { auth, db } from "@/lib/firebase"
+import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
+import { fetchRestaurantCommissionBatches } from "@/lib/delivery-settlements"
 import type { RestaurantCommissionBatch } from "@/types/delivery-settlements"
 import { ApiService } from "@/lib/services/api"
 import { Button } from "@/components/ui/button"
@@ -125,19 +126,9 @@ export default function RestaurantDashboardPage() {
     )
     const amount = pending.reduce((sum, o) => sum + (Number(o.servidoCommission) || 0), 0)
     setPendingCommissionAmount(Math.round(amount * 100) / 100)
-    void (async () => {
-      try {
-        const token = await auth.currentUser?.getIdToken()
-        if (!token) return
-        const res = await fetch("/api/restaurant/commission-batches", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const data = await res.json()
-        setCommissionBatches(Array.isArray(data.batches) ? data.batches : [])
-      } catch {
-        setCommissionBatches([])
-      }
-    })()
+    void fetchRestaurantCommissionBatches(restaurantId)
+      .then(setCommissionBatches)
+      .catch(() => setCommissionBatches([]))
   }, [restaurantId, orders])
 
   // Si ya tiene suscripción activa pero el flag del local no, sincronizar

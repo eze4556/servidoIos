@@ -1,5 +1,5 @@
-import { auth as adminAuth } from "@/lib/firebase-admin"
-import { db } from "@/lib/firebase"
+import { auth as adminAuth, db as adminDb } from "@/lib/firebase-admin"
+import { FieldValue } from "firebase-admin/firestore"
 import { configureMercadoPago, getMercadoPagoSiteUrl } from "@/lib/mercadopago"
 import { getMercadoPagoSellerAccessToken } from "@/lib/mercadopago-oauth"
 import { mapMenuItemDoc } from "@/lib/restaurant-menu"
@@ -15,7 +15,6 @@ import {
   quotePickupCommission,
 } from "@/lib/delivery-pricing"
 import { hasValidCoordinates } from "@/lib/geo"
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore"
 import type {
   DeliveryMode,
   FoodOrderItem,
@@ -106,15 +105,15 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
     throw new Error("La transferencia no está disponible. Usá Mercado Pago o efectivo.")
   }
 
-  const restaurantDoc = await getDoc(doc(db, "restaurants", restaurantId))
-  if (!restaurantDoc.exists()) {
+  const restaurantDoc = await adminDb.collection("restaurants").doc(restaurantId).get()
+  if (!restaurantDoc.exists) {
     throw new Error("Restaurante no encontrado")
   }
-  const restaurantData = restaurantDoc.data()
+  const restaurantData = restaurantDoc.data()!
   const ownerId = (restaurantData.ownerId as string) || restaurantId
 
-  const ownerSnap = await getDoc(doc(db, "users", ownerId))
-  if (!ownerSnap.exists()) {
+  const ownerSnap = await adminDb.collection("users").doc(ownerId).get()
+  if (!ownerSnap.exists) {
     throw new Error("Dueño del restaurante no encontrado")
   }
 
@@ -159,8 +158,8 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
     }
 
     if (item.promotionId) {
-      const promoDoc = await getDoc(doc(db, "menuPromotions", item.promotionId))
-      if (!promoDoc.exists()) {
+      const promoDoc = await adminDb.collection("menuPromotions").doc(item.promotionId).get()
+      if (!promoDoc.exists) {
         throw new Error(`Combo no encontrado: ${item.promotionId}`)
       }
       const promotion = mapMenuPromotionDoc(promoDoc.id, promoDoc.data() as Record<string, unknown>)
@@ -191,8 +190,8 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
       continue
     }
 
-    const menuDoc = await getDoc(doc(db, "menuItems", item.menuItemId))
-    if (!menuDoc.exists()) {
+    const menuDoc = await adminDb.collection("menuItems").doc(item.menuItemId).get()
+    if (!menuDoc.exists) {
       throw new Error(`Plato no encontrado: ${item.menuItemId}`)
     }
     const menuItem = mapMenuItemDoc(menuDoc.id, menuDoc.data() as Record<string, unknown>)
@@ -271,8 +270,8 @@ async function validateAndBuildOrder(body: CreateFoodOrderPayload) {
     paymentMethod,
     status: "recibido" as const,
     paymentStatus: paymentMethod === "cash" ? ("approved" as const) : ("pending" as const),
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   }
 
   return {
@@ -309,7 +308,7 @@ export async function createFoodOrder(request: Request, body: CreateFoodOrderPay
     if (!pickup) {
       throw new Error("El delivery solo se paga con Mercado Pago")
     }
-    await setDoc(doc(db, "foodOrders", orderId), {
+    await adminDb.collection("foodOrders").doc(orderId).set({
       ...baseOrder,
       preferenceId: null,
       paymentId: null,
@@ -381,7 +380,7 @@ export async function createFoodOrder(request: Request, body: CreateFoodOrderPay
 
   const result = (await preference.preferences.create(preferenceData)) as { id?: string; init_point?: string }
 
-  await setDoc(doc(db, "foodOrders", orderId), {
+  await adminDb.collection("foodOrders").doc(orderId).set({
     ...baseOrder,
     preferenceId: result.id || null,
     paymentId: null,
@@ -407,19 +406,19 @@ export async function updateFoodOrderPaymentStatus(
   paymentStatus: "pending" | "approved" | "rejected" | "cancelled",
   paymentId?: string
 ) {
-  const orderRef = doc(db, "foodOrders", orderId)
-  const orderSnap = await getDoc(orderRef)
-  if (!orderSnap.exists()) return false
+  const orderRef = adminDb.collection("foodOrders").doc(orderId)
+  const orderSnap = await orderRef.get()
+  if (!orderSnap.exists) return false
 
-  const data = orderSnap.data()
+  const data = orderSnap.data()!
   const isDelivery =
     data.deliveryMode === "delivery_propio" ||
     (data.deliveryMode === "ambos" && Number(data.deliveryFee) > 0)
 
-  await updateDoc(orderRef, {
+  await orderRef.update({
     paymentStatus,
     paymentId: paymentId || null,
-    updatedAt: serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     ...(paymentStatus === "approved"
       ? {
           status: "recibido",

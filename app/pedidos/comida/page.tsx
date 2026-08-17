@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useTranslations } from "next-intl"
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore"
+import { useLocale, useTranslations } from "next-intl"
+import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useAuth } from "@/contexts/auth-context"
 import { Badge } from "@/components/ui/badge"
@@ -14,9 +14,12 @@ import { formatOrderItemSelections } from "@/types/restaurant"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
 import { getDeliveryChatId } from "@/lib/delivery-chat"
+import { BuyerCadeteTracking } from "@/components/delivery/buyer-cadete-tracking"
+import { shouldTrackCadeteStatus } from "@/lib/cadete-live-location"
 
 export default function FoodOrdersPage() {
   const t = useTranslations("foodOrders")
+  const locale = useLocale()
   const { formatPrice } = usePriceFormat()
   const { currentUser, authLoading } = useAuth()
   const [orders, setOrders] = useState<FoodOrder[]>([])
@@ -29,27 +32,30 @@ export default function FoodOrdersPage() {
       return
     }
 
-    async function load() {
-      setLoading(true)
-      try {
-        const snap = await getDocs(
-          query(
-            collection(db, "foodOrders"),
-            where("buyerId", "==", currentUser!.firebaseUser.uid),
-            orderBy("createdAt", "desc")
-          )
-        )
-        setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FoodOrder)))
-      } catch {
-        const snap = await getDocs(
-          query(collection(db, "foodOrders"), where("buyerId", "==", currentUser!.firebaseUser.uid))
-        )
-        setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() } as FoodOrder)))
-      } finally {
-        setLoading(false)
-      }
+    const uid = currentUser.firebaseUser.uid
+    let fallbackUnsub: (() => void) | null = null
+
+    const apply = (docs: { id: string; data: () => Record<string, unknown> }[]) => {
+      setOrders(docs.map((d) => ({ id: d.id, ...d.data() } as FoodOrder)))
+      setLoading(false)
     }
-    void load()
+
+    const unsub = onSnapshot(
+      query(collection(db, "foodOrders"), where("buyerId", "==", uid), orderBy("createdAt", "desc")),
+      (snap) => apply(snap.docs),
+      () => {
+        fallbackUnsub = onSnapshot(
+          query(collection(db, "foodOrders"), where("buyerId", "==", uid)),
+          (snap) => apply(snap.docs),
+          () => setLoading(false)
+        )
+      }
+    )
+
+    return () => {
+      unsub()
+      fallbackUnsub?.()
+    }
   }, [currentUser])
 
   if (authLoading || loading) {
@@ -119,6 +125,15 @@ export default function FoodOrdersPage() {
                   })}
                 </ul>
                 <p className="mt-3 font-bold text-servido-800">{formatPrice(order.total)}</p>
+                {order.cadeteId &&
+                  order.deliveryMode !== "retiro_en_local" &&
+                  shouldTrackCadeteStatus(order.status) && (
+                    <BuyerCadeteTracking
+                      liveLocation={order.liveLocation}
+                      cadeteName={order.cadeteName}
+                      locale={locale}
+                    />
+                  )}
                 {order.cadeteId &&
                   order.deliveryMode !== "retiro_en_local" &&
                   order.status !== "entregado" &&

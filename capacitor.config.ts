@@ -14,6 +14,11 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: 'dark',
       backgroundColor: '#8B5CF6'
+    },
+    Geolocation: {
+      // Permisos nativos listos en:
+      // - native/android/AndroidManifest.xml
+      // - native/ios/Info.plist
     }
   }
 };
