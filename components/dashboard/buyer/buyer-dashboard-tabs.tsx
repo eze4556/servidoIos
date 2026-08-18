@@ -150,6 +150,10 @@ export function BuyerDashboardTabs({
     productosComprados.filter((p) => p.estadoPago === "pendiente").length +
     centralizedPurchases.filter((p) => p.items.some((item) => item.estadoPagoVendedor === "pendiente")).length
 
+  if (activeTab === "stats") {
+    return null
+  }
+
   if (activeTab === "appointments") {
     if (!buyerId) return <LoadingBlock />
     return <BuyerAppointmentsPanel buyerId={buyerId} />

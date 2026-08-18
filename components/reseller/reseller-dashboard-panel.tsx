@@ -35,7 +35,7 @@ import { productUrlWithRef } from "@/lib/reseller/attribution-storage"
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useToast } from "@/components/ui/use-toast"
-import { Copy, ExternalLink, Loader2, Link2, Receipt, TrendingUp, Wallet } from "lucide-react"
+import { ResellerAdvancedStats } from "@/components/dashboard/advanced-stats/reseller-advanced-stats"
 
 export function ResellerDashboardPanel() {
   const t = useTranslations("resellerProgram")
@@ -74,7 +74,7 @@ export function ResellerDashboardPanel() {
       }
 
       const [salesRows, linkRows, batchRows] = await Promise.all([
-        loadResellerSales(uid),
+        loadResellerSales(uid, 80),
         loadResellerLinks(uid),
         loadResellerPayoutBatches(uid),
       ])
@@ -187,6 +187,14 @@ export function ResellerDashboardPanel() {
           </p>
         </CardContent>
       </Card>
+
+      <ResellerAdvancedStats
+        sales={sales}
+        links={links}
+        batches={batches}
+        lifetimeUnits={stats?.lifetimeUnits ?? 0}
+        totalClicks={stats?.totalClicks ?? 0}
+      />
 
       <Card>
         <CardHeader>

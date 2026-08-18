@@ -23,6 +23,8 @@ import { useToast } from '@/components/ui/use-toast'
 import { useLocale, useTranslations } from 'next-intl'
 import { describeApiError, translateClientError } from '@/lib/i18n/translate-client-error'
 import type { SubscriptionPricing, SubscriptionPricingHistory } from '@/types/subscription'
+import { AdminPager } from '@/components/admin/admin-pager'
+import { usePagedList } from '@/hooks/use-paged-list'
 
 interface SubscriptionPricingManagerProps {
   currentUserId: string
@@ -37,6 +39,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
   const dateLocale = locale === 'pt-BR' ? 'pt-BR' : 'es-AR'
   const [currentPricing, setCurrentPricing] = useState<SubscriptionPricing | null>(null)
   const [pricingHistory, setPricingHistory] = useState<SubscriptionPricingHistory[]>([])
+  const historyPaged = usePagedList(pricingHistory, 8)
   const [isEditing, setIsEditing] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -397,7 +400,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {pricingHistory.map((change) => (
+              {historyPaged.slice.map((change) => (
                 <div key={change.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
@@ -416,6 +419,14 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
                 </div>
               ))}
             </div>
+            <AdminPager
+              page={historyPaged.page}
+              totalPages={historyPaged.totalPages}
+              total={historyPaged.total}
+              from={historyPaged.from}
+              to={historyPaged.to}
+              onPageChange={historyPaged.setPage}
+            />
           </CardContent>
         </Card>
       )}

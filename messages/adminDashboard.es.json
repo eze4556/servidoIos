@@ -11,10 +11,59 @@
       "accessDeniedTitle": "Acceso Denegado",
       "accessDeniedBeforeLogin": "No tienes permisos para acceder a esta página. Por favor,",
       "accessDeniedAfterLogin": "con una cuenta de administrador.",
-      "loginLink": "inicia sesión"
+      "loginLink": "inicia sesión",
+      "greetingMorning": "Buenos días",
+      "greetingAfternoon": "Buenas tardes",
+      "greetingEvening": "Buenas noches",
+      "welcomeFallback": "equipo",
+      "sectionLive": "En vivo",
+      "goHome": "Ir al inicio",
+      "heroEyebrow": "Centro de control",
+      "heroTitle": "{greeting}, {name}",
+      "heroSubtitle": "Así está la operación ahora mismo."
+    },
+    "navGroups": {
+      "home": "Inicio",
+      "people": "Personas",
+      "catalog": "Catálogo",
+      "finance": "Finanzas",
+      "content": "Comunicación"
+    },
+    "sectionHints": {
+      "overview": "Pulso de la plataforma, métricas y clima local.",
+      "stats": "Gráficos globales de marketplace, comida y usuarios.",
+      "users": "Cuentas, roles y estado de acceso.",
+      "cadetes": "Postulaciones y aprobación del equipo de delivery.",
+      "categories": "Estructura del catálogo del marketplace.",
+      "brands": "Marcas visibles en productos y filtros.",
+      "allProducts": "Inventario completo de vendedores y servicios.",
+      "sales": "Ventas, comisiones y pagos a vendedores.",
+      "banners": "Piezas destacadas de la home.",
+      "alerts": "Avisos visibles para compradores y vendedores.",
+      "servidoBroadcast": "Mensajes masivos hacia la comunidad.",
+      "resellerPayouts": "Lotes pendientes de pago a revendedores.",
+      "deliverySettlements": "Liquidaciones de cadetes y restaurantes.",
+      "coupons": "Descuentos y reglas de uso.",
+      "subscriptionPricing": "Precio vigente de la suscripción vendedor."
+    },
+    "weather": {
+      "loading": "Consultando clima…",
+      "unavailable": "Clima no disponible",
+      "humidity": "Humedad",
+      "codes": {
+        "clear": "Cielo despejado",
+        "partly": "Parcialmente nublado",
+        "cloudy": "Nublado",
+        "fog": "Niebla",
+        "drizzle": "Llovizna",
+        "rain": "Lluvia",
+        "snow": "Nieve",
+        "storm": "Tormenta"
+      }
     },
     "nav": {
       "overview": "Resumen",
+      "stats": "Estadísticas",
       "users": "Usuarios",
       "cadetes": "Cadetes",
       "categories": "Categorías",
@@ -31,6 +80,7 @@
     },
     "tabs": {
       "overview": "Resumen",
+      "stats": "Estadísticas",
       "users": "Usuarios",
       "categories": "Categorías",
       "brands": "Marcas",
@@ -123,6 +173,74 @@
       "uid": "UID",
       "subscribed": "Suscrito",
       "bankDetails": "Datos Bancarios"
+    },
+    "pagination": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "pageOf": "Página {page} de {total}",
+      "showing": "Mostrando {from}–{to} de {total}"
+    },
+    "platformStats": {
+      "eyebrow": "Inteligencia de plataforma",
+      "title": "Estadísticas de Servido",
+      "description": "Visión global del marketplace, la comida a domicilio y la comunidad de usuarios.",
+      "loading": "Cargando estadísticas…",
+      "empty": "Todavía no hay datos suficientes para este gráfico.",
+      "unknownCategory": "Categoría eliminada",
+      "kpi": {
+        "gmv": "Facturación marketplace",
+        "commissions": "Comisiones Servido",
+        "users": "Usuarios totales",
+        "orders": "Compras totales",
+        "products": "Publicaciones",
+        "sellers": "Vendedores",
+        "cadetes": "Cadetes",
+        "foodOrders": "Pedidos comida"
+      },
+      "roles": {
+        "admin": "Administradores",
+        "seller": "Vendedores",
+        "cadete": "Cadetes",
+        "buyer": "Compradores"
+      },
+      "charts": {
+        "monthlySales": "Ventas mensuales (marketplace)",
+        "monthlySalesDesc": "Monto aprobado por mes en los últimos 6 meses.",
+        "monthlyOrders": "Compras por mes",
+        "monthlyOrdersDesc": "Cantidad de compras registradas por mes.",
+        "monthlySignups": "Registros de usuarios",
+        "monthlySignupsDesc": "Nuevos usuarios por mes.",
+        "monthlyFood": "Facturación comida",
+        "monthlyFoodDesc": "Subtotal de pedidos de comida aprobados por mes.",
+        "usersByRole": "Usuarios por rol",
+        "usersByRoleDesc": "Distribución de la base de usuarios.",
+        "userActivity": "Usuarios activos vs inactivos",
+        "userActivityDesc": "Estado de acceso en la plataforma.",
+        "catalogSplit": "Productos vs servicios",
+        "catalogSplitDesc": "Composición del catálogo publicado.",
+        "ordersByStatus": "Compras por estado",
+        "ordersByStatusDesc": "Estado de pago de las compras del marketplace.",
+        "foodByStatus": "Pedidos comida por estado",
+        "foodByStatusDesc": "Estados operativos del módulo de comida.",
+        "sellerPayouts": "Pagos a vendedores",
+        "sellerPayoutsDesc": "Montos pagados vs pendientes a vendedores.",
+        "paidToSellers": "Pagado a vendedores",
+        "pendingToSellers": "Pendiente a vendedores",
+        "topCategories": "Top categorías",
+        "topCategoriesDesc": "Categorías con más publicaciones.",
+        "topSellers": "Top vendedores",
+        "topSellersDesc": "Vendedores con mayor facturación."
+      },
+      "foodBlock": {
+        "title": "Comida a domicilio",
+        "gmv": "Facturación de platos (subtotal)",
+        "delivery": "Total cobrado en envíos"
+      },
+      "marketplaceBlock": {
+        "title": "Marketplace",
+        "gmv": "Ventas aprobadas",
+        "commissions": "Comisiones generadas"
+      }
     },
     "errors": {
       "loadPanel": "Error al cargar los datos del panel. Verifica tu conexión y permisos.",

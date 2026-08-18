@@ -106,7 +106,7 @@ export default function VehicleDetailPage() {
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-white" />
+        <Loader2 className="h-10 w-10 animate-spin text-servido-700" />
       </div>
     )
   }
@@ -114,8 +114,8 @@ export default function VehicleDetailPage() {
   if (!listing || (listing.status !== "active" && listing.sellerId !== uid)) {
     return (
       <div className="mx-auto max-w-lg px-4 py-20 text-center">
-        <p className="text-slate-400">{t("notFound")}</p>
-        <Button asChild className="mt-4 border-white/20 bg-white/10 text-white hover:bg-white/20" variant="outline">
+        <p className="text-slate-500">{t("notFound")}</p>
+        <Button asChild className="mt-4" variant="outline">
           <Link href="/autos">{t("backToCatalog")}</Link>
         </Button>
       </div>
@@ -124,7 +124,7 @@ export default function VehicleDetailPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-6 pb-8 md:py-8">
-      <Button asChild variant="ghost" size="sm" className="-ml-2 text-slate-300 hover:bg-white/10 hover:text-white">
+      <Button asChild variant="ghost" size="sm" className="-ml-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
         <Link href="/autos">
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t("backToCatalog")}
@@ -172,7 +172,7 @@ export default function VehicleDetailPage() {
           {listing.allowChat && !isOwner && (
             <Button
               size="lg"
-              className="w-full bg-white font-semibold text-servido-800 shadow-md hover:bg-purple-50 sm:w-auto"
+              className="w-full bg-servido-800 font-semibold text-white shadow-md hover:bg-servido-900 sm:w-auto"
               onClick={() => void handleContact()}
               disabled={contacting}
             >
@@ -195,7 +195,7 @@ export default function VehicleDetailPage() {
       </div>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-white">{t("specsTitle")}</h2>
+        <h2 className="mb-4 text-lg font-semibold text-slate-800">{t("specsTitle")}</h2>
         <VehicleSpecsTable listing={listing} />
       </section>
 

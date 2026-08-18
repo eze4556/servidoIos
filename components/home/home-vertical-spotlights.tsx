@@ -23,15 +23,15 @@ const themes: Record<
   }
 > = {
   vehicles: {
-    surface: "bg-gradient-to-br from-[#1a1210] via-[#2b1912] to-[#4a2a0c]",
-    glow: "bg-[radial-gradient(ellipse_at_90%_10%,rgba(251,191,36,0.32),transparent_55%)]",
+    surface: "bg-gradient-to-br from-servido-950 via-servido-800 to-[#3d2208]",
+    glow: "bg-[radial-gradient(ellipse_at_90%_10%,rgba(251,191,36,0.28),transparent_55%)]",
     kicker: "text-amber-200/90",
     iconWrap: "bg-amber-400/15 ring-1 ring-amber-200/30",
     icon: "text-amber-200",
     watermark: "text-amber-300/[0.12]",
     chip: "bg-white/10 text-amber-50 ring-1 ring-white/10",
     note: "text-amber-100/70",
-    primary: "bg-amber-400 text-zinc-950 hover:bg-amber-300",
+    primary: "bg-white text-servido-800 hover:bg-purple-50",
     secondary: "border-white/25 bg-white/10 text-white hover:bg-white/15",
   },
   properties: {

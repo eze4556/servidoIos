@@ -14,6 +14,7 @@ import { buildBuyerNavItems, getBuyerPageMeta } from "@/components/dashboard/buy
 
 export type BuyerDashboardTab =
   | "dashboard"
+  | "stats"
   | "orders"
   | "purchases"
   | "appointments"

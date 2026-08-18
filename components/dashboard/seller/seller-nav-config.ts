@@ -8,12 +8,14 @@ import {
   Tag,
   Share2,
   Truck,
+  BarChart3,
 } from "lucide-react"
 import type { DashboardNavItem } from "@/components/dashboard/dashboard-sidebar"
 import type { SellerDashboardTab } from "@/components/dashboard/seller/seller-dashboard-shell"
 
 const navTabIds: SellerDashboardTab[] = [
   "dashboard",
+  "stats",
   "products",
   "addProduct",
   "addService",
@@ -27,6 +29,7 @@ const navTabIds: SellerDashboardTab[] = [
 
 const navIcons = {
   dashboard: Home,
+  stats: BarChart3,
   products: ShoppingBag,
   addProduct: PlusCircle,
   addService: PlusCircle,
@@ -40,6 +43,7 @@ const navIcons = {
 
 const navGroups: Record<SellerDashboardTab, string> = {
   dashboard: "principal",
+  stats: "principal",
   products: "tienda",
   addProduct: "tienda",
   addService: "tienda",

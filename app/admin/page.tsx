@@ -34,6 +34,7 @@ import {
   Search,
   Bike,
   Banknote,
+  BarChart3,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -105,8 +106,14 @@ import SubscriptionPricingManager from "@/components/admin/subscription-pricing-
 import { ServidoBroadcastPanel } from "@/components/admin/servido-broadcast-panel"
 import { AdminResellerPayoutsPanel } from "@/components/admin/admin-reseller-payouts-panel"
 import { AdminDeliverySettlementsPanel } from "@/components/admin/admin-delivery-settlements-panel"
+import { AdminDatetimeWeather } from "@/components/admin/admin-datetime-weather"
+import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav"
+import { AdminPager } from "@/components/admin/admin-pager"
+import { AdminPlatformStats } from "@/components/admin/admin-platform-stats"
+import { usePagedList } from "@/hooks/use-paged-list"
 import type { CadeteStatus } from "@/types/cadete"
 import { sendCadeteStatusEmail } from "@/lib/email-service"
+import "@/components/admin/admin-console.css"
 
 interface UserData {
   id: string
@@ -252,28 +259,59 @@ export default function AdminDashboard() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const adminNavItems = useMemo(
-    () =>
-      [
-        { tab: "overview", label: t("nav.overview"), icon: Home },
-        { tab: "users", label: t("nav.users"), icon: Users },
-        { tab: "cadetes", label: t("nav.cadetes"), icon: Bike },
-        { tab: "categories", label: t("nav.categories"), icon: List },
-        { tab: "brands", label: t("nav.brands"), icon: Tag },
-        { tab: "allProducts", label: t("nav.allProducts"), icon: ShoppingCart },
-        { tab: "sales", label: t("nav.sales"), icon: DollarSign },
-        { tab: "banners", label: t("nav.banners"), icon: ImageIcon },
-        { tab: "alerts", label: t("nav.alerts"), icon: Megaphone },
-        { tab: "servidoBroadcast", label: t("nav.servidoBroadcast"), icon: Megaphone },
-        { tab: "resellerPayouts", label: t("nav.resellerPayouts"), icon: TrendingUp },
-        { tab: "deliverySettlements", label: t("nav.deliverySettlements"), icon: Banknote },
-        { tab: "coupons", label: t("nav.coupons"), icon: Percent },
-        { tab: "subscriptionPricing", label: t("nav.subscriptionPricing"), icon: Percent },
-      ] as const,
+  const adminNavGroups = useMemo(
+    () => [
+      {
+        id: "home",
+        label: t("navGroups.home"),
+        items: [
+          { tab: "overview", label: t("nav.overview"), icon: Home },
+          { tab: "stats", label: t("nav.stats"), icon: BarChart3 },
+        ],
+      },
+      {
+        id: "people",
+        label: t("navGroups.people"),
+        items: [
+          { tab: "users", label: t("nav.users"), icon: Users },
+          { tab: "cadetes", label: t("nav.cadetes"), icon: Bike },
+        ],
+      },
+      {
+        id: "catalog",
+        label: t("navGroups.catalog"),
+        items: [
+          { tab: "categories", label: t("nav.categories"), icon: List },
+          { tab: "brands", label: t("nav.brands"), icon: Tag },
+          { tab: "allProducts", label: t("nav.allProducts"), icon: ShoppingCart },
+        ],
+      },
+      {
+        id: "finance",
+        label: t("navGroups.finance"),
+        items: [
+          { tab: "sales", label: t("nav.sales"), icon: DollarSign },
+          { tab: "resellerPayouts", label: t("nav.resellerPayouts"), icon: TrendingUp },
+          { tab: "deliverySettlements", label: t("nav.deliverySettlements"), icon: Banknote },
+          { tab: "coupons", label: t("nav.coupons"), icon: Percent },
+          { tab: "subscriptionPricing", label: t("nav.subscriptionPricing"), icon: CreditCard },
+        ],
+      },
+      {
+        id: "content",
+        label: t("navGroups.content"),
+        items: [
+          { tab: "banners", label: t("nav.banners"), icon: ImageIcon },
+          { tab: "alerts", label: t("nav.alerts"), icon: AlertTriangle },
+          { tab: "servidoBroadcast", label: t("nav.servidoBroadcast"), icon: Megaphone },
+        ],
+      },
+    ],
     [t]
   )
 
   const [activeTab, setActiveTab] = useState("overview")
+  const currentNav = adminNavGroups.flatMap((group) => group.items).find((item) => item.tab === activeTab)
   const [users, setUsers] = useState<UserData[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
@@ -502,6 +540,9 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (activeTab === "sales" && currentUser) {
+      fetchSalesData()
+    }
+    if (activeTab === "stats" && currentUser) {
       fetchSalesData()
     }
     if (activeTab === "manual-payments" && currentUser) {
@@ -1892,6 +1933,37 @@ export default function AdminDashboard() {
     allProductsSortOrder,
   ])
 
+  const cadetesList = useMemo(() => {
+    return users
+      .filter((u) => u.role === "cadete")
+      .slice()
+      .sort((a, b) => {
+        const rank = (s?: string) => (s === "pending_approval" ? 0 : s === "approved" ? 1 : 2)
+        return rank(a.status) - rank(b.status)
+      })
+  }, [users])
+  const pendingCadetesCount = cadetesList.filter(
+    (u) => u.status === "pending_approval" || (!u.status && !u.isActive)
+  ).length
+
+  const usersPaged = usePagedList(users, 12)
+  const cadetesPaged = usePagedList(cadetesList, 12)
+  const categoriesPaged = usePagedList(categories, 12)
+  const brandsPaged = usePagedList(brands, 12)
+  const productsPaged = usePagedList(
+    filteredAllProducts,
+    12,
+    `${allProductsSearchTerm}|${allProductsFilterCategory}|${allProductsFilterSeller}|${allProductsFilterIsService}|${allProductsSortOrder}`
+  )
+  const bannersPaged = usePagedList(banners, 12)
+  const alertsPaged = usePagedList(offerAlerts, 12)
+  const couponsPaged = usePagedList(coupons, 12)
+  const purchasesPaged = usePagedList(
+    filteredPurchases,
+    12,
+    `${debouncedSearchTerm}|${salesFilters.estadoPago}|${salesFilters.estadoEnvio}|${salesFilters.vendedorId || ""}`
+  )
+
   // Filtros visuales robustos sobre salesData
   const getFilteredSales = () => {
     return salesData.filter(sale => {
@@ -2001,17 +2073,21 @@ export default function AdminDashboard() {
     }
   }, [showSellerModal, selectedSellerId])
 
+  const hour = new Date().getHours()
+  const greeting =
+    hour < 12 ? t("shell.greetingMorning") : hour < 19 ? t("shell.greetingAfternoon") : t("shell.greetingEvening")
+
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <Loader2 className="h-12 w-12 animate-spin text-purple-600" />
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <Loader2 className="h-12 w-12 animate-spin text-teal-400" />
       </div>
     )
   }
 
   if (!currentUser || currentUser.role !== "admin") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4">
         <Alert variant="destructive" className="max-w-md">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>{t("shell.accessDeniedTitle")}</AlertTitle>
@@ -2029,64 +2105,42 @@ export default function AdminDashboard() {
 
   if (loadingAdmin) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
-        <span className="ml-2 text-lg text-gray-700">{t("shell.loading")}</span>
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-200">
+        <Loader2 className="h-8 w-8 animate-spin text-teal-400" />
+        <span className="ml-3 text-lg">{t("shell.loading")}</span>
       </div>
     )
   }
 
   return (
-    <div className="relative grid min-h-screen w-full max-w-full overflow-hidden lg:grid-cols-[280px_1fr] bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.14),transparent_40%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)]">
-      {/* Sidebar */}
-      <div className="hidden border-r border-white/10 bg-[linear-gradient(180deg,#111827_0%,#1f1147_55%,#0f172a_100%)] text-white shadow-2xl lg:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
+    <div className="admin-console relative grid min-h-screen w-full max-w-full overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(13,148,136,0.10),transparent_36%),linear-gradient(180deg,#f8fafc_0%,#eef2f6_100%)] lg:grid-cols-[272px_1fr]">
+      <aside className="admin-sidebar hidden h-screen border-r border-white/10 text-white shadow-2xl lg:sticky lg:top-0 lg:block">
+        <div className="flex h-full max-h-screen flex-col">
           <div className="flex h-[84px] items-center border-b border-white/10 px-6">
             <Link href="/" className="flex items-center gap-3 font-semibold" prefetch={false}>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10 backdrop-blur">
-                <Package2 className="h-6 w-6 text-purple-200" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-400/15 ring-1 ring-teal-300/20 backdrop-blur">
+                <Package2 className="h-6 w-6 text-teal-200" />
               </div>
               <div className="leading-tight">
-                <span className="block text-[10px] uppercase tracking-[0.28em] text-purple-200/70">{t("shell.brand")}</span>
+                <span className="block text-[10px] uppercase tracking-[0.28em] text-teal-200/70">{t("shell.brand")}</span>
                 <span className="text-lg">{t("shell.controlCenter")}</span>
               </div>
             </Link>
           </div>
-          <div className="px-4 pb-3 pt-4">
+          <div className="px-4 pb-2 pt-4">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.25em] text-purple-200/70">{t("shell.session")}</p>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-teal-200/70">{t("shell.session")}</p>
               <p className="mt-2 text-sm text-white/80">{t("shell.sessionDescription")}</p>
             </div>
           </div>
-          <div className="flex-1 overflow-auto py-2">
-            <nav className="grid items-start gap-2 px-4 text-sm font-medium">
-              {adminNavItems.map((item) => (
-                <Button
-                  key={item.tab}
-                  variant={activeTab === item.tab ? "secondary" : "ghost"}
-                  className={`relative flex items-center justify-start gap-3 rounded-2xl px-4 py-3 transition-all duration-300 ${
-                    activeTab === item.tab
-                      ? "bg-white text-slate-950 shadow-lg shadow-black/20 ring-1 ring-white/20"
-                      : "text-white/75 hover:bg-white/10 hover:text-white"
-                  }`}
-                  onClick={() => setActiveTab(item.tab)}
-                >
-                  {activeTab === item.tab && (
-                    <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-fuchsia-400 to-cyan-300 shadow-[0_0_18px_rgba(168,85,247,0.45)]" />
-                  )}
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Button>
-              ))}
-            </nav>
+          <div className="flex-1 overflow-auto pb-6">
+            <AdminSidebarNav groups={adminNavGroups} activeTab={activeTab} onSelect={setActiveTab} />
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* Main Content */}
-      <div className="flex flex-col">
-        {/* Header for mobile sidebar */}
-        <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b border-white/10 bg-white/90 px-6 backdrop-blur lg:hidden">
+      <div className="flex min-h-0 min-w-0 flex-col overflow-auto">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200/70 bg-white/80 px-4 backdrop-blur-xl md:px-6">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="lg:hidden">
@@ -2094,63 +2148,72 @@ export default function AdminDashboard() {
                 <span className="sr-only">{t("shell.openMenu")}</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="lg:hidden w-80 border-white/10 bg-slate-950 text-white">
+            <SheetContent side="left" className="admin-sidebar w-80 border-white/10 p-0 text-white lg:hidden">
               <div className="flex h-[84px] items-center border-b border-white/10 px-6">
                 <Link href="/" className="flex items-center gap-3 font-semibold" prefetch={false}>
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
-                    <Package2 className="h-6 w-6 text-purple-200" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-400/15 ring-1 ring-teal-300/20">
+                    <Package2 className="h-6 w-6 text-teal-200" />
                   </div>
                   <div className="leading-tight">
-                    <span className="block text-[10px] uppercase tracking-[0.28em] text-purple-200/70">{t("shell.brand")}</span>
+                    <span className="block text-[10px] uppercase tracking-[0.28em] text-teal-200/70">{t("shell.brand")}</span>
                     <span className="text-lg">{t("shell.controlCenter")}</span>
                   </div>
                 </Link>
               </div>
-              <nav className="grid gap-2 p-4 text-base font-medium">
-                {adminNavItems.map((item) => (
-                  <Button
-                    key={item.tab}
-                    variant={activeTab === item.tab ? "secondary" : "ghost"}
-                    className={`relative flex items-center justify-start gap-3 rounded-2xl px-4 py-3 transition-all duration-300 ${
-                      activeTab === item.tab
-                        ? "bg-white text-slate-950 shadow-lg shadow-black/20"
-                        : "text-white/75 hover:bg-white/10 hover:text-white"
-                    }`}
-                    onClick={() => {
-                      setActiveTab(item.tab)
-                      setIsMobileMenuOpen(false)
-                    }}
-                  >
-                    {activeTab === item.tab && (
-                      <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-fuchsia-400 to-cyan-300" />
-                    )}
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Button>
-                ))}
-              </nav>
+              <AdminSidebarNav
+                compact
+                groups={adminNavGroups}
+                activeTab={activeTab}
+                onSelect={(tab) => {
+                  setActiveTab(tab)
+                  setIsMobileMenuOpen(false)
+                }}
+              />
             </SheetContent>
           </Sheet>
-          <h1 className="font-semibold text-lg md:text-2xl text-gray-800 flex-1 text-center lg:text-left">
-            {t("shell.pageTitle")}
-          </h1>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">
+              <span className="admin-live-dot" />
+              {t("shell.sectionLive")}
+            </div>
+            <h1 className="truncate text-lg font-semibold tracking-tight text-slate-900 md:text-xl">
+              {currentNav?.label || t("shell.pageTitle")}
+            </h1>
+          </div>
+          <div className="hidden md:block">
+            <AdminDatetimeWeather variant="compact" />
+          </div>
+          <Avatar className="h-9 w-9 ring-2 ring-white shadow-sm">
+            <AvatarImage src={currentUser.photoURL || undefined} alt={currentUser.name || ""} />
+            <AvatarFallback className="bg-slate-900 text-xs text-white">
+              {(currentUser.name || "A").slice(0, 1).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
         </header>
 
-        {/* Main Area with Tabs */}
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
           {error && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>{t("alerts.errorTitle")}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
+          {activeTab !== "overview" && (
+            <div className="admin-tab">
+              <p className="text-sm text-slate-500">
+                {t(`sectionHints.${activeTab}` as "sectionHints.users")}
+              </p>
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            {/* Responsive TabsList */}
-            <TabsList className="flex w-full overflow-x-auto justify-start sm:justify-center md:justify-start bg-white border-b pb-2 hidden lg:flex">
+            <TabsList className="hidden">
               <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
+              <TabsTrigger value="stats">{t("tabs.stats")}</TabsTrigger>
               <TabsTrigger value="users">{t("tabs.users")}</TabsTrigger>
+              <TabsTrigger value="cadetes">{t("nav.cadetes")}</TabsTrigger>
               <TabsTrigger value="categories">{t("tabs.categories")}</TabsTrigger>
               <TabsTrigger value="brands">{t("tabs.brands")}</TabsTrigger>
               <TabsTrigger value="allProducts">{t("tabs.allProducts")}</TabsTrigger>
@@ -2164,88 +2227,113 @@ export default function AdminDashboard() {
               <TabsTrigger value="subscriptionPricing">{t("tabs.subscriptionPricing")}</TabsTrigger>
             </TabsList>
 
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="overview" className="admin-tab mt-0">
               <div className="space-y-6">
-                {/* Métricas principales */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">{t("overview.totalUsers")}</CardTitle>
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{users.length}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {t("overview.activeUsers", { count: users.filter(u => u.isActive).length })}
-                      </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">{t("overview.totalProducts")}</CardTitle>
-                      <ShoppingBag className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{products.length}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {t("overview.productsServicesBreakdown", { products: products.filter(p => !p.isService).length, services: products.filter(p => p.isService).length })}
-                      </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">{t("overview.totalSales")}</CardTitle>
-                      <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{fmtNum(salesSummary.totalVentas)}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {t("overview.commissionsAmount", { amount: fmtNum(salesSummary.totalComisiones) })}
-                      </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">{t("overview.notifications")}</CardTitle>
-                      <AlertTriangle className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{notifications.filter(n => !n.isRead).length}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {t("overview.totalCount", { count: notifications.length })}
-                      </p>
-                  </CardContent>
-                </Card>
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch lg:justify-between">
+                  <div className="flex-1 rounded-[28px] border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
+                      {t("shell.heroEyebrow")}
+                    </p>
+                    <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+                      {t("shell.heroTitle", {
+                        greeting,
+                        name: currentUser.name || t("shell.welcomeFallback"),
+                      })}
+                    </h2>
+                    <p className="mt-2 max-w-xl text-slate-500">{t("shell.heroSubtitle")}</p>
+                    <p className="mt-4 text-sm text-slate-400">{t("sectionHints.overview")}</p>
+                  </div>
+                  <AdminDatetimeWeather />
                 </div>
 
-                {/* Distribución por categorías */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Card className="admin-kpi overflow-hidden">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-slate-500">{t("overview.totalUsers")}</CardTitle>
+                      <span className="rounded-xl bg-teal-50 p-2 text-teal-700">
+                        <Users className="h-4 w-4" />
+                      </span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-semibold tabular-nums">{users.length}</div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {t("overview.activeUsers", { count: users.filter((u) => u.isActive).length })}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="admin-kpi overflow-hidden">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-slate-500">{t("overview.totalProducts")}</CardTitle>
+                      <span className="rounded-xl bg-sky-50 p-2 text-sky-700">
+                        <ShoppingBag className="h-4 w-4" />
+                      </span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-semibold tabular-nums">{products.length}</div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {t("overview.productsServicesBreakdown", {
+                          products: products.filter((p) => !p.isService).length,
+                          services: products.filter((p) => p.isService).length,
+                        })}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="admin-kpi overflow-hidden">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-slate-500">{t("overview.totalSales")}</CardTitle>
+                      <span className="rounded-xl bg-emerald-50 p-2 text-emerald-700">
+                        <TrendingUp className="h-4 w-4" />
+                      </span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-semibold tabular-nums">{fmtNum(salesSummary.totalVentas)}</div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {t("overview.commissionsAmount", { amount: fmtNum(salesSummary.totalComisiones) })}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card className="admin-kpi overflow-hidden">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-slate-500">{t("overview.notifications")}</CardTitle>
+                      <span className="rounded-xl bg-amber-50 p-2 text-amber-700">
+                        <AlertTriangle className="h-4 w-4" />
+                      </span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-semibold tabular-nums">
+                        {notifications.filter((n) => !n.isRead).length}
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {t("overview.totalCount", { count: notifications.length })}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 <Card>
                   <CardHeader>
                     <CardTitle>{t("overview.categoryDistributionTitle")}</CardTitle>
-                    <CardDescription>
-                      {t("overview.categoryDistributionDesc")}
-                    </CardDescription>
+                    <CardDescription>{t("overview.categoryDistributionDesc")}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       {categories.map((category) => {
-                        const categoryProducts = products.filter(p => p.category === category.name)
+                        const categoryProducts = products.filter((p) => p.category === category.name)
                         const percentage = products.length > 0 ? (categoryProducts.length / products.length) * 100 : 0
                         return (
-                          <div key={category.id} className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                              <span className="text-sm font-medium">{category.name}</span>
+                          <div key={category.id} className="flex items-center justify-between gap-4">
+                            <div className="flex min-w-0 items-center space-x-2">
+                              <div className="h-2.5 w-2.5 rounded-full bg-teal-500" />
+                              <span className="truncate text-sm font-medium">{category.name}</span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <div className="w-24 bg-gray-200 rounded-full h-2">
-                                <div 
-                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                              <div className="h-2 w-28 overflow-hidden rounded-full bg-slate-100">
+                                <div
+                                  className="h-2 rounded-full bg-gradient-to-r from-teal-500 to-sky-400 transition-all duration-700"
                                   style={{ width: `${percentage}%` }}
-                                ></div>
+                                />
                               </div>
-                              <span className="text-sm text-gray-600 w-16 text-right">
+                              <span className="w-20 text-right text-sm tabular-nums text-slate-500">
                                 {categoryProducts.length} ({percentage.toFixed(1)}%)
                               </span>
                             </div>
@@ -2256,57 +2344,55 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* Estadísticas adicionales */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">{t("overview.categories")}</CardTitle>
-                      <List className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{categories.length}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">{t("overview.brands")}</CardTitle>
-                      <Tag className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                      <div className="text-2xl font-bold">{brands.length}</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                      <CardTitle className="text-sm font-medium">{t("overview.activeBanners")}</CardTitle>
-                      <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                  <Card className="admin-kpi">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-slate-500">{t("overview.categories")}</CardTitle>
+                      <List className="h-4 w-4 text-slate-400" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{banners.filter(b => b.isActive).length}</div>
-                      <p className="text-xs text-muted-foreground">{t("common.ofTotal", { total: banners.length })}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                    <CardTitle className="text-sm font-medium">{t("overview.activeCoupons")}</CardTitle>
-                    <Percent className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{coupons.filter(c => c.isActive).length}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {t("overview.totalCouponUses", { count: coupons.reduce((total, coupon) => total + coupon.usedCount, 0) })}
+                      <div className="text-2xl font-semibold tabular-nums">{categories.length}</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="admin-kpi">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-slate-500">{t("overview.brands")}</CardTitle>
+                      <Tag className="h-4 w-4 text-slate-400" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-semibold tabular-nums">{brands.length}</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="admin-kpi">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-slate-500">{t("overview.activeBanners")}</CardTitle>
+                      <ImageIcon className="h-4 w-4 text-slate-400" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-semibold tabular-nums">{banners.filter((b) => b.isActive).length}</div>
+                      <p className="text-xs text-slate-500">{t("common.ofTotal", { total: banners.length })}</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="admin-kpi">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-slate-500">{t("overview.activeCoupons")}</CardTitle>
+                      <Percent className="h-4 w-4 text-slate-400" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-semibold tabular-nums">{coupons.filter((c) => c.isActive).length}</div>
+                      <p className="text-xs text-slate-500">
+                        {t("overview.totalCouponUses", {
+                          count: coupons.reduce((total, coupon) => total + coupon.usedCount, 0),
+                        })}
                       </p>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
                 </div>
 
-                {/* Top vendedores */}
                 <Card>
                   <CardHeader>
                     <CardTitle>{t("overview.topSellersTitle")}</CardTitle>
-                    <CardDescription>
-                      {t("overview.topSellersDesc")}
-                    </CardDescription>
+                    <CardDescription>{t("overview.topSellersDesc")}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -2315,26 +2401,26 @@ export default function AdminDashboard() {
                           .sort((a, b) => b.totalVentas - a.totalVentas)
                           .slice(0, 5)
                           .map((vendedor, index) => (
-                            <div key={vendedor.vendedorId} className="flex items-center justify-between">
+                            <div key={vendedor.vendedorId} className="flex items-center justify-between rounded-2xl bg-slate-50/80 px-3 py-2">
                               <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
                                   {index + 1}
                                 </div>
                                 <div>
                                   <div className="font-medium">{vendedor.vendedorNombre}</div>
-                                  <div className="text-sm text-gray-500">{t("overview.salesAmount", { amount: fmtNum(vendedor.totalVentas) })}</div>
+                                  <div className="text-sm text-slate-500">
+                                    {t("overview.salesAmount", { amount: fmtNum(vendedor.totalVentas) })}
+                                  </div>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="font-semibold text-green-600">{fmtNum(vendedor.totalComisiones)}</div>
-                                <div className="text-sm text-gray-500">{t("overview.commissionsLabel")}</div>
+                                <div className="font-semibold text-emerald-600">{fmtNum(vendedor.totalComisiones)}</div>
+                                <div className="text-sm text-slate-500">{t("overview.commissionsLabel")}</div>
                               </div>
                             </div>
                           ))
                       ) : (
-                        <div className="text-center py-8 text-gray-500">
-                          {t("overview.noSalesData")}
-                        </div>
+                        <div className="py-8 text-center text-slate-500">{t("overview.noSalesData")}</div>
                       )}
                     </div>
                   </CardContent>
@@ -2342,8 +2428,19 @@ export default function AdminDashboard() {
               </div>
             </TabsContent>
 
+            <TabsContent value="stats" className="admin-tab mt-4">
+              <AdminPlatformStats
+                users={users}
+                products={products}
+                purchases={purchases}
+                categories={categories}
+                salesSummary={salesSummary}
+                loadingSales={loadingSales}
+              />
+            </TabsContent>
+
             {/* Users Tab */}
-            <TabsContent value="users" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="users" className="admin-tab mt-4">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("users.title")}</CardTitle>
@@ -2411,7 +2508,7 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {users.map((user) => (
+                        {usersPaged.slice.map((user) => (
                           <TableRow key={user.id} className="text-xs md:text-sm">
                             <TableCell className="p-1 md:p-2">
                               <Checkbox
@@ -2463,59 +2560,54 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  <AdminPager
+                    page={usersPaged.page}
+                    totalPages={usersPaged.totalPages}
+                    total={usersPaged.total}
+                    from={usersPaged.from}
+                    to={usersPaged.to}
+                    onPageChange={usersPaged.setPage}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
 
             {/* Cadetes Tab */}
-            <TabsContent value="cadetes" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="cadetes" className="admin-tab mt-4">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("cadetes.title")}</CardTitle>
                   <CardDescription>
-                    Aprobá o rechazá postulaciones. Solo los aprobados pueden tomar pedidos del pool.
+                    {t("cadetes.description")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    const cadetes = users.filter((u) => u.role === "cadete")
-                    const pending = cadetes.filter((u) => u.status === "pending_approval" || (!u.status && !u.isActive))
-                    if (cadetes.length === 0) {
-                      return (
-                        <p className="py-8 text-center text-gray-500">
-                          {t("cadetes.empty")}
+                  {cadetesList.length === 0 ? (
+                    <p className="py-8 text-center text-gray-500">
+                      {t("cadetes.empty")}
+                    </p>
+                  ) : (
+                    <div className="space-y-6">
+                      {pendingCadetesCount > 0 && (
+                        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                          {t("cadetes.pendingBanner", { count: pendingCadetesCount })}
                         </p>
-                      )
-                    }
-                    return (
-                      <div className="space-y-6">
-                        {pending.length > 0 && (
-                          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                            {t("cadetes.pendingBanner", { count: pending.length })}
-                          </p>
-                        )}
-                        <div className="overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>{t("common.name")}</TableHead>
-                                <TableHead>{t("cadetes.contact")}</TableHead>
-                                <TableHead className="hidden md:table-cell">{t("cadetes.zone")}</TableHead>
-                                <TableHead className="hidden md:table-cell">{t("cadetes.vehicle")}</TableHead>
-                                <TableHead className="hidden lg:table-cell">{t("cadetes.document")}</TableHead>
-                                <TableHead>{t("common.status")}</TableHead>
-                                <TableHead>{t("common.actions")}</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {cadetes
-                                .slice()
-                                .sort((a, b) => {
-                                  const rank = (s?: string) =>
-                                    s === "pending_approval" ? 0 : s === "approved" ? 1 : 2
-                                  return rank(a.status) - rank(b.status)
-                                })
-                                .map((cadete) => {
+                      )}
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>{t("common.name")}</TableHead>
+                              <TableHead>{t("cadetes.contact")}</TableHead>
+                              <TableHead className="hidden md:table-cell">{t("cadetes.zone")}</TableHead>
+                              <TableHead className="hidden md:table-cell">{t("cadetes.vehicle")}</TableHead>
+                              <TableHead className="hidden lg:table-cell">{t("cadetes.document")}</TableHead>
+                              <TableHead>{t("common.status")}</TableHead>
+                              <TableHead>{t("common.actions")}</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {cadetesPaged.slice.map((cadete) => {
                                   const status = (cadete.status || "pending_approval") as CadeteStatus
                                   return (
                                     <TableRow key={cadete.id}>
@@ -2551,7 +2643,7 @@ export default function AdminDashboard() {
                                               onClick={() => void handleApproveCadete(cadete.id)}
                                             >
                                               <CheckCircle className="mr-1 h-3.5 w-3.5" />
-                                              Aprobar
+                                              {t("common.approve")}
                                             </Button>
                                           )}
                                           {status !== "rejected" && (
@@ -2561,7 +2653,7 @@ export default function AdminDashboard() {
                                               onClick={() => void handleRejectCadete(cadete.id)}
                                             >
                                               <XCircle className="mr-1 h-3.5 w-3.5" />
-                                              Rechazar
+                                              {t("common.reject")}
                                             </Button>
                                           )}
                                         </div>
@@ -2569,18 +2661,25 @@ export default function AdminDashboard() {
                                     </TableRow>
                                   )
                                 })}
-                            </TableBody>
-                          </Table>
-                        </div>
+                          </TableBody>
+                        </Table>
                       </div>
-                    )
-                  })()}
+                      <AdminPager
+                        page={cadetesPaged.page}
+                        totalPages={cadetesPaged.totalPages}
+                        total={cadetesPaged.total}
+                        from={cadetesPaged.from}
+                        to={cadetesPaged.to}
+                        onPageChange={cadetesPaged.setPage}
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
 
             {/* Categories Tab */}
-            <TabsContent value="categories" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="categories" className="admin-tab mt-4">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("categories.title")}</CardTitle>
@@ -2681,7 +2780,7 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {categories.map((cat) => (
+                        {categoriesPaged.slice.map((cat) => (
                           <TableRow key={cat.id} className="text-xs md:text-sm">
                             <TableCell className="p-1 md:p-2">
                               {cat.imageUrl ? (
@@ -2725,6 +2824,14 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  <AdminPager
+                    page={categoriesPaged.page}
+                    totalPages={categoriesPaged.totalPages}
+                    total={categoriesPaged.total}
+                    from={categoriesPaged.from}
+                    to={categoriesPaged.to}
+                    onPageChange={categoriesPaged.setPage}
+                  />
 
                   {/* Category Edit Form */}
                   {editingCategory && (
@@ -2819,7 +2926,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Brands Tab */}
-            <TabsContent value="brands" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="brands" className="admin-tab mt-4">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("brands.title")}</CardTitle>
@@ -2910,7 +3017,7 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {brands.map((brand) => (
+                        {brandsPaged.slice.map((brand) => (
                           <TableRow key={brand.id}>
                             <TableCell>
                               {brand.imageUrl ? (
@@ -2953,6 +3060,14 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  <AdminPager
+                    page={brandsPaged.page}
+                    totalPages={brandsPaged.totalPages}
+                    total={brandsPaged.total}
+                    from={brandsPaged.from}
+                    to={brandsPaged.to}
+                    onPageChange={brandsPaged.setPage}
+                  />
 
                   {/* Brand Edit Form */}
                   {editingBrand && (
@@ -3038,7 +3153,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Todos los Productos Tab */}
-            <TabsContent value="allProducts" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="allProducts" className="admin-tab mt-4">
               <Card className="w-full max-w-full">
                 <CardHeader>
                   <CardTitle>{t("allProducts.title")}</CardTitle>
@@ -3144,7 +3259,7 @@ export default function AdminDashboard() {
                             </TableCell>
                           </TableRow>
                         ) : (
-                          filteredAllProducts.map((product) => (
+                          productsPaged.slice.map((product) => (
                             <TableRow key={product.id} className="text-xs xs:text-sm md:text-sm">
                               <TableCell className="p-1 md:p-2 max-w-[100px] xs:max-w-[110px] align-middle">
                                 <div className="flex items-center gap-1 xs:gap-2 md:gap-3 min-w-0">
@@ -3209,12 +3324,20 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  <AdminPager
+                    page={productsPaged.page}
+                    totalPages={productsPaged.totalPages}
+                    total={productsPaged.total}
+                    from={productsPaged.from}
+                    to={productsPaged.to}
+                    onPageChange={productsPaged.setPage}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
 
             {/* Ventas y Comisiones Tab */}
-            <TabsContent value="sales" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="sales" className="admin-tab mt-4">
               <div className="pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] space-y-4 w-full">
                 {/* Resumen de Ventas */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
@@ -3341,7 +3464,7 @@ export default function AdminDashboard() {
                   <CardContent className="p-2 sm:p-4 md:p-6">
                     {loadingSales ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
                         <span className="ml-2">{t("sales.loadingPurchases")}</span>
                       </div>
                     ) : (
@@ -3359,7 +3482,7 @@ export default function AdminDashboard() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {filteredPurchases.map((compra) => {
+                            {purchasesPaged.slice.map((compra) => {
                               const allPaid = compra.paidToSellers === true || (Array.isArray(compra.products) && compra.products.every((p: any) => p.paidToSeller === true));
                               return (
                                 <TableRow key={compra.id} className="text-xs sm:text-sm">
@@ -3394,6 +3517,14 @@ export default function AdminDashboard() {
                         {filteredPurchases.length === 0 && (
                           <div className="text-center py-8 text-gray-500">{purchases.length === 0 ? t("sales.noPurchases") : t("sales.noPurchasesFiltered")}</div>
                         )}
+                        <AdminPager
+                          page={purchasesPaged.page}
+                          totalPages={purchasesPaged.totalPages}
+                          total={purchasesPaged.total}
+                          from={purchasesPaged.from}
+                          to={purchasesPaged.to}
+                          onPageChange={purchasesPaged.setPage}
+                        />
                       </div>
                     )}
                   </CardContent>
@@ -3402,7 +3533,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* Banners Tab */}
-            <TabsContent value="banners" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="banners" className="admin-tab mt-4">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("banners.title")}</CardTitle>
@@ -3528,7 +3659,7 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {banners.map((banner) => (
+                        {bannersPaged.slice.map((banner) => (
                           <TableRow key={banner.id} className="text-xs md:text-sm">
                             <TableCell className="p-1 md:p-2">
                               <div className="w-20 h-10 md:w-32 md:h-16 relative rounded-md overflow-hidden">
@@ -3556,12 +3687,20 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  <AdminPager
+                    page={bannersPaged.page}
+                    totalPages={bannersPaged.totalPages}
+                    total={bannersPaged.total}
+                    from={bannersPaged.from}
+                    to={bannersPaged.to}
+                    onPageChange={bannersPaged.setPage}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
 
             {/* Alertas Tab */}
-            <TabsContent value="alerts" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="alerts" className="admin-tab mt-4">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("offerAlerts.title")}</CardTitle>
@@ -3656,7 +3795,7 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {offerAlerts.map((alert) => (
+                        {alertsPaged.slice.map((alert) => (
                           <TableRow key={alert.id} className="text-xs md:text-sm">
                             <TableCell className="p-1 md:p-2">
                               <Badge variant={alert.type === "info" ? "default" : alert.type === "warning" ? "secondary" : alert.type === "success" ? "default" : "destructive"}>
@@ -3688,24 +3827,32 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  <AdminPager
+                    page={alertsPaged.page}
+                    totalPages={alertsPaged.totalPages}
+                    total={alertsPaged.total}
+                    from={alertsPaged.from}
+                    to={alertsPaged.to}
+                    onPageChange={alertsPaged.setPage}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="servidoBroadcast" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="servidoBroadcast" className="admin-tab mt-4">
               <ServidoBroadcastPanel />
             </TabsContent>
 
-            <TabsContent value="resellerPayouts" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="resellerPayouts" className="admin-tab mt-4">
               <AdminResellerPayoutsPanel />
             </TabsContent>
 
-            <TabsContent value="deliverySettlements" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="deliverySettlements" className="admin-tab mt-4">
               <AdminDeliverySettlementsPanel />
             </TabsContent>
 
             {/* Cupones Tab */}
-            <TabsContent value="coupons" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="coupons" className="admin-tab mt-4">
               <Card>
                 <CardHeader>
                   <CardTitle>{t("coupons.title")}</CardTitle>
@@ -3874,7 +4021,7 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {coupons.map((coupon) => (
+                        {couponsPaged.slice.map((coupon) => (
                           <TableRow key={coupon.id} className="text-xs md:text-sm">
                             <TableCell className="p-1 md:p-2 font-mono font-bold max-w-[60px] truncate">{coupon.code}</TableCell>
                             <TableCell className="p-1 md:p-2 max-w-[80px] truncate">
@@ -3912,12 +4059,20 @@ export default function AdminDashboard() {
                       </TableBody>
                     </Table>
                   </div>
+                  <AdminPager
+                    page={couponsPaged.page}
+                    totalPages={couponsPaged.totalPages}
+                    total={couponsPaged.total}
+                    from={couponsPaged.from}
+                    to={couponsPaged.to}
+                    onPageChange={couponsPaged.setPage}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>
 
             {/* Precios de Suscripción Tab */}
-            <TabsContent value="subscriptionPricing" className="mt-4 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-right-3 data-[state=active]:duration-300">
+            <TabsContent value="subscriptionPricing" className="admin-tab mt-4">
               {currentUser ? (
                 <SubscriptionPricingManager currentUserId={currentUser.firebaseUser.uid} />
               ) : (
@@ -3930,7 +4085,7 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                      <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
                       <span className="ml-2">{t("subscriptionPricingFallback.verifying")}</span>
                     </div>
                   </CardContent>

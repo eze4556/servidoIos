@@ -29,8 +29,8 @@ export function VehiclesVerticalHeader({ showBackToMarketplace = true }: Vehicle
               <Car className="h-5 w-5 text-servido-800" strokeWidth={2.25} />
             </span>
             <div className="min-w-0 leading-tight">
-              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.2em] text-purple-200/90">Servido</p>
-              <p className="truncate text-base font-bold text-white md:text-lg">{t("verticalName")}</p>
+              <p className="truncate text-[10px] font-semibold uppercase tracking-[0.2em] text-purple-200/90">{t("zoneBadge")}</p>
+              <p className="truncate text-base font-bold text-white md:text-lg">{t("heroTitle")}</p>
             </div>
           </Link>
         </div>

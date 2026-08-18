@@ -16,6 +16,8 @@ import { Bike, Landmark, Loader2, Store, Wallet } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useToast } from "@/hooks/use-toast"
+import { AdminPager } from "@/components/admin/admin-pager"
+import { usePagedList } from "@/hooks/use-paged-list"
 
 type CadeteRow = {
   id: string
@@ -61,6 +63,8 @@ export function AdminDeliverySettlementsPanel() {
   const [marking, setMarking] = useState<string | null>(null)
   const [cadetes, setCadetes] = useState<CadeteRow[]>([])
   const [restaurants, setRestaurants] = useState<RestaurantRow[]>([])
+  const cadetesPaged = usePagedList(cadetes, 12)
+  const restaurantsPaged = usePagedList(restaurants, 12)
   const [summary, setSummary] = useState<SettlementsSummary | null>(null)
   const [loadingSummary, setLoadingSummary] = useState(true)
 
@@ -304,7 +308,7 @@ export function AdminDeliverySettlementsPanel() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cadetes.map((b) => {
+                {cadetesPaged.slice.map((b) => {
                   const p = b.payoutInfoSnapshot
                   return (
                     <TableRow key={b.id}>
@@ -334,6 +338,14 @@ export function AdminDeliverySettlementsPanel() {
               </TableBody>
             </Table>
           )}
+          <AdminPager
+            page={cadetesPaged.page}
+            totalPages={cadetesPaged.totalPages}
+            total={cadetesPaged.total}
+            from={cadetesPaged.from}
+            to={cadetesPaged.to}
+            onPageChange={cadetesPaged.setPage}
+          />
         </CardContent>
       </Card>
 
@@ -369,7 +381,7 @@ export function AdminDeliverySettlementsPanel() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {restaurants.map((b) => (
+                {restaurantsPaged.slice.map((b) => (
                   <TableRow key={b.id}>
                     <TableCell className="font-medium">{b.restaurantName || "—"}</TableCell>
                     <TableCell>{b.orderCount || 0}</TableCell>
@@ -384,6 +396,14 @@ export function AdminDeliverySettlementsPanel() {
               </TableBody>
             </Table>
           )}
+          <AdminPager
+            page={restaurantsPaged.page}
+            totalPages={restaurantsPaged.totalPages}
+            total={restaurantsPaged.total}
+            from={restaurantsPaged.from}
+            to={restaurantsPaged.to}
+            onPageChange={restaurantsPaged.setPage}
+          />
         </CardContent>
       </Card>
     </div>

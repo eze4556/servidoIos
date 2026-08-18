@@ -34,6 +34,7 @@ import {
   Menu,
   Settings,
   UtensilsCrossed,
+  BarChart3,
 } from "lucide-react"
 import type {
   FoodOrder,
@@ -53,8 +54,9 @@ import { cn } from "@/lib/utils"
 import { getNextFoodOrderStatus, setFoodOrderStatus } from "@/lib/food-order-tracking"
 import { notifyFoodOrderStatus } from "@/lib/notifications"
 import { describeApiError, translateClientError } from "@/lib/i18n/translate-client-error"
+import { RestaurantAdvancedStats } from "@/components/dashboard/advanced-stats/restaurant-advanced-stats"
 
-type RestaurantTab = "orders" | "menu" | "profile"
+type RestaurantTab = "orders" | "stats" | "menu" | "profile"
 
 export default function RestaurantDashboardPage() {
   const { formatPrice, formatPriceNumber } = usePriceFormat()
@@ -404,6 +406,7 @@ export default function RestaurantDashboardPage() {
   const tabs: { id: RestaurantTab; label: string; icon: typeof ClipboardList }[] = useMemo(
     () => [
       { id: "orders", label: t("tabOrders"), icon: ClipboardList },
+      { id: "stats", label: t("tabStats"), icon: BarChart3 },
       { id: "menu", label: t("tabMenu"), icon: Menu },
       { id: "profile", label: t("tabProfile"), icon: Settings },
     ],
@@ -542,6 +545,7 @@ export default function RestaurantDashboardPage() {
         {paymentMsg && (
           <p className="mb-4 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">{paymentMsg}</p>
         )}
+        {activeTab === "stats" && <RestaurantAdvancedStats orders={orders} />}
         {activeTab === "orders" && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">

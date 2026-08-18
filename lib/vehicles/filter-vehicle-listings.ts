@@ -1,4 +1,4 @@
-import type { VehicleListing, VehicleType } from "@/types/vehicle-listing"
+import type { VehicleCondition, VehicleListing, VehicleType } from "@/types/vehicle-listing"
 
 export interface VehicleListFilters {
   searchTerm: string
@@ -10,6 +10,7 @@ export interface VehicleListFilters {
   make: string
   model: string
   vehicleType: VehicleType | "all"
+  condition: VehicleCondition | "all"
   maxYear: string
   minYear: string
   maxMileage: string
@@ -29,6 +30,7 @@ export function filterVehicleListings(
   return listings.filter((v) => {
     if (v.priceCurrency !== filters.priceCurrency) return false
     if (filters.vehicleType !== "all" && v.vehicleType !== filters.vehicleType) return false
+    if (filters.condition && filters.condition !== "all" && v.condition !== filters.condition) return false
     if (filters.province && filters.province !== "all" && v.province !== filters.province) return false
     if (filters.city.trim() && !v.city.toLowerCase().includes(filters.city.trim().toLowerCase())) return false
     if (filters.make && filters.make !== "all" && v.make !== filters.make) return false
@@ -39,7 +41,7 @@ export function filterVehicleListings(
     if (maxY != null && !Number.isNaN(maxY) && v.year > maxY) return false
     if (maxKm != null && !Number.isNaN(maxKm) && (v.mileageKm ?? 0) > maxKm) return false
     if (term) {
-      const hay = `${v.title} ${v.make} ${v.model} ${v.description}`.toLowerCase()
+      const hay = `${v.title} ${v.make} ${v.model} ${v.description} ${v.city} ${v.province}`.toLowerCase()
       if (!hay.includes(term)) return false
     }
     return true

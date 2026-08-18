@@ -14,6 +14,7 @@ import { buildSellerNavItems, getSellerPageMeta } from "@/components/dashboard/s
 
 export type SellerDashboardTab =
   | "dashboard"
+  | "stats"
   | "products"
   | "addProduct"
   | "addService"

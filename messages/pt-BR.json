@@ -42,7 +42,7 @@
     "chat": "Chat",
     "navFollow": "Seguir",
     "navRestaurants": "Restaurantes",
-    "navAutos": "Carros",
+    "navAutos": "Veículos",
     "navPropiedades": "Imóveis",
     "navServices": "Serviços",
     "navFavorites": "Favoritos",
@@ -474,6 +474,7 @@
     "panelTitle": "Painel do restaurante",
     "viewStore": "Ver loja",
     "tabOrders": "Pedidos",
+    "tabStats": "Estatísticas",
     "tabMenu": "Cardápio",
     "tabProfile": "Perfil",
     "subRequiredTitle": "Assinatura mensal necessária",
@@ -780,11 +781,11 @@
     "shortcutPharmacy": "Farmácia",
     "shortcutShipping": "Entregas",
     "shortcutServices": "Serviços",
-    "shortcutAutos": "Carros",
+    "shortcutAutos": "Veículos",
     "shortcutPropiedades": "Servido Imóveis",
     "vehiclesSpotlightKicker": "Veículos",
-    "vehiclesSpotlightTitle": "Servido Veículos",
-    "vehiclesSpotlightChips": ["Marca e modelo", "ARS ou USD", "Chat direto"],
+    "vehiclesSpotlightTitle": "Garagem da Servido",
+    "vehiclesSpotlightChips": ["Marca e modelo", "ARS ou USD", "0 km ou usados"],
     "vehiclesSpotlightCta": "Explorar",
     "propertiesSpotlightKicker": "Imóveis",
     "propertiesSpotlightTitle": "Servido Imóveis",
@@ -1388,6 +1389,73 @@
     "buyNow": "Comprar",
     "deliveryBanner": "Chat de entrega com seu entregador"
   },
+  "advancedStats": {
+    "title": "Estatísticas avançadas",
+    "empty": "Ainda não há dados suficientes para gerar gráficos.",
+    "lastMonths": "Últimos 6 meses",
+    "unknown": "Sem dado",
+    "navLabel": "Estatísticas",
+    "navDesc": "Gráficos e tendências",
+    "pageTitle": "Estatísticas avançadas",
+    "pageSubtitle": "Métricas da sua atividade em gráficos",
+    "restaurant": {
+      "subtitle": "Pedidos, faturamento e pratos mais vendidos do seu local.",
+      "kpiOrders": "Pedidos cobrados",
+      "kpiRevenue": "Faturamento comida",
+      "kpiTicket": "Ticket médio",
+      "kpiCommission": "Comissão Servido",
+      "revenueTitle": "Faturamento mensal",
+      "statusTitle": "Pedidos por status",
+      "paymentTitle": "Método de pagamento",
+      "dishesTitle": "Pratos mais vendidos"
+    },
+    "seller": {
+      "subtitle": "Vendas, catálogo e envios da sua loja.",
+      "kpiSales": "Vendas",
+      "kpiNet": "Líquido recebido",
+      "kpiTicket": "Ticket médio",
+      "kpiCatalog": "Publicações",
+      "revenueTitle": "Receita mensal",
+      "mixTitle": "Produtos vs serviços",
+      "categoryTitle": "Catálogo por categoria",
+      "shippingTitle": "Envios por status",
+      "products": "Produtos",
+      "services": "Serviços",
+      "shipPending": "Pendente",
+      "shipPreparing": "Em preparação",
+      "shipShipped": "Enviado",
+      "shipDelivered": "Entregue",
+      "shipCancelled": "Cancelado"
+    },
+    "buyer": {
+      "subtitle": "Suas compras, gastos e vendedores mais frequentes.",
+      "kpiPurchases": "Compras",
+      "kpiSpent": "Total gasto",
+      "kpiTicket": "Ticket médio",
+      "kpiFavorites": "Favoritos",
+      "spendTitle": "Gasto mensal",
+      "mixTitle": "Produtos vs serviços",
+      "statusTitle": "Pagamentos por status",
+      "sellersTitle": "Vendedores mais comprados",
+      "products": "Produtos",
+      "services": "Serviços"
+    },
+    "reseller": {
+      "subtitle": "Cliques, comissões e lotes de cobrança das suas indicações.",
+      "kpiUnits": "Unidades históricas",
+      "kpiClicks": "Cliques",
+      "kpiCommission": "Comissão gerada",
+      "kpiPending": "Pendente de cobrança",
+      "commissionTitle": "Comissão mensal",
+      "productsTitle": "Produtos mais vendidos",
+      "linksTitle": "Links ativos",
+      "batchesTitle": "Lotes de cobrança",
+      "active": "Ativos",
+      "inactive": "Inativos",
+      "paid": "Pagos",
+      "pending": "Pendentes"
+    }
+  },
   "buyerDashboard": {
     "panelTitle": "Painel do comprador",
     "accountLabel": "Conta de comprador",
@@ -1398,6 +1466,10 @@
       "dashboard": {
         "label": "Resumo",
         "description": "Atividade geral"
+      },
+      "stats": {
+        "label": "Estatísticas",
+        "description": "Gráficos e tendências"
       },
       "orders": {
         "label": "Minhas compras",
@@ -1428,6 +1500,10 @@
       "dashboard": {
         "title": "Resumo",
         "subtitle": "Sua atividade de compras em um relance"
+      },
+      "stats": {
+        "title": "Estatísticas avançadas",
+        "subtitle": "Suas compras e gastos em gráficos"
       },
       "orders": {
         "title": "Minhas compras",
@@ -2082,6 +2158,10 @@
         "label": "Resumo",
         "description": "Métricas da sua loja"
       },
+      "stats": {
+        "label": "Estatísticas",
+        "description": "Gráficos e tendências"
+      },
       "products": {
         "label": "Meus produtos",
         "description": "Anúncios ativos"
@@ -2127,6 +2207,10 @@
       "dashboard": {
         "title": "Resumo",
         "subtitle": "Sua loja e atividade em um relance"
+      },
+      "stats": {
+        "title": "Estatísticas avançadas",
+        "subtitle": "Vendas, catálogo e envios em gráficos"
       },
       "products": {
         "title": "Meus produtos",
@@ -2825,12 +2909,22 @@
     "heroCardListings": "no catálogo",
     "quickTypes": "Explorar por tipo",
     "catalogTitle": "Catálogo",
-    "catalogSubtitle": "Encontre seu próximo veículo ou anuncie o seu em minutos.",
     "loadingListings": "Carregando anúncios…",
     "emptyListHint": "Seja o primeiro a publicar ou tente outros filtros.",
-    "heroBadge": "Automotores",
-    "heroTitle": "Compre e venda veículos no Servido",
-    "heroSubtitle": "Carros, motos, picapes e mais. Anúncios com fotos, filtros por marca, modelo, preço e localização. Preço em pesos ou dólares.",
+    "heroBadge": "Veículos",
+    "zoneBadge": "Veículos",
+    "heroTitle": "Garagem da Servido",
+    "heroSubtitle": "Carros, motos e picapes. Anuncie grátis, em pesos ou dólares.",
+    "searchAll": "Todos",
+    "searchNew": "0 km",
+    "searchUsed": "Usados",
+    "searchLocationPlaceholder": "Marca, modelo ou cidade",
+    "searchCta": "Buscar",
+    "resultsHeadline": "{count} veículos",
+    "mapTitle": "Mapa",
+    "mapEmpty": "Estes anúncios não têm localização no mapa.",
+    "filterCondition": "Estado",
+    "catalogSubtitle": "Toque em um anúncio para ver fotos, ficha e consultar no chat.",
     "publishFreeNote": "Anuncie grátis — sem assinatura nem taxa de publicação.",
     "publishCta": "Publicar veículo",
     "filtersTitle": "Filtros",
@@ -2911,7 +3005,7 @@
       "sold": "Vendido"
     },
     "sellerPanelTitle": "Meus anúncios de veículos",
-    "sellerPanelDesc": "Gerencie seus anúncios no catálogo de carros.",
+    "sellerPanelDesc": "Gerencie seus anúncios na Garagem da Servido.",
     "sellerEmpty": "Você ainda não publicou nenhum veículo.",
     "backToSeller": "Voltar ao painel vendedor",
     "viewPublic": "Ver anúncio",

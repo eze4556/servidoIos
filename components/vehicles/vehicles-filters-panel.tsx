@@ -14,7 +14,7 @@ import {
 import { useTranslations } from "next-intl"
 import { ARGENTINA_PROVINCES, VEHICLE_MAKES, modelsForMake } from "@/lib/vehicles/vehicle-catalog"
 import type { VehicleListFilters } from "@/lib/vehicles/filter-vehicle-listings"
-import type { VehicleType } from "@/types/vehicle-listing"
+import type { VehicleCondition, VehicleType } from "@/types/vehicle-listing"
 import { XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -126,6 +126,24 @@ export function VehiclesFiltersPanel({
                 {vt === "all" ? t("filterAll") : t(`vehicleType.${vt}`)}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label className={filterLabel}>{t("filterCondition")}</Label>
+        <Select
+          modal={false}
+          value={filters.condition || "all"}
+          onValueChange={(v) => onChange({ condition: v as VehicleCondition | "all" })}
+        >
+          <SelectTrigger className={filterSelectTrigger}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("filterAll")}</SelectItem>
+            <SelectItem value="0km">{t("condition.0km")}</SelectItem>
+            <SelectItem value="usado">{t("condition.usado")}</SelectItem>
           </SelectContent>
         </Select>
       </div>

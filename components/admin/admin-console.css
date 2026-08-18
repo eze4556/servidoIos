@@ -1,0 +1,186 @@
+/* Consola admin: look operativo independiente de la marca Servido */
+
+.admin-console {
+  --admin-ink: #0f172a;
+  --admin-muted: #64748b;
+  --admin-line: rgba(148, 163, 184, 0.28);
+  --admin-accent: #0d9488;
+  --admin-accent-2: #38bdf8;
+  --admin-sidebar: #07111f;
+  color: var(--admin-ink);
+}
+
+.admin-console * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+.admin-console ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.admin-console ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+
+@keyframes admin-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes admin-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes admin-live {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes admin-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.admin-sidebar {
+  background:
+    radial-gradient(1200px 480px at -10% -10%, rgba(13, 148, 136, 0.22), transparent 42%),
+    radial-gradient(900px 420px at 120% 0%, rgba(56, 189, 248, 0.12), transparent 46%),
+    linear-gradient(180deg, #07111f 0%, #0b1628 58%, #081018 100%);
+}
+
+.admin-nav-group {
+  margin: 14px 8px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.72);
+}
+
+.admin-nav-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-nav-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.admin-nav-btn:hover::after {
+  transform: translateX(120%);
+}
+
+.admin-console main .bg-card,
+.admin-console main [class*="bg-card"] {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  border-radius: 1.15rem !important;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 10px 28px rgba(15, 23, 42, 0.05);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.admin-console main .bg-card:hover,
+.admin-console main [class*="bg-card"]:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 16px rgba(15, 23, 42, 0.05),
+    0 18px 40px rgba(15, 23, 42, 0.08);
+  border-color: rgba(13, 148, 136, 0.28) !important;
+}
+
+.admin-console table thead th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  background: rgba(248, 250, 252, 0.85);
+}
+
+.admin-console table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.admin-console table tbody tr:hover {
+  background: rgba(240, 253, 250, 0.7);
+}
+
+.admin-kpi {
+  animation: admin-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-kpi:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.admin-kpi:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.admin-kpi:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.admin-kpi:nth-child(4) {
+  animation-delay: 0.22s;
+}
+
+.admin-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #14b8a6;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.16);
+  animation: admin-live 1.6s ease-in-out infinite;
+}
+
+.admin-weather-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #0b1220 0%, #102033 55%, #0c1a22 100%);
+  animation: admin-rise 0.6s 0.12s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.admin-weather-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(13, 148, 136, 0.28), rgba(56, 189, 248, 0.12), transparent 62%);
+  background-size: 180% 180%;
+  animation: admin-shimmer 10s linear infinite;
+  pointer-events: none;
+}
+
+.admin-tab {
+  animation: admin-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

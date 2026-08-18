@@ -16,6 +16,8 @@ import { Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useToast } from "@/hooks/use-toast"
+import { AdminPager } from "@/components/admin/admin-pager"
+import { usePagedList } from "@/hooks/use-paged-list"
 
 type BatchRow = {
   id: string
@@ -41,6 +43,7 @@ export function AdminResellerPayoutsPanel() {
   const [loading, setLoading] = useState(true)
   const [batches, setBatches] = useState<BatchRow[]>([])
   const [marking, setMarking] = useState<string | null>(null)
+  const paged = usePagedList(batches, 12)
 
   const load = useCallback(async () => {
     const user = auth.currentUser
@@ -106,7 +109,7 @@ export function AdminResellerPayoutsPanel() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {batches.map((b) => {
+              {paged.slice.map((b) => {
                 const p = b.payoutInfoSnapshot
                 return (
                   <TableRow key={b.id}>
@@ -137,6 +140,14 @@ export function AdminResellerPayoutsPanel() {
             </TableBody>
           </Table>
         )}
+        <AdminPager
+          page={paged.page}
+          totalPages={paged.totalPages}
+          total={paged.total}
+          from={paged.from}
+          to={paged.to}
+          onPageChange={paged.setPage}
+        />
       </CardContent>
     </Card>
   )

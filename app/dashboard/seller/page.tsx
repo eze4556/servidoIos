@@ -105,6 +105,7 @@ import {
   SellerDashboardShell,
   type SellerDashboardTab,
 } from "@/components/dashboard/seller/seller-dashboard-shell"
+import { SellerAdvancedStats } from "@/components/dashboard/advanced-stats/seller-advanced-stats"
 import { BuyerStatCard } from "@/components/dashboard/buyer/buyer-stat-card"
 import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
 import { SellerAgendaPanel } from "@/components/dashboard/seller/seller-agenda-panel"
@@ -679,6 +680,7 @@ export default function SellerDashboardPage() {
     const tab = searchParams.get("tab")
     if (
       tab === "dashboard" ||
+      tab === "stats" ||
       tab === "products" ||
       tab === "addProduct" ||
       tab === "addService" ||
@@ -1137,14 +1139,14 @@ export default function SellerDashboardPage() {
 
   // Fetch shipments when shipping tab is active
   useEffect(() => {
-    if (activeTab === "shipping" && currentUser) {
+    if ((activeTab === "shipping" || activeTab === "stats") && currentUser) {
       fetchShipments()
     }
   }, [activeTab, currentUser])
 
   useEffect(() => {
     const currentUid = currentUser?.firebaseUser.uid
-    if (activeTab === "earnings" && currentUid && earningsLoadedForUid !== currentUid) {
+    if ((activeTab === "earnings" || activeTab === "stats") && currentUid && earningsLoadedForUid !== currentUid) {
       fetchSellerEarnings()
       setEarningsLoadedForUid(currentUid)
     }
@@ -2532,6 +2534,14 @@ export default function SellerDashboardPage() {
               <AlertTitle>{t("alerts.successTitle")}</AlertTitle>
               <AlertDescription>{successMessage}</AlertDescription>
             </Alert>
+          )}
+
+          {activeTab === "stats" && (
+            <SellerAdvancedStats
+              sales={sellerSales}
+              products={myProducts}
+              shipments={[...shipments, ...centralizedShipments]}
+            />
           )}
 
           {activeTab === "dashboard" && (
