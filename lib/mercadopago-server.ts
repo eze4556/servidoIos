@@ -1305,6 +1305,22 @@ export async function handleMercadoPagoWebhook(request: Request): Promise<Webhoo
 
   const externalReference = String(paymentInfo.external_reference || "")
   const status = normalizePaymentStatus(paymentInfo.status)
+  const refundedAmount = Number(paymentInfo.transaction_amount_refunded || 0)
+  const statusDetail = String(paymentInfo.status_detail || "").toLowerCase()
+  if (status === "refunded" || refundedAmount > 0 || statusDetail.includes("refund")) {
+    try {
+      const { applyPaymentRefundToClaims } = await import("@/lib/claim-refunds-server")
+      await applyPaymentRefundToClaims({
+        paymentInfo,
+        purchaseId: externalReference,
+      })
+    } catch (claimRefundError) {
+      logMercadoPagoEvent("error", "claim_refund_sync_failed", {
+        paymentId: String(paymentId),
+        error: claimRefundError instanceof Error ? claimRefundError.message : "Error sincronizando reclamo",
+      })
+    }
+  }
   const eventContext = {
     paymentId: String(paymentId),
     externalReference,

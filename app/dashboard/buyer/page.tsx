@@ -110,6 +110,7 @@ export default function BuyerDashboardPage() {
     const tab = searchParams.get("tab")
     if (
       tab === "orders" ||
+      tab === "claims" ||
       tab === "purchases" ||
       tab === "appointments" ||
       tab === "favorites" ||

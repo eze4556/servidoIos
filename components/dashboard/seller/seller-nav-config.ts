@@ -9,6 +9,7 @@ import {
   Share2,
   Truck,
   BarChart3,
+  AlertTriangle,
 } from "lucide-react"
 import type { DashboardNavItem } from "@/components/dashboard/dashboard-sidebar"
 import type { SellerDashboardTab } from "@/components/dashboard/seller/seller-dashboard-shell"
@@ -23,6 +24,7 @@ const navTabIds: SellerDashboardTab[] = [
   "create-coupons",
   "resellerProgram",
   "shipping",
+  "claims",
   "earnings",
   "profile",
 ]
@@ -37,6 +39,7 @@ const navIcons = {
   "create-coupons": Tag,
   resellerProgram: Share2,
   shipping: Truck,
+  claims: AlertTriangle,
   earnings: DollarSign,
   profile: Settings,
 } as const
@@ -51,6 +54,7 @@ const navGroups: Record<SellerDashboardTab, string> = {
   "create-coupons": "tienda",
   resellerProgram: "tienda",
   shipping: "operaciones",
+  claims: "operaciones",
   earnings: "operaciones",
   profile: "cuenta",
 }

@@ -1,4 +1,4 @@
-import { CalendarDays, CreditCard, Heart, Home, Settings, ShoppingBag, TrendingUp, BarChart3 } from "lucide-react"
+import { AlertTriangle, CalendarDays, CreditCard, Heart, Home, Settings, ShoppingBag, TrendingUp, BarChart3 } from "lucide-react"
 import type { DashboardNavItem } from "@/components/dashboard/dashboard-sidebar"
 import type { BuyerDashboardTab } from "@/components/dashboard/buyer/buyer-dashboard-shell"
 
@@ -6,6 +6,7 @@ const tabIds: BuyerDashboardTab[] = [
   "dashboard",
   "stats",
   "orders",
+  "claims",
   "purchases",
   "appointments",
   "favorites",
@@ -17,6 +18,7 @@ const tabIcons = {
   dashboard: Home,
   stats: BarChart3,
   orders: ShoppingBag,
+  claims: AlertTriangle,
   purchases: CreditCard,
   appointments: CalendarDays,
   favorites: Heart,
@@ -28,6 +30,7 @@ const tabGroups: Record<BuyerDashboardTab, string> = {
   dashboard: "principal",
   stats: "principal",
   orders: "principal",
+  claims: "principal",
   purchases: "principal",
   appointments: "principal",
   favorites: "guardado",

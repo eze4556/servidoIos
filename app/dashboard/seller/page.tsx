@@ -106,6 +106,7 @@ import {
   type SellerDashboardTab,
 } from "@/components/dashboard/seller/seller-dashboard-shell"
 import { SellerAdvancedStats } from "@/components/dashboard/advanced-stats/seller-advanced-stats"
+import { SellerClaimsPanel } from "@/components/claims/claims-panels"
 import { BuyerStatCard } from "@/components/dashboard/buyer/buyer-stat-card"
 import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
 import { SellerAgendaPanel } from "@/components/dashboard/seller/seller-agenda-panel"
@@ -686,6 +687,7 @@ export default function SellerDashboardPage() {
       tab === "addService" ||
       tab === "agenda" ||
       tab === "shipping" ||
+      tab === "claims" ||
       tab === "earnings" ||
       tab === "create-coupons" ||
       tab === "profile"
@@ -4293,6 +4295,10 @@ export default function SellerDashboardPage() {
           )}
 
           {/* Shipping Management Tab */}
+          {activeTab === "claims" && currentUser?.firebaseUser?.uid && (
+            <SellerClaimsPanel sellerId={currentUser.firebaseUser.uid} />
+          )}
+
           {activeTab === "shipping" && (
             <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
               <CardHeader>

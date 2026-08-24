@@ -507,6 +507,78 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // ─── Reclamos marketplace ──────────────────────────────────
+    match /claims/{claimId} {
+      function isClaimParty() {
+        return signedIn() && (
+          resource.data.buyerId == uid()
+          || resource.data.sellerId == uid()
+        );
+      }
+
+      allow read: if isAdmin() || isClaimParty();
+
+      allow create: if signedIn()
+        && request.resource.data.buyerId == uid()
+        && request.resource.data.sellerId is string
+        && request.resource.data.purchaseId is string;
+
+      allow update: if isAdmin()
+        || (
+          isClaimParty()
+          && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny([
+              'priority',
+              'refundId',
+              'refundAmount',
+              'refundRequestedAmount',
+              'refundStatus',
+              'mpConnectionError',
+              'mpConnectionStatus',
+              'refundedAt',
+              'slaWarningSentAt',
+              'slaEscalatedAt',
+              'mpConnectionAlertSentAt'
+            ])
+        );
+      allow delete: if isAdmin();
+
+      match /adminNotes/{noteId} {
+        allow read, write: if isAdmin();
+      }
+
+      match /messages/{messageId} {
+        function parentClaim() {
+          return get(/databases/$(database)/documents/claims/$(claimId)).data;
+        }
+        function canAccessClaim() {
+          return isAdmin() || (signedIn() && (
+            parentClaim().buyerId == uid()
+            || parentClaim().sellerId == uid()
+          ));
+        }
+        allow read: if canAccessClaim();
+        allow create: if canAccessClaim()
+          && request.resource.data.authorId == uid();
+        allow update, delete: if isAdmin();
+      }
+
+      match /events/{eventId} {
+        function parentClaim() {
+          return get(/databases/$(database)/documents/claims/$(claimId)).data;
+        }
+        function canAccessClaim() {
+          return isAdmin() || (signedIn() && (
+            parentClaim().buyerId == uid()
+            || parentClaim().sellerId == uid()
+          ));
+        }
+        allow read: if canAccessClaim();
+        allow create: if canAccessClaim();
+        allow update, delete: if isAdmin();
+      }
+    }
+
     // Deny-by-default para cualquier otra colección nueva
     match /{document=**} {
       allow read, write: if false;

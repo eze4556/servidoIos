@@ -1458,6 +1458,7 @@
       "dashboard": { "label": "Resumen", "description": "Actividad general" },
       "stats": { "label": "Estadísticas", "description": "Gráficos y tendencias" },
       "orders": { "label": "Mis compras", "description": "Pedidos y envíos" },
+      "claims": { "label": "Reclamos", "description": "Problemas con compras" },
       "purchases": { "label": "Historial de pagos", "description": "Transacciones" },
       "appointments": { "label": "Mis turnos", "description": "Reservas de servicios" },
       "favorites": { "label": "Favoritos", "description": "Guardados para después" },
@@ -1468,6 +1469,7 @@
       "dashboard": { "title": "Resumen", "subtitle": "Tu actividad de compras de un vistazo" },
       "stats": { "title": "Estadísticas avanzadas", "subtitle": "Tus compras y gasto en gráficos" },
       "orders": { "title": "Mis compras", "subtitle": "Seguí el estado de tus pedidos y envíos" },
+      "claims": { "title": "Reclamos", "subtitle": "Casos abiertos y el historial de cada uno" },
       "purchases": { "title": "Historial de pagos", "subtitle": "Detalle de todas tus transacciones" },
       "appointments": { "title": "Mis turnos", "subtitle": "Reservas de servicios que pediste" },
       "favorites": { "title": "Favoritos", "subtitle": "Productos que guardaste para más tarde" },
@@ -2050,6 +2052,7 @@
       "agenda": { "label": "Agenda", "description": "Turnos y horarios" },
       "create-coupons": { "label": "Crear cupones", "description": "Promociones" },
       "shipping": { "label": "Envíos", "description": "Estado de entregas" },
+      "claims": { "label": "Reclamos", "description": "Casos de compradores" },
       "earnings": { "label": "Mis ventas", "description": "Ingresos y pagos" },
       "profile": { "label": "Configuración", "description": "Perfil y suscripción" },
       "resellerProgram": { "label": "Revendedores", "description": "Programa de difusión Servido" }
@@ -2063,6 +2066,7 @@
       "addService": { "title": "Publicar servicio", "subtitle": "Ofrecé un nuevo servicio" },
       "agenda": { "title": "Agenda de servicios", "subtitle": "Horarios y turnos de tus clientes" },
       "shipping": { "title": "Envíos", "subtitle": "Gestioná el estado de tus envíos" },
+      "claims": { "title": "Reclamos", "subtitle": "Respondé casos y consultá el historial" },
       "earnings": { "title": "Mis ventas", "subtitle": "Ingresos y transacciones" },
       "create-coupons": { "title": "Cupones", "subtitle": "Creá promociones para tus clientes" },
       "profile": { "title": "Configuración", "subtitle": "Perfil, suscripción y Mercado Pago" },
@@ -3009,5 +3013,162 @@
     "heading": "Esta función no existe o está en desarrollo",
     "description": "La página que intentaste visitar no está disponible. Si crees que esto es un error, por favor revisa la URL o vuelve a tu panel principal.",
     "backDashboard": "Ir a mi Dashboard"
+  },
+  "claims": {
+    "eyebrow": "Reclamo",
+    "loading": "Cargando reclamos…",
+    "yes": "Sí",
+    "no": "No",
+    "deadlineSoon": "Plazo por vencer",
+    "deadlineExpired": "El plazo de respuesta del vendedor venció",
+    "deadlineHours": "El vendedor tiene {hours} h para responder",
+    "withSeller": "Vendedor: {name}",
+    "withBuyer": "Comprador: {name}",
+    "confirmClose": "¿Cerrar este reclamo? Esta acción no se puede deshacer.",
+    "create": {
+      "title": "Tuve un problema",
+      "subtitle": "Contanos qué pasó con {product}.",
+      "fallbackSubtitle": "Describí el inconveniente con tu compra.",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Elegí un motivo",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Contá con detalle qué ocurrió.",
+      "receivedPartial": "Recibí parte del pedido",
+      "proposedSolution": "Solución que proponés (opcional)",
+      "proposedSolutionPlaceholder": "Por ejemplo: reembolso, reenvío o reparación.",
+      "attachments": "Fotos y comprobantes",
+      "attachmentsHint": "Hasta 8 archivos. JPG, PNG, WebP o PDF. Máximo 8 MB cada uno."
+    },
+    "buyer": {
+      "empty": "Todavía no abriste ningún reclamo. Podés hacerlo desde Mis compras."
+    },
+    "seller": {
+      "title": "Reclamos",
+      "description": "Casos abiertos por compradores sobre tus ventas.",
+      "empty": "No tenés reclamos con este filtro."
+    },
+    "thread": {
+      "title": "Conversación",
+      "replyPlaceholder": "Escribí tu respuesta…",
+      "closed": "Este reclamo está cerrado. Ya no se pueden enviar mensajes."
+    },
+    "history": {
+      "title": "Historial del caso"
+    },
+    "fields": {
+      "reason": "Motivo",
+      "amount": "Importe",
+      "paymentId": "Payment ID",
+      "receivedPartial": "¿Recibió parte del pedido?",
+      "proposedSolution": "Solución propuesta"
+    },
+    "actions": {
+      "report": "Tuve un problema",
+      "view": "Ver reclamo",
+      "submit": "Iniciar reclamo",
+      "cancel": "Cancelar",
+      "reply": "Responder",
+      "close": "Cerrar caso",
+      "back": "Volver"
+    },
+    "filters": {
+      "all": "Todos",
+      "open": "Abiertos"
+    },
+    "roles": {
+      "buyer": "Comprador",
+      "seller": "Vendedor",
+      "admin": "Administrador",
+      "system": "Sistema"
+    },
+    "reasons": {
+      "not_received": "El producto no llegó",
+      "damaged": "El producto llegó dañado",
+      "wrong_item": "Recibí un producto incorrecto",
+      "incomplete": "El pedido llegó incompleto",
+      "seller_no_response": "El vendedor no responde",
+      "cancel_purchase": "Quiero cancelar la compra",
+      "other": "Otro problema"
+    },
+    "status": {
+      "open": "Reclamo abierto",
+      "waiting_seller": "Esperando respuesta del vendedor",
+      "seller_responded": "Vendedor respondió",
+      "waiting_buyer": "Esperando respuesta del comprador",
+      "agreement_proposed": "Acuerdo propuesto",
+      "agreement_accepted": "Acuerdo aceptado",
+      "in_review": "En revisión por Servido",
+      "partial_refund_requested": "Reembolso parcial solicitado",
+      "total_refund_requested": "Reembolso total solicitado",
+      "refund_processing": "Reembolso procesando",
+      "refund_approved": "Reembolso aprobado",
+      "refund_rejected": "Reembolso rechazado",
+      "rejected": "Reclamo rechazado",
+      "closed": "Caso cerrado"
+    },
+    "events": {
+      "opened": "Reclamo abierto",
+      "message": "Nuevo mensaje",
+      "proposal": "Solución propuesta",
+      "proposal_accepted": "Propuesta aceptada",
+      "proposal_rejected": "Propuesta rechazada",
+      "admin_decision": "Decisión de Servido",
+      "priority_on": "Marcado como prioritario",
+      "priority_off": "Prioridad quitada",
+      "closed": "Caso cerrado",
+      "refund_executed": "Reembolso enviado a Mercado Pago",
+      "refund_confirmed": "Reembolso acreditado",
+      "refund_failed": "Mercado Pago rechazó el reembolso",
+      "mp_connection_blocked": "Reembolso bloqueado: cuenta Mercado Pago del vendedor",
+      "sla_warning": "Recordatorio: plazo de respuesta por vencer",
+      "sla_escalated": "Plazo vencido: caso pasado a revisión de Servido",
+      "mp_connection_alert": "Alerta admin: conexión Mercado Pago del vendedor"
+    },
+    "proposal": {
+      "title": "Propuesta de solución",
+      "formTitle": "Proponer una solución",
+      "formHint": "El comprador podrá aceptar o rechazar. El reembolso todavía no se ejecuta: queda registrado para Servido.",
+      "type": "Tipo de propuesta",
+      "typePlaceholder": "Elegí una opción",
+      "amount": "Importe a reembolsar",
+      "tracking": "Número de seguimiento",
+      "trackingPlaceholder": "Ej. 000123456AR",
+      "note": "Explicación",
+      "notePlaceholder": "Contá cómo vas a resolver el caso.",
+      "submit": "Enviar propuesta",
+      "accept": "Aceptar propuesta",
+      "reject": "Rechazar",
+      "refundPendingAdmin": "El acuerdo quedó registrado. El reembolso lo ejecuta Servido sobre el pago original del vendedor en Mercado Pago; no se usa dinero de la plataforma.",
+      "refundConfirmed": "El reembolso fue acreditado en Mercado Pago.",
+      "status": {
+        "pending": "Esperando respuesta del comprador",
+        "accepted": "Aceptada",
+        "rejected": "Rechazada"
+      },
+      "types": {
+        "reship": "Reenvío del producto",
+        "partial_refund": "Reembolso parcial",
+        "total_refund": "Reembolso total",
+        "alternative": "Acuerdo alternativo"
+      }
+    },
+    "errors": {
+      "generic": "No se pudo completar la acción. Intentá de nuevo.",
+      "empty_reason": "Elegí un motivo.",
+      "empty_description": "Escribí una descripción.",
+      "empty_message": "Escribí un mensaje o adjuntá un archivo.",
+      "empty_proposal": "Escribí una explicación para la propuesta.",
+      "empty_proposal_type": "Elegí el tipo de propuesta.",
+      "empty_tracking": "Ingresá el número de seguimiento.",
+      "invalid_amount": "El importe parcial tiene que ser mayor a 0 y menor al total de la compra.",
+      "proposal_pending": "Ya hay una propuesta esperando respuesta del comprador.",
+      "no_proposal": "No hay una propuesta pendiente.",
+      "closed": "Este reclamo ya está cerrado.",
+      "forbidden": "No tenés permiso para esta acción.",
+      "same_user": "No podés reclamar una compra propia.",
+      "invalid_type": "Solo se permiten imágenes o PDF.",
+      "too_large": "Cada archivo puede pesar hasta 8 MB.",
+      "too_many": "Podés adjuntar hasta 8 archivos."
+    }
   }
 }

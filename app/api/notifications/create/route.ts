@@ -19,6 +19,16 @@ async function canNotifyUser(actorUid: string, notification: IncomingNotificatio
     return data.buyerId === actorUid || data.sellerId === actorUid
   }
 
+  const claimId = notification.meta?.claimId
+  if (typeof claimId === "string" && claimId.trim()) {
+    const snap = await db.collection("claims").doc(claimId.trim()).get()
+    if (!snap.exists) return false
+    const data = snap.data() || {}
+    const isParty = data.buyerId === actorUid || data.sellerId === actorUid
+    const isTargetParty = data.buyerId === targetUserId || data.sellerId === targetUserId
+    return isParty && isTargetParty
+  }
+
   return false
 }
 

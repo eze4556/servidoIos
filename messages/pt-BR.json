@@ -1475,6 +1475,10 @@
         "label": "Minhas compras",
         "description": "Pedidos e entregas"
       },
+      "claims": {
+        "label": "Reclamações",
+        "description": "Problemas com compras"
+      },
       "purchases": {
         "label": "Histórico de pagamentos",
         "description": "Transações"
@@ -1508,6 +1512,10 @@
       "orders": {
         "title": "Minhas compras",
         "subtitle": "Acompanhe pedidos e entregas"
+      },
+      "claims": {
+        "title": "Reclamações",
+        "subtitle": "Casos abertos e o histórico de cada um"
       },
       "purchases": {
         "title": "Histórico de pagamentos",
@@ -2190,6 +2198,10 @@
         "label": "Envios",
         "description": "Status das entregas"
       },
+      "claims": {
+        "label": "Reclamações",
+        "description": "Casos de compradores"
+      },
       "earnings": {
         "label": "Minhas vendas",
         "description": "Receitas e pagamentos"
@@ -2235,6 +2247,10 @@
       "shipping": {
         "title": "Envios",
         "subtitle": "Gerencie o status dos seus envios"
+      },
+      "claims": {
+        "title": "Reclamações",
+        "subtitle": "Responda casos e consulte o histórico"
       },
       "earnings": {
         "title": "Minhas vendas",
@@ -3191,5 +3207,162 @@
     "formErrorVideo": "Revisá el formato o tamaño del video.",
     "formErrorImage": "Revisá el formato o tamaño de la imagen.",
     "formErrorGeneric": "No se pudo guardar. Intentá de nuevo."
+  },
+  "claims": {
+    "eyebrow": "Reclamação",
+    "loading": "Carregando reclamações…",
+    "yes": "Sim",
+    "no": "Não",
+    "deadlineSoon": "Prazo prestes a vencer",
+    "deadlineExpired": "O prazo de resposta do vendedor venceu",
+    "deadlineHours": "O vendedor tem {hours} h para responder",
+    "withSeller": "Vendedor: {name}",
+    "withBuyer": "Comprador: {name}",
+    "confirmClose": "Fechar esta reclamação? Esta ação não pode ser desfeita.",
+    "create": {
+      "title": "Tive um problema",
+      "subtitle": "Conte o que aconteceu com {product}.",
+      "fallbackSubtitle": "Descreva o problema com a sua compra.",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Escolha um motivo",
+      "description": "Descrição",
+      "descriptionPlaceholder": "Conte com detalhes o que ocorreu.",
+      "receivedPartial": "Recebi parte do pedido",
+      "proposedSolution": "Solução que você propõe (opcional)",
+      "proposedSolutionPlaceholder": "Por exemplo: reembolso, reenvio ou reparo.",
+      "attachments": "Fotos e comprovantes",
+      "attachmentsHint": "Até 8 arquivos. JPG, PNG, WebP ou PDF. Máximo 8 MB cada."
+    },
+    "buyer": {
+      "empty": "Você ainda não abriu nenhuma reclamação. Pode fazer isso em Minhas compras."
+    },
+    "seller": {
+      "title": "Reclamações",
+      "description": "Casos abertos por compradores sobre as suas vendas.",
+      "empty": "Não há reclamações com este filtro."
+    },
+    "thread": {
+      "title": "Conversa",
+      "replyPlaceholder": "Escreva sua resposta…",
+      "closed": "Esta reclamação está fechada. Não é possível enviar mensagens."
+    },
+    "history": {
+      "title": "Histórico do caso"
+    },
+    "fields": {
+      "reason": "Motivo",
+      "amount": "Valor",
+      "paymentId": "Payment ID",
+      "receivedPartial": "Recebeu parte do pedido?",
+      "proposedSolution": "Solução proposta"
+    },
+    "actions": {
+      "report": "Tive um problema",
+      "view": "Ver reclamação",
+      "submit": "Abrir reclamação",
+      "cancel": "Cancelar",
+      "reply": "Responder",
+      "close": "Fechar caso",
+      "back": "Voltar"
+    },
+    "filters": {
+      "all": "Todas",
+      "open": "Abertas"
+    },
+    "roles": {
+      "buyer": "Comprador",
+      "seller": "Vendedor",
+      "admin": "Administrador",
+      "system": "Sistema"
+    },
+    "reasons": {
+      "not_received": "O produto não chegou",
+      "damaged": "O produto chegou danificado",
+      "wrong_item": "Recebi um produto incorreto",
+      "incomplete": "O pedido chegou incompleto",
+      "seller_no_response": "O vendedor não responde",
+      "cancel_purchase": "Quero cancelar a compra",
+      "other": "Outro problema"
+    },
+    "status": {
+      "open": "Reclamação aberta",
+      "waiting_seller": "Aguardando resposta do vendedor",
+      "seller_responded": "O vendedor respondeu",
+      "waiting_buyer": "Aguardando resposta do comprador",
+      "agreement_proposed": "Acordo proposto",
+      "agreement_accepted": "Acordo aceito",
+      "in_review": "Em revisão pela Servido",
+      "partial_refund_requested": "Reembolso parcial solicitado",
+      "total_refund_requested": "Reembolso total solicitado",
+      "refund_processing": "Reembolso em processamento",
+      "refund_approved": "Reembolso aprovado",
+      "refund_rejected": "Reembolso recusado",
+      "rejected": "Reclamação recusada",
+      "closed": "Caso fechado"
+    },
+    "events": {
+      "opened": "Reclamação aberta",
+      "message": "Nova mensagem",
+      "proposal": "Solução proposta",
+      "proposal_accepted": "Proposta aceita",
+      "proposal_rejected": "Proposta recusada",
+      "admin_decision": "Decisão da Servido",
+      "priority_on": "Marcado como prioritário",
+      "priority_off": "Prioridade removida",
+      "closed": "Caso fechado",
+      "refund_executed": "Reembolso enviado ao Mercado Pago",
+      "refund_confirmed": "Reembolso creditado",
+      "refund_failed": "O Mercado Pago recusou o reembolso",
+      "mp_connection_blocked": "Reembolso bloqueado: conta Mercado Pago do vendedor",
+      "sla_warning": "Lembrete: prazo de resposta prestes a vencer",
+      "sla_escalated": "Prazo vencido: caso enviado para revisão da Servido",
+      "mp_connection_alert": "Alerta admin: conexão Mercado Pago do vendedor"
+    },
+    "proposal": {
+      "title": "Proposta de solução",
+      "formTitle": "Propor uma solução",
+      "formHint": "O comprador poderá aceitar ou recusar. O reembolso ainda não é executado: fica registrado para a Servido.",
+      "type": "Tipo de proposta",
+      "typePlaceholder": "Escolha uma opção",
+      "amount": "Valor a reembolsar",
+      "tracking": "Número de rastreio",
+      "trackingPlaceholder": "Ex. 000123456BR",
+      "note": "Explicação",
+      "notePlaceholder": "Explique como vai resolver o caso.",
+      "submit": "Enviar proposta",
+      "accept": "Aceitar proposta",
+      "reject": "Recusar",
+      "refundPendingAdmin": "O acordo ficou registrado. O reembolso é executado pela Servido sobre o pagamento original do vendedor no Mercado Pago; a plataforma não usa dinheiro próprio.",
+      "refundConfirmed": "O reembolso foi creditado no Mercado Pago.",
+      "status": {
+        "pending": "Aguardando resposta do comprador",
+        "accepted": "Aceita",
+        "rejected": "Recusada"
+      },
+      "types": {
+        "reship": "Reenvio do produto",
+        "partial_refund": "Reembolso parcial",
+        "total_refund": "Reembolso total",
+        "alternative": "Acordo alternativo"
+      }
+    },
+    "errors": {
+      "generic": "Não foi possível concluir a ação. Tente de novo.",
+      "empty_reason": "Escolha um motivo.",
+      "empty_description": "Escreva uma descrição.",
+      "empty_message": "Escreva uma mensagem ou anexe um arquivo.",
+      "empty_proposal": "Escreva uma explicação para a proposta.",
+      "empty_proposal_type": "Escolha o tipo de proposta.",
+      "empty_tracking": "Informe o número de rastreio.",
+      "invalid_amount": "O valor parcial deve ser maior que 0 e menor que o total da compra.",
+      "proposal_pending": "Já existe uma proposta aguardando resposta do comprador.",
+      "no_proposal": "Não há uma proposta pendente.",
+      "closed": "Esta reclamação já está fechada.",
+      "forbidden": "Você não tem permissão para esta ação.",
+      "same_user": "Você não pode reclamar uma compra própria.",
+      "invalid_type": "Só são permitidas imagens ou PDF.",
+      "too_large": "Cada arquivo pode ter até 8 MB.",
+      "too_many": "Você pode anexar até 8 arquivos."
+    }
   }
 }

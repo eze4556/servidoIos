@@ -56,16 +56,22 @@ service firebase.storage {
       allow write: if isSignedIn();
     }
 
-    // Vehículos (módulo /autos) — ruta: vehicles/{userId}/{listingId}/archivo
+    // Vehículos (módulo /autos)
     match /vehicles/{userId}/{listingId}/{fileName} {
       allow read: if true;
       allow write: if isOwner(userId) || isAdmin();
     }
 
-    // Propiedades (Servido Inmuebles) — ruta: properties/{userId}/{listingId}/archivo (fotos y videos)
+    // Propiedades (Zona Prop) — fotos y videos
     match /properties/{userId}/{listingId}/{fileName} {
       allow read: if true;
       allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // Adjuntos de reclamos (fotos y comprobantes)
+    match /claims/{claimId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
 
     // Cualquier otra ruta: solo lectura pública

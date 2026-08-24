@@ -1,26 +1,9 @@
 "use client"
 
-import type { ChangeEvent } from "react"
+import { useEffect, useMemo, useState, type ChangeEvent } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import {
-  AlertCircle,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  CreditCard,
-  Download,
-  Heart,
-  Loader2,
-  MessageSquare,
-  Package,
-  PackageCheck,
-  ShoppingBag,
-  Sparkles,
-  User,
-  XCircle,
-} from "lucide-react"
+import { AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Clock, CreditCard, Download, Heart, Loader2, MessageSquare, Package, PackageCheck, ShoppingBag, Sparkles, User, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -32,6 +15,10 @@ import { BuyerEmptyState } from "@/components/dashboard/buyer/buyer-empty-state"
 import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
 import { StatusBadge } from "@/components/dashboard/buyer/buyer-status-badge"
 import { BuyerAppointmentsPanel } from "@/components/dashboard/buyer/buyer-appointments-panel"
+import { BuyerClaimsPanel } from "@/components/claims/claims-panels"
+import { ClaimCreateDialog, type ClaimPurchaseContext } from "@/components/claims/claim-create-dialog"
+import { listClaimsForUser } from "@/lib/claims"
+import { isClaimOpen, purchaseClaimKey, type ClaimDoc } from "@/types/claims"
 import type { CentralizedPurchase, PurchaseItem } from "@/types/centralized-payments"
 import { getDashboardProductImage } from "@/lib/image-utils"
 import { usePriceFormat } from "@/hooks/use-price-format"
@@ -150,6 +137,50 @@ export function BuyerDashboardTabs({
     productosComprados.filter((p) => p.estadoPago === "pendiente").length +
     centralizedPurchases.filter((p) => p.items.some((item) => item.estadoPagoVendedor === "pendiente")).length
 
+  const tClaims = useTranslations("claims")
+  const [claimDialogOpen, setClaimDialogOpen] = useState(false)
+  const [claimPurchase, setClaimPurchase] = useState<ClaimPurchaseContext | null>(null)
+  const [buyerClaims, setBuyerClaims] = useState<ClaimDoc[]>([])
+
+  useEffect(() => {
+    if (!buyerId) return
+    let cancelled = false
+    void listClaimsForUser("buyer", buyerId).then((rows) => {
+      if (!cancelled) setBuyerClaims(rows)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [buyerId, activeTab])
+
+  const claimByKey = useMemo(() => {
+    const map = new Map<string, ClaimDoc>()
+    for (const claim of buyerClaims) {
+      const key = claim.purchaseKey || purchaseClaimKey(claim.purchaseId, claim.productId)
+      const previous = map.get(key)
+      if (!previous || (isClaimOpen(claim.status) && !isClaimOpen(previous.status))) {
+        map.set(key, claim)
+      }
+    }
+    return map
+  }, [buyerClaims])
+
+  const openClaimDialog = (purchase: CompraProductoBuyer) => {
+    setClaimPurchase({
+      purchaseId: purchase.compraId,
+      productId: purchase.productId,
+      paymentId: purchase.paymentId,
+      buyerId: purchase.buyerId,
+      sellerId: purchase.vendedorId,
+      buyerName: currentUser?.displayName || currentUser?.email || tClaims("roles.buyer"),
+      sellerName: purchase.vendedorNombre,
+      productName: purchase.productName,
+      productImageUrl: purchase.productImageUrl,
+      amount: purchase.productPrice * (purchase.quantity || 1),
+    })
+    setClaimDialogOpen(true)
+  }
+
   if (activeTab === "stats") {
     return null
   }
@@ -252,6 +283,7 @@ export function BuyerDashboardTabs({
 
   if (activeTab === "orders") {
     return (
+      <>
       <BuyerPanel
         title={t("pages.orders.title")}
         description={t("ordersPanelDesc")}
@@ -346,6 +378,35 @@ export function BuyerDashboardTabs({
                         {loadingData ? t("confirming") : t("confirmDelivery")}
                       </Button>
                     )}
+
+                    {(() => {
+                      const existing = claimByKey.get(purchaseClaimKey(purchase.compraId, purchase.productId))
+                      const openClaim = existing && isClaimOpen(existing.status) ? existing : null
+                      if (openClaim) {
+                        return (
+                          <Button asChild size="sm" variant="outline" className="rounded-full border-amber-200 text-amber-900">
+                            <Link href={`/dashboard/claims/${openClaim.id}`}>
+                              <AlertTriangle className="mr-2 h-4 w-4" />
+                              {tClaims("actions.view")}
+                            </Link>
+                          </Button>
+                        )
+                      }
+                      if (purchase.estadoPago === "approved" || purchase.estadoPago === "pagado") {
+                        return (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full border-amber-200 text-amber-900"
+                            onClick={() => openClaimDialog(purchase)}
+                          >
+                            <AlertTriangle className="mr-2 h-4 w-4" />
+                            {tClaims("actions.report")}
+                          </Button>
+                        )
+                      }
+                      return null
+                    })()}
                   </div>
 
                   {purchase.shippingStatus === "entregado" && (
@@ -387,6 +448,17 @@ export function BuyerDashboardTabs({
             )}
           </div>
         )}
+      </BuyerPanel>
+      <ClaimCreateDialog open={claimDialogOpen} onOpenChange={setClaimDialogOpen} purchase={claimPurchase} />
+    </>
+    )
+  }
+
+  if (activeTab === "claims") {
+    if (!buyerId) return <LoadingBlock />
+    return (
+      <BuyerPanel title={t("pages.claims.title")} description={t("pages.claims.subtitle")}>
+        <BuyerClaimsPanel buyerId={buyerId} />
       </BuyerPanel>
     )
   }

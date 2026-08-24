@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import {
+  Handshake,
   Home,
   Users,
   Tag,
@@ -110,6 +111,7 @@ import { AdminDatetimeWeather } from "@/components/admin/admin-datetime-weather"
 import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav"
 import { AdminPager } from "@/components/admin/admin-pager"
 import { AdminPlatformStats } from "@/components/admin/admin-platform-stats"
+import { AdminClaimsQueue } from "@/components/admin/admin-claims-queue"
 import { usePagedList } from "@/hooks/use-paged-list"
 import type { CadeteStatus } from "@/types/cadete"
 import { sendCadeteStatusEmail } from "@/lib/email-service"
@@ -267,6 +269,7 @@ export default function AdminDashboard() {
         items: [
           { tab: "overview", label: t("nav.overview"), icon: Home },
           { tab: "stats", label: t("nav.stats"), icon: BarChart3 },
+          { tab: "claims", label: t("nav.claims"), icon: Handshake },
         ],
       },
       {
@@ -2212,6 +2215,7 @@ export default function AdminDashboard() {
             <TabsList className="hidden">
               <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
               <TabsTrigger value="stats">{t("tabs.stats")}</TabsTrigger>
+              <TabsTrigger value="claims">{t("tabs.claims")}</TabsTrigger>
               <TabsTrigger value="users">{t("tabs.users")}</TabsTrigger>
               <TabsTrigger value="cadetes">{t("nav.cadetes")}</TabsTrigger>
               <TabsTrigger value="categories">{t("tabs.categories")}</TabsTrigger>
@@ -2436,6 +2440,17 @@ export default function AdminDashboard() {
                 categories={categories}
                 salesSummary={salesSummary}
                 loadingSales={loadingSales}
+              />
+            </TabsContent>
+
+            <TabsContent value="claims" className="admin-tab mt-4">
+              <AdminClaimsQueue
+                adminId={currentUser?.firebaseUser?.uid || ""}
+                adminName={
+                  currentUser?.firebaseUser?.displayName ||
+                  currentUser?.firebaseUser?.email?.split("@")[0] ||
+                  "Admin"
+                }
               />
             </TabsContent>
 

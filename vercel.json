@@ -9,6 +9,10 @@
     {
       "path": "/api/cron/delivery-settlements",
       "schedule": "0 12 * * 2"
+    },
+    {
+      "path": "/api/cron/claims-sla",
+      "schedule": "0 10 * * *"
     }
   ],
   "functions": {

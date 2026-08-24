@@ -16,6 +16,7 @@ export type BuyerDashboardTab =
   | "dashboard"
   | "stats"
   | "orders"
+  | "claims"
   | "purchases"
   | "appointments"
   | "favorites"

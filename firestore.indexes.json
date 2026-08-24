@@ -578,6 +578,14 @@
         { "fieldPath": "commissionStatus", "order": "ASCENDING" },
         { "fieldPath": "paymentMethod", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "claims",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "buyerId", "order": "ASCENDING" },
+        { "fieldPath": "purchaseKey", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

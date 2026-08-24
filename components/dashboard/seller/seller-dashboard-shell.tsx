@@ -20,6 +20,7 @@ export type SellerDashboardTab =
   | "addService"
   | "agenda"
   | "shipping"
+  | "claims"
   | "earnings"
   | "create-coupons"
   | "resellerProgram"

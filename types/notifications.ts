@@ -7,6 +7,7 @@ export type AppNotificationType =
   | "payment"
   | "promo"
   | "reseller"
+  | "claim"
   | "system"
 
 export interface AppNotification {
