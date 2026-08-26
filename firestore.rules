@@ -87,8 +87,19 @@ service cloud.firestore {
           signedIn()
           && uid() == userId
           && !request.resource.data.diff(resource.data).affectedKeys()
-              .hasAny(['role', 'isActive', 'productUploadLimit'])
+              .hasAny([
+                'role',
+                'isActive',
+                'productUploadLimit',
+                'sellerSalesBlocked',
+                'claimManualReview',
+                'claimWarningCount'
+              ])
         );
+
+      match /claimSanctions/{sanctionId} {
+        allow read, write: if isAdmin();
+      }
 
       allow delete: if isAdmin();
     }

@@ -1,13 +1,12 @@
 "use client"
-import { useEffect, useState, useCallback } from "react"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter, usePathname } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
-  Search,
   ChevronDown,
-  Menu,
   Heart,
   Package,
   Loader2,
@@ -17,13 +16,16 @@ import {
   UtensilsCrossed,
   Car,
   Building2,
+  LayoutGrid,
+  LogOut,
+  Store,
+  User,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -40,10 +42,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useChatUnread } from "@/components/chat/chat-unread-context"
 import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy } from "firebase/firestore"
-import { getSearchResultImage } from "@/lib/image-utils"
-import { usePriceFormat } from "@/hooks/use-price-format"
-import { UserGreeting } from "@/components/layout/user-greeting"
 import { LocaleFlagToggle } from "@/components/layout/locale-flag-toggle"
+import { cn } from "@/lib/utils"
 
 interface CategoryItem {
   id: string
@@ -52,38 +52,19 @@ interface CategoryItem {
   imageUrl?: string
 }
 
-interface SearchProduct {
-  id: string
-  name: string
-  price: number
-  imageUrl?: string
-  media?: any[]
-  category?: string
-  sellerName?: string
-}
+const iconBtn =
+  "relative inline-flex h-9 w-9 items-center justify-center rounded-full text-servido-900/75 transition-colors hover:bg-servido-50 hover:text-servido-950"
 
 export function Header() {
   const t = useTranslations("header")
   const tc = useTranslations("common")
-  const { formatPrice } = usePriceFormat()
-  const { currentUser, authLoading, handleLogout, getDashboardLink, getVenderLink } = useAuth()
+  const tb = useTranslations("tabBar")
+  const { currentUser, handleLogout, getDashboardLink, getVenderLink } = useAuth()
   const { userLocation, shortLocation, loadingLocation, openLocationPicker } = useLocation()
   const { unreadCount } = useChatUnread()
-  const router = useRouter()
   const pathname = usePathname()
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
-  
-  // Estados para búsqueda
-  const [searchTerm, setSearchTerm] = useState("")
-  const [searchResults, setSearchResults] = useState<SearchProduct[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-  const [showSearchResults, setShowSearchResults] = useState(false)
-
-  // Estado para almacenar todos los productos
-  const [allProducts, setAllProducts] = useState<SearchProduct[] | null>(null)
-
-  // Estado para controlar el menú móvil — ahora en MobileAppHeader
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -101,380 +82,278 @@ export function Header() {
     fetchCategories()
   }, [])
 
-  // Nueva función para traer todos los productos una sola vez
-  const fetchAllProducts = useCallback(async () => {
-    try {
-      const productsSnapshot = await getDocs(collection(db, "products"));
-      const products: SearchProduct[] = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as SearchProduct);
-      setAllProducts(products);
-    } catch (error) {
-      console.error("Error fetching all products for search:", error);
-      setAllProducts([]);
-    }
-  }, [])
+  const primaryLinks = [
+    { href: "/restaurantes", icon: UtensilsCrossed, label: t("navRestaurants") },
+    { href: "/autos", icon: Car, label: t("navAutos") },
+    { href: "/propiedades", icon: Building2, label: t("navPropiedades") },
+    { href: "/services", icon: Package, label: t("navServices") },
+  ]
 
-  // Modificar handleSearch para filtrar en frontend
-  const handleSearch = async (term: string) => {
-    const trimmed = term.trim();
-    if (trimmed.length < 1) {
-      setSearchResults([])
-      setShowSearchResults(false)
-      return
-    }
-    setIsSearching(true)
-    setShowSearchResults(true)
+  const secondaryLinks = [
+    { href: "/siguiendo", icon: UserPlus, label: t("navFollow") },
+    { href: "/favorites", icon: Heart, label: t("navFavorites") },
+  ]
 
-    // Si no se han traído todos los productos, traerlos
-    if (!allProducts) {
-      await fetchAllProducts();
-    }
-    // Filtrar en frontend
-    const lowerTerm = trimmed.toLowerCase();
-    const filtered = (allProducts || []).filter(product => {
-      const name = product.name?.toLowerCase() || "";
-      const keywords = Array.isArray((product as any).keywords) ? (product as any).keywords.map((k: string) => k.toLowerCase()) : [];
-      return name.includes(lowerTerm) || keywords.some((k: string) => k.includes(lowerTerm));
-    });
-    setSearchResults(filtered.slice(0, 20));
-    setIsSearching(false);
-  }
+  const isActive = (href: string) =>
+    pathname === href || pathname?.startsWith(`${href}/`)
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchTerm(value)
-    handleSearch(value)
-  }
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchTerm.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchTerm.trim())}`)
-      setShowSearchResults(false)
-    }
-  }
-
-  const clearSearch = () => {
-    setSearchTerm("")
-    setSearchResults([])
-    setShowSearchResults(false)
-  }
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element
-      if (!target.closest('.search-container')) {
-        setShowSearchResults(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const searchInputClass =
-    "w-full rounded-full border-0 bg-gray-100 py-2.5 pl-11 pr-12 text-sm text-gray-900 shadow-inner ring-1 ring-gray-200/80 placeholder:text-gray-500 transition-all focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-purple-300 lg:text-base"
-
-  const renderSearchResults = (onResultClick?: () => void) => {
-    if (!showSearchResults || !searchTerm.trim()) return null
-
-    return (
-      <div
-        className={`absolute top-[calc(100%+0.5rem)] left-0 right-0 z-50 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-purple-900/10 max-h-96`}
-      >
-        {isSearching ? (
-          <div className="flex items-center justify-center gap-2 p-4 text-gray-500">
-            <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
-            {tc("searching")}
-          </div>
-        ) : searchResults.length > 0 ? (
-          <div className="divide-y divide-gray-50 py-1">
-            {searchResults.map((product) => (
-              <Link
-                key={product.id}
-                href={`/product/${product.id}`}
-                className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-purple-50"
-                onClick={() => {
-                  setShowSearchResults(false)
-                  onResultClick?.()
-                }}
-              >
-                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-gray-100 ring-1 ring-gray-100">
-                  <Image
-                    src={getSearchResultImage(product.media, product.imageUrl, product.name)}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="truncate text-sm font-medium text-gray-900">{product.name}</h4>
-                  <p className="text-sm font-semibold text-purple-700">{formatPrice(product.price)}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="p-4 text-center text-sm text-gray-500">{tc("noProductsFound")}</div>
-        )}
-      </div>
-    )
-  }
+  const storeHref =
+    currentUser?.role === "seller"
+      ? currentUser.businessType === "restaurant" && currentUser.restaurantId
+        ? `/restaurantes/${currentUser.restaurantId}`
+        : `/seller/${currentUser.firebaseUser.uid}`
+      : null
 
   return (
     <header className="sticky top-0 z-50 hidden lg:block">
-      {/* Barra principal — solo desktop */}
-      <div className="border-b border-gray-100/80 bg-white/95 shadow-sm backdrop-blur-md">
-        <div className="container mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Logo */}
+      {/* Barra principal */}
+      <div className="border-b border-servido-950/[0.06] bg-white/85 backdrop-blur-xl">
+        <div className="container mx-auto flex h-[4.25rem] max-w-screen-xl items-center gap-5 px-6 xl:px-8">
+          {/* Marca */}
+          <Link href="/" className="group flex shrink-0 items-center gap-2.5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white p-1 shadow-md ring-1 ring-servido-950/10">
+              <Image
+                src="/images/logo-128.png"
+                alt="Servido"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+              />
+            </span>
+            <span className="servido-wordmark text-2xl font-bold tracking-tight">
+              Servido
+            </span>
+          </Link>
+
+          {/* Navegación central — llena el espacio */}
+          <nav className="flex min-w-0 flex-1 items-center justify-center gap-0.5 xl:gap-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-servido-950 transition-colors hover:bg-servido-50"
+                >
+                  <LayoutGrid className="h-3.5 w-3.5 text-servido-800" />
+                  {t("categories")}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="max-h-[min(70vh,28rem)] w-64 overflow-y-auto rounded-2xl border border-servido-950/5 p-2 shadow-[0_20px_50px_-24px_rgba(46,16,101,0.45)]"
+              >
+                {loadingCategories ? (
+                  <DropdownMenuItem disabled>{tc("loadingCategories")}</DropdownMenuItem>
+                ) : categories.length === 0 ? (
+                  <DropdownMenuItem disabled>{tc("noCategories")}</DropdownMenuItem>
+                ) : (
+                  categories.map((category) => (
+                    <DropdownMenuItem key={category.id} asChild className="rounded-xl px-3 py-2">
+                      <Link href={`/category/${category.id}`}>{category.name}</Link>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <span className="mx-1 hidden h-4 w-px bg-servido-950/10 xl:block" aria-hidden />
+
+            {primaryLinks.map(({ href, icon: Icon, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "group relative inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors",
+                  isActive(href)
+                    ? "bg-servido-50 text-servido-950"
+                    : "text-servido-900/65 hover:bg-servido-50/80 hover:text-servido-950"
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "h-3.5 w-3.5 transition-colors",
+                    isActive(href) ? "text-servido-800" : "text-servido-900/40 group-hover:text-servido-800"
+                  )}
+                />
+                <span className="hidden xl:inline">{label}</span>
+                {isActive(href) && (
+                  <span className="absolute inset-x-3 -bottom-[0.85rem] hidden h-0.5 rounded-full bg-servido-gold xl:block" />
+                )}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Acciones */}
+          <div className="flex shrink-0 items-center gap-1">
+            <LocaleFlagToggle compact className="mr-0.5" />
+
+            <NotificationBell
+              className={cn(
+                iconBtn,
+                pathname?.startsWith("/notifications") && "bg-servido-50 text-servido-950"
+              )}
+            />
+
             <Link
-              href="/"
-              className="group flex shrink-0 items-center gap-3 transition-opacity hover:opacity-90"
+              href="/mensajes"
+              className={cn(
+                iconBtn,
+                (pathname?.startsWith("/mensajes") || pathname?.startsWith("/chat")) &&
+                  "bg-servido-50 text-servido-950"
+              )}
+              aria-label={t("chat")}
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white p-1 shadow-md ring-2 ring-servido-100">
-                <Image src="/images/logo-128.png" alt="Servido" width={32} height={32} className="h-8 w-8 object-contain" />
-              </span>
-              <span className="text-xl font-bold tracking-tight text-servido-900 transition-colors group-hover:text-servido-800">
-                Servido
-              </span>
+              <MessageCircle className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </Link>
 
-            <UserGreeting variant="desktop" />
+            <CartDrawer />
 
-            {/* Centro desktop: categorías + búsqueda */}
-            <div className="hidden min-w-0 flex-1 items-center gap-3 lg:flex">
+            <span className="mx-1.5 h-5 w-px bg-servido-950/10" aria-hidden />
+
+            {currentUser ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-11 shrink-0 gap-2 rounded-full border-purple-200 bg-purple-50 px-4 font-semibold text-purple-800 shadow-sm hover:border-purple-300 hover:bg-purple-100 hover:text-purple-900"
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-servido-50"
                   >
-                    <Menu className="h-4 w-4" />
-                    {t("categories")}
-                    <ChevronDown className="h-4 w-4 opacity-60" />
-                  </Button>
+                    <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
+                      <AvatarImage
+                        src={currentUser.firebaseUser.photoURL || undefined}
+                        alt={currentUser.firebaseUser.displayName || tc("user")}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-servido-800 text-xs font-semibold text-white">
+                        {currentUser.firebaseUser.displayName?.charAt(0).toUpperCase() ||
+                          currentUser.firebaseUser.email?.charAt(0).toUpperCase() ||
+                          "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden max-w-[7.5rem] truncate text-sm font-semibold text-servido-950 2xl:inline">
+                      {currentUser.firebaseUser.displayName?.split(/\s+/)[0] ||
+                        currentUser.firebaseUser.email?.split("@")[0]}
+                    </span>
+                    <ChevronDown className="hidden h-3.5 w-3.5 text-servido-900/40 2xl:block" />
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56 rounded-2xl border-0 p-2 shadow-xl">
-                  {loadingCategories ? (
-                    <DropdownMenuItem disabled>{tc("loadingCategories")}</DropdownMenuItem>
-                  ) : categories.length === 0 ? (
-                    <DropdownMenuItem disabled>{tc("noCategories")}</DropdownMenuItem>
-                  ) : (
-                    categories.map((category) => (
-                      <DropdownMenuItem key={category.id} asChild className="rounded-xl">
-                        <Link href={`/category/${category.id}`}>{category.name}</Link>
-                      </DropdownMenuItem>
-                    ))
+                <DropdownMenuContent
+                  align="end"
+                  className="w-52 rounded-2xl border border-servido-950/5 p-1.5 shadow-xl"
+                >
+                  <DropdownMenuItem asChild className="rounded-xl">
+                    <Link href={getDashboardLink()} className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      {t("myPanel")}
+                    </Link>
+                  </DropdownMenuItem>
+                  {storeHref && (
+                    <DropdownMenuItem asChild className="rounded-xl">
+                      <Link href={storeHref} className="flex items-center gap-2">
+                        <Store className="h-4 w-4" />
+                        {t("myStore")}
+                      </Link>
+                    </DropdownMenuItem>
                   )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="rounded-xl text-red-600 focus:bg-red-50 focus:text-red-700"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {t("logout")}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              <div className="search-container relative min-w-0 flex-1 max-w-2xl">
-                <form onSubmit={handleSearchSubmit} className="relative">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder={t("searchPlaceholder")}
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    className={searchInputClass}
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-purple-700 text-white transition-colors hover:bg-purple-800"
-                  >
-                    <Search className="h-4 w-4" />
-                  </button>
-                </form>
-                {renderSearchResults()}
-              </div>
-            </div>
-
-            {/* Acciones */}
-            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-              <LocaleFlagToggle />
-              {currentUser ? (
-                <div className="hidden items-center gap-2 lg:flex">
-                  <Avatar className="h-9 w-9 border-2 border-purple-100 ring-2 ring-purple-50">
-                    <AvatarImage
-                      src={currentUser.firebaseUser.photoURL || undefined}
-                      alt={currentUser.firebaseUser.displayName || tc("user")}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="bg-purple-700 text-sm font-medium text-white">
-                      {currentUser.firebaseUser.displayName?.charAt(0).toUpperCase() ||
-                        currentUser.firebaseUser.email?.charAt(0).toUpperCase() ||
-                        "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="hidden max-w-[10rem] xl:block">
-                    <p className="truncate text-sm font-semibold text-gray-900">
-                      {currentUser.firebaseUser.displayName || currentUser.firebaseUser.email}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Link href={getDashboardLink()} className="hover:text-purple-700">
-                        {t("myPanel")}
-                      </Link>
-                      {currentUser.role === "seller" && (
-                        <Link
-                          href={
-                            currentUser.businessType === "restaurant" && currentUser.restaurantId
-                              ? `/restaurantes/${currentUser.restaurantId}`
-                              : `/seller/${currentUser.firebaseUser.uid}`
-                          }
-                          className="hover:text-purple-700"
-                        >
-                          {t("myStore")}
-                        </Link>
-                      )}
-                      <button onClick={handleLogout} className="hover:text-purple-700">
-                        {t("logout")}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="hidden items-center gap-2 lg:flex">
-                  <Link
-                    href="/login"
-                    className="rounded-full px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-purple-800"
-                  >
-                    {t("login")}
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className="rounded-full bg-purple-700 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-purple-200 transition-all hover:bg-purple-800 hover:shadow-lg"
-                  >
-                    {t("signup")}
-                  </Link>
-                </div>
-              )}
-
-              <div className="hidden items-center gap-2 lg:flex">
-                <NotificationBell
-                  showLabel
-                  className={`h-10 px-3 ${
-                    pathname?.startsWith("/notifications")
-                      ? "bg-servido-800 text-white"
-                      : "bg-servido-50 text-servido-900 ring-1 ring-servido-100 hover:bg-servido-100"
-                  }`}
-                />
+            ) : (
+              <div className="flex items-center gap-1.5">
                 <Link
-                  href="/mensajes"
-                  className={`relative flex h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold transition ${
-                    pathname?.startsWith("/mensajes") || pathname?.startsWith("/chat")
-                      ? "bg-servido-800 text-white"
-                      : "bg-servido-50 text-servido-900 ring-1 ring-servido-100 hover:bg-servido-100"
-                  }`}
+                  href="/login"
+                  className="rounded-full px-3 py-1.5 text-sm font-medium text-servido-900/70 transition-colors hover:bg-servido-50 hover:text-servido-950"
                 >
-                  <MessageCircle className="h-4 w-4" />
-                  {t("chat")}
-                  {unreadCount > 0 && (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
+                  {t("login")}
                 </Link>
-                <CartDrawer />
+                <Link
+                  href="/signup"
+                  className="rounded-full bg-servido-950 px-3.5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-servido-800"
+                >
+                  {t("signup")}
+                </Link>
               </div>
-            </div>
+            )}
+
+            <Link
+              href={getVenderLink()}
+              className="ml-1 hidden rounded-full bg-servido-gold px-4 py-2 text-sm font-semibold text-servido-950 shadow-[0_8px_20px_-10px_rgba(255,212,0,0.8)] transition-all hover:bg-[#ffe566] hover:shadow-[0_10px_24px_-10px_rgba(255,212,0,0.95)] xl:inline-flex"
+            >
+              {tb("sell")}
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Sub navegación */}
-      <div className="relative hidden overflow-hidden lg:block">
-        <div className="absolute inset-0 bg-gradient-to-r from-servido-950 via-servido-900 to-servido-950" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_120%_at_0%_50%,rgba(76,29,149,0.28),transparent_55%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_100%_at_100%_50%,rgba(59,7,100,0.18),transparent_50%)]" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      {/* Franja de contexto: ubicación + links secundarios */}
+      <div className="relative overflow-hidden bg-servido-950">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_140%_at_0%_50%,rgba(255,212,0,0.12),transparent_50%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_120%_at_100%_0%,rgba(167,139,250,0.18),transparent_45%)]" />
 
-        <div className="container relative mx-auto flex items-center justify-between gap-6 px-4 py-2.5">
-          <TooltipProvider>
+        <div className="container relative mx-auto flex h-11 max-w-screen-xl items-center justify-between gap-6 px-6 xl:px-8">
+          <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   onClick={openLocationPicker}
-                  className="group flex max-w-lg items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-left shadow-lg shadow-purple-950/25 backdrop-blur-md transition-all duration-300 hover:border-white/25 hover:bg-white/15 hover:shadow-purple-900/30"
+                  className="group flex min-w-0 max-w-md items-center gap-2 text-left transition-opacity hover:opacity-90"
                 >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/10 transition-colors group-hover:bg-white/20">
-                    <MapPin className="h-4 w-4 text-purple-100" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-purple-200/90">
-                      {tc("sendTo")}
-                    </span>
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-servido-gold" />
+                  <span className="truncate text-[13px] text-white/90">
+                    <span className="font-medium text-white/55">{tc("sendTo")} </span>
                     {loadingLocation ? (
-                      <span className="flex items-center gap-2 text-sm font-medium text-white">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span className="inline-flex items-center gap-1.5 font-medium text-white">
+                        <Loader2 className="h-3 w-3 animate-spin" />
                         {tc("detecting")}
                       </span>
                     ) : (
-                      <span className="block truncate text-sm font-semibold text-white">
+                      <span className="font-semibold text-white">
                         {shortLocation || userLocation || tc("chooseLocation")}
                       </span>
                     )}
-                  </div>
-                  <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-purple-100 ring-1 ring-white/10">
-                    {tc("change")}
                   </span>
+                  <ChevronDown className="h-3 w-3 shrink-0 text-white/40 transition-transform group-hover:translate-y-px" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-xs rounded-xl border-0 shadow-xl">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-purple-600" />
-                    <span className="font-medium">{tc("yourLocation")}</span>
-                  </div>
-                  <p className="text-sm">{userLocation || tc("noLocationYet")}</p>
-                  <p className="text-xs text-gray-500">{tc("locationHint")}</p>
+                <div className="space-y-1.5">
+                  <p className="text-sm font-medium">{tc("yourLocation")}</p>
+                  <p className="text-sm text-slate-600">{userLocation || tc("noLocationYet")}</p>
+                  <p className="text-xs text-slate-400">{tc("locationHint")}</p>
                 </div>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
-          <nav className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-sm">
-            {[
-              { href: "/siguiendo", icon: UserPlus, label: t("navFollow") },
-              { href: "/mensajes", icon: MessageCircle, label: t("chat") },
-              { href: "/restaurantes", icon: UtensilsCrossed, label: t("navRestaurants") },
-              { href: "/autos", icon: Car, label: t("navAutos") },
-              { href: "/propiedades", icon: Building2, label: t("navPropiedades") },
-              { href: "/services", icon: Package, label: t("navServices") },
-              { href: "/favorites", icon: Heart, label: t("navFavorites") },
-            ].map(({ href, icon: Icon, label }) => {
-              const isActive =
-                href === "/mensajes"
-                  ? pathname?.startsWith("/mensajes") || pathname?.startsWith("/chat")
-                  : pathname === href || pathname?.startsWith(`${href}/`)
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`group flex items-center gap-2.5 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300 ${
-                    isActive
-                      ? "bg-white text-purple-900 shadow-md shadow-purple-950/20"
-                      : "text-purple-100 hover:bg-white/12 hover:text-white"
-                  }`}
-                >
-                  <span
-                    className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-purple-100 text-purple-700"
-                        : "bg-white/10 text-purple-100 group-hover:bg-white/15 group-hover:text-white"
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                  </span>
-                  {label}
-                </Link>
-              )
-            })}
+          <nav className="flex items-center gap-5">
+            {secondaryLinks.map(({ href, icon: Icon, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "inline-flex items-center gap-1.5 text-[13px] font-medium transition-colors",
+                  isActive(href) ? "text-servido-gold" : "text-white/70 hover:text-white"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </Link>
+            ))}
           </nav>
         </div>
       </div>
-
     </header>
   )
 }

@@ -25,6 +25,8 @@ import {
   type ClaimAdminNote,
 } from "@/lib/claims"
 import { CLAIM_STATUSES, isClaimOpen, type ClaimDoc, type ClaimEvent, type ClaimMessage } from "@/types/claims"
+import type { SellerClaimHistory } from "@/types/claim-moderation"
+import { CLAIM_SANCTION_TYPES, type ClaimSanctionType } from "@/types/claim-moderation"
 
 type RefundErrorCode =
   | "missing_payment"
@@ -99,6 +101,29 @@ export function AdminClaimsQueue({
   const [refundMode, setRefundMode] = useState<"total" | "partial">("total")
   const [refundAmount, setRefundAmount] = useState("")
   const [refundError, setRefundError] = useState<string | null>(null)
+  const [sellerHistory, setSellerHistory] = useState<SellerClaimHistory | null>(null)
+  const [sellerHistoryLoading, setSellerHistoryLoading] = useState(false)
+  const [sanctionType, setSanctionType] = useState<ClaimSanctionType>("warning")
+  const [sanctionNote, setSanctionNote] = useState("")
+  const [listingLimit, setListingLimit] = useState("0")
+
+  const loadSellerHistory = async (sellerId: string) => {
+    const user = auth.currentUser
+    if (!user || !sellerId) return
+    setSellerHistoryLoading(true)
+    try {
+      const token = await user.getIdToken()
+      const res = await fetch(`/api/admin/claims/seller-history?sellerId=${encodeURIComponent(sellerId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      setSellerHistory(res.ok ? (data as SellerClaimHistory) : null)
+    } catch {
+      setSellerHistory(null)
+    } finally {
+      setSellerHistoryLoading(false)
+    }
+  }
 
   const loadRefundPreview = async (claimId: string, claim?: ClaimDoc | null) => {
     const user = auth.currentUser
@@ -172,6 +197,14 @@ export function AdminClaimsQueue({
     const claim = selected?.id === selectedId ? selected : claims.find((item) => item.id === selectedId) || null
     void loadRefundPreview(selectedId, claim)
   }, [selectedId, selected?.status])
+
+  useEffect(() => {
+    if (!selected?.sellerId) {
+      setSellerHistory(null)
+      return
+    }
+    void loadSellerHistory(selected.sellerId)
+  }, [selected?.sellerId, selectedId])
 
   const formatWhen = (value: unknown) => {
     const time = claimTime(value)
@@ -342,6 +375,145 @@ export function AdminClaimsQueue({
                   {selected.proposalAmount != null ? ` · ${formatPriceNumber(selected.proposalAmount)}` : ""}
                   {selected.proposalStatus ? ` · ${tClaims(`proposal.status.${selected.proposalStatus}`)}` : ""}
                 </p>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+              <h3 className="text-sm font-semibold text-slate-900">{t("sellerHistory.title")}</h3>
+              {sellerHistoryLoading ? (
+                <div className="mt-3 flex items-center gap-2 text-sm text-slate-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("sellerHistory.loading")}
+                </div>
+              ) : sellerHistory ? (
+                <div className="mt-3 space-y-4">
+                  <div className="grid gap-2 text-xs sm:grid-cols-3 lg:grid-cols-4">
+                    {[
+                      ["total", sellerHistory.stats.total],
+                      ["open", sellerHistory.stats.open],
+                      ["closed", sellerHistory.stats.closedAgreement],
+                      ["rejected", sellerHistory.stats.rejected],
+                      ["refunds", sellerHistory.stats.refundsApproved],
+                      ["noResponse", sellerHistory.stats.slaEscalated],
+                      ["warnings", sellerHistory.stats.warnings],
+                      ["suspensions", sellerHistory.stats.suspensions],
+                    ].map(([key, value]) => (
+                      <div key={key} className="rounded-lg bg-white px-3 py-2">
+                        <p className="text-slate-400">{t(`sellerHistory.${key}` as "sellerHistory.total")}</p>
+                        <p className="text-lg font-semibold text-slate-900">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-2">
+                    <p>
+                      {t("sellerHistory.salesBlocked")}:{" "}
+                      {sellerHistory.moderation.sellerSalesBlocked ? t("sellerHistory.yes") : t("sellerHistory.no")}
+                    </p>
+                    <p>
+                      {t("sellerHistory.manualReview")}:{" "}
+                      {sellerHistory.moderation.claimManualReview ? t("sellerHistory.yes") : t("sellerHistory.no")}
+                    </p>
+                    <p>
+                      {t("sellerHistory.activeAccount")}:{" "}
+                      {sellerHistory.moderation.isActive ? t("sellerHistory.yes") : t("sellerHistory.no")}
+                    </p>
+                    <p>
+                      {t("sellerHistory.uploadLimit")}:{" "}
+                      {sellerHistory.moderation.productUploadLimit == null
+                        ? "—"
+                        : sellerHistory.moderation.productUploadLimit}
+                    </p>
+                  </div>
+                  {sellerHistory.recentClaims.length > 0 ? (
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {t("sellerHistory.recentClaims")}
+                      </p>
+                      <ul className="space-y-1 text-xs text-slate-600">
+                        {sellerHistory.recentClaims.map((claim) => (
+                          <li key={claim.id}>
+                            {claim.productName} · {tClaims(`status.${claim.status}` as never)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {sellerHistory.sanctions.length > 0 ? (
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {t("sellerHistory.sanctionsLog")}
+                      </p>
+                      <ul className="space-y-1 text-xs text-slate-600">
+                        {sellerHistory.sanctions.slice(0, 5).map((sanction) => (
+                          <li key={sanction.id}>
+                            {t(`sellerHistory.types.${sanction.type}` as "sellerHistory.types.warning")}
+                            {sanction.note ? ` · ${sanction.note}` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-3">
+                    <p className="text-xs font-semibold text-amber-900">{t("sellerHistory.applySanction")}</p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                      <Select value={sanctionType} onValueChange={(value) => setSanctionType(value as ClaimSanctionType)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CLAIM_SANCTION_TYPES.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {t(`sellerHistory.types.${type}` as "sellerHistory.types.warning")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        disabled={busy}
+                        onClick={() =>
+                          void run(async () => {
+                            const user = auth.currentUser
+                            if (!user || !selected) return
+                            const token = await user.getIdToken()
+                            const res = await fetch("/api/admin/claims/sanction", {
+                              method: "POST",
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                sellerId: selected.sellerId,
+                                claimId: selected.id,
+                                type: sanctionType,
+                                note: sanctionNote,
+                                productUploadLimit:
+                                  sanctionType === "limit_listings" ? Number(listingLimit) : undefined,
+                              }),
+                            })
+                            if (!res.ok) return
+                            setSanctionNote("")
+                            await loadSellerHistory(selected.sellerId)
+                          })
+                        }
+                      >
+                        {t("sellerHistory.apply")}
+                      </Button>
+                    </div>
+                    {sanctionType === "limit_listings" ? (
+                      <div className="mt-2 space-y-1">
+                        <Label>{t("sellerHistory.listingLimit")}</Label>
+                        <Input value={listingLimit} onChange={(e) => setListingLimit(e.target.value)} inputMode="numeric" />
+                      </div>
+                    ) : null}
+                    <Textarea
+                      className="mt-2"
+                      rows={2}
+                      value={sanctionNote}
+                      onChange={(e) => setSanctionNote(e.target.value)}
+                      placeholder={t("sellerHistory.sanctionNote")}
+                    />
+                  </div>
+                </div>
               ) : null}
             </div>
 

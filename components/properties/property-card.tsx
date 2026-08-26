@@ -28,8 +28,8 @@ export function PropertyCard({ listing, selected = false, onHover }: PropertyCar
   return (
     <article
       className={cn(
-        "overflow-hidden rounded-xl border bg-white shadow-sm transition hover:shadow-md",
-        selected ? "border-servido-600 ring-1 ring-servido-600" : "border-slate-200"
+        "group overflow-hidden rounded-2xl bg-white shadow-[0_12px_32px_-20px_rgba(46,16,101,0.25)] ring-1 transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-18px_rgba(46,16,101,0.32)]",
+        selected ? "ring-servido-700" : "ring-servido-950/5"
       )}
       onMouseEnter={onHover}
     >
@@ -37,20 +37,24 @@ export function PropertyCard({ listing, selected = false, onHover }: PropertyCar
         href={`/propiedades/${listing.id}`}
         className="flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-servido-600 sm:flex-row"
       >
-        <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-slate-200 sm:aspect-auto sm:w-[42%] sm:min-h-[188px] lg:w-[280px]">
-          <SimpleImage src={thumb} alt={listing.title} className="h-full w-full object-cover" />
+        <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-slate-200 sm:aspect-auto sm:w-[42%] sm:min-h-[188px] lg:w-[260px]">
+          <SimpleImage
+            src={thumb}
+            alt={listing.title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
           {hasVideo && (
             <span className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-servido-800 shadow">
               <Play className="h-3.5 w-3.5 fill-current" />
             </span>
           )}
-          <span className="absolute left-2 top-2 rounded bg-servido-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+          <span className="absolute left-2 top-2 rounded-full bg-servido-950 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
             {t(`operation.${listing.operation}`)}
           </span>
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col px-3.5 py-3 sm:px-4 sm:py-3.5">
-          <p className="text-lg font-bold leading-tight text-slate-900 sm:text-xl">
+          <p className="text-lg font-bold leading-tight tracking-tight text-servido-950 sm:text-xl">
             {formatPropertyPrice(listing.price, listing.priceCurrency, locale)}
             <span className="ml-1.5 text-xs font-semibold text-slate-500">{listing.priceCurrency}</span>
           </p>

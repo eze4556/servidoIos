@@ -238,6 +238,42 @@
         "invalid_amount": "Revise o valor parcial.",
         "mp_refund_rejected": "O Mercado Pago recusou o reembolso.",
         "generic": "Não foi possível executar o reembolso. Tente de novo."
+      },
+      "sellerHistory": {
+        "title": "Histórico do vendedor",
+        "loading": "Carregando histórico…",
+        "total": "Reclamações totais",
+        "open": "Abertas",
+        "closed": "Fechadas por acordo",
+        "rejected": "Recusadas",
+        "refunds": "Reembolsos creditados",
+        "noResponse": "Sem resposta no prazo",
+        "warnings": "Advertências",
+        "suspensions": "Suspensões",
+        "flags": "Estado atual",
+        "salesBlocked": "Vendas bloqueadas",
+        "manualReview": "Revisão manual",
+        "uploadLimit": "Limite de publicações",
+        "activeAccount": "Conta ativa",
+        "yes": "Sim",
+        "no": "Não",
+        "recentClaims": "Reclamações recentes",
+        "sanctionsLog": "Sanções aplicadas",
+        "applySanction": "Aplicar medida",
+        "sanctionType": "Medida",
+        "sanctionNote": "Motivo interno",
+        "listingLimit": "Limite de publicações",
+        "apply": "Registrar medida",
+        "types": {
+          "warning": "Advertência",
+          "limit_listings": "Limitar publicações",
+          "block_sales": "Bloquear vendas",
+          "suspend": "Suspender conta",
+          "manual_review": "Marcar revisão manual",
+          "clear_sales_block": "Remover bloqueio de vendas",
+          "lift_manual_review": "Remover revisão manual",
+          "restore_active": "Reativar conta"
+        }
       }
     },
     "platformStats": {

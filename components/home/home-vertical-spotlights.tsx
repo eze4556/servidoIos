@@ -76,20 +76,21 @@ function VerticalSpotlightCard({
   return (
     <article
       className={cn(
-        "relative isolate overflow-hidden rounded-3xl shadow-lg ring-1 ring-white/10",
+        "group relative isolate overflow-hidden rounded-[1.75rem] shadow-[0_24px_50px_-28px_rgba(46,16,101,0.55)] ring-1 ring-white/10 transition-transform duration-500 hover:-translate-y-1 lg:min-h-[280px]",
         theme.surface
       )}
     >
       <div className={cn("pointer-events-none absolute inset-0", theme.glow)} />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
       <Icon
         aria-hidden
         className={cn(
-          "pointer-events-none absolute -bottom-6 -right-4 h-36 w-36 rotate-[-12deg] sm:h-44 sm:w-44",
+          "pointer-events-none absolute -bottom-6 -right-4 h-36 w-36 rotate-[-12deg] transition-transform duration-700 group-hover:scale-110 sm:h-44 sm:w-44",
           theme.watermark
         )}
       />
 
-      <div className="relative flex min-h-[220px] flex-col p-5 sm:min-h-[240px] sm:p-6">
+      <div className="relative flex min-h-[220px] flex-col p-5 sm:min-h-[240px] sm:p-6 lg:min-h-[280px] lg:p-7">
         <div className="mb-3 flex items-center gap-2">
           <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", theme.iconWrap)}>
             <Icon className={cn("h-4 w-4", theme.icon)} />
@@ -99,7 +100,7 @@ function VerticalSpotlightCard({
           </span>
         </div>
 
-        <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">{title}</h2>
+        <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl lg:text-[1.7rem]">{title}</h2>
 
         {chips.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -120,8 +121,10 @@ function VerticalSpotlightCard({
           <Link
             href={exploreHref}
             className={cn(
-              "inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-bold transition min-[420px]:flex-none",
-              theme.primary
+              "inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-sm font-bold transition min-[420px]:flex-none",
+              variant === "vehicles"
+                ? "bg-servido-gold text-servido-950 hover:bg-[#ffe566]"
+                : "bg-white text-servido-900 hover:bg-purple-50"
             )}
           >
             {exploreLabel}
@@ -130,7 +133,7 @@ function VerticalSpotlightCard({
           <Link
             href={publishHref}
             className={cn(
-              "inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-semibold transition",
+              "inline-flex items-center justify-center rounded-full border px-4 py-2.5 text-sm font-semibold transition",
               theme.secondary
             )}
           >
@@ -186,7 +189,7 @@ export function HomePropertiesSpotlight() {
 
 export function HomeVerticalSpotlights() {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-2 lg:gap-6">
       <HomeVehiclesSpotlight />
       <HomePropertiesSpotlight />
     </div>

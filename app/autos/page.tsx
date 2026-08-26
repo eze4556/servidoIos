@@ -134,7 +134,7 @@ export default function AutosPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[260px_1fr] xl:grid-cols-[240px_minmax(0,1fr)_360px]">
+        <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)_300px]">
           <aside className="hidden lg:block">
             <div className="sticky top-20">{filtersPanel}</div>
           </aside>
@@ -168,7 +168,7 @@ export default function AutosPage() {
             )}
           </div>
 
-          <aside className="hidden xl:block">
+          <aside className="hidden lg:block">
             <div className="sticky top-20">
               <VehicleResultsMap listings={filtered} selectedId={selectedId} />
             </div>

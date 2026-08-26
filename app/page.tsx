@@ -240,92 +240,102 @@ export default function HomePage() {
       <div className="hidden lg:block">
         <HomeSearchHero chips={searchChips} />
 
-        <div className="container mx-auto max-w-screen-xl px-4 pt-4 md:px-6">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-800">{th("stories")}</h2>
-            <a href="/historias" className="text-xs font-medium text-servido-800 hover:underline">
-              {th("seeAll")}
-            </a>
+        <div className="relative bg-gradient-to-b from-slate-50 via-white to-white">
+          <div className="container mx-auto max-w-screen-xl px-6 pt-10 xl:px-8">
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight text-servido-950">{th("stories")}</h2>
+                <p className="mt-0.5 text-sm text-slate-500">{th("storiesSubtitle")}</p>
+              </div>
+              <a
+                href="/historias"
+                className="rounded-full px-3 py-1.5 text-sm font-medium text-servido-800 transition-colors hover:bg-servido-50 hover:text-servido-950"
+              >
+                {th("seeAll")}
+              </a>
+            </div>
+            <div className="rounded-[1.75rem] bg-white/70 p-4 shadow-[0_18px_40px_-28px_rgba(46,16,101,0.35)] ring-1 ring-servido-950/5 backdrop-blur-sm">
+              <HomeStoriesSection />
+            </div>
           </div>
-          <HomeStoriesSection />
-        </div>
 
-        <div className="container mx-auto max-w-screen-xl px-4 pt-4 md:px-6">
-          <HomeBannerCarousel variant="desktop" />
-        </div>
+          <div className="container mx-auto max-w-screen-xl px-6 pt-8 xl:px-8">
+            <HomeBannerCarousel variant="desktop" />
+          </div>
 
-        <HomeSectionShell variant="default" className="home-section-delay-1">
-          <HomeVerticalSpotlights />
-        </HomeSectionShell>
+          <HomeSectionShell variant="default" className="home-section-delay-1">
+            <HomeVerticalSpotlights />
+          </HomeSectionShell>
 
-        <HomeSectionShell variant="default" className="home-section-delay-2">
-          <HomeSectionHeader
-            title={th("categories")}
-            subtitle={th("categoriesSubtitleLong")}
-            href="/products"
-            linkText={th("seeAll")}
-            icon={LayoutGrid}
-            accent="purple"
-          />
-          <HomeCategoriesShowcase categories={categories} loading={loadingData} />
-        </HomeSectionShell>
-
-        <HomeAnimatedPromo />
-
-        <HomeSectionShell variant="tinted" className="home-section-delay-2">
-          <HomeSectionHeader
-            title={th("featuredProducts")}
-            subtitle={th("featuredSubtitle")}
-            href="/products"
-            linkText={th("seeFeatured")}
-            icon={Star}
-            accent="amber"
-          />
-          <HomeProductCarousel
-            products={featuredProducts}
-            loading={loadingData}
-            badge="featured"
-            emptyMessage={th("noFeatured")}
-          />
-        </HomeSectionShell>
-
-        <HomeSectionShell variant="elevated" className="home-section-delay-3">
-          <HomeSectionHeader
-            title={th("newProducts")}
-            subtitle={th("newProductsSubtitle")}
-            href="/products"
-            linkText={th("seeCatalog")}
-            icon={Sparkles}
-            accent="emerald"
-          />
-          <HomeProductCarousel
-            products={newProducts}
-            loading={loadingData}
-            badge="new"
-            emptyMessage={th("noNew")}
-          />
-        </HomeSectionShell>
-
-        {recentlyViewedProducts.length > 0 && (
-          <HomeSectionShell variant="default">
+          <HomeSectionShell variant="default" className="home-section-delay-2">
             <HomeSectionHeader
-              title={th("recentlyViewed")}
-              subtitle={th("recentlyViewedSubtitle")}
+              title={th("categories")}
+              subtitle={th("categoriesSubtitleLong")}
+              href="/products"
+              linkText={th("seeAll")}
+              icon={LayoutGrid}
               accent="purple"
             />
-            <HomeProductCarousel products={recentlyViewedProducts} />
+            <HomeCategoriesShowcase categories={categories} loading={loadingData} />
           </HomeSectionShell>
-        )}
 
-        <HomeSectionShell variant="tinted">
-          <HomeSectionHeader
-            title={th("ourBrands")}
-            subtitle={th("brandsSubtitleLong")}
-            icon={Tag}
-            accent="purple"
-          />
-          <HomeBrandsShowcase brands={brands} loading={loadingData} />
-        </HomeSectionShell>
+          <HomeAnimatedPromo />
+
+          <HomeSectionShell variant="tinted" className="home-section-delay-2">
+            <HomeSectionHeader
+              title={th("featuredProducts")}
+              subtitle={th("featuredSubtitle")}
+              href="/products"
+              linkText={th("seeFeatured")}
+              icon={Star}
+              accent="amber"
+            />
+            <HomeProductCarousel
+              products={featuredProducts}
+              loading={loadingData}
+              badge="featured"
+              emptyMessage={th("noFeatured")}
+            />
+          </HomeSectionShell>
+
+          <HomeSectionShell variant="elevated" className="home-section-delay-3">
+            <HomeSectionHeader
+              title={th("newProducts")}
+              subtitle={th("newProductsSubtitle")}
+              href="/products"
+              linkText={th("seeCatalog")}
+              icon={Sparkles}
+              accent="emerald"
+            />
+            <HomeProductCarousel
+              products={newProducts}
+              loading={loadingData}
+              badge="new"
+              emptyMessage={th("noNew")}
+            />
+          </HomeSectionShell>
+
+          {recentlyViewedProducts.length > 0 && (
+            <HomeSectionShell variant="default">
+              <HomeSectionHeader
+                title={th("recentlyViewed")}
+                subtitle={th("recentlyViewedSubtitle")}
+                accent="purple"
+              />
+              <HomeProductCarousel products={recentlyViewedProducts} />
+            </HomeSectionShell>
+          )}
+
+          <HomeSectionShell variant="tinted">
+            <HomeSectionHeader
+              title={th("ourBrands")}
+              subtitle={th("brandsSubtitleLong")}
+              icon={Tag}
+              accent="purple"
+            />
+            <HomeBrandsShowcase brands={brands} loading={loadingData} />
+          </HomeSectionShell>
+        </div>
       </div>
 
       {activeAlert && !showAlert && (

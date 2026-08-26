@@ -34,13 +34,15 @@ export function VehicleSpecsTable({ listing }: VehicleSpecsTableProps) {
   })
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-servido-200/80 bg-white shadow-md ring-1 ring-servido-100">
+    <div className="overflow-hidden rounded-2xl bg-white shadow-[0_16px_40px_-28px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 lg:rounded-3xl">
       <table className="w-full text-sm">
         <tbody>
           {rows.map((row) => (
-            <tr key={row.label} className="border-b border-servido-100 last:border-0">
-              <th className="w-2/5 bg-servido-50 px-4 py-3 text-left font-semibold text-servido-800">{row.label}</th>
-              <td className="bg-white px-4 py-3 text-servido-900">{row.value}</td>
+            <tr key={row.label} className="border-b border-servido-950/[0.04] last:border-0">
+              <th className="w-2/5 bg-servido-50/60 px-4 py-3 text-left font-medium text-servido-800 lg:px-5 lg:py-3.5">
+                {row.label}
+              </th>
+              <td className="bg-white px-4 py-3 text-servido-950 lg:px-5 lg:py-3.5">{row.value}</td>
             </tr>
           ))}
         </tbody>

@@ -20,20 +20,20 @@ export function ProductDetailSection({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100",
+        "overflow-hidden rounded-2xl bg-white shadow-[0_16px_40px_-28px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 lg:rounded-3xl",
         className
       )}
     >
-      <div className="flex items-center gap-3 border-b border-purple-50 bg-gradient-to-r from-purple-50/80 to-violet-50/50 px-5 py-4 sm:px-6">
+      <div className="flex items-center gap-3 border-b border-servido-950/[0.04] px-5 py-4 sm:px-6">
         {Icon && (
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
+          <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-servido-50 text-servido-800">
             <Icon className="h-4 w-4" />
           </span>
         )}
-        <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
+        <h2 className="text-lg font-semibold tracking-tight text-servido-950 sm:text-xl">
           {title}
           {typeof count === "number" && (
-            <span className="ml-2 text-base font-semibold text-purple-600">({count})</span>
+            <span className="ml-2 text-base font-medium text-servido-800/70">({count})</span>
           )}
         </h2>
       </div>

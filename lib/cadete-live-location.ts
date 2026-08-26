@@ -1,12 +1,14 @@
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore"
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { hasValidCoordinates } from "@/lib/geo"
-import type { CadeteLiveLocation, FoodOrderStatus } from "@/types/restaurant"
+import type { CadeteLiveLocation, CadeteRoutePoint, FoodOrderStatus } from "@/types/restaurant"
 
 const ACTIVE_TRACKING_STATUSES: FoodOrderStatus[] = ["en_camino", "llegando", "afuera"]
 
 const MIN_INTERVAL_MS = 8000
 const MIN_MOVE_METERS = 35
+/** Tope de puntos en la traza (≈ 1–2 h de viaje con el throttle actual). */
+export const MAX_LIVE_ROUTE_POINTS = 220
 
 export function shouldTrackCadeteStatus(status?: FoodOrderStatus | null): boolean {
   return Boolean(status && ACTIVE_TRACKING_STATUSES.includes(status))
@@ -37,6 +39,24 @@ export function shouldPublishLiveLocation(
   return metersBetween(prev.lat, prev.lng, next.lat, next.lng) >= MIN_MOVE_METERS * 2
 }
 
+function appendRoutePoint(existing: unknown, point: CadeteRoutePoint): CadeteRoutePoint[] {
+  const prev = Array.isArray(existing)
+    ? existing.filter(
+        (item): item is CadeteRoutePoint =>
+          Boolean(
+            item &&
+              typeof item === "object" &&
+              hasValidCoordinates(Number((item as CadeteRoutePoint).lat), Number((item as CadeteRoutePoint).lng))
+          )
+      )
+    : []
+  const last = prev[prev.length - 1]
+  if (last && metersBetween(last.lat, last.lng, point.lat, point.lng) < 12) {
+    return [...prev.slice(0, -1), point].slice(-MAX_LIVE_ROUTE_POINTS)
+  }
+  return [...prev, point].slice(-MAX_LIVE_ROUTE_POINTS)
+}
+
 export async function publishCadeteLiveLocation(
   orderId: string,
   location: Omit<CadeteLiveLocation, "updatedAt">
@@ -49,8 +69,19 @@ export async function publishCadeteLiveLocation(
     speed: location.speed ?? null,
     updatedAt: new Date().toISOString(),
   }
-  await updateDoc(doc(db, "foodOrders", orderId), {
+
+  const orderRef = doc(db, "foodOrders", orderId)
+  const snap = await getDoc(orderRef)
+  const currentRoute = snap.exists() ? (snap.data() as { liveRoute?: unknown }).liveRoute : []
+  const nextRoute = appendRoutePoint(currentRoute, {
+    lat: payload.lat,
+    lng: payload.lng,
+    at: payload.updatedAt,
+  })
+
+  await updateDoc(orderRef, {
     liveLocation: payload,
+    liveRoute: nextRoute,
     updatedAt: serverTimestamp(),
   })
   return payload

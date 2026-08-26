@@ -32,19 +32,19 @@ export function PropertyCatalogHero({ totalCount, filters, onChange, onSearch }:
       <div className="pointer-events-none absolute -left-16 top-0 h-56 w-56 rounded-full bg-purple-400/25 blur-3xl" />
       <div className="pointer-events-none absolute -right-10 bottom-0 h-48 w-48 rounded-full bg-fuchsia-400/15 blur-3xl" />
 
-      <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 md:px-6">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/25">
-            <Building2 className="h-4 w-4 text-white" />
+      <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 md:px-6 lg:py-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 lg:h-11 lg:w-11">
+            <Building2 className="h-4 w-4 text-servido-gold lg:h-5 lg:w-5" />
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-purple-200">{t("zoneBadge")}</p>
-            <h1 className="truncate text-base font-bold tracking-tight sm:text-lg">{t("heroTitle")}</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">{t("zoneBadge")}</p>
+            <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl lg:text-3xl">{t("heroTitle")}</h1>
           </div>
         </div>
         <Link
           href="/dashboard/seller/properties"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-sm font-bold text-servido-800 shadow-sm transition hover:bg-purple-50"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-servido-gold px-3.5 py-2 text-sm font-bold text-servido-950 shadow-sm transition hover:bg-[#ffe566]"
         >
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">{t("publishCta")}</span>
@@ -52,10 +52,10 @@ export function PropertyCatalogHero({ totalCount, filters, onChange, onSearch }:
         </Link>
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 pb-5 md:px-6 md:pb-6">
-        <p className="mb-3 hidden text-sm text-purple-100/85 sm:block">{t("heroSubtitle")}</p>
+      <div className="relative mx-auto max-w-7xl px-4 pb-5 md:px-6 md:pb-7">
+        <p className="mb-4 hidden max-w-2xl text-sm text-white/70 sm:block lg:text-base">{t("heroSubtitle")}</p>
 
-        <div className="overflow-hidden rounded-2xl bg-white shadow-xl shadow-black/15">
+        <div className="overflow-hidden rounded-2xl bg-white shadow-[0_24px_50px_-24px_rgba(0,0,0,0.45)] lg:rounded-[1.5rem]">
           <div className="flex gap-1 overflow-x-auto border-b border-slate-100 px-2 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {OPERATIONS.map((op) => (
               <button
@@ -123,7 +123,7 @@ export function PropertyCatalogHero({ totalCount, filters, onChange, onSearch }:
 
             <button
               type="submit"
-              className="h-11 rounded-xl bg-servido-800 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-servido-900"
+              className="h-11 rounded-xl bg-servido-gold px-5 text-sm font-bold text-servido-950 shadow-sm transition hover:bg-[#ffe566]"
             >
               {t("searchCta")}
               {typeof totalCount === "number" ? ` · ${totalCount}` : ""}

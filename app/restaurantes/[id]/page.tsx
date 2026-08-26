@@ -121,7 +121,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
+        <Loader2 className="h-8 w-8 animate-spin text-servido-800" />
       </div>
     )
   }
@@ -144,15 +144,15 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-28">
       <div className="relative overflow-hidden">
-        <div className="relative h-44 w-full bg-gradient-to-br from-orange-500 to-red-600 sm:h-56">
+        <div className="relative h-48 w-full bg-gradient-to-br from-servido-800 to-servido-950 sm:h-56 lg:h-72">
           {coverUrl ? (
             <Image src={coverUrl} alt={restaurant.name} fill className="object-cover" unoptimized priority />
           ) : null}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-black/10" />
-          <div className="absolute left-4 top-4">
+          <div className="absolute inset-0 bg-gradient-to-t from-servido-950/70 via-servido-950/25 to-transparent" />
+          <div className="absolute left-4 top-4 lg:left-8 lg:top-6">
             <Link
               href="/restaurantes"
-              className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm text-white backdrop-blur-sm"
+              className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm text-white backdrop-blur-sm transition hover:bg-white/25"
             >
               <ArrowLeft className="h-4 w-4" />
               {t("backToList")}
@@ -160,34 +160,38 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
           </div>
         </div>
 
-        <div className="container relative mx-auto px-4">
-          <div className="-mt-10 flex items-end gap-4">
-            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-orange-400 to-red-500 ring-4 ring-white shadow-lg">
+        <div className="container relative mx-auto max-w-screen-xl px-4 xl:px-8">
+          <div className="-mt-12 flex items-end gap-4 lg:-mt-14 lg:gap-5">
+            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-servido-700 to-servido-950 ring-4 ring-white shadow-lg lg:h-28 lg:w-28">
               {logoUrl ? (
                 <Image src={logoUrl} alt={restaurant.name} fill className="object-cover" unoptimized />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <UtensilsCrossed className="h-10 w-10 text-white" />
+                  <UtensilsCrossed className="h-10 w-10 text-servido-gold" />
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1 pb-1">
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">{restaurant.name}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight text-servido-950 sm:text-3xl lg:text-4xl">
+                {restaurant.name}
+              </h1>
             </div>
           </div>
 
           <div className="mt-3 space-y-3 pb-2">
-            {restaurant.description && <p className="max-w-xl text-gray-600">{restaurant.description}</p>}
+            {restaurant.description && (
+              <p className="max-w-2xl text-slate-600">{restaurant.description}</p>
+            )}
             <div className="flex flex-wrap gap-2">
-              <Badge className="bg-orange-50 text-orange-800 hover:bg-orange-50">
+              <Badge className="rounded-full bg-servido-50 text-servido-800 hover:bg-servido-50">
                 <MapPin className="mr-1 h-3 w-3" />
                 {restaurant.zone || restaurant.address}
               </Badge>
-              <Badge className="bg-orange-50 text-orange-800 hover:bg-orange-50">
+              <Badge className="rounded-full bg-servido-50 text-servido-800 hover:bg-servido-50">
                 {getDeliveryModeLabel(t, restaurant.deliveryMode)}
               </Badge>
               {restaurant.deliveryMode !== "retiro_en_local" && (
-                <Badge className="bg-orange-50 text-orange-800 hover:bg-orange-50">
+                <Badge className="rounded-full bg-servido-50 text-servido-800 hover:bg-servido-50">
                   {t("shippingLabel")} {t("shippingByKm")}
                 </Badge>
               )}
@@ -205,9 +209,9 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      <div className="container mx-auto space-y-8 px-4 py-6">
+      <div className="container mx-auto max-w-screen-xl space-y-8 px-4 py-6 xl:px-8">
         {!canOrder && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950 lg:rounded-3xl">
             <p className="font-semibold">{t("closedTitle")}</p>
             <p className="mt-1 text-sm text-amber-800">{t("closedBody")}</p>
             <Button asChild variant="outline" className="mt-4 rounded-full">
@@ -218,14 +222,16 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
 
         {promotions.length > 0 && (
           <section>
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">{t("combos")}</h2>
-            <div className="space-y-3">
+            <h2 className="mb-4 text-lg font-semibold tracking-tight text-servido-950 lg:text-xl">
+              {t("combos")}
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:gap-4">
               {promotions.map((promo) => (
                 <div
                   key={promo.id}
                   role="button"
                   tabIndex={0}
-                  className="flex w-full cursor-pointer items-center gap-4 rounded-2xl bg-white p-3 text-left ring-1 ring-orange-100 transition hover:shadow-md"
+                  className="flex w-full cursor-pointer items-center gap-4 rounded-2xl bg-white p-3 text-left shadow-[0_12px_32px_-20px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-18px_rgba(46,16,101,0.35)] lg:rounded-3xl lg:p-4"
                   onClick={() => {
                     setSelectedItem(null)
                     setSelectedPromotion(promo)
@@ -238,7 +244,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                     }
                   }}
                 >
-                  <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-orange-400 to-red-500 text-xs font-bold text-white">
+                  <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-servido-700 to-servido-950 text-xs font-bold text-servido-gold lg:h-24 lg:w-24">
                     {promo.imageUrl ? (
                       <Image
                         src={promo.imageUrl}
@@ -252,8 +258,8 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900">{promo.name}</p>
-                    <p className="mt-0.5 line-clamp-2 text-sm text-gray-500">
+                    <p className="font-medium text-servido-950">{promo.name}</p>
+                    <p className="mt-0.5 line-clamp-2 text-sm text-slate-500">
                       {promo.includedItems.map((i) => `${i.quantity}x ${i.name}`).join(" · ")}
                     </p>
                     <p className="mt-1 font-semibold text-servido-800">
@@ -262,7 +268,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                   </div>
                   <Button
                     size="sm"
-                    className="shrink-0 rounded-full bg-servido-800"
+                    className="shrink-0 rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
                     disabled={!canOrder}
                     onClick={(e) => {
                       e.stopPropagation()
@@ -280,16 +286,16 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
         )}
 
         {menuItems.length === 0 && promotions.length === 0 ? (
-          <div className="rounded-2xl bg-white p-8 text-center text-gray-500 ring-1 ring-gray-100">
+          <div className="rounded-2xl bg-white p-8 text-center text-slate-500 ring-1 ring-servido-950/5 lg:rounded-3xl">
             {t("emptyMenu")}
           </div>
         ) : (
           groups.map((group) => (
             <section key={group.category?.id || "sin-categoria"}>
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              <h2 className="mb-4 text-lg font-semibold tracking-tight text-servido-950 lg:text-xl">
                 {group.category?.name || t("noCategory")}
               </h2>
-              <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:gap-4">
                 {group.items.map((item) => {
                   const image = getMenuItemPrimaryImage(item)
                   const hasOptions = menuItemHasOptions(item)
@@ -299,7 +305,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                       key={item.id}
                       role="button"
                       tabIndex={0}
-                      className="flex w-full cursor-pointer items-center gap-4 rounded-2xl bg-white p-3 text-left ring-1 ring-gray-100 transition hover:shadow-md"
+                      className="flex w-full cursor-pointer items-center gap-4 rounded-2xl bg-white p-3 text-left shadow-[0_12px_32px_-20px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-18px_rgba(46,16,101,0.35)] lg:rounded-3xl lg:p-4"
                       onClick={() => {
                         setSelectedPromotion(null)
                         setSelectedItem(item)
@@ -312,19 +318,19 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                         }
                       }}
                     >
-                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-slate-100 lg:h-24 lg:w-24">
                         {image ? (
                           <Image src={image} alt={item.name} fill className="object-cover" unoptimized />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-[10px] text-gray-400">
+                          <div className="flex h-full items-center justify-center text-[10px] text-slate-400">
                             {t("noPhoto")}
                           </div>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-900">{item.name}</p>
+                        <p className="font-medium text-servido-950">{item.name}</p>
                         {item.description && (
-                          <p className="mt-0.5 line-clamp-2 text-sm text-gray-500">{item.description}</p>
+                          <p className="mt-0.5 line-clamp-2 text-sm text-slate-500">{item.description}</p>
                         )}
                         <p className="mt-1 font-semibold text-servido-800">
                           {hasOptions && fromPrice !== item.price
@@ -334,7 +340,7 @@ export default function RestaurantDetailPage({ params }: { params: Promise<{ id:
                       </div>
                       <Button
                         size="sm"
-                        className="shrink-0 rounded-full bg-servido-800"
+                        className="shrink-0 rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
                         disabled={!canOrder}
                         onClick={(e) => {
                           e.stopPropagation()

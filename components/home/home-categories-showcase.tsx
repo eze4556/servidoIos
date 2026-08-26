@@ -44,8 +44,8 @@ export function HomeCategoriesShowcase({ categories, loading }: HomeCategoriesSh
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="-left-1 border-0 bg-white/95 shadow-md sm:-left-2 md:flex lg:-left-3" />
-          <CarouselNext className="-right-1 border-0 bg-white/95 shadow-md sm:-right-2 md:flex lg:-right-3" />
+      <CarouselPrevious className="-left-1 border-0 bg-white/95 text-servido-800 shadow-md ring-1 ring-servido-950/5 hover:bg-white sm:-left-2 md:flex lg:-left-3 lg:h-11 lg:w-11" />
+      <CarouselNext className="-right-1 border-0 bg-white/95 text-servido-800 shadow-md ring-1 ring-servido-950/5 hover:bg-white sm:-right-2 md:flex lg:-right-3 lg:h-11 lg:w-11" />
         </Carousel>
       </div>
 

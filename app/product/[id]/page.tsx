@@ -870,7 +870,7 @@ export default function ProductDetailPage() {
             variant="ghost"
             size="icon"
             onClick={() => router.back()}
-            className="h-10 w-10 shrink-0 rounded-full hover:bg-purple-50 hover:text-purple-800"
+            className="h-10 w-10 shrink-0 rounded-full hover:bg-servido-50 hover:text-servido-800"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -890,11 +890,11 @@ export default function ProductDetailPage() {
           />
 
           <div className="lg:sticky lg:top-36 lg:self-start">
-            <div className="space-y-5 rounded-2xl bg-white p-5 shadow-lg shadow-purple-900/5 ring-1 ring-gray-100 sm:p-6">
+            <div className="space-y-5 rounded-2xl bg-white p-5 shadow-[0_24px_50px_-28px_rgba(46,16,101,0.32)] ring-1 ring-servido-950/5 sm:p-6 lg:rounded-[1.75rem] lg:p-7">
               <div>
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   {brand && (
-                    <Badge className="rounded-full bg-purple-100 text-purple-800 hover:bg-purple-100">
+                    <Badge className="rounded-full bg-servido-50 text-servido-800 hover:bg-servido-50">
                       {brand.name}
                     </Badge>
                   )}
@@ -911,10 +911,10 @@ export default function ProductDetailPage() {
                     <Badge className="rounded-full bg-green-600 text-white">{tp("freeShipping")}</Badge>
                   )}
                   {product.allowResellerShare && !product.isService && (
-                    <Badge className="rounded-full bg-violet-600 text-white">{tReseller("badge")}</Badge>
+                    <Badge className="rounded-full bg-servido-800 text-white">{tReseller("badge")}</Badge>
                   )}
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{product.name}</h1>
+                <h1 className="text-2xl font-semibold tracking-tight text-servido-950 sm:text-3xl">{product.name}</h1>
                 <div className="mt-3 flex items-center gap-2">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
@@ -924,15 +924,15 @@ export default function ProductDetailPage() {
                       />
                     ))}
                   </div>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-slate-500">
                     {tp("reviewsCount", { rating: averageRating.toFixed(1), count: reviews.length })}
                   </span>
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-4">
+              <div className="border-t border-servido-950/[0.06] pt-4">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="text-3xl font-bold text-purple-700 sm:text-4xl">{formatPrice(finalPrice)}</span>
+                  <span className="text-3xl font-bold tracking-tight text-servido-800 sm:text-4xl">{formatPrice(finalPrice)}</span>
                   {appliedCoupon && finalPrice < product.price && (
                     <>
                       <span className="text-lg text-gray-400 line-through">{formatPrice(product.price)}</span>
@@ -998,7 +998,7 @@ export default function ProductDetailPage() {
                   onClick={handleAddToCart}
                   size="lg"
                   disabled={maxQuantity <= 0}
-                  className="h-12 w-full rounded-full bg-purple-700 text-base font-semibold shadow-lg shadow-purple-200 hover:bg-purple-800"
+                  className="h-12 w-full rounded-full bg-servido-gold text-base font-semibold text-servido-950 shadow-[0_12px_28px_-12px_rgba(255,212,0,0.85)] hover:bg-[#ffe566]"
                 >
                   <ShoppingCart className="mr-2 h-5 w-5" />
                   {maxQuantity <= 0 ? tp("outOfStock") : tp("addToCart")}
@@ -1006,22 +1006,22 @@ export default function ProductDetailPage() {
               </div>
 
               {seller && (
-                <div className="rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 p-4 ring-1 ring-purple-100">
+                <div className="rounded-2xl bg-servido-50/70 p-4 ring-1 ring-servido-950/5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm">
-                        <Store className="h-5 w-5 text-purple-700" />
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-servido-950/5">
+                        <Store className="h-5 w-5 text-servido-800" />
                       </div>
                       <div>
-                        <Link href={`/seller/${seller.id}`} className="font-semibold text-gray-900 hover:text-purple-800">
+                        <Link href={`/seller/${seller.id}`} className="font-semibold text-servido-950 hover:text-servido-800">
                           {seller.name}
                         </Link>
-                        <p className="text-xs text-gray-500">{tp("verifiedSeller")}</p>
+                        <p className="text-xs text-slate-500">{tp("verifiedSeller")}</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <Link href={`/seller/${seller.id}`}>
-                        <Button variant="outline" size="sm" className="rounded-full border-purple-200">
+                        <Button variant="outline" size="sm" className="rounded-full border-servido-200">
                           {tp("viewStore")}
                         </Button>
                       </Link>

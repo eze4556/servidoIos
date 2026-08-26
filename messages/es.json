@@ -752,6 +752,7 @@
     "brandsSubtitle": "Las mejores del mercado",
     "brandsSubtitleLong": "Trabajamos con las mejores del mercado",
     "stories": "Historias",
+    "storiesSubtitle": "Lo que está pasando ahora en Servido",
     "featuredProducts": "Productos Destacados",
     "featuredSubtitle": "Los más elegidos de la semana",
     "seeFeatured": "Ver destacados",
@@ -766,6 +767,7 @@
     "heroBadge": "Servido Marketplace",
     "heroTitle": "¿Qué estás buscando hoy?",
     "heroSubtitle": "Productos, servicios y ofertas de vendedores de confianza",
+    "quickLinks": "Accesos rápidos",
     "search": "Buscar",
     "promoSoon": "Próximamente en Servido",
     "securePurchase": "Compra segura",
@@ -899,6 +901,7 @@
     "clearFilters": "Limpiar filtros",
     "refreshHint": "Actualización cada 5 min",
     "bannerAlt": "Encontrá la tecnología ideal para vos",
+    "catalogHeroSubtitle": "Productos cerca tuyo, listos para comprar",
     "loadMore": "Cargar más productos",
     "brandLabel": "Marca"
   },
@@ -985,6 +988,7 @@
     "loading": "Cargando servicios...",
     "loadError": "Error al cargar los servicios. Intenta de nuevo más tarde.",
     "bannerAlt": "Todos los servicios en un solo lugar",
+    "catalogHeroSubtitle": "Profesionales cerca tuyo, listos para ayudarte",
     "searchPlaceholder": "Buscar servicios...",
     "categoryPlaceholder": "Categoría",
     "allCategories": "Todas las categorías",
@@ -1794,11 +1798,13 @@
     "trackingCadete": "Repartidor: {name}",
     "trackingUpdated": "Actualizado a las {time}",
     "trackingMapTitle": "Ubicación del cadete",
+    "trackingRoutePoints": "Recorrido: {count} puntos registrados",
     "trackingWebHint": "El mapa en vivo está en la app. En la web ves el estado y podés abrir Maps.",
     "trackingOpenMaps": "Ver en Maps"
   },
   "restaurants": {
     "bannerAlt": "Los mejores sabores, directo a tu mesa",
+    "catalogHeroSubtitle": "Pedí cerca tuyo, directo a tu mesa",
     "searchPlaceholder": "Buscar restaurante o comida",
     "allCategories": "Todas",
     "sortAria": "Ordenar restaurantes",
@@ -3122,7 +3128,7 @@
       "mp_connection_blocked": "Reembolso bloqueado: cuenta Mercado Pago del vendedor",
       "sla_warning": "Recordatorio: plazo de respuesta por vencer",
       "sla_escalated": "Plazo vencido: caso pasado a revisión de Servido",
-      "mp_connection_alert": "Alerta admin: conexión Mercado Pago del vendedor"
+      "seller_sanction": "Sanción aplicada al vendedor"
     },
     "proposal": {
       "title": "Propuesta de solución",

@@ -127,7 +127,7 @@ body {
 
   .home-product-card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 20px 40px -12px rgba(74, 0, 142, 0.18);
+    box-shadow: 0 28px 50px -20px rgba(46, 16, 101, 0.22);
   }
 
   .home-fade-in {
@@ -156,12 +156,12 @@ body {
 
   .home-carousel-fade::before {
     left: 0;
-    background: linear-gradient(to right, rgba(248, 250, 252, 0.95), transparent);
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.95), transparent);
   }
 
   .home-carousel-fade::after {
     right: 0;
-    background: linear-gradient(to left, rgba(248, 250, 252, 0.95), transparent);
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.95), transparent);
   }
 
   .product-card-fixed {
@@ -379,6 +379,61 @@ body {
   animation: hero-glow 6s ease-in-out infinite;
 }
 
+.home-hero-mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(255, 212, 0, 0.12), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 80% 20%, rgba(167, 139, 250, 0.22), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 90%, rgba(46, 16, 101, 0.55), transparent 60%);
+  animation: home-hero-mesh-drift 14s ease-in-out infinite alternate;
+}
+
+.home-hero-orb {
+  animation: home-hero-orb-float 10s ease-in-out infinite;
+}
+
+.home-hero-orb-b {
+  animation-delay: -4s;
+  animation-duration: 13s;
+}
+
+.home-hero-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  animation: home-hero-reveal 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.home-hero-delay-1 { animation-delay: 0.05s; }
+.home-hero-delay-2 { animation-delay: 0.18s; }
+.home-hero-delay-3 { animation-delay: 0.3s; }
+.home-hero-delay-4 { animation-delay: 0.42s; }
+.home-hero-delay-5 { animation-delay: 0.55s; }
+
+@keyframes home-hero-reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-hero-mesh-drift {
+  from {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.06) translate3d(-1.5%, 1%, 0);
+  }
+}
+
+@keyframes home-hero-orb-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(18px, -22px, 0);
+  }
+}
+
 .home-animated-gradient {
   background: linear-gradient(
     -45deg,
@@ -487,8 +542,39 @@ body {
   animation: vehicles-gentle-float 5s ease-in-out infinite;
 }
 
+/* Wordmark header: degradé continuo de tenue → violeta Servido */
+.servido-wordmark {
+  background-image: linear-gradient(
+    105deg,
+    #ddd6fe 0%,
+    #c4b5fd 22%,
+    #9204F8 48%,
+    #a855f7 72%,
+    #ddd6fe 100%
+  );
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: servido-wordmark-flow 3.6s ease-in-out infinite;
+}
+
+@keyframes servido-wordmark-flow {
+  0%,
+  100% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 0% 50%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-hero-glow,
+  .home-hero-mesh,
+  .home-hero-orb,
+  .home-hero-reveal,
   .home-animated-gradient,
   .home-particle,
   .home-shortcut-enter,
@@ -502,7 +588,13 @@ body {
   .vehicles-hero-enter-delay-1,
   .vehicles-hero-enter-delay-2,
   .vehicles-card-enter,
-  .vehicles-float {
+  .vehicles-float,
+  .servido-wordmark {
     animation: none;
+  }
+
+  .servido-wordmark {
+    background-image: linear-gradient(105deg, #c4b5fd, #9204F8);
+    background-size: 100% 100%;
   }
 }

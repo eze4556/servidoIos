@@ -130,6 +130,11 @@ export default function FoodOrdersPage() {
                   shouldTrackCadeteStatus(order.status) && (
                     <BuyerCadeteTracking
                       liveLocation={order.liveLocation}
+                      liveRoute={order.liveRoute}
+                      restaurantLat={order.restaurantLat}
+                      restaurantLng={order.restaurantLng}
+                      deliveryLat={order.deliveryLat}
+                      deliveryLng={order.deliveryLng}
                       cadeteName={order.cadeteName}
                       locale={locale}
                     />

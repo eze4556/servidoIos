@@ -40,7 +40,7 @@ export function HomeProductCarousel({
 
   return (
     <div className="home-carousel-fade relative">
-      <Carousel opts={{ align: "start", dragFree: true }} className="w-full px-1">
+      <Carousel opts={{ align: "start", dragFree: true }} className="w-full px-1 lg:px-2">
         <CarouselContent className="-ml-4">
           {products.map((product) => (
             <CarouselItem
@@ -51,8 +51,8 @@ export function HomeProductCarousel({
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="-left-2 hidden border-0 bg-white/95 text-purple-800 shadow-lg hover:bg-white md:flex" />
-        <CarouselNext className="-right-2 hidden border-0 bg-white/95 text-purple-800 shadow-lg hover:bg-white md:flex" />
+        <CarouselPrevious className="-left-2 hidden border-0 bg-white/95 text-servido-800 shadow-lg ring-1 ring-servido-950/5 hover:bg-white hover:text-servido-950 md:flex lg:-left-3 lg:h-11 lg:w-11" />
+        <CarouselNext className="-right-2 hidden border-0 bg-white/95 text-servido-800 shadow-lg ring-1 ring-servido-950/5 hover:bg-white hover:text-servido-950 md:flex lg:-right-3 lg:h-11 lg:w-11" />
       </Carousel>
     </div>
   )

@@ -10,6 +10,7 @@ import { COMMISSION_RATE } from "@/types/centralized-payments"
 import { resolveReferralsForCheckout } from "@/lib/reseller/resolve-referrals"
 import { processResellerAttributionAfterPurchase } from "@/lib/reseller/process-purchase"
 import { sendResellerNotifications } from "@/lib/reseller/reseller-notifications"
+import { assertSellerCanReceiveSales } from "@/lib/claim-seller-moderation-server"
 import type { ResellerAttributionLine } from "@/types/reseller"
 
 export type ShippingAddress = {
@@ -217,6 +218,7 @@ async function getSellerInfo(sellerId: string) {
 async function validateCheckoutProducts(products: CreatePreferenceProduct[]) {
   const validatedProducts: ValidatedCheckoutProduct[] = []
   const sellerConnectionCache = new Map<string, boolean>()
+  const sellerModerationCache = new Map<string, boolean>()
 
   for (const [index, product] of products.entries()) {
     const { productId, quantity } = product
@@ -242,6 +244,11 @@ async function validateCheckoutProducts(products: CreatePreferenceProduct[]) {
     const sellerId = getProductSellerId(productData)
     if (!sellerId) {
       throw new Error(`El producto ${productId} no tiene vendedor asociado`)
+    }
+
+    if (!sellerModerationCache.has(sellerId)) {
+      await assertSellerCanReceiveSales(sellerId)
+      sellerModerationCache.set(sellerId, true)
     }
 
     if (!sellerConnectionCache.has(sellerId)) {

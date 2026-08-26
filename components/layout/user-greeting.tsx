@@ -48,14 +48,11 @@ export function UserGreeting({ variant = "desktop", className }: UserGreetingPro
   return (
     <p
       className={cn(
-        "shrink-0 whitespace-nowrap rounded-full bg-purple-50 px-3 py-1.5 text-sm font-semibold text-servido-900 ring-1 ring-purple-100",
+        "hidden shrink-0 whitespace-nowrap text-sm font-medium text-servido-900/80 xl:inline",
         className
       )}
     >
-      {text}{" "}
-      <span className="inline-block origin-bottom-right animate-[wave_1.8s_ease-in-out_infinite]" aria-hidden>
-        👋
-      </span>
+      {text}
     </p>
   )
 }

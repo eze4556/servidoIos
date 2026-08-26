@@ -78,6 +78,13 @@ export type CadeteLiveLocation = {
   updatedAt: string
 }
 
+/** Punto acumulado del recorrido del cadete durante el viaje. */
+export type CadeteRoutePoint = {
+  lat: number
+  lng: number
+  at: string
+}
+
 export interface MenuCategory {
   id: string
   restaurantId: string
@@ -225,6 +232,8 @@ export interface FoodOrder {
   servidoPayoutAmount?: number
   /** Posición en vivo del cadete (solo mientras el pedido está en camino). */
   liveLocation?: CadeteLiveLocation | null
+  /** Traza del recorrido (puntos acumulados mientras está en camino). */
+  liveRoute?: CadeteRoutePoint[] | null
   createdAt?: unknown
   updatedAt?: unknown
 }

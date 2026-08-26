@@ -222,7 +222,12 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
       }}
     >
       <div
-        className="relative w-full overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-black/5 sm:rounded-3xl"
+        className={cn(
+          "relative w-full overflow-hidden bg-white",
+          variant === "desktop"
+            ? "rounded-[1.75rem] shadow-[0_24px_60px_-28px_rgba(46,16,101,0.35)] ring-1 ring-servido-950/10"
+            : "rounded-2xl shadow-lg ring-1 ring-black/5 sm:rounded-3xl"
+        )}
         onTouchStart={() => {
           setPaused(true)
           showControls()
@@ -292,7 +297,10 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
               onClick={() => stepBy(-1)}
               aria-label={th("bannerPrev")}
               className={cn(
-                "absolute left-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-black/60 active:scale-95 sm:left-3 sm:h-10 sm:w-10",
+                "absolute left-2 top-1/2 z-[3] flex -translate-y-1/2 items-center justify-center rounded-full text-white shadow-md backdrop-blur-sm transition-all duration-200 active:scale-95",
+                variant === "desktop"
+                  ? "h-11 w-11 bg-servido-950/55 hover:bg-servido-950/75 sm:left-4"
+                  : "h-9 w-9 bg-black/45 hover:bg-black/60 sm:left-3 sm:h-10 sm:w-10",
                 controlsVisible
                   ? "pointer-events-auto opacity-100"
                   : "pointer-events-none opacity-0"
@@ -305,7 +313,10 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
               onClick={() => stepBy(1)}
               aria-label={th("bannerNext")}
               className={cn(
-                "absolute right-2 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-black/60 active:scale-95 sm:right-3 sm:h-10 sm:w-10",
+                "absolute right-2 top-1/2 z-[3] flex -translate-y-1/2 items-center justify-center rounded-full text-white shadow-md backdrop-blur-sm transition-all duration-200 active:scale-95",
+                variant === "desktop"
+                  ? "h-11 w-11 bg-servido-950/55 hover:bg-servido-950/75 sm:right-4"
+                  : "h-9 w-9 bg-black/45 hover:bg-black/60 sm:right-3 sm:h-10 sm:w-10",
                 controlsVisible
                   ? "pointer-events-auto opacity-100"
                   : "pointer-events-none opacity-0"
@@ -314,7 +325,12 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
               <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
             </button>
 
-            <div className="absolute bottom-3 left-0 right-0 z-[2] flex items-center justify-center gap-1.5">
+            <div
+              className={cn(
+                "absolute bottom-3 left-0 right-0 z-[2] flex items-center justify-center gap-1.5",
+                variant === "desktop" && "bottom-4 gap-2"
+              )}
+            >
               {slides.map((slide, i) => (
                 <button
                   key={slide.id}
@@ -324,7 +340,13 @@ export function HomeBannerCarousel({ className, variant = "mobile" }: HomeBanner
                   aria-current={i === index}
                   className={cn(
                     "h-1.5 rounded-full transition-all",
-                    i === index ? "w-5 bg-white shadow-sm" : "w-1.5 bg-white/55 hover:bg-white/80"
+                    i === index
+                      ? variant === "desktop"
+                        ? "w-7 bg-servido-gold shadow-sm"
+                        : "w-5 bg-white shadow-sm"
+                      : variant === "desktop"
+                        ? "w-1.5 bg-white/50 hover:bg-white/80"
+                        : "w-1.5 bg-white/55 hover:bg-white/80"
                   )}
                 />
               ))}

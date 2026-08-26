@@ -1,17 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import { MapPin, Navigation, Radio } from "lucide-react"
-import { isNativeCapacitor } from "@/lib/native-platform"
 import { hasValidCoordinates } from "@/lib/geo"
-import type { CadeteLiveLocation } from "@/types/restaurant"
-
-function osmEmbedUrl(lat: number, lng: number) {
-  const d = 0.008
-  const bbox = `${lng - d},${lat - d},${lng + d},${lat + d}`
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${lat}%2C${lng}`
-}
+import { CadeteRouteMap } from "@/components/delivery/cadete-route-map"
+import type { CadeteLiveLocation, CadeteRoutePoint } from "@/types/restaurant"
 
 function mapsUrl(lat: number, lng: number) {
   return `https://www.google.com/maps?q=${lat},${lng}`
@@ -28,19 +21,33 @@ function formatUpdatedAt(iso: string, locale: string) {
 
 export function BuyerCadeteTracking(props: {
   liveLocation?: CadeteLiveLocation | null
+  liveRoute?: CadeteRoutePoint[] | null
+  restaurantLat?: number | null
+  restaurantLng?: number | null
+  deliveryLat?: number | null
+  deliveryLng?: number | null
   cadeteName?: string | null
   locale: string
 }) {
   const t = useTranslations("foodOrders")
-  const [nativeApp, setNativeApp] = useState(false)
   const loc = props.liveLocation
   const hasFix = Boolean(loc && hasValidCoordinates(loc.lat, loc.lng))
-  const showMap = nativeApp && hasFix
-
-  useEffect(() => {
-    setNativeApp(isNativeCapacitor())
-  }, [])
+  const routeCount = Array.isArray(props.liveRoute) ? props.liveRoute.length : 0
+  const showMap =
+    hasFix ||
+    routeCount > 0 ||
+    (hasValidCoordinates(Number(props.restaurantLat), Number(props.restaurantLng)) &&
+      hasValidCoordinates(Number(props.deliveryLat), Number(props.deliveryLng)))
   const updated = loc?.updatedAt ? formatUpdatedAt(loc.updatedAt, props.locale) : null
+
+  const restaurant =
+    hasValidCoordinates(Number(props.restaurantLat), Number(props.restaurantLng))
+      ? { lat: Number(props.restaurantLat), lng: Number(props.restaurantLng) }
+      : null
+  const delivery =
+    hasValidCoordinates(Number(props.deliveryLat), Number(props.deliveryLng))
+      ? { lat: Number(props.deliveryLat), lng: Number(props.deliveryLng) }
+      : null
 
   return (
     <div className="mt-4 space-y-2 rounded-2xl bg-sky-50 p-4 ring-1 ring-sky-100">
@@ -52,17 +59,20 @@ export function BuyerCadeteTracking(props: {
         <p className="text-xs text-sky-800/80">{t("trackingCadete", { name: props.cadeteName })}</p>
       )}
       {updated && <p className="text-xs text-sky-700">{t("trackingUpdated", { time: updated })}</p>}
-      {showMap && loc && (
+      {routeCount > 1 && (
+        <p className="text-xs text-sky-700">{t("trackingRoutePoints", { count: routeCount })}</p>
+      )}
+      {showMap && (
         <div className="overflow-hidden rounded-xl ring-1 ring-sky-200">
-          <iframe
-            title={t("trackingMapTitle")}
-            src={osmEmbedUrl(loc.lat, loc.lng)}
-            className="h-48 w-full border-0"
-            loading="lazy"
+          <CadeteRouteMap
+            liveLocation={loc}
+            liveRoute={props.liveRoute}
+            restaurant={restaurant}
+            delivery={delivery}
+            className="h-56 w-full"
           />
         </div>
       )}
-      {!showMap && hasFix && <p className="text-xs text-sky-800">{t("trackingWebHint")}</p>}
       {hasFix && loc && (
         <a
           href={mapsUrl(loc.lat, loc.lng)}

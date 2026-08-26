@@ -10,10 +10,16 @@ interface HomeSectionHeaderProps {
   accent?: "purple" | "amber" | "emerald"
 }
 
-const accentStyles = {
-  purple: "from-purple-500 to-purple-900",
-  amber: "from-amber-400 to-orange-600",
-  emerald: "from-emerald-400 to-teal-600",
+const accentBar = {
+  purple: "from-servido-700 via-[#9204F8] to-servido-gold",
+  amber: "from-amber-400 to-orange-500",
+  emerald: "from-emerald-400 to-teal-500",
+}
+
+const iconStyles = {
+  purple: "bg-servido-50 text-servido-800",
+  amber: "bg-amber-50 text-amber-700",
+  emerald: "bg-emerald-50 text-emerald-700",
 }
 
 export function HomeSectionHeader({
@@ -26,24 +32,35 @@ export function HomeSectionHeader({
 }: HomeSectionHeaderProps) {
   return (
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-2">
         <div className="flex items-center gap-3">
-          <span className={`h-9 w-1.5 rounded-full bg-gradient-to-b ${accentStyles[accent]}`} />
-          <div className="flex items-center gap-2">
+          <span
+            className={`hidden h-10 w-1 shrink-0 rounded-full bg-gradient-to-b sm:block ${accentBar[accent]}`}
+            aria-hidden
+          />
+          <div className="flex min-w-0 items-center gap-2.5">
             {Icon && (
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
-                <Icon className="h-5 w-5" />
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${iconStyles[accent]}`}
+              >
+                <Icon className="h-4 w-4" />
               </span>
             )}
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">{title}</h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-servido-950 md:text-[1.75rem]">
+              {title}
+            </h2>
           </div>
         </div>
-        {subtitle && <p className="pl-5 text-sm text-gray-500 md:pl-6 md:text-base">{subtitle}</p>}
+        {subtitle && (
+          <p className="max-w-2xl text-sm text-slate-500 sm:pl-[1.35rem] md:text-[15px]">
+            {subtitle}
+          </p>
+        )}
       </div>
       {href && linkText && (
         <Link
           href={href}
-          className="group inline-flex w-fit items-center gap-2 rounded-full bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-purple-200 transition-all duration-300 hover:bg-purple-800 hover:shadow-lg"
+          className="group inline-flex w-fit items-center gap-2 rounded-full bg-servido-950 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-servido-800"
         >
           {linkText}
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />

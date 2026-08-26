@@ -191,37 +191,42 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white py-5">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5 sm:rounded-3xl">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
+      <div className="container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <section className="mb-8 overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-servido-950/5 sm:rounded-3xl lg:mb-10 lg:rounded-[1.75rem] lg:shadow-[0_24px_60px_-28px_rgba(46,16,101,0.28)]">
+          <div className="relative">
             <Image
               src="/images/bannernuevooficial4.jpeg"
               alt={ts("bannerAlt")}
               width={1600}
               height={723}
               className="h-auto w-full"
-              sizes="(max-width: 1056px) calc(100vw - 2rem), 1024px"
+              sizes="(max-width: 1280px) calc(100vw - 2rem), 1200px"
               priority
             />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-24 bg-gradient-to-t from-servido-950/35 to-transparent lg:block" />
+            <div className="pointer-events-none absolute bottom-5 left-6 hidden lg:block">
+              <p className="font-serif text-3xl font-semibold tracking-tight text-white drop-shadow">
+                Servido
+                <span className="text-servido-gold">.</span>
+              </p>
+              <p className="mt-1 text-sm text-white/85">{ts("catalogHeroSubtitle")}</p>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Filtros y Búsqueda */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="mb-8 rounded-2xl bg-white p-5 shadow-[0_16px_40px_-28px_rgba(46,16,101,0.35)] ring-1 ring-servido-950/5 lg:rounded-3xl lg:p-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
             {/* Búsqueda */}
             <div className="lg:col-span-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   type="text"
                   placeholder={ts("searchPlaceholder")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="h-11 rounded-2xl border-0 bg-slate-100/90 pl-10 ring-1 ring-servido-950/5 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-servido-800/25"
                 />
               </div>
             </div>
@@ -229,7 +234,7 @@ export default function ServicesPage() {
             {/* Categoría */}
             <div>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 rounded-2xl border-0 bg-slate-100/90 ring-1 ring-servido-950/5">
                   <SelectValue placeholder={ts("categoryPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -246,7 +251,7 @@ export default function ServicesPage() {
             {/* Rango de precio */}
             <div>
               <Select value={priceRange} onValueChange={setPriceRange}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 rounded-2xl border-0 bg-slate-100/90 ring-1 ring-servido-950/5">
                   <SelectValue placeholder={ts("pricePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -262,7 +267,7 @@ export default function ServicesPage() {
             {/* Ordenar por */}
             <div>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 rounded-2xl border-0 bg-slate-100/90 ring-1 ring-servido-950/5">
                   <SelectValue placeholder={ts("sortPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -279,7 +284,11 @@ export default function ServicesPage() {
           {/* Botón limpiar filtros */}
           {(searchTerm || selectedCategory !== "all" || priceRange !== "all" || sortBy !== "newest") && (
             <div className="mt-4">
-              <Button variant="outline" onClick={clearFilters} className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="flex items-center gap-2 rounded-full border-servido-200 text-servido-800 hover:bg-servido-50"
+              >
                 <Filter className="h-4 w-4" />
                 {ts("clearFilters")}
               </Button>
@@ -290,7 +299,7 @@ export default function ServicesPage() {
         {/* Resultados */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold tracking-tight text-servido-950 md:text-2xl">
               {filteredServices.length === 1
                 ? ts("foundOne")
                 : ts("foundMany", { count: filteredServices.length })}
@@ -300,37 +309,37 @@ export default function ServicesPage() {
 
         {/* Grid de servicios */}
         {filteredServices.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
             {filteredServices.map((service) => (
               <Link key={service.id} href={`/product/${service.id}`}>
-                <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer group">
-                  <div className="aspect-square relative overflow-hidden rounded-t-lg">
+                <Card className="group h-full cursor-pointer overflow-hidden rounded-2xl border-0 bg-white shadow-[0_12px_32px_-20px_rgba(46,16,101,0.3)] ring-1 ring-servido-950/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.35)] lg:rounded-3xl">
+                  <div className="relative aspect-square overflow-hidden">
                     <Image
                       src={getProductThumbnail(service.media, service.imageUrl, service.name)}
                       alt={service.name}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-200"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className="absolute top-2 left-2">
-                      <Badge className="bg-purple-600 text-white">
+                    <div className="absolute left-2.5 top-2.5">
+                      <Badge className="rounded-full bg-servido-800 text-white hover:bg-servido-800">
                         {ts("badge")}
                       </Badge>
                     </div>
                     {service.condition && (
-                      <div className="absolute top-2 right-2">
-                        <Badge variant={service.condition === 'nuevo' ? 'default' : 'secondary'}>
+                      <div className="absolute right-2.5 top-2.5">
+                        <Badge variant={service.condition === 'nuevo' ? 'default' : 'secondary'} className="rounded-full">
                           {service.condition === 'nuevo' ? tc("conditionNew") : tc("conditionUsed")}
                         </Badge>
                       </div>
                     )}
                   </div>
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                    <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-servido-950 transition-colors group-hover:text-servido-800">
                       {service.name}
                     </h3>
                     
                     {service.description && (
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      <p className="mb-3 line-clamp-2 text-sm text-slate-500">
                         {service.description}
                       </p>
                     )}
@@ -364,10 +373,10 @@ export default function ServicesPage() {
                     )}
 
                     <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold text-purple-600">
+                      <span className="text-xl font-bold tracking-tight text-servido-800">
                         {formatPrice(service.price)}
                       </span>
-                      <div className="flex items-center gap-1 text-sm text-gray-500">
+                      <div className="flex items-center gap-1 text-sm text-slate-500">
                         <Clock className="h-4 w-4" />
                         <span>{ts("available")}</span>
                       </div>

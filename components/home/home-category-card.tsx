@@ -23,17 +23,17 @@ export function HomeCategoryCard({
     return (
       <Link
         href={`/category/${id}`}
-        className="group relative block aspect-[4/3] overflow-hidden rounded-2xl shadow-md ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-purple-300"
+        className="group relative block aspect-[4/3] overflow-hidden rounded-2xl shadow-[0_16px_36px_-20px_rgba(46,16,101,0.35)] ring-1 ring-servido-950/10 transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.4)] hover:ring-servido-800/25 lg:rounded-[1.5rem]"
       >
         <SimpleImage
           src={src}
           alt={name}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-purple-950/85 via-purple-900/30 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-4">
-          <span className="text-sm font-bold text-white sm:text-base">{name}</span>
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all group-hover:bg-white group-hover:text-purple-900">
+        <div className="absolute inset-0 bg-gradient-to-t from-servido-950/90 via-servido-900/35 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-4 lg:p-5">
+          <span className="text-sm font-bold text-white sm:text-base lg:text-lg">{name}</span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all duration-300 group-hover:bg-servido-gold group-hover:text-servido-950">
             <ArrowUpRight className="h-4 w-4" />
           </span>
         </div>
