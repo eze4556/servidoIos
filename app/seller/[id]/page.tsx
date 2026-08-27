@@ -326,16 +326,16 @@ export default function SellerProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-white">
+        <Loader2 className="h-8 w-8 animate-spin text-servido-800" />
       </div>
     )
   }
 
   if (error || !seller) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Alert variant="destructive" className="max-w-md">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-white p-4">
+        <Alert variant="destructive" className="max-w-md rounded-2xl">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>{tr("errorTitle")}</AlertTitle>
           <AlertDescription>{error || ts("notFound")}</AlertDescription>
@@ -353,16 +353,21 @@ export default function SellerProfilePage() {
   const memberSinceLabel = ts("sellerSince", {
     date: memberSinceDate || ts("recently"),
   })
+  const daysActive = seller.createdAt?.toDate?.()
+    ? Math.floor((Date.now() - seller.createdAt.toDate().getTime()) / (1000 * 60 * 60 * 24))
+    : 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
       {/* Header del vendedor */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-            {/* Avatar y info básica */}
+      <div className="relative overflow-hidden bg-servido-950">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_120%_at_0%_0%,rgba(255,212,0,0.12),transparent_50%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_100%_at_100%_100%,rgba(146,4,248,0.2),transparent_45%)]" />
+
+        <div className="container relative mx-auto max-w-screen-xl px-4 py-8 md:px-6 md:py-10 xl:px-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center">
             <div className="flex items-center gap-4">
-              <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
+              <div className="relative h-20 w-20 overflow-hidden rounded-full ring-4 ring-white/20 shadow-lg lg:h-24 lg:w-24">
                 <Image
                   src={seller.photoURL || "/placeholder-user.jpg"}
                   alt={sellerDisplayName}
@@ -371,16 +376,16 @@ export default function SellerProfilePage() {
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Store className="h-6 w-6 text-orange-600" />
+                <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-white lg:text-3xl">
+                  <Store className="h-6 w-6 text-servido-gold" />
                   {sellerDisplayName}
                 </h1>
-                <p className="text-gray-600 flex items-center gap-1">
+                <p className="mt-1 flex items-center gap-1 text-sm text-white/70">
                   <Calendar className="h-4 w-4" />
                   {memberSinceLabel}
                 </p>
                 {seller.location && (
-                  <p className="text-gray-600 flex items-center gap-1">
+                  <p className="mt-0.5 flex items-center gap-1 text-sm text-white/70">
                     <MapPin className="h-4 w-4" />
                     {seller.location}
                   </p>
@@ -388,8 +393,7 @@ export default function SellerProfilePage() {
               </div>
             </div>
 
-            {/* Acciones */}
-            <div className="flex gap-2 ml-auto flex-wrap">
+            <div className="ml-auto flex flex-wrap gap-2">
               {!isOwner && (
                 <FollowButton
                   targetUserId={sellerId}
@@ -399,80 +403,70 @@ export default function SellerProfilePage() {
                 />
               )}
               {!isOwner && (
-                <Button onClick={handleContactSeller} className="bg-orange-600 hover:bg-orange-700">
-                  <MessageSquare className="h-4 w-4 mr-2" />
+                <Button
+                  onClick={handleContactSeller}
+                  className="rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
                   {ts("contact")}
                 </Button>
               )}
               {isOwner && (
-                <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                <Button asChild className="rounded-full bg-white text-servido-950 hover:bg-white/90">
                   <Link href="/dashboard/seller">
-                    <User className="h-4 w-4 mr-2" />
+                    <User className="mr-2 h-4 w-4" />
                     {ts("myDashboard")}
                   </Link>
                 </Button>
               )}
               {(seller.subscription_status === "active" || seller.subscription?.status === "active" || seller.isSubscribed) && (
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  <Star className="h-3 w-3 mr-1" />
+                <Badge className="rounded-full bg-servido-gold/20 text-servido-gold hover:bg-servido-gold/20">
+                  <Star className="mr-1 h-3 w-3" />
                   {ts("verifiedBadge")}
                 </Badge>
               )}
             </div>
           </div>
 
-          {/* Descripción */}
           {seller.description && (
-            <div className="mt-6">
-              <p className="text-gray-700 leading-relaxed">{seller.description}</p>
-            </div>
+            <p className="mt-6 max-w-3xl text-sm leading-relaxed text-white/75 sm:text-base">
+              {seller.description}
+            </p>
           )}
 
-          {/* Estadísticas */}
-          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{products.length}</div>
-              <div className="text-sm text-gray-600">{ts("statProducts")}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{services.length}</div>
-              <div className="text-sm text-gray-600">{ts("statServices")}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {seller.createdAt?.toDate?.() ? 
-                  Math.floor((Date.now() - seller.createdAt.toDate().getTime()) / (1000 * 60 * 60 * 24)) : 
-                  0
-                }
+          <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+            {[
+              { value: products.length, label: ts("statProducts") },
+              { value: services.length, label: ts("statServices") },
+              { value: daysActive, label: ts("statDaysActive") },
+              { value: "4.8", label: ts("statRating") },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center backdrop-blur-sm"
+              >
+                <div className="text-2xl font-bold tabular-nums text-servido-gold">{stat.value}</div>
+                <div className="mt-0.5 text-xs text-white/60 sm:text-sm">{stat.label}</div>
               </div>
-              <div className="text-sm text-gray-600">{ts("statDaysActive")}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">4.8</div>
-              <div className="text-sm text-gray-600">{ts("statRating")}</div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Contenido principal */}
-      <div className="container mx-auto px-4 py-8">
-        {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder={ts("searchPlaceholder")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      <div className="container mx-auto max-w-screen-xl px-4 py-8 md:px-6 xl:px-8">
+        <div className="mb-6 rounded-2xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(46,16,101,0.3)] ring-1 ring-servido-950/5 lg:rounded-3xl lg:p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                placeholder={ts("searchPlaceholder")}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11 rounded-2xl border-0 bg-slate-100/90 pl-10 ring-1 ring-servido-950/5 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-servido-800/25"
+              />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="h-11 w-full rounded-2xl border-0 bg-slate-100/90 ring-1 ring-servido-950/5 md:w-48">
                 <SelectValue placeholder={ts("allCategories")} />
               </SelectTrigger>
               <SelectContent>
@@ -483,7 +477,7 @@ export default function SellerProfilePage() {
               </SelectContent>
             </Select>
             <Select value={priceFilter} onValueChange={setPriceFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="h-11 w-full rounded-2xl border-0 bg-slate-100/90 ring-1 ring-servido-950/5 md:w-48">
                 <SelectValue placeholder={ts("allPrices")} />
               </SelectTrigger>
               <SelectContent>
@@ -495,7 +489,7 @@ export default function SellerProfilePage() {
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="h-11 w-full rounded-2xl border-0 bg-slate-100/90 ring-1 ring-servido-950/5 md:w-48">
                 <SelectValue placeholder={ts("sortBy")} />
               </SelectTrigger>
               <SelectContent>
@@ -508,14 +502,13 @@ export default function SellerProfilePage() {
           </div>
         </div>
 
-        {/* Tabs de productos y servicios */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="products" className="flex items-center gap-2">
+          <TabsList className="grid h-11 w-full grid-cols-2 rounded-2xl bg-white p-1 shadow-sm ring-1 ring-servido-950/5">
+            <TabsTrigger value="products" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-servido-950 data-[state=active]:text-white">
               <Package className="h-4 w-4" />
               {ts("tabProducts", { count: filteredProducts.length })}
             </TabsTrigger>
-            <TabsTrigger value="services" className="flex items-center gap-2">
+            <TabsTrigger value="services" className="flex items-center gap-2 rounded-xl data-[state=active]:bg-servido-950 data-[state=active]:text-white">
               <Store className="h-4 w-4" />
               {ts("tabServices", { count: filteredServices.length })}
             </TabsTrigger>
@@ -533,23 +526,23 @@ export default function SellerProfilePage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
                 {filteredProducts.map((product) => (
-                  <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+                  <Card key={product.id} className="group overflow-hidden rounded-2xl border-0 bg-white shadow-[0_12px_32px_-20px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 transition-all hover:-translate-y-1 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.35)] lg:rounded-3xl">
                     <CardContent className="p-4">
-                      <div className="relative aspect-square mb-4 rounded-lg overflow-hidden bg-gray-100">
+                      <div className="relative mb-4 aspect-square overflow-hidden rounded-xl bg-slate-100 lg:rounded-2xl">
                         <Image
                           src={getProductThumbnail(product.media, product.imageUrl, product.name)}
                           alt={product.name}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
-                        <div className="absolute top-2 right-2 flex gap-1">
+                        <div className="absolute right-2 top-2 flex gap-1">
                           {!isOwner && (
                             <Button
                               size="icon"
                               variant="secondary"
-                              className="h-8 w-8 bg-white/80 hover:bg-white"
+                              className="h-8 w-8 rounded-full bg-white/90 hover:bg-white"
                               onClick={() => handleAddToFavorites(product.id)}
                               disabled={favoriting === product.id}
                             >
@@ -565,7 +558,7 @@ export default function SellerProfilePage() {
                               <Button
                                 size="icon"
                                 variant="secondary"
-                                className="h-8 w-8 bg-blue-500/80 hover:bg-blue-500 text-white"
+                                className="h-8 w-8 rounded-full bg-servido-800/90 text-white hover:bg-servido-800"
                                 onClick={() => handleEditProduct(product.id)}
                               >
                                 <Edit className="h-4 w-4" />
@@ -573,7 +566,7 @@ export default function SellerProfilePage() {
                               <Button
                                 size="icon"
                                 variant="secondary"
-                                className="h-8 w-8 bg-red-500/80 hover:bg-red-500 text-white"
+                                className="h-8 w-8 rounded-full bg-red-500/90 text-white hover:bg-red-500"
                                 onClick={() => handleDeleteProduct(product.id, false)}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -582,24 +575,24 @@ export default function SellerProfilePage() {
                           )}
                         </div>
                         {product.condition && (
-                          <Badge 
-                            variant="secondary" 
-                            className="absolute top-2 left-2 bg-white/80 text-xs"
+                          <Badge
+                            variant="secondary"
+                            className="absolute left-2 top-2 rounded-full bg-white/90 text-xs"
                           >
                             {product.condition === "nuevo" ? tc("conditionNew") : tc("conditionUsed")}
                           </Badge>
                         )}
                       </div>
-                      
+
                       <div className="space-y-2">
-                        <h3 className="font-semibold text-gray-900 line-clamp-2">
-                          <Link href={`/product/${product.id}`} className="hover:text-orange-600">
+                        <h3 className="line-clamp-2 font-semibold text-servido-950">
+                          <Link href={`/product/${product.id}`} className="hover:text-servido-800">
                             {product.name}
                           </Link>
                         </h3>
-                        <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+                        <p className="line-clamp-2 text-sm text-slate-500">{product.description}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-orange-600">
+                          <span className="text-lg font-bold tracking-tight text-servido-800">
                             {formatPrice(product.price)}
                           </span>
                           {!isOwner && (
@@ -607,7 +600,7 @@ export default function SellerProfilePage() {
                               size="sm"
                               onClick={() => handleAddToCart(product)}
                               disabled={addingToCart === product.id}
-                              className="bg-orange-600 hover:bg-orange-700"
+                              className="rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
                             >
                               {addingToCart === product.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -617,7 +610,7 @@ export default function SellerProfilePage() {
                             </Button>
                           )}
                           {isOwner && (
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-slate-500">
                               {ts("yourProduct")}
                             </div>
                           )}
@@ -647,23 +640,23 @@ export default function SellerProfilePage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
                 {filteredServices.map((service) => (
-                  <Card key={service.id} className="group hover:shadow-lg transition-shadow">
+                  <Card key={service.id} className="group overflow-hidden rounded-2xl border-0 bg-white shadow-[0_12px_32px_-20px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 transition-all hover:-translate-y-1 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.35)] lg:rounded-3xl">
                     <CardContent className="p-4">
-                      <div className="relative aspect-square mb-4 rounded-lg overflow-hidden bg-gray-100">
+                      <div className="relative mb-4 aspect-square overflow-hidden rounded-xl bg-slate-100 lg:rounded-2xl">
                         <Image
                           src={getProductThumbnail(service.media, service.imageUrl, service.name)}
                           alt={service.name}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
-                        <div className="absolute top-2 right-2 flex gap-1">
+                        <div className="absolute right-2 top-2 flex gap-1">
                           {!isOwner && (
                             <Button
                               size="icon"
                               variant="secondary"
-                              className="h-8 w-8 bg-white/80 hover:bg-white"
+                              className="h-8 w-8 rounded-full bg-white/90 hover:bg-white"
                               onClick={() => handleAddToFavorites(service.id)}
                               disabled={favoriting === service.id}
                             >
@@ -679,7 +672,7 @@ export default function SellerProfilePage() {
                               <Button
                                 size="icon"
                                 variant="secondary"
-                                className="h-8 w-8 bg-blue-500/80 hover:bg-blue-500 text-white"
+                                className="h-8 w-8 rounded-full bg-servido-800/90 text-white hover:bg-servido-800"
                                 onClick={() => handleEditProduct(service.id)}
                               >
                                 <Edit className="h-4 w-4" />
@@ -687,7 +680,7 @@ export default function SellerProfilePage() {
                               <Button
                                 size="icon"
                                 variant="secondary"
-                                className="h-8 w-8 bg-red-500/80 hover:bg-red-500 text-white"
+                                className="h-8 w-8 rounded-full bg-red-500/90 text-white hover:bg-red-500"
                                 onClick={() => handleDeleteProduct(service.id, true)}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -695,20 +688,20 @@ export default function SellerProfilePage() {
                             </>
                           )}
                         </div>
-                        <Badge className="absolute top-2 left-2 bg-blue-600 text-xs">
+                        <Badge className="absolute left-2 top-2 rounded-full bg-servido-800 text-xs text-white hover:bg-servido-800">
                           {tsv("badge")}
                         </Badge>
                       </div>
-                      
+
                       <div className="space-y-2">
-                        <h3 className="font-semibold text-gray-900 line-clamp-2">
-                          <Link href={`/product/${service.id}`} className="hover:text-orange-600">
+                        <h3 className="line-clamp-2 font-semibold text-servido-950">
+                          <Link href={`/product/${service.id}`} className="hover:text-servido-800">
                             {service.name}
                           </Link>
                         </h3>
-                        <p className="text-sm text-gray-600 line-clamp-2">{service.description}</p>
+                        <p className="line-clamp-2 text-sm text-slate-500">{service.description}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-orange-600">
+                          <span className="text-lg font-bold tracking-tight text-servido-800">
                             {formatPrice(service.price)}
                           </span>
                           {!isOwner && (
@@ -716,7 +709,7 @@ export default function SellerProfilePage() {
                               size="sm"
                               onClick={() => handleAddToCart(service)}
                               disabled={addingToCart === service.id}
-                              className="bg-orange-600 hover:bg-orange-700"
+                              className="rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
                             >
                               {addingToCart === service.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -726,7 +719,7 @@ export default function SellerProfilePage() {
                             </Button>
                           )}
                           {isOwner && (
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-slate-500">
                               {ts("yourService")}
                             </div>
                           )}

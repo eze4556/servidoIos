@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Check, ExternalLink, Eye, Loader2, Send, Trash2, X } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, ExternalLink, Eye, Loader2, Send, Trash2, X } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { describeApiError } from "@/lib/i18n/translate-client-error"
 import { useAuth } from "@/contexts/auth-context"
@@ -511,6 +511,11 @@ export function StoryViewer({
           onPointerCancel={handleResume}
           onPointerLeave={handleResume}
         >
+          <div
+            className="pointer-events-none absolute inset-0 hidden scale-110 bg-cover bg-center opacity-25 blur-2xl lg:block"
+            style={{ backgroundImage: `url("${story.imageUrl}")` }}
+            aria-hidden="true"
+          />
           <Image src={story.imageUrl} alt={story.caption || t("storyAlt")} fill className="object-contain" priority />
 
           <button
@@ -692,6 +697,26 @@ export function StoryViewer({
           </div>
         )}
       </div>
+      {authorIndex > 0 && (
+        <button
+          type="button"
+          onClick={goPrev}
+          className="absolute left-4 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/25 sm:flex lg:left-[calc(50%-24rem)]"
+          aria-label={t("previous")}
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+      )}
+      {(storyIndex < group.stories.length - 1 || authorIndex < groups.length - 1) && (
+        <button
+          type="button"
+          onClick={goNext}
+          className="absolute right-4 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition hover:bg-white/25 sm:flex lg:right-[calc(50%-24rem)]"
+          aria-label={t("next")}
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
+      )}
     </div>
   )
 }

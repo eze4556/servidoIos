@@ -702,7 +702,9 @@
     "restaurants": "Restaurantes",
     "typeRestaurant": "Restaurante",
     "typeStore": "Loja",
-    "unfollow": "Deixar de seguir"
+    "unfollow": "Deixar de seguir",
+    "count": "{count} seguido",
+    "countPlural": "{count} seguidos"
   },
   "greeting": {
     "hello": "Olá, {name}"
@@ -910,6 +912,9 @@
     "loadError": "Erro ao carregar os produtos desta categoria.",
     "backHome": "Voltar ao início",
     "home": "Início",
+    "products": "Produtos",
+    "productCount": "{count} produto",
+    "productCountPlural": "{count} produtos",
     "titleInCategory": "Produtos em {name}",
     "empty": "Não há produtos disponíveis nesta categoria.",
     "exploreOthers": "Explorar outros produtos",

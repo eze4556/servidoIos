@@ -36,6 +36,8 @@ import {
   Bike,
   Banknote,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -320,6 +322,8 @@ export default function AdminDashboard() {
   const [brands, setBrands] = useState<Brand[]>([])
   const [products, setProducts] = useState<Product[]>([]) // Still used for overview count
   const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [categoryDistributionPage, setCategoryDistributionPage] = useState(1)
+  const CATEGORY_DISTRIBUTION_PAGE_SIZE = 10
 
   // Category Form State
   const [newCategoryName, setNewCategoryName] = useState("")
@@ -1936,6 +1940,29 @@ export default function AdminDashboard() {
     allProductsSortOrder,
   ])
 
+  const categoryDistributionRows = useMemo(() => {
+    return categories
+      .map((category) => {
+        const count = products.filter(
+          (p) => p.category === category.id || p.category === category.name
+        ).length
+        const percentage = products.length > 0 ? (count / products.length) * 100 : 0
+        return { category, count, percentage }
+      })
+      .sort((a, b) => b.count - a.count || a.category.name.localeCompare(b.category.name, "es"))
+  }, [categories, products])
+
+  const categoryDistributionTotalPages = Math.max(
+    1,
+    Math.ceil(categoryDistributionRows.length / CATEGORY_DISTRIBUTION_PAGE_SIZE)
+  )
+  const categoryDistributionCurrentPage = Math.min(categoryDistributionPage, categoryDistributionTotalPages)
+  const categoryDistributionStart = (categoryDistributionCurrentPage - 1) * CATEGORY_DISTRIBUTION_PAGE_SIZE
+  const categoryDistributionPageRows = categoryDistributionRows.slice(
+    categoryDistributionStart,
+    categoryDistributionStart + CATEGORY_DISTRIBUTION_PAGE_SIZE
+  )
+
   const cadetesList = useMemo(() => {
     return users
       .filter((u) => u.role === "cadete")
@@ -2321,30 +2348,76 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {categories.map((category) => {
-                        const categoryProducts = products.filter((p) => p.category === category.name)
-                        const percentage = products.length > 0 ? (categoryProducts.length / products.length) * 100 : 0
-                        return (
-                          <div key={category.id} className="flex items-center justify-between gap-4">
-                            <div className="flex min-w-0 items-center space-x-2">
-                              <div className="h-2.5 w-2.5 rounded-full bg-teal-500" />
-                              <span className="truncate text-sm font-medium">{category.name}</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <div className="h-2 w-28 overflow-hidden rounded-full bg-slate-100">
-                                <div
-                                  className="h-2 rounded-full bg-gradient-to-r from-teal-500 to-sky-400 transition-all duration-700"
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                              <span className="w-20 text-right text-sm tabular-nums text-slate-500">
-                                {categoryProducts.length} ({percentage.toFixed(1)}%)
-                              </span>
-                            </div>
+                      {categoryDistributionPageRows.map(({ category, count, percentage }) => (
+                        <div key={category.id} className="flex items-center justify-between gap-4">
+                          <div className="flex min-w-0 items-center space-x-2">
+                            <div className="h-2.5 w-2.5 rounded-full bg-teal-500" />
+                            <span className="truncate text-sm font-medium">{category.name}</span>
                           </div>
-                        )
-                      })}
+                          <div className="flex items-center space-x-2">
+                            <div className="h-2 w-28 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-2 rounded-full bg-gradient-to-r from-teal-500 to-sky-400 transition-all duration-700"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                            <span className="w-20 text-right text-sm tabular-nums text-slate-500">
+                              {count} ({percentage.toFixed(1)}%)
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+
+                    {categoryDistributionRows.length > CATEGORY_DISTRIBUTION_PAGE_SIZE && (
+                      <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-slate-500">
+                          {t("pagination.showing", {
+                            from:
+                              categoryDistributionRows.length === 0 ? 0 : categoryDistributionStart + 1,
+                            to: Math.min(
+                              categoryDistributionStart + CATEGORY_DISTRIBUTION_PAGE_SIZE,
+                              categoryDistributionRows.length
+                            ),
+                            total: categoryDistributionRows.length,
+                          })}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1 rounded-full"
+                            disabled={categoryDistributionCurrentPage <= 1}
+                            onClick={() => setCategoryDistributionPage((p) => Math.max(1, p - 1))}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                            {t("pagination.previous")}
+                          </Button>
+                          <span className="px-2 text-xs tabular-nums text-slate-500">
+                            {t("pagination.pageOf", {
+                              page: categoryDistributionCurrentPage,
+                              total: categoryDistributionTotalPages,
+                            })}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1 rounded-full"
+                            disabled={categoryDistributionCurrentPage >= categoryDistributionTotalPages}
+                            onClick={() =>
+                              setCategoryDistributionPage((p) =>
+                                Math.min(categoryDistributionTotalPages, p + 1)
+                              )
+                            }
+                          >
+                            {t("pagination.next")}
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 

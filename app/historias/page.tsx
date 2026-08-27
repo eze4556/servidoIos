@@ -68,19 +68,19 @@ export default function HistoriasPage() {
   }, [loadingLocation, hasValidLocation, coordinates?.latitude, coordinates?.longitude])
 
   return (
-    <div className="min-h-screen max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-purple-50/30">
-      <div className="border-b border-gray-100 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto w-full max-w-screen-xl px-4 py-3">
+    <div className="min-h-screen max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-purple-50/30 lg:bg-[#fafafa]">
+      <div className="border-b border-gray-100 bg-white/90 backdrop-blur-md lg:border-0 lg:bg-transparent">
+        <div className="mx-auto w-full max-w-screen-xl px-4 py-3 lg:max-w-[975px] lg:px-5 lg:py-5">
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-colors hover:bg-gray-200 lg:bg-white lg:ring-1 lg:ring-[#dbdbdb]"
               aria-label={t("back")}
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-bold text-gray-900 sm:text-xl">{t("title")}</h1>
+              <h1 className="truncate text-lg font-bold text-gray-900 sm:text-xl lg:font-semibold lg:tracking-tight">{t("title")}</h1>
               <p className="truncate text-xs text-gray-500">
                 {hasValidLocation
                   ? t("subtitleNearby", {
@@ -133,10 +133,11 @@ export default function HistoriasPage() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-screen-xl px-4 py-4">
+      <div className="mx-auto w-full max-w-screen-xl px-4 py-4 lg:grid lg:max-w-[975px] lg:grid-cols-[minmax(0,614px)_293px] lg:items-start lg:gap-7 lg:px-5 lg:py-2">
+        <div className="min-w-0">
         {/* Siempre el rail estilo IG: “Tu historia” con + aunque no haya otras */}
         {(canPost || loading || loadingLocation || displayGroups.length > 0) && (
-          <div className="mb-4">
+          <div className="mb-4 rounded-2xl bg-white px-4 py-5 shadow-sm ring-1 ring-gray-100 sm:px-5 lg:mb-6 lg:rounded-lg lg:px-6 lg:shadow-none lg:ring-1 lg:ring-[#dbdbdb]">
             <StoriesRail
               groups={displayGroups}
               loading={loading || loadingLocation}
@@ -149,7 +150,7 @@ export default function HistoriasPage() {
         )}
 
         {loadingLocation || loading ? null : !hasValidLocation ? (
-          <div className="rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-100">
+          <div className="rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-100 lg:rounded-lg lg:shadow-none lg:ring-1 lg:ring-[#dbdbdb]">
             <span className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-servido-gold/20 text-servido-900">
               <MapPin className="h-7 w-7" />
             </span>
@@ -164,7 +165,7 @@ export default function HistoriasPage() {
             </Button>
           </div>
         ) : displayGroups.length === 0 ? (
-          <div className="rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-100">
+          <div className="rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-100 lg:rounded-lg lg:shadow-none lg:ring-1 lg:ring-[#dbdbdb]">
             <span className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-servido-gold/20 text-servido-900">
               <Sparkles className="h-7 w-7" />
             </span>
@@ -184,7 +185,7 @@ export default function HistoriasPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-6">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-6 lg:gap-1">
             {displayGroups.map((group, index) => (
               <button
                 key={group.authorId}
@@ -195,7 +196,7 @@ export default function HistoriasPage() {
                 }}
                 className="group min-w-0 text-left"
               >
-                <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 ring-2 ring-servido-gold/50 transition group-hover:ring-servido-700">
+                <div className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 ring-2 ring-servido-gold/50 transition group-hover:opacity-90 group-hover:ring-servido-700 lg:rounded-none lg:ring-0">
                   {group.stories[0]?.imageUrl ? (
                     <Image
                       src={group.stories[0].imageUrl}
@@ -204,7 +205,7 @@ export default function HistoriasPage() {
                       className="object-cover transition duration-300 group-hover:scale-105"
                     />
                   ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
                   <div className="absolute bottom-2 left-2 right-2 min-w-0">
                     <p className="truncate text-xs font-semibold text-white">{group.authorName}</p>
                     <p className="truncate text-[10px] text-white/80">
@@ -219,6 +220,58 @@ export default function HistoriasPage() {
             ))}
           </div>
         )}
+        </div>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 space-y-5">
+            {currentUser && (
+              <div className="flex items-center gap-3 px-2">
+                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-servido-800 text-sm font-bold text-white ring-1 ring-[#dbdbdb]">
+                  {currentUser.photoURL || currentUser.firebaseUser.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={currentUser.photoURL || currentUser.firebaseUser.photoURL || ""}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    (currentUser.name || currentUser.firebaseUser.email || "U").charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-gray-900">
+                    {currentUser.name || currentUser.firebaseUser.email?.split("@")[0]}
+                  </p>
+                  <p className="text-xs text-gray-500">{t("title")}</p>
+                </div>
+              </div>
+            )}
+            <div className="rounded-lg border border-[#dbdbdb] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">{t("subtitleDefault")}</p>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                {hasValidLocation
+                  ? t("subtitleNearby", {
+                      location: shortLocation || t("zone"),
+                      radius: STORY_NEARBY_RADIUS_KM,
+                    })
+                  : t("chooseZoneBody")}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-4 w-full rounded-md border-[#dbdbdb] text-gray-700"
+                onClick={openLocationPicker}
+              >
+                <MapPin className="mr-2 h-3.5 w-3.5" />
+                {t("zone")}
+              </Button>
+            </div>
+            <p className="px-2 text-[11px] leading-relaxed text-gray-400">
+              © 2026 Servido · {t("title")}
+            </p>
+          </div>
+        </aside>
       </div>
 
       <StoryViewer

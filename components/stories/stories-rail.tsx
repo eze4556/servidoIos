@@ -31,15 +31,15 @@ function YourStoryCircle({
 }) {
   if (hasOwnStories && onOpenOwn) {
     return (
-      <div className="flex w-16 shrink-0 flex-col items-center gap-1.5">
+      <div className="flex w-16 shrink-0 flex-col items-center gap-1.5 lg:w-[4.75rem]">
         <div className="relative">
           <button
             type="button"
             onClick={onOpenOwn}
-            className="rounded-full bg-gradient-to-tr from-servido-gold via-orange-400 to-servido-700 p-[2.5px]"
+            className="rounded-full bg-gradient-to-tr from-servido-gold via-orange-400 to-servido-700 p-[2.5px] transition-transform hover:scale-105 lg:from-[#feda75] lg:via-[#d62976] lg:to-[#4f5bd5]"
             aria-label={labels.viewYourStory}
           >
-            <span className="relative flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-full bg-white p-[2px]">
+            <span className="relative flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-full bg-white p-[2px] lg:h-[62px] lg:w-[62px]">
               <span className="relative h-full w-full overflow-hidden rounded-full bg-purple-100">
                 {photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -68,9 +68,9 @@ function YourStoryCircle({
   }
 
   return (
-    <div className="flex w-16 shrink-0 flex-col items-center gap-1.5">
+    <div className="flex w-16 shrink-0 flex-col items-center gap-1.5 lg:w-[4.75rem]">
       <Link href="/historias/nueva" className="flex w-full flex-col items-center gap-1.5">
-        <span className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-servido-700 to-servido-950 text-white shadow-md ring-2 ring-gray-100">
+        <span className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-servido-700 to-servido-950 text-white shadow-md ring-2 ring-gray-100 lg:h-[66px] lg:w-[66px]">
           {photo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
@@ -117,8 +117,8 @@ export function StoriesRail({
     return (
       <div className={cn("flex gap-3 overflow-hidden px-1", className)}>
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex w-16 shrink-0 flex-col items-center gap-1.5">
-            <div className="h-14 w-14 animate-pulse rounded-full bg-purple-100" />
+          <div key={i} className="flex w-16 shrink-0 flex-col items-center gap-1.5 lg:w-[4.75rem]">
+            <div className="h-14 w-14 animate-pulse rounded-full bg-purple-100 lg:h-[66px] lg:w-[66px] lg:bg-gray-200" />
             <div className="h-2 w-12 animate-pulse rounded bg-purple-50" />
           </div>
         ))}
@@ -138,7 +138,7 @@ export function StoriesRail({
   return (
     <div
       className={cn(
-        "flex max-w-full gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "flex max-w-full gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:gap-4",
         className
       )}
     >
@@ -157,10 +157,10 @@ export function StoriesRail({
           key={group.authorId}
           type="button"
           onClick={() => openOther(index)}
-          className="flex w-16 shrink-0 flex-col items-center gap-1.5"
+          className="group flex w-16 shrink-0 flex-col items-center gap-1.5 lg:w-[4.75rem]"
         >
-          <span className="rounded-full bg-gradient-to-tr from-servido-gold via-orange-400 to-servido-700 p-[2.5px]">
-            <span className="relative flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-full bg-white p-[2px]">
+          <span className="rounded-full bg-gradient-to-tr from-servido-gold via-orange-400 to-servido-700 p-[2.5px] transition-transform group-hover:scale-105 lg:from-[#feda75] lg:via-[#d62976] lg:to-[#4f5bd5]">
+            <span className="relative flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-full bg-white p-[2px] lg:h-[62px] lg:w-[62px]">
               <span className="relative h-full w-full overflow-hidden rounded-full bg-purple-100">
                 {group.authorPhotoURL ? (
                   // eslint-disable-next-line @next/next/no-img-element

@@ -255,12 +255,10 @@ export default function FavoritesPage() {
 
   if ((authLoading || loading) && !hasLoaded) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-purple-600" />
-            <p className="mt-4 text-gray-600">{tf("loading")}</p>
-          </div>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-white">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-servido-200 border-t-servido-800" />
+          <p className="mt-4 text-slate-600">{tf("loading")}</p>
         </div>
       </div>
     )
@@ -268,18 +266,22 @@ export default function FavoritesPage() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="mx-auto max-w-md text-center">
-            <Heart className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-            <h1 className="mb-4 text-2xl font-bold text-gray-900">{tf("title")}</h1>
-            <p className="mb-6 text-gray-600">{tf("loginHint")}</p>
-            <div className="space-y-3">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
+        <div className="container mx-auto max-w-screen-xl px-4 py-16 md:px-6">
+          <div className="mx-auto max-w-md rounded-3xl bg-white px-6 py-12 text-center shadow-[0_24px_50px_-28px_rgba(46,16,101,0.32)] ring-1 ring-servido-950/5">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-servido-50 text-servido-800">
+              <Heart className="h-8 w-8" />
+            </span>
+            <h1 className="mt-5 text-2xl font-semibold tracking-tight text-servido-950">{tf("title")}</h1>
+            <p className="mt-3 text-slate-600">{tf("loginHint")}</p>
+            <div className="mt-8 space-y-3">
               <Link href="/login">
-                <Button className="w-full">{tf("login")}</Button>
+                <Button className="w-full rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]">
+                  {tf("login")}
+                </Button>
               </Link>
               <Link href="/signup">
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full rounded-full border-servido-200 text-servido-900 hover:bg-servido-50">
                   {tf("createAccount")}
                 </Button>
               </Link>
@@ -292,146 +294,175 @@ export default function FavoritesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <p className="mb-4 text-red-600">{error}</p>
-            <Button onClick={() => void retryFetch()}>{tf("retry")}</Button>
-          </div>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-white p-4">
+        <div className="rounded-3xl bg-white px-6 py-10 text-center shadow-[0_16px_40px_-28px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5">
+          <p className="mb-4 text-red-600">{error}</p>
+          <Button
+            onClick={() => void retryFetch()}
+            className="rounded-full bg-servido-950 text-white hover:bg-servido-800"
+          >
+            {tf("retry")}
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-purple-800 to-purple-900 py-12 text-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <Heart className="mx-auto mb-4 h-12 w-12 text-purple-200" />
-            <h1 className="mb-4 text-4xl font-bold">{tf("title")}</h1>
-            <p className="mx-auto max-w-2xl text-xl text-purple-200">{tf("subtitle")}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8">
-        {favorites.length > 0 ? (
-          <>
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">
-                {favorites.length === 1
-                  ? tf("count", { count: favorites.length })
-                  : tf("countPlural", { count: favorites.length })}
-              </h2>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
+      <div className="container mx-auto max-w-screen-xl px-4 py-6 md:px-6 md:py-8">
+        <section className="mb-8 overflow-hidden rounded-2xl bg-servido-950 shadow-[0_24px_60px_-28px_rgba(46,16,101,0.4)] ring-1 ring-servido-950/10 lg:mb-10 lg:rounded-[1.75rem]">
+          <div className="relative px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_120%_at_0%_0%,rgba(255,212,0,0.14),transparent_50%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_100%_at_100%_100%,rgba(146,4,248,0.22),transparent_45%)]" />
+            <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                  <Heart className="h-3.5 w-3.5 text-servido-gold" />
+                  Servido
+                </p>
+                <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-4xl">
+                  {tf("title")}
+                </h1>
+                <p className="mt-3 max-w-xl text-sm text-white/70 sm:text-base">{tf("subtitle")}</p>
+              </div>
+              {favorites.length > 0 && (
+                <p className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-servido-gold ring-1 ring-white/10">
+                  {favorites.length === 1
+                    ? tf("count", { count: favorites.length })
+                    : tf("countPlural", { count: favorites.length })}
+                </p>
+              )}
             </div>
+          </div>
+        </section>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {favorites.map((product) => (
-                <Card key={product.favoriteId} className="group h-full transition-shadow duration-200 hover:shadow-lg">
-                  <div className="relative aspect-square overflow-hidden rounded-t-lg bg-white">
-                    <Image
-                      src={getProductThumbnail(product.media, product.imageUrl, product.name)}
-                      alt={product.name}
-                      fill
-                      unoptimized
-                      className="object-contain transition-transform duration-200 group-hover:scale-105"
-                    />
-                    <div className="absolute left-2 top-2">
-                      <Badge className="bg-purple-600 text-white">
-                        {product.isService ? tf("service") : tf("product")}
+        {favorites.length > 0 ? (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
+            {favorites.map((product) => (
+              <Card
+                key={product.favoriteId}
+                className="group h-full overflow-hidden rounded-2xl border-0 bg-white shadow-[0_12px_32px_-20px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.35)] lg:rounded-3xl"
+              >
+                <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-slate-50 to-servido-50/40">
+                  <Image
+                    src={getProductThumbnail(product.media, product.imageUrl, product.name)}
+                    alt={product.name}
+                    fill
+                    unoptimized
+                    className="object-contain p-3 transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute left-2.5 top-2.5">
+                    <Badge className="rounded-full bg-servido-800 text-white hover:bg-servido-800">
+                      {product.isService ? tf("service") : tf("product")}
+                    </Badge>
+                  </div>
+                  {product.condition && (
+                    <div className="absolute left-2.5 top-11">
+                      <Badge
+                        variant={product.condition === "nuevo" ? "default" : "secondary"}
+                        className="rounded-full"
+                      >
+                        {product.condition === "nuevo" ? tc("conditionNew") : tc("conditionUsed")}
                       </Badge>
                     </div>
-                    {product.condition && (
-                      <div className="absolute right-10 top-2">
-                        <Badge variant={product.condition === "nuevo" ? "default" : "secondary"}>
-                          {product.condition === "nuevo" ? tc("conditionNew") : tc("conditionUsed")}
-                        </Badge>
-                      </div>
-                    )}
-                    <button
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      void removeFromFavorites(product.favoriteId, product.name)
+                    }}
+                    className="absolute right-2.5 top-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-red-500 shadow-md ring-1 ring-servido-950/5 transition-colors hover:bg-red-50"
+                    title={tf("removeTitle")}
+                  >
+                    <Heart className="h-4 w-4 fill-current" />
+                  </button>
+                </div>
+                <CardContent className="p-4">
+                  <Link href={`/product/${product.id}`}>
+                    <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-servido-950 transition-colors group-hover:text-servido-800">
+                      {product.name || tf("unnamedProduct")}
+                    </h3>
+                  </Link>
+
+                  {product.description && (
+                    <p className="mb-3 line-clamp-2 text-sm text-slate-500">{product.description}</p>
+                  )}
+
+                  <div className="mb-3 flex items-center gap-2">
+                    <User className="h-4 w-4 text-slate-400" />
+                    <span className="truncate text-sm text-slate-600">{product.sellerName || tr("seller")}</span>
+                  </div>
+
+                  {product.sellerLocation && (
+                    <div className="mb-3 flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-slate-400" />
+                      <span className="truncate text-sm text-slate-600">{product.sellerLocation}</span>
+                    </div>
+                  )}
+
+                  {product.rating && (
+                    <div className="mb-3 flex items-center gap-2">
+                      <Star className="h-4 w-4 fill-current text-amber-400" />
+                      <span className="text-sm text-slate-600">
+                        {product.rating.toFixed(1)} ({product.reviewCount || 0})
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="mb-4 flex items-center justify-between">
+                    <span className="text-xl font-bold tracking-tight text-servido-800">
+                      {formatPrice(product.price)}
+                    </span>
+                    <div className="flex items-center gap-1 text-sm text-slate-500">
+                      <Clock className="h-4 w-4" />
+                      <span>{ts("available")}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        void removeFromFavorites(product.favoriteId, product.name)
+                        addToCart(product)
                       }}
-                      className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white transition-colors hover:bg-red-600"
-                      title={tf("removeTitle")}
+                      className="flex-1 rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
+                      size="sm"
                     >
-                      <Heart className="h-4 w-4 fill-current" />
-                    </button>
-                  </div>
-                  <CardContent className="p-4">
-                    <Link href={`/product/${product.id}`}>
-                      <h3 className="mb-2 line-clamp-2 text-lg font-semibold transition-colors group-hover:text-purple-600">
-                        {product.name || tf("unnamedProduct")}
-                      </h3>
-                    </Link>
-
-                    {product.description && (
-                      <p className="mb-3 line-clamp-2 text-sm text-gray-600">{product.description}</p>
-                    )}
-
-                    <div className="mb-3 flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{product.sellerName || tr("seller")}</span>
-                    </div>
-
-                    {product.sellerLocation && (
-                      <div className="mb-3 flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">{product.sellerLocation}</span>
-                      </div>
-                    )}
-
-                    {product.rating && (
-                      <div className="mb-3 flex items-center gap-2">
-                        <Star className="h-4 w-4 fill-current text-yellow-400" />
-                        <span className="text-sm text-gray-600">
-                          {product.rating.toFixed(1)} ({product.reviewCount || 0} reseñas)
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-xl font-bold text-purple-600">{formatPrice(product.price)}</span>
-                      <div className="flex items-center gap-1 text-sm text-gray-500">
-                        <Clock className="h-4 w-4" />
-                        <span>{ts("available")}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      {tf("add")}
+                    </Button>
+                    <Link href={`/product/${product.id}`} className="flex-1">
                       <Button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          addToCart(product)
-                        }}
-                        className="flex-1"
+                        variant="outline"
+                        className="w-full rounded-full border-servido-200 text-servido-900 hover:bg-servido-50"
                         size="sm"
                       >
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        {tf("add")}
+                        {tf("view")}
                       </Button>
-                      <Link href={`/product/${product.id}`} className="flex-1">
-                        <Button variant="outline" className="w-full" size="sm">
-                          {tf("view")}
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         ) : (
-          <div className="py-16 text-center">
-            <Heart className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-            <h2 className="mb-2 text-2xl font-semibold text-gray-900">{tf("emptyTitle")}</h2>
-            <p className="mx-auto mb-8 max-w-md text-gray-600">{tf("emptyHint")}</p>
+          <div className="rounded-3xl bg-white px-6 py-16 text-center shadow-[0_16px_40px_-28px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-servido-50 text-servido-300">
+              <Heart className="h-8 w-8" />
+            </span>
+            <h2 className="mt-5 text-2xl font-semibold tracking-tight text-servido-950">{tf("emptyTitle")}</h2>
+            <p className="mx-auto mt-2 max-w-md text-slate-600">{tf("emptyHint")}</p>
             <Link href="/products">
-              <Button size="lg">{tf("goProducts")}</Button>
+              <Button
+                size="lg"
+                className="mt-8 rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
+              >
+                {tf("goProducts")}
+              </Button>
             </Link>
           </div>
         )}
