@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Home, Package } from "lucide-react"
 import Link from "next/link"
 import { MultiSellerCheckoutContinue, readCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
+import { PurchaseResultShell } from "@/components/checkout/purchase-result-shell"
 
 export default function PurchaseSuccessPage() {
   const t = useTranslations("purchase")
@@ -38,72 +38,63 @@ export default function PurchaseSuccessPage() {
   }, [searchParams])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
-          <CardContent className="p-8 text-center">
-            <div className="flex justify-center items-center gap-4 mb-6">
-              <div className="text-4xl">🎉</div>
-              <div className="relative">
-                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                  <CheckCircle className="w-12 h-12 text-white" />
-                </div>
-              </div>
-              <div className="text-4xl">🎉</div>
-            </div>
+    <PurchaseResultShell
+      tone="success"
+      icon={CheckCircle}
+      title={t("successTitle")}
+      subtitle={t("successSubtitle")}
+      body={t("successBody")}
+      footnote={t("emailConfirm")}
+    >
+      <MultiSellerCheckoutContinue
+        sessionId={checkoutSessionId}
+        currentPurchaseId={currentPurchaseId}
+        variant="success"
+      />
 
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{t("successTitle")}</h1>
-            <p className="text-xl text-gray-600 mb-6">{t("successSubtitle")}</p>
-            <p className="text-gray-500 mb-8 leading-relaxed">
-              {t("successBody")}
+      {purchaseData.paymentId && (
+        <div className="mb-6 space-y-1 rounded-2xl bg-slate-50 p-4 ring-1 ring-servido-950/5">
+          <p className="text-sm text-slate-600">
+            <span className="font-semibold text-servido-950">{t("paymentId")}</span>{" "}
+            {purchaseData.paymentId}
+          </p>
+          {purchaseData.orderId && (
+            <p className="text-sm text-slate-600">
+              <span className="font-semibold text-servido-950">{t("order")}</span>{" "}
+              {purchaseData.orderId}
             </p>
-
-            <MultiSellerCheckoutContinue
-              sessionId={checkoutSessionId}
-              currentPurchaseId={currentPurchaseId}
-              variant="success"
-            />
-
-            {purchaseData.paymentId && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold">{t("paymentId")}</span> {purchaseData.paymentId}
-                </p>
-                {purchaseData.orderId && (
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold">{t("order")}</span> {purchaseData.orderId}
-                  </p>
-                )}
-                {purchaseData.amount && (
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold">{t("amount")}</span> ${purchaseData.amount}
-                  </p>
-                )}
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
-                <Link href="/dashboard/buyer">
-                  <Package className="w-4 h-4 mr-2" />
-                  {t("viewPurchases")}
-                </Link>
-              </Button>
-
-              <Button asChild variant="outline" className="w-full">
-                <Link href="/">
-                  <Home className="w-4 h-4 mr-2" />
-                  {t("backHome")}
-                </Link>
-              </Button>
-            </div>
-
-            <p className="text-xs text-gray-400 mt-6">
-              {t("emailConfirm")}
+          )}
+          {purchaseData.amount && (
+            <p className="text-sm text-slate-600">
+              <span className="font-semibold text-servido-950">{t("amount")}</span> $
+              {purchaseData.amount}
             </p>
-          </CardContent>
-        </Card>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-3">
+        <Button
+          asChild
+          className="w-full rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
+        >
+          <Link href="/dashboard/buyer">
+            <Package className="mr-2 h-4 w-4" />
+            {t("viewPurchases")}
+          </Link>
+        </Button>
+
+        <Button
+          asChild
+          variant="outline"
+          className="w-full rounded-full border-servido-200 text-servido-900 hover:bg-servido-50"
+        >
+          <Link href="/">
+            <Home className="mr-2 h-4 w-4" />
+            {t("backHome")}
+          </Link>
+        </Button>
       </div>
-    </div>
+    </PurchaseResultShell>
   )
 }

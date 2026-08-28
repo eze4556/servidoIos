@@ -26,7 +26,7 @@ export function LegalBlocks({ blocks }: { blocks: LegalBlock[] }) {
             {block.before}
             <Link
               href={block.href}
-              className="font-medium text-purple-900 underline-offset-2 hover:underline"
+              className="font-semibold text-servido-800 underline-offset-2 hover:underline"
             >
               {block.linkLabel}
             </Link>

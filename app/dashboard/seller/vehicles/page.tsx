@@ -32,6 +32,7 @@ import type { VehicleListing, VehicleListingStatus } from "@/types/vehicle-listi
 import { useLocale } from "next-intl"
 
 import { cn } from "@/lib/utils"
+import { vehicleHref } from "@/lib/routes"
 
 export default function SellerVehiclesPage() {
   const t = useTranslations("vehicles")
@@ -156,7 +157,7 @@ export default function SellerVehiclesPage() {
                   </div>
                   <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
                     <Button asChild size="sm" variant="outline" className="h-9 min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
-                      <Link href={`/autos/${row.id}`}>{t("viewPublic")}</Link>
+                      <Link href={vehicleHref(row.id)}>{t("viewPublic")}</Link>
                     </Button>
                     <Button
                       size="sm"

@@ -21,6 +21,7 @@ import { listClaimsForUser } from "@/lib/claims"
 import { isClaimOpen, purchaseClaimKey, type ClaimDoc } from "@/types/claims"
 import type { CentralizedPurchase, PurchaseItem } from "@/types/centralized-payments"
 import { getDashboardProductImage } from "@/lib/image-utils"
+import { claimHref, productHref } from "@/lib/routes"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useTranslations, useLocale } from "next-intl"
 
@@ -385,7 +386,7 @@ export function BuyerDashboardTabs({
                       if (openClaim) {
                         return (
                           <Button asChild size="sm" variant="outline" className="rounded-full border-amber-200 text-amber-900">
-                            <Link href={`/dashboard/claims/${openClaim.id}`}>
+                            <Link href={claimHref(openClaim.id)}>
                               <AlertTriangle className="mr-2 h-4 w-4" />
                               {tClaims("actions.view")}
                             </Link>
@@ -504,10 +505,10 @@ export function BuyerDashboardTabs({
                   <p className="mt-1 text-lg font-bold text-purple-900">{formatPriceNumber(product.price)}</p>
                   <div className="mt-4 flex gap-2">
                     <Button asChild variant="outline" size="sm" className="flex-1 rounded-full border-purple-200">
-                      <Link href={`/product/${product.productId}`}>{t("viewProduct")}</Link>
+                      <Link href={productHref(product.productId)}>{t("viewProduct")}</Link>
                     </Button>
                     <Button asChild size="sm" className="flex-1 rounded-full bg-purple-900 hover:bg-purple-800">
-                      <Link href={`/product/${product.productId}`}>{t("buy")}</Link>
+                      <Link href={productHref(product.productId)}>{t("buy")}</Link>
                     </Button>
                   </div>
                 </div>

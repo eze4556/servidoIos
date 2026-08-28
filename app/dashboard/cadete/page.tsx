@@ -29,6 +29,7 @@ import {
 import { fetchCadeteAccruedPayout, fetchCadetePayoutBatches } from "@/lib/delivery-settlements"
 import { CadetePayoutForm } from "@/components/cadete/cadete-payout-form"
 import { getDeliveryChatId } from "@/lib/delivery-chat"
+import { chatHref } from "@/lib/routes"
 import type { CadetePayoutBatch } from "@/types/delivery-settlements"
 import { getNextFoodOrderStatus } from "@/lib/food-order-tracking"
 import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
@@ -354,7 +355,7 @@ export default function CadeteDashboardPage() {
           )}
 
           <Link
-            href={`/chat/${deliveryChatId}`}
+            href={chatHref(deliveryChatId)}
             className="mt-3 flex h-14 items-center justify-center gap-2 rounded-2xl bg-violet-600 text-base font-bold active:bg-violet-500"
           >
             {t("chatWithBuyer")}

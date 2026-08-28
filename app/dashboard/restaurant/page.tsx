@@ -51,6 +51,7 @@ import {
 } from "@/lib/i18n/restaurant-labels"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { cn } from "@/lib/utils"
+import { restaurantHref } from "@/lib/routes"
 import { getNextFoodOrderStatus, setFoodOrderStatus } from "@/lib/food-order-tracking"
 import { notifyFoodOrderStatus } from "@/lib/notifications"
 import { describeApiError, translateClientError } from "@/lib/i18n/translate-client-error"
@@ -419,7 +420,7 @@ export default function RestaurantDashboardPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
+        <Loader2 className="h-8 w-8 animate-spin text-servido-800" />
       </div>
     )
   }
@@ -446,20 +447,27 @@ export default function RestaurantDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30">
-      <header className="border-b border-gray-100 bg-white/80 backdrop-blur-md">
+      <header className="border-b border-servido-950/[0.06] bg-white/85 backdrop-blur-xl">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-servido-gold/20 text-servido-800">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-servido-950 text-servido-gold shadow-md">
               <UtensilsCrossed className="h-5 w-5" />
             </span>
             <div>
-              <h1 className="font-bold text-gray-900">{restaurant?.name || t("myRestaurant")}</h1>
-              <p className="text-xs text-gray-500">{t("panelTitle")}</p>
+              <h1 className="font-semibold tracking-tight text-servido-950">
+                {restaurant?.name || t("myRestaurant")}
+              </h1>
+              <p className="text-xs text-slate-500">{t("panelTitle")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm" className="rounded-full">
-              <Link href={`/restaurantes/${restaurantId}`}>{t("viewStore")}</Link>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="rounded-full border-servido-200 text-servido-900 hover:bg-servido-50"
+            >
+              <Link href={restaurantHref(restaurantId)}>{t("viewStore")}</Link>
             </Button>
             <Button variant="ghost" size="icon" onClick={() => void handleLogout()}>
               <LogOut className="h-4 w-4" />
@@ -549,7 +557,7 @@ export default function RestaurantDashboardPage() {
         {activeTab === "orders" && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-gray-900">{t("incomingOrders")}</h2>
+              <h2 className="text-lg font-semibold text-servido-950">{t("incomingOrders")}</h2>
               {otherOrders.length > 0 && (
                 <Button
                   variant="outline"
@@ -575,7 +583,7 @@ export default function RestaurantDashboardPage() {
                   <div key={order.id} className="rounded-2xl bg-white p-5 ring-1 ring-gray-100">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-servido-950">
                           {t("orderNumber", { id: order.id.slice(-6) })}
                         </p>
                         <p className="text-sm text-gray-500">{order.buyerEmail}</p>
@@ -724,7 +732,7 @@ export default function RestaurantDashboardPage() {
         {activeTab === "profile" && (
           <div className="mx-auto max-w-lg space-y-4">
             <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
-              <h2 className="font-semibold text-gray-900">{t("profileTitle")}</h2>
+              <h2 className="font-semibold text-servido-950">{t("profileTitle")}</h2>
               <p className="text-sm text-gray-600">
                 <strong>{t("statusLabel")}</strong> {restaurant?.status || "pending"}
               </p>
@@ -752,7 +760,7 @@ export default function RestaurantDashboardPage() {
             )}
 
             <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
-              <h2 className="font-semibold text-gray-900">{t("pendingCommissionsTitle")}</h2>
+              <h2 className="font-semibold text-servido-950">{t("pendingCommissionsTitle")}</h2>
               {pendingCommissionAmount > 0 ? (
                 <>
                   <p className="text-2xl font-bold text-servido-800">{formatPrice(pendingCommissionAmount)}</p>
@@ -771,7 +779,7 @@ export default function RestaurantDashboardPage() {
                           {batch.status === "paid" ? t("commissionBatchPaid") : t("commissionBatchPending")}
                           {` · ${batch.orderCount} pedidos`}
                         </span>
-                        <span className="font-medium text-gray-900">{formatPrice(batch.amount)}</span>
+                        <span className="font-medium text-servido-950">{formatPrice(batch.amount)}</span>
                       </li>
                     ))}
                   </ul>
@@ -780,7 +788,7 @@ export default function RestaurantDashboardPage() {
             </div>
 
             <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-gray-100">
-              <h2 className="font-semibold text-gray-900">{t("howYouCharge")}</h2>
+              <h2 className="font-semibold text-servido-950">{t("howYouCharge")}</h2>
               <p className="text-sm text-gray-500">{t("howYouChargeHint")}</p>
 
               {paymentMsg && (
@@ -841,7 +849,7 @@ export default function RestaurantDashboardPage() {
 
               {paymentMethods.includes("transfer") && (
                 <div className="space-y-3 rounded-xl border border-gray-100 p-4">
-                  <p className="text-sm font-medium text-gray-900">{t("transferData")}</p>
+                  <p className="text-sm font-medium text-servido-950">{t("transferData")}</p>
                   <div className="space-y-2">
                     <Label>{t("alias")}</Label>
                     <Input value={transferAlias} onChange={(e) => setTransferAlias(e.target.value)} className="rounded-xl" />

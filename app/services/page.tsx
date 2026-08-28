@@ -13,6 +13,7 @@ import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy, where } from "firebase/firestore"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { getProductThumbnail } from "@/lib/image-utils"
+import { productHref } from "@/lib/routes"
 import type { ProductMedia } from "@/types/product"
 import { useTranslations } from "next-intl"
 
@@ -311,7 +312,7 @@ export default function ServicesPage() {
         {filteredServices.length > 0 ? (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
             {filteredServices.map((service) => (
-              <Link key={service.id} href={`/product/${service.id}`}>
+              <Link key={service.id} href={productHref(service.id)}>
                 <Card className="group h-full cursor-pointer overflow-hidden rounded-2xl border-0 bg-white shadow-[0_12px_32px_-20px_rgba(46,16,101,0.3)] ring-1 ring-servido-950/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.35)] lg:rounded-3xl">
                   <div className="relative aspect-square overflow-hidden">
                     <Image

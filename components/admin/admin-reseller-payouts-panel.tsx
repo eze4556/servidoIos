@@ -18,6 +18,7 @@ import { usePriceFormat } from "@/hooks/use-price-format"
 import { useToast } from "@/hooks/use-toast"
 import { AdminPager } from "@/components/admin/admin-pager"
 import { usePagedList } from "@/hooks/use-paged-list"
+import { apiUrl } from "@/lib/api-base"
 
 type BatchRow = {
   id: string
@@ -50,7 +51,7 @@ export function AdminResellerPayoutsPanel() {
     if (!user) return
     setLoading(true)
     const token = await user.getIdToken()
-    const res = await fetch("/api/admin/reseller-payouts?status=pending_payout", {
+    const res = await fetch(apiUrl("/api/admin/reseller-payouts?status=pending_payout"), {
       headers: { Authorization: `Bearer ${token}` },
     })
     const data = await res.json()
@@ -67,7 +68,7 @@ export function AdminResellerPayoutsPanel() {
     if (!user) return
     setMarking(batchId)
     const token = await user.getIdToken()
-    const res = await fetch("/api/admin/reseller-payouts", {
+    const res = await fetch(apiUrl("/api/admin/reseller-payouts"), {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,

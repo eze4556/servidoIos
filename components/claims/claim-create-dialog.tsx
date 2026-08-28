@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { createClaim } from "@/lib/claims"
 import { validateClaimFiles } from "@/lib/claim-storage"
+import { claimHref } from "@/lib/routes"
 import { CLAIM_REASONS, type ClaimReason } from "@/types/claims"
 
 export type ClaimPurchaseContext = {
@@ -97,7 +98,7 @@ export function ClaimCreateDialog({
       })
       reset()
       onOpenChange(false)
-      router.push(`/dashboard/claims/${claim.id}`)
+      router.push(claimHref(claim.id))
     } catch (err) {
       const message = err instanceof Error ? err.message : ""
       if (message.startsWith("claim_file:")) {

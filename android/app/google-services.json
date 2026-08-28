@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "727894321548",
+    "firebase_url": "https://servidodb-a1eda-default-rtdb.firebaseio.com",
+    "project_id": "servidodb-a1eda",
+    "storage_bucket": "servidodb-a1eda.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:727894321548:android:94c615bbf76249f7a14ea9",
+        "android_client_info": {
+          "package_name": "ar.com.servido.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "727894321548-dkbskr4fiq228ljimhqgoa0v8rtm97mp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAofNabd-CsK9f7kdLdemhLBBEsd308MyA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "727894321548-dkbskr4fiq228ljimhqgoa0v8rtm97mp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

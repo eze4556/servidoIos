@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { apiUrl } from "@/lib/api-base"
 
 interface SearchResult {
   label: string
@@ -76,7 +77,7 @@ export function LocationPickerSheet() {
       setSearching(true)
       setError(null)
       try {
-        const response = await fetch(`/api/geocoding/search?q=${encodeURIComponent(term)}`)
+        const response = await fetch(apiUrl(`/api/geocoding/search?q=${encodeURIComponent(term)}`))
         const data = await response.json()
         setResults(Array.isArray(data.results) ? data.results : [])
       } catch {

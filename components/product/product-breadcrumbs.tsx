@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { ChevronRight, Home } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { categoryHref } from "@/lib/routes"
 
 interface ProductBreadcrumbsProps {
   category?: { id: string; name: string } | null
@@ -32,7 +33,7 @@ export function ProductBreadcrumbs({ category, productName }: ProductBreadcrumbs
         <>
           <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
           <Link
-            href={`/category/${category.id}`}
+            href={categoryHref(category.id)}
             className="max-w-[140px] truncate rounded-lg px-2 py-1 transition-colors hover:bg-servido-50 hover:text-servido-800 sm:max-w-none"
           >
             {category.name}

@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import type { AppNotification, CreateAppNotificationInput } from "@/types/notifications"
+import { apiUrl } from "@/lib/api-base"
 
 export function isNotificationRead(n: Pick<AppNotification, "read" | "isRead">): boolean {
   return Boolean(n.read ?? n.isRead)
@@ -85,7 +86,7 @@ export async function dispatchAppNotifications(items: CreateAppNotificationInput
     const token = await auth.currentUser?.getIdToken()
     if (!token) throw new Error("Sin sesión")
 
-    const res = await fetch("/api/notifications/create", {
+    const res = await fetch(apiUrl("/api/notifications/create"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

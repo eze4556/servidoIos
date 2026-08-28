@@ -10,8 +10,8 @@ export function InfoLegalToc({ sections }: { sections: LegalTocSection[] }) {
 
   return (
     <aside className="hidden lg:block">
-      <nav className="sticky top-28 rounded-2xl border border-purple-100 bg-white p-4 shadow-sm">
-        <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-purple-700">
+      <nav className="sticky top-28 rounded-2xl bg-white p-4 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5">
+        <p className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-servido-800">
           <FileText className="h-3.5 w-3.5" />
           {tCommon("tocIndex")}
         </p>
@@ -20,9 +20,9 @@ export function InfoLegalToc({ sections }: { sections: LegalTocSection[] }) {
             <li key={id}>
               <a
                 href={`#${id}`}
-                className="block rounded-lg px-2 py-1.5 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-900"
+                className="block rounded-lg px-2 py-1.5 text-slate-600 transition-colors hover:bg-servido-50 hover:text-servido-900"
               >
-                <span className="font-medium text-purple-800">{number}.</span> {title}
+                <span className="font-semibold text-servido-800">{number}.</span> {title}
               </a>
             </li>
           ))}

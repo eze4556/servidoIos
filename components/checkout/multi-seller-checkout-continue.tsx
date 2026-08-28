@@ -135,7 +135,7 @@ export function MultiSellerCheckoutContinue({
 
   if (loading) {
     return (
-      <div className="mb-6 flex items-center justify-center gap-2 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
+      <div className="mb-6 flex items-center justify-center gap-2 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
         <Loader2 className="h-4 w-4 animate-spin" />
         {t("checking")}
       </div>
@@ -144,7 +144,7 @@ export function MultiSellerCheckoutContinue({
 
   if (error) {
     return (
-      <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+      <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
         {error}
       </div>
     )
@@ -152,7 +152,7 @@ export function MultiSellerCheckoutContinue({
 
   if (allDone) {
     return (
-      <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+      <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
         {t("allDone", { count: totalCount })}
       </div>
     )
@@ -161,7 +161,7 @@ export function MultiSellerCheckoutContinue({
   if (!nextPayment?.init_point) {
     if (variant === "failure") {
       return (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-left text-sm text-red-800">
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-left text-sm text-red-800">
           <p className="font-medium">{t("failureIncomplete")}</p>
           <p className="mt-1">{t("failureHint")}</p>
         </div>
@@ -171,7 +171,7 @@ export function MultiSellerCheckoutContinue({
   }
 
   return (
-    <div className="mb-6 rounded-lg border border-sky-200 bg-sky-50 p-4 text-left text-sm text-sky-900">
+    <div className="mb-6 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-left text-sm text-sky-900">
       <p className="font-semibold">{t("intro", { total: totalCount })}</p>
       <p className="mt-1 text-sky-800">
         {t("progress", { completed: completedCount, total: totalCount })}
@@ -184,7 +184,7 @@ export function MultiSellerCheckoutContinue({
         {formatPriceNumber(nextPayment.amount)}
       </p>
       <Button
-        className="mt-4 w-full bg-sky-700 hover:bg-sky-800"
+        className="mt-4 w-full rounded-full bg-sky-700 hover:bg-sky-800"
         onClick={() => {
           if (nextPayment.init_point) window.location.href = nextPayment.init_point
         }}

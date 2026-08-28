@@ -36,6 +36,13 @@ export function normalizeStoryLink(raw: string): string | null {
   return null
 }
 
+/*
+ * Estas dos funciones producen el formato con el que el link se guarda en la
+ * historia, que es siempre el path de la web. La traducción a la URL de la app
+ * pasa al renderizar, en resolveStoredHref, para que las historias ya guardadas
+ * sigan funcionando.
+ */
+
 export function productStoryLink(productId: string): string {
   return `/product/${productId}`
 }

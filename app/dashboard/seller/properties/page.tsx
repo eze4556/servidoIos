@@ -25,6 +25,7 @@ import { fetchSellerPropertyListings, updatePropertyListing, deletePropertyListi
 import { formatPropertyPrice } from "@/lib/properties/format-property-price"
 import type { PropertyListing, PropertyListingStatus } from "@/types/property-listing"
 import { cn } from "@/lib/utils"
+import { propertyHref } from "@/lib/routes"
 
 export default function SellerPropertiesPage() {
   const t = useTranslations("properties")
@@ -142,7 +143,7 @@ export default function SellerPropertiesPage() {
                   </div>
                   <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
                     <Button asChild size="sm" variant="outline" className="h-9 text-xs sm:text-sm">
-                      <Link href={`/propiedades/${row.id}`}>{t("viewPublic")}</Link>
+                      <Link href={propertyHref(row.id)}>{t("viewPublic")}</Link>
                     </Button>
                     <Button
                       size="sm"

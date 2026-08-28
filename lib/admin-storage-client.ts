@@ -1,4 +1,5 @@
 import { auth } from "@/lib/firebase"
+import { apiUrl } from "@/lib/api-base"
 
 export async function deleteStoragePathAsAdmin(path: string): Promise<void> {
   const user = auth.currentUser
@@ -7,7 +8,7 @@ export async function deleteStoragePathAsAdmin(path: string): Promise<void> {
   }
 
   const token = await user.getIdToken()
-  const response = await fetch("/api/admin/storage/delete", {
+  const response = await fetch(apiUrl("/api/admin/storage/delete"), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

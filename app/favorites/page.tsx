@@ -13,6 +13,7 @@ import { db } from "@/lib/firebase"
 import { collection, deleteDoc, doc, getDoc, getDocs, query, where } from "firebase/firestore"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { getProductThumbnail } from "@/lib/image-utils"
+import { productHref } from "@/lib/routes"
 import { useToast } from "@/components/ui/use-toast"
 import { useTranslations } from "next-intl"
 import type { ProductMedia } from "@/types/product"
@@ -381,7 +382,7 @@ export default function FavoritesPage() {
                   </button>
                 </div>
                 <CardContent className="p-4">
-                  <Link href={`/product/${product.id}`}>
+                  <Link href={productHref(product.id)}>
                     <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-servido-950 transition-colors group-hover:text-servido-800">
                       {product.name || tf("unnamedProduct")}
                     </h3>
@@ -435,7 +436,7 @@ export default function FavoritesPage() {
                       <ShoppingCart className="mr-2 h-4 w-4" />
                       {tf("add")}
                     </Button>
-                    <Link href={`/product/${product.id}`} className="flex-1">
+                    <Link href={productHref(product.id)} className="flex-1">
                       <Button
                         variant="outline"
                         className="w-full rounded-full border-servido-200 text-servido-900 hover:bg-servido-50"

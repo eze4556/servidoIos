@@ -25,3 +25,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# android / capacitor
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+# Ruta del SDK, propia de cada máquina.
+android/local.properties
+# Assets web copiados por "cap sync": salida de build, no fuente.
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+# Carpeta temporal del build del APK (ver scripts/build-capacitor.mjs).
+.capacitor-stash/
+
+# firma de android: nunca commitear
+# Perder el keystore impide publicar actualizaciones de la app, y filtrarlo
+# permite firmar builds falsos en tu nombre.
+*.jks
+*.keystore
+android/keystore.properties

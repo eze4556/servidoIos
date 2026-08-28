@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { SimpleImage } from "@/components/ui/simple-image"
 import { ArrowUpRight } from "lucide-react"
+import { categoryHref } from "@/lib/routes"
 
 interface HomeCategoryCardProps {
   id: string
@@ -22,7 +23,7 @@ export function HomeCategoryCard({
   if (variant === "tile") {
     return (
       <Link
-        href={`/category/${id}`}
+        href={categoryHref(id)}
         className="group relative block aspect-[4/3] overflow-hidden rounded-2xl shadow-[0_16px_36px_-20px_rgba(46,16,101,0.35)] ring-1 ring-servido-950/10 transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.4)] hover:ring-servido-800/25 lg:rounded-[1.5rem]"
       >
         <SimpleImage
@@ -43,7 +44,7 @@ export function HomeCategoryCard({
 
   return (
     <Link
-      href={`/category/${id}`}
+      href={categoryHref(id)}
       className="group flex flex-col items-center transition-all duration-300 hover:-translate-y-1"
     >
       <div className="relative mb-3 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100 transition-all duration-300 group-hover:shadow-xl group-hover:ring-purple-200 sm:h-24 sm:w-24">

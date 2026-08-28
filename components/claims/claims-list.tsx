@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { hoursLeftToRespond } from "@/lib/claims"
 import { isClaimOpen, type ClaimDoc, type ClaimStatus } from "@/types/claims"
 import { ClaimStatusBadge } from "@/components/claims/claim-status-badge"
+import { claimHref } from "@/lib/routes"
 
 export function ClaimsList({
   claims,
@@ -82,7 +83,7 @@ export function ClaimsList({
                   ) : null}
                 </div>
                 <Button asChild variant="outline" className="rounded-full">
-                  <Link href={`/dashboard/claims/${claim.id}`}>{t("actions.view")}</Link>
+                  <Link href={claimHref(claim.id)}>{t("actions.view")}</Link>
                 </Button>
               </article>
             )

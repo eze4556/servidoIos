@@ -14,6 +14,7 @@ import {
   updateAppointmentStatus,
 } from "@/lib/service-appointments"
 import type { ServiceAppointment } from "@/types/service-appointments"
+import { productHref } from "@/lib/routes"
 
 type BuyerAppointmentsPanelProps = {
   buyerId: string
@@ -92,7 +93,7 @@ export function BuyerAppointmentsPanel({ buyerId }: BuyerAppointmentsPanelProps)
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">
-                  <Link href={`/product/${appt.serviceId}`}>{t("viewService")}</Link>
+                  <Link href={productHref(appt.serviceId)}>{t("viewService")}</Link>
                 </Button>
                 {(appt.status === "pending" || appt.status === "confirmed") && (
                   <Button

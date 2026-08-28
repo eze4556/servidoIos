@@ -39,13 +39,23 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   }
 
   if (isAuthRoute) {
-    return <main className="flex-1">{children}</main>
+    return (
+      <main className="flex-1 pt-[env(safe-area-inset-top)] lg:pt-0">{children}</main>
+    )
   }
+
+  // Las rutas sin header mobile quedarían debajo de la barra de estado en la
+  // app nativa (edge-to-edge). Las de mensajería resuelven su propio inset.
+  const needsTopInset = !showMobileHeader && !isMessagingRoute
 
   return (
     <ChatUnreadProvider>
       <>
-        <div className="flex min-h-full max-w-[100vw] flex-1 flex-col overflow-x-hidden">
+        <div
+          className={`flex min-h-full max-w-[100vw] flex-1 flex-col overflow-x-hidden ${
+            needsTopInset ? "pt-[env(safe-area-inset-top)] lg:pt-0" : ""
+          }`}
+        >
           {showMobileHeader && <MobileAppHeader />}
           {!isChatThread && (
             <div className="hidden lg:block">

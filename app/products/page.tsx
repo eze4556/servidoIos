@@ -316,12 +316,12 @@ export default function ProductsPage() {
           <Button
             variant="outline"
             onClick={() => setMobileFiltersOpen(true)}
-            className="w-full rounded-xl border-purple-200 text-purple-800 hover:bg-purple-50"
+            className="w-full rounded-full border-servido-200 text-servido-900 hover:bg-servido-50"
           >
             <Filter className="mr-2 h-4 w-4" />
             {tp("filtersSort")}
             {activeFilterCount > 0 && (
-              <span className="ml-2 rounded-full bg-purple-700 px-2 py-0.5 text-xs text-white">
+              <span className="ml-2 rounded-full bg-servido-800 px-2 py-0.5 text-xs text-white">
                 {activeFilterCount}
               </span>
             )}
@@ -330,20 +330,25 @@ export default function ProductsPage() {
 
         <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
           <SheetContent side="left" className="flex w-full max-w-sm flex-col border-r-0 p-0 sm:max-w-md">
-            <div className="bg-gradient-to-br from-purple-900 via-purple-800 to-violet-900 px-5 py-5 text-white">
-              <SheetTitle className="text-left text-lg font-bold">{tp("filters")}</SheetTitle>
-              <p className="mt-1 text-sm text-purple-200">
-                {loading
-                  ? tp("loadingCatalog")
-                  : `${filteredProducts.length} ${resultsWord}`}
-              </p>
+            <div className="relative overflow-hidden bg-servido-950 px-5 py-6 text-white">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_120%_at_0%_0%,rgba(255,212,0,0.14),transparent_50%)]" />
+              <div className="relative">
+                <SheetTitle className="text-left text-lg font-semibold tracking-tight text-white">
+                  {tp("filters")}
+                </SheetTitle>
+                <p className="mt-1 text-sm text-white/70">
+                  {loading
+                    ? tp("loadingCatalog")
+                    : `${filteredProducts.length} ${resultsWord}`}
+                </p>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto p-5">
               <ProductsFiltersPanel {...filterPanelProps} />
             </div>
-            <div className="border-t border-gray-100 bg-white p-4">
+            <div className="border-t border-servido-950/5 bg-white p-4">
               <Button
-                className="w-full rounded-full bg-purple-700 hover:bg-purple-800"
+                className="w-full rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
                 onClick={() => setMobileFiltersOpen(false)}
               >
                 {tp("seeResults", { count: filteredProducts.length, label: resultsWord })}
@@ -354,8 +359,8 @@ export default function ProductsPage() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr]">
           <aside className="hidden lg:block">
-            <div className="sticky top-36 overflow-hidden rounded-2xl bg-white shadow-lg shadow-purple-900/5 ring-1 ring-gray-100">
-              <div className="border-b border-purple-100 bg-gradient-to-r from-purple-50 to-violet-50 px-5 py-4">
+            <div className="sticky top-36 overflow-hidden rounded-2xl bg-white shadow-[0_16px_40px_-28px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 lg:rounded-3xl">
+              <div className="border-b border-servido-950/5 bg-gradient-to-r from-servido-50 to-purple-50/60 px-5 py-4">
                 <ProductsFiltersPanelHeader activeCount={activeFilterCount} />
               </div>
               <div className="max-h-[calc(100vh-12rem)] overflow-y-auto p-4">
@@ -368,7 +373,7 @@ export default function ProductsPage() {
             {!loading && !error && filteredProducts.length > 0 && (
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-semibold text-purple-800">
+                  <span className="inline-flex items-center rounded-full bg-servido-50 px-3 py-1 text-sm font-semibold text-servido-800">
                     {resultLabel}
                   </span>
                   {activeFilters.map((chip) => (
@@ -376,14 +381,14 @@ export default function ProductsPage() {
                       key={chip.label}
                       type="button"
                       onClick={chip.onRemove}
-                      className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-600 shadow-sm ring-1 ring-gray-200 transition-colors hover:bg-purple-50 hover:text-purple-800"
+                      className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm ring-1 ring-servido-950/10 transition-colors hover:bg-servido-50 hover:text-servido-900"
                     >
                       {chip.label}
-                      <span className="text-gray-400">×</span>
+                      <span className="text-slate-400">×</span>
                     </button>
                   ))}
                 </div>
-                <p className="hidden text-xs text-gray-400 lg:block">{tp("refreshHint")}</p>
+                <p className="hidden text-xs text-slate-400 lg:block">{tp("refreshHint")}</p>
               </div>
             )}
 
@@ -392,28 +397,32 @@ export default function ProductsPage() {
                 {Array.from({ length: 12 }).map((_, i) => (
                   <div
                     key={i}
-                    className="overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100"
+                    className="overflow-hidden rounded-2xl bg-white shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 lg:rounded-3xl"
                   >
-                    <div className="aspect-square animate-pulse bg-gray-200" />
+                    <div className="aspect-square animate-pulse bg-slate-200" />
                     <div className="space-y-2 p-4">
-                      <div className="h-4 animate-pulse rounded bg-gray-200" />
-                      <div className="h-5 w-2/3 animate-pulse rounded bg-gray-200" />
+                      <div className="h-4 animate-pulse rounded bg-slate-200" />
+                      <div className="h-5 w-2/3 animate-pulse rounded bg-slate-200" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : error ? (
-              <div className="rounded-2xl bg-white py-16 text-center shadow-sm ring-1 ring-gray-100">
-                <Frown className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-                <p className="text-lg text-gray-600">{error}</p>
+              <div className="rounded-3xl bg-white py-16 text-center shadow-[0_16px_40px_-28px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5">
+                <span className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-servido-50 text-servido-300">
+                  <Frown className="h-8 w-8" />
+                </span>
+                <p className="text-lg text-slate-600">{error}</p>
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="rounded-2xl bg-white py-16 text-center shadow-sm ring-1 ring-gray-100">
-                <Frown className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-                <p className="text-lg text-gray-600">{tp("noResultsFilters")}</p>
+              <div className="rounded-3xl bg-white py-16 text-center shadow-[0_16px_40px_-28px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5">
+                <span className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-servido-50 text-servido-300">
+                  <Frown className="h-8 w-8" />
+                </span>
+                <p className="text-lg text-slate-600">{tp("noResultsFilters")}</p>
                 <Button
                   onClick={handleClearFilters}
-                  className="mt-4 rounded-full bg-purple-700 hover:bg-purple-800"
+                  className="mt-6 rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
                 >
                   {tp("clearFilters")}
                 </Button>
@@ -455,12 +464,12 @@ export default function ProductsPage() {
                       onClick={loadMoreProducts}
                       disabled={loading}
                       variant="outline"
-                      className="rounded-full border-purple-200 px-8 text-purple-800 hover:bg-purple-50"
+                      className="rounded-full border-servido-200 px-8 text-servido-900 hover:bg-servido-50"
                     >
                       {loading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Cargando...
+                          {tp("loadingCatalog")}
                         </>
                       ) : (
                         tp("loadMore")

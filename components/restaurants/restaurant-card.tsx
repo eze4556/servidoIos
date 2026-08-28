@@ -8,6 +8,7 @@ import type { Restaurant } from "@/types/restaurant"
 import { getRestaurantCoverUrl, getRestaurantLogoUrl } from "@/types/restaurant"
 import { getDeliveryModeLabel } from "@/lib/i18n/restaurant-labels"
 import { usePriceFormat } from "@/hooks/use-price-format"
+import { restaurantHref } from "@/lib/routes"
 
 interface RestaurantCardProps {
   restaurant: Restaurant
@@ -23,7 +24,7 @@ export function RestaurantCard({ restaurant, categories = [], minPrice }: Restau
 
   return (
     <Link
-      href={`/restaurantes/${restaurant.id}`}
+      href={restaurantHref(restaurant.id)}
       className="group flex gap-3 overflow-hidden rounded-2xl bg-white p-3 shadow-[0_12px_32px_-20px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 transition-all hover:-translate-y-1 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.35)] sm:block sm:p-0 lg:rounded-3xl"
     >
       <div className="relative h-28 w-32 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-servido-800 to-servido-950 sm:h-36 sm:w-full sm:rounded-none lg:h-40">

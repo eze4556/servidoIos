@@ -44,6 +44,7 @@ import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { LocaleFlagToggle } from "@/components/layout/locale-flag-toggle"
 import { cn } from "@/lib/utils"
+import { categoryHref, restaurantHref, sellerHref } from "@/lib/routes"
 
 interface CategoryItem {
   id: string
@@ -100,8 +101,8 @@ export function Header() {
   const storeHref =
     currentUser?.role === "seller"
       ? currentUser.businessType === "restaurant" && currentUser.restaurantId
-        ? `/restaurantes/${currentUser.restaurantId}`
-        : `/seller/${currentUser.firebaseUser.uid}`
+        ? restaurantHref(currentUser.restaurantId)
+        : sellerHref(currentUser.firebaseUser.uid)
       : null
 
   return (
@@ -149,7 +150,7 @@ export function Header() {
                 ) : (
                   categories.map((category) => (
                     <DropdownMenuItem key={category.id} asChild className="rounded-xl px-3 py-2">
-                      <Link href={`/category/${category.id}`}>{category.name}</Link>
+                      <Link href={categoryHref(category.id)}>{category.name}</Link>
                     </DropdownMenuItem>
                   ))
                 )}

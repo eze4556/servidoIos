@@ -25,6 +25,7 @@ import { describeApiError, translateClientError } from '@/lib/i18n/translate-cli
 import type { SubscriptionPricing, SubscriptionPricingHistory } from '@/types/subscription'
 import { AdminPager } from '@/components/admin/admin-pager'
 import { usePagedList } from '@/hooks/use-paged-list'
+import { apiUrl } from "@/lib/api-base"
 
 interface SubscriptionPricingManagerProps {
   currentUserId: string
@@ -60,7 +61,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
   const fetchCurrentPricing = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/admin/subscription-pricing')
+      const response = await fetch(apiUrl('/api/admin/subscription-pricing'))
       if (response.ok) {
         const data = await response.json()
         setCurrentPricing(data)
@@ -81,7 +82,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
 
   const fetchPricingHistory = async () => {
     try {
-      const response = await fetch('/api/admin/subscription-pricing/history')
+      const response = await fetch(apiUrl('/api/admin/subscription-pricing/history'))
       if (response.ok) {
         const data = await response.json()
         setPricingHistory(data)
@@ -138,7 +139,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
       
       if (isCreating) {
         // Crear nuevo precio
-        const response = await fetch('/api/admin/subscription-pricing', {
+        const response = await fetch(apiUrl('/api/admin/subscription-pricing'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -166,7 +167,7 @@ export default function SubscriptionPricingManager({ currentUserId }: Subscripti
         }
       } else if (isEditing && currentPricing) {
         // Actualizar precio existente
-        const response = await fetch('/api/admin/subscription-pricing', {
+        const response = await fetch(apiUrl('/api/admin/subscription-pricing'), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'

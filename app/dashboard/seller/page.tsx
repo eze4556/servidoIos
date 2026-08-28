@@ -98,6 +98,7 @@ import { getSellerShipments, updateShippingStatus, initializeShipping } from "@/
 // Los iconos ya están importados arriba
 import * as XLSX from "xlsx"
 import { getDashboardProductImage } from "@/lib/image-utils"
+import { sellerHref } from "@/lib/routes"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { SubscriptionNotification } from "@/components/subscription-notification"
 import { SellerBusinessLocationCard } from "@/components/dashboard/seller-business-location-card"
@@ -112,6 +113,7 @@ import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
 import { SellerAgendaPanel } from "@/components/dashboard/seller/seller-agenda-panel"
 import { SellerResellerProgramPanel } from "@/components/seller/seller-reseller-program-panel"
 import type { ServiceSchedule } from "@/types/service-appointments"
+import { apiUrl } from "@/lib/api-base"
 
 interface UserProfile {
   uid: string
@@ -964,7 +966,7 @@ export default function SellerDashboardPage() {
       case "preparing":
         return "bg-blue-100 text-blue-800"
       case "shipped":
-        return "bg-purple-100 text-purple-800"
+        return "bg-servido-50 text-servido-800"
       case "delivered":
         return "bg-green-100 text-green-800"
       case "cancelled":
@@ -1111,7 +1113,7 @@ export default function SellerDashboardPage() {
   const fetchSubscriptionPrice = async () => {
     setLoadingSubscriptionPrice(true);
     try {
-      const response = await fetch('/api/subscription/active-price');
+      const response = await fetch(apiUrl('/api/subscription/active-price'));
       const data = await response.json();
       
       if (data.price) {
@@ -2384,7 +2386,7 @@ export default function SellerDashboardPage() {
   if (authLoading || (!currentUser && !authLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/40">
-        <Loader2 className="h-12 w-12 animate-spin text-purple-700" />
+        <Loader2 className="h-12 w-12 animate-spin text-servido-800" />
       </div>
     )
   }
@@ -2407,7 +2409,7 @@ export default function SellerDashboardPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-purple-50/40">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
+        <Loader2 className="h-8 w-8 animate-spin text-servido-800" />
       </div>
     )
   }
@@ -2507,7 +2509,7 @@ export default function SellerDashboardPage() {
   }
 
   const sellerStoreHref = currentUser?.firebaseUser?.uid
-    ? `/seller/${currentUser.firebaseUser.uid}`
+    ? sellerHref(currentUser.firebaseUser.uid)
     : undefined
 
   return (
@@ -2551,7 +2553,7 @@ export default function SellerDashboardPage() {
               {!mercadoPagoConnected && (
                 <Alert
                   variant={mercadoPagoTokenExpired ? "destructive" : "default"}
-                  className="rounded-2xl border-purple-200 bg-purple-50"
+                  className="rounded-2xl border-servido-200 bg-servido-50"
                 >
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle>
@@ -2565,7 +2567,7 @@ export default function SellerDashboardPage() {
                         onClick={handleConnectMercadoPago}
                         disabled={connectingMercadoPago}
                         size="sm"
-                        className="rounded-full bg-purple-900 text-white hover:bg-purple-800"
+                        className="rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
                       >
                         {connectingMercadoPago ? t("mercadoPago.connecting") : mercadoPagoActionLabel}
                       </Button>
@@ -2591,7 +2593,7 @@ export default function SellerDashboardPage() {
                     <p className="text-2xl font-bold text-gray-900">{shippingStats.pending}</p>
                     <p className="text-sm text-gray-500">{t("overview.pending")}</p>
                   </div>
-                  <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-4 text-center">
+                  <div className="rounded-xl border border-servido-100 bg-servido-50/50 p-4 text-center">
                     <p className="text-2xl font-bold text-gray-900">{shippingStats.shipped}</p>
                     <p className="text-sm text-gray-500">{t("overview.shipped")}</p>
                   </div>
@@ -2606,7 +2608,7 @@ export default function SellerDashboardPage() {
 
           {/* Products Tab - Updated to show media */}
           {activeTab === "products" && (
-            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+            <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
               <CardHeader>
                 <CardTitle>{t("products.title")}</CardTitle>
                 <CardDescription>{t("products.description")}</CardDescription>
@@ -2614,7 +2616,7 @@ export default function SellerDashboardPage() {
               <CardContent>
                 {loadingData ? (
                   <div className="flex justify-center items-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
+                    <Loader2 className="h-8 w-8 animate-spin text-servido-800" />
                   </div>
                 ) : myProducts.length === 0 ? (
                   <div className="text-center py-10">
@@ -2725,7 +2727,7 @@ export default function SellerDashboardPage() {
 
           {/* Add/Edit Product Tab - Updated with new media upload */}
           {activeTab === "addProduct" && (
-            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+            <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
               <CardHeader>
                 <CardTitle>{isEditing ? t("productForm.editTitle") : t("productForm.addTitle")}</CardTitle>
                 <CardDescription>
@@ -2793,8 +2795,8 @@ export default function SellerDashboardPage() {
                             file:mr-4 file:py-2 file:px-4
                             file:rounded-md file:border-0
                             file:text-sm file:font-semibold
-                            file:bg-orange-100 file:text-orange-700
-                            hover:file:bg-orange-200
+                            file:bg-servido-50 file:text-servido-800
+                            hover:file:bg-servido-100
                             cursor-pointer"
                           disabled={validatingImages}
                         />
@@ -2843,7 +2845,7 @@ export default function SellerDashboardPage() {
 
                         {/* Loading States */}
                         {validatingImages && (
-                        <div className="flex items-center gap-2 text-purple-700">
+                        <div className="flex items-center gap-2 text-servido-800">
                           <Loader2 className="h-4 w-4 animate-spin" />
                             <span className="text-sm">{t("media.validating")}</span>
                         </div>
@@ -2976,7 +2978,7 @@ export default function SellerDashboardPage() {
                       <Label htmlFor="freeShipping" className="text-sm">{t("productForm.freeShipping")}</Label>
                     </div>
                     {!productIsService && (
-                      <div className="mt-4 space-y-2 rounded-xl border border-purple-100 bg-purple-50/40 p-4">
+                      <div className="mt-4 space-y-2 rounded-xl border border-servido-100 bg-servido-50/40 p-4">
                         <div className="flex items-start gap-3">
                           <Checkbox
                             id="allowResellerShare"
@@ -3034,7 +3036,7 @@ export default function SellerDashboardPage() {
 
           {/* Add/Edit Service Tab - Updated with new media upload */}
           {activeTab === "addService" && (
-            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+            <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
               <CardHeader>
                 <CardTitle>{isEditing ? t("serviceForm.editTitle") : t("serviceForm.addTitle")}</CardTitle>
                 <CardDescription>
@@ -3093,7 +3095,7 @@ export default function SellerDashboardPage() {
                         {/* Drag and Drop Area */}
                         <div
                           className={`flex flex-col items-center gap-4 p-6 border-2 border-dashed rounded-lg transition-colors
-                            ${isDraggingOver ? "border-orange-500 bg-orange-50" : "border-gray-300 hover:border-orange-400"}
+                            ${isDraggingOver ? "border-servido-500 bg-servido-50" : "border-gray-300 hover:border-servido-400"}
                             ${validatingImages ? "opacity-50" : ""}`}
                           onDragEnter={handleDragEnter}
                           onDragLeave={handleDragLeave}
@@ -3121,14 +3123,14 @@ export default function SellerDashboardPage() {
                               file:mr-4 file:py-2 file:px-4
                               file:rounded-md file:border-0
                               file:text-sm file:font-semibold
-                              file:bg-orange-100 file:text-orange-700
-                              hover:file:bg-orange-200
+                              file:bg-servido-50 file:text-servido-800
+                              hover:file:bg-servido-100
                               cursor-pointer"
                             disabled={validatingImages}
                           />
 
                           {validatingImages && (
-                            <div className="flex items-center gap-2 text-purple-700">
+                            <div className="flex items-center gap-2 text-servido-800">
                               <Loader2 className="h-4 w-4 animate-spin" />
                               <span className="text-sm">{t("media.validating")}</span>
                             </div>
@@ -3226,7 +3228,7 @@ export default function SellerDashboardPage() {
                         )}
 
                         {uploadingMedia && (
-                          <div className="flex items-center gap-2 text-purple-700">
+                          <div className="flex items-center gap-2 text-servido-800">
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span className="text-sm">{t("media.uploading")}</span>
                           </div>
@@ -3331,7 +3333,7 @@ export default function SellerDashboardPage() {
 
           {/* Chat functionality temporarily disabled */}
           {/* {activeTab === "chats" && (
-            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+            <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
               <CardHeader>
                 <CardTitle>Mis Chats</CardTitle>
                 <CardDescription>Comunícate con tus clientes y resuelve sus dudas.</CardDescription>
@@ -3348,7 +3350,7 @@ export default function SellerDashboardPage() {
 
 
           {activeTab === "profile" && (
-            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+            <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
               <CardHeader>
                 <CardTitle>{t("profile.cardTitle")}</CardTitle>
                 <CardDescription>{t("profile.cardDescription")}</CardDescription>
@@ -3381,14 +3383,14 @@ export default function SellerDashboardPage() {
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-md file:border-0
                         file:text-sm file:font-semibold
-                        file:bg-orange-100 file:text-orange-700
-                        hover:file:bg-orange-200
+                        file:bg-servido-50 file:text-servido-800
+                        hover:file:bg-servido-100
                         cursor-pointer"
                     />
                     <Button
                       onClick={handleSaveProfileImage}
                       disabled={!profileImageFile || uploadingProfileImage}
-                      className="bg-orange-600 text-white hover:bg-orange-700"
+                      className="rounded-full bg-servido-950 text-white hover:bg-servido-800"
                     >
                       {uploadingProfileImage ? t("profile.uploadingPhoto") : t("profile.savePhoto")}
                     </Button>
@@ -3472,7 +3474,7 @@ export default function SellerDashboardPage() {
                           type="button"
                           onClick={handleConnectMercadoPago}
                           disabled={connectingMercadoPago}
-                          className="bg-purple-900 hover:bg-purple-800"
+                          className="rounded-full bg-servido-950 text-white hover:bg-servido-800"
                         >
                           {connectingMercadoPago ? t("mercadoPago.connecting") : mercadoPagoActionLabel}
                         </Button>
@@ -3509,7 +3511,7 @@ export default function SellerDashboardPage() {
                              </AlertDescription>
                            </Alert>
                            
-                           <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+                           <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
                              <CardHeader>
                                <CardTitle>{t("profile.statusCardTitle")}</CardTitle>
                                <CardDescription>
@@ -3554,7 +3556,7 @@ export default function SellerDashboardPage() {
                                    </div>
                                    <Button
                                      type="button"
-                                     className="w-full bg-purple-700 text-white hover:bg-purple-800"
+                                     className="w-full rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
                                      disabled={subscribing}
                                      onClick={handleSubscribe}
                                    >
@@ -3575,7 +3577,7 @@ export default function SellerDashboardPage() {
                     </AlertDescription>
                   </Alert>
                            
-                <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+                <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
                   <CardHeader>
                                <CardTitle>{t("profile.marketplaceTitle")}</CardTitle>
                     <CardDescription>
@@ -3606,7 +3608,7 @@ export default function SellerDashboardPage() {
                       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-gray-700">{t("profile.monthlyPrice")}</span>
-                          <span className="text-lg font-bold text-purple-700">
+                          <span className="text-lg font-bold text-servido-800">
                             {loadingSubscriptionPrice ? (
                               <span className="flex items-center gap-2">
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -3627,7 +3629,7 @@ export default function SellerDashboardPage() {
                       <Button
                         onClick={handleSubscribe}
                         disabled={subscribing}
-                                 className="w-full bg-purple-700 text-white hover:bg-purple-800"
+                                 className="w-full rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
                       >
                                   {subscribing ? t("subscription.redirecting") : subscriptionActionLabel}
                       </Button>
@@ -3644,7 +3646,7 @@ export default function SellerDashboardPage() {
                       
                       <PriceFormatToggle onFormatChange={updatePriceFormat} />
                       
-                      <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+                      <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
                         <CardHeader>
                           <CardTitle>{t("profile.otherSettingsTitle")}</CardTitle>
                           <CardDescription>
@@ -3666,7 +3668,7 @@ export default function SellerDashboardPage() {
           {/* Earnings Tab */}
           {activeTab === "earnings" && (
             <div className="space-y-6">
-              <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+              <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
                 <CardHeader>
                   <CardTitle>{t("earnings.title")}</CardTitle>
                   <CardDescription>{t("earnings.description")}</CardDescription>
@@ -3675,7 +3677,7 @@ export default function SellerDashboardPage() {
 
               {/* Resumen de ventas y pagos */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+                <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium">{t("earnings.statTotal")}</CardTitle>
                     <DollarSign className="w-4 h-4 text-muted-foreground" />
@@ -3687,7 +3689,7 @@ export default function SellerDashboardPage() {
                     <p className="text-xs text-muted-foreground">{t("earnings.statTotalHint")}</p>
               </CardContent>
             </Card>
-                <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+                <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium">{t("earnings.statPending")}</CardTitle>
                     <Clock className="w-4 h-4 text-muted-foreground" />
@@ -3699,7 +3701,7 @@ export default function SellerDashboardPage() {
                     <p className="text-xs text-muted-foreground">{t("earnings.statPendingHint")}</p>
                   </CardContent>
                 </Card>
-                <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+                <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
                   <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                     <CardTitle className="text-sm font-medium">{t("earnings.statPaid")}</CardTitle>
                     <CheckCircle className="w-4 h-4 text-muted-foreground" />
@@ -3714,7 +3716,7 @@ export default function SellerDashboardPage() {
               </div>
 
               
-              <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+              <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
                 <CardHeader>
                   <CardTitle>{t("earnings.filtersTitle")}</CardTitle>
                   <CardDescription>{t("earnings.filtersDescription")}</CardDescription>
@@ -3762,7 +3764,7 @@ export default function SellerDashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+              <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
                 <CardHeader>
                   <CardTitle>{t("earnings.salesTableTitle")}</CardTitle>
                   <CardDescription>{t("earnings.salesTableDescription")}</CardDescription>
@@ -3770,7 +3772,7 @@ export default function SellerDashboardPage() {
                 <CardContent>
                   {loadingEarnings ? (
                     <div className="flex justify-center items-center py-10">
-                      <Loader2 className="h-8 w-8 animate-spin text-purple-700" />
+                      <Loader2 className="h-8 w-8 animate-spin text-servido-800" />
                     </div>
                   ) : visibleSellerSales.length === 0 ? (
                     <div className="text-center py-10 text-gray-500">
@@ -3842,7 +3844,7 @@ export default function SellerDashboardPage() {
           )}
 
           {/* {activeTab === "coupons" && (
-            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+            <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
               <CardHeader>
                 <CardTitle>Gestionar Cupones de Descuento</CardTitle>
                 <CardDescription>Asocia cupones a tus productos y define el período de validez.</CardDescription>
@@ -4023,7 +4025,7 @@ export default function SellerDashboardPage() {
 
           {/* Create Coupons Tab */}
           {activeTab === "create-coupons" && (
-            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+            <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
               <CardHeader>
                 <CardTitle>{t("coupons.title")}</CardTitle>
                 <CardDescription>{t("coupons.description")}</CardDescription>
@@ -4300,7 +4302,7 @@ export default function SellerDashboardPage() {
           )}
 
           {activeTab === "shipping" && (
-            <Card className="rounded-2xl border-purple-100/80 shadow-sm shadow-purple-900/5">
+            <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
               <CardHeader>
                 <CardTitle>{t("shipping.title")}</CardTitle>
                 <CardDescription>{t("shipping.description")}</CardDescription>

@@ -2,7 +2,9 @@
 
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
+import { useRouteId } from "@/hooks/use-route-id"
+import { productHref } from "@/lib/routes"
 import { useLocale, useTranslations } from "next-intl"
 import Link from "next/link"
 import Image from "next/image"
@@ -80,13 +82,12 @@ interface Message {
   listingPrice?: number | null
 }
 
-export default function ChatPage() {
+export function ChatThread() {
   const t = useTranslations("chat")
   const locale = useLocale()
-  const params = useParams()
   const router = useRouter()
   const { currentUser, authLoading } = useAuth()
-  const chatId = params.chatId as string
+  const chatId = useRouteId("chatId") ?? ""
 
   const [chat, setChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -418,7 +419,7 @@ export default function ChatPage() {
 
   if (authLoading || (loading && !chat)) {
     return (
-      <div className="flex h-[calc(100dvh-6.5rem)] items-center justify-center bg-[#f0f2f5] lg:h-[100dvh]">
+      <div className="flex h-[calc(100dvh-6.5rem)] items-center justify-center bg-[#f5f3fa] lg:h-[100dvh]">
         <Loader2 className="h-8 w-8 animate-spin text-servido-800" />
       </div>
     )
@@ -426,7 +427,7 @@ export default function ChatPage() {
 
   if ((error && !chat) || !currentUser) {
     return (
-      <div className="flex h-[calc(100dvh-6.5rem)] flex-col items-center justify-center bg-[#f0f2f5] p-4 lg:h-[100dvh]">
+      <div className="flex h-[calc(100dvh-6.5rem)] flex-col items-center justify-center bg-[#f5f3fa] p-4 lg:h-[100dvh]">
         <Alert variant="destructive" className="max-w-md">
           <Info className="h-4 w-4" />
           <AlertTitle>{t("alertTitle")}</AlertTitle>
@@ -458,8 +459,8 @@ export default function ChatPage() {
   const otherLastReadMs = getOtherLastReadMs(chat.lastReadAt, otherId)
 
   return (
-    <div className="fixed inset-x-0 top-0 bottom-[6.5rem] z-40 flex flex-col bg-[#ece5dd] lg:inset-0">
-      <header className="flex shrink-0 items-center gap-2 border-b border-black/5 bg-[#075e54] px-2 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] text-white">
+    <div className="fixed inset-x-0 top-0 bottom-[6.5rem] z-40 flex flex-col bg-[#f5f3fa] lg:inset-0">
+      <header className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-servido-950 px-2 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] text-white">
         <button
           type="button"
           onClick={() => router.push("/mensajes")}
@@ -480,7 +481,7 @@ export default function ChatPage() {
           </Avatar>
           )}
           {online && !isServido && (
-            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#075e54] bg-emerald-400" />
+            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-servido-950 bg-emerald-400" />
           )}
         </div>
         <div className="min-w-0 flex-1">
@@ -540,7 +541,7 @@ export default function ChatPage() {
           const isListing = message.messageType === "listing" && message.listingId
           const listingHref =
             message.listingKind === "product"
-              ? `/product/${message.listingId}`
+              ? productHref(message.listingId!)
               : message.listingKind === "story"
                 ? `/historias`
                 : null
@@ -549,8 +550,8 @@ export default function ChatPage() {
               <div
                 className={`max-w-[78%] px-3 py-2 shadow-sm ${
                   mine
-                    ? "rounded-2xl rounded-br-md bg-[#dcf8c6] text-gray-900"
-                    : "rounded-2xl rounded-bl-md bg-white text-gray-900"
+                    ? "rounded-2xl rounded-br-md bg-servido-100 text-servido-950"
+                    : "rounded-2xl rounded-bl-md bg-white text-servido-950"
                 }`}
               >
                 {isListing && message.listingKind === "product" && message.listingId ? (
@@ -605,7 +606,7 @@ export default function ChatPage() {
                     )}
                   </>
                 )}
-                <p className="mt-0.5 flex items-center justify-end gap-1 text-[10px] text-gray-500">
+                <p className="mt-0.5 flex items-center justify-end gap-1 text-[10px] text-slate-500">
                   <span>
                     {message.timestamp?.toDate
                       ? message.timestamp.toDate().toLocaleTimeString([], {
@@ -616,7 +617,7 @@ export default function ChatPage() {
                   </span>
                   {mine &&
                     (seen ? (
-                      <span className="inline-flex items-center gap-0.5 text-[#53bdeb]" title={t("seen")}>
+                      <span className="inline-flex items-center gap-0.5 text-servido-700" title={t("seen")}>
                         <CheckCheck className="h-3.5 w-3.5" />
                         <span className="sr-only">{t("seen")}</span>
                       </span>
@@ -638,14 +639,14 @@ export default function ChatPage() {
       {!isServido && (
       <form
         onSubmit={(e) => void handleSendMessage(e)}
-        className="flex shrink-0 items-end gap-2 border-t border-black/5 bg-[#f0f2f5] px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2"
+        className="flex shrink-0 items-end gap-2 border-t border-servido-950/5 bg-white/90 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-sm"
       >
         {canShareProducts && (
           <button
             type="button"
             disabled={sharingListing || sending}
             onClick={() => void handleShareListing()}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-servido-800 shadow-sm disabled:opacity-40"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-servido-50 text-servido-800 shadow-sm ring-1 ring-servido-950/5 disabled:opacity-40"
             aria-label={t("shareListingAria")}
             title={t("shareListingAria")}
           >
@@ -663,14 +664,14 @@ export default function ChatPage() {
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder={t("messagePlaceholder")}
           disabled={sending}
-          className="min-h-11 min-w-0 flex-1 rounded-full border-0 bg-white px-4 text-[15px] text-gray-900 shadow-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-servido-700/30"
+          className="min-h-11 min-w-0 flex-1 rounded-full border-0 bg-slate-100 px-4 text-[15px] text-servido-950 shadow-inner outline-none ring-1 ring-servido-950/5 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-servido-700/30"
           enterKeyHint="send"
           autoComplete="off"
         />
         <button
           type="submit"
           disabled={sending || !newMessage.trim()}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#075e54] text-white disabled:opacity-40"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-servido-gold text-servido-950 shadow-md disabled:opacity-40"
           aria-label={t("sendAria")}
         >
           {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}

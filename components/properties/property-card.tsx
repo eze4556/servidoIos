@@ -7,6 +7,7 @@ import { Bath, BedDouble, MapPin, Maximize2, Play } from "lucide-react"
 import { formatPropertyPrice } from "@/lib/properties/format-property-price"
 import type { PropertyListing } from "@/types/property-listing"
 import { cn } from "@/lib/utils"
+import { propertyHref } from "@/lib/routes"
 
 interface PropertyCardProps {
   listing: PropertyListing
@@ -34,7 +35,7 @@ export function PropertyCard({ listing, selected = false, onHover }: PropertyCar
       onMouseEnter={onHover}
     >
       <Link
-        href={`/propiedades/${listing.id}`}
+        href={propertyHref(listing.id)}
         className="flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-servido-600 sm:flex-row"
       >
         <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-slate-200 sm:aspect-auto sm:w-[42%] sm:min-h-[188px] lg:w-[260px]">

@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { recordStoryView, softDeleteStory } from "@/lib/stories"
 import { replyToStory, STORY_REPLY_ERROR, CHAT_CONTENT_BLOCKED } from "@/lib/story-chat"
 import { formatStoryRelativeTime } from "@/lib/story-time"
+import { chatHref, resolveStoredHref } from "@/lib/routes"
 import { FollowButton } from "@/components/follows/follow-button"
 import { STORY_VIEW_MS, type StoryAuthorGroup } from "@/types/story"
 
@@ -278,7 +279,7 @@ export function StoryViewer({
     if (!story?.linkUrl || navigatingOffer) return
     setNavigatingOffer(true)
     setPaused(true)
-    router.push(story.linkUrl)
+    router.push(resolveStoredHref(story.linkUrl))
   }
 
   const openDeleteConfirm = () => {
@@ -575,7 +576,7 @@ export function StoryViewer({
                       {t("replySent")}
                     </span>
                     <Link
-                      href={`/chat/${replySentChatId}`}
+                      href={chatHref(replySentChatId)}
                       className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-servido-900"
                       onClick={onClose}
                     >

@@ -41,6 +41,10 @@ export function buildReferralPayloadForProducts(
   return Object.keys(out).length > 0 ? out : undefined
 }
 
+/**
+ * Usa el path de la web a propósito, incluso en la app: este link se comparte
+ * afuera y tiene que abrirse en cualquier navegador y generar preview.
+ */
 export function productUrlWithRef(origin: string, productId: string, code: string): string {
   const url = new URL(`${origin.replace(/\/$/, "")}/product/${productId}`)
   url.searchParams.set("ref", code)

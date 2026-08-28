@@ -30,6 +30,7 @@ import { useLocation } from "@/contexts/location-context"
 import { db } from "@/lib/firebase"
 import { collection, getDocs } from "firebase/firestore"
 import { getSearchResultImage } from "@/lib/image-utils"
+import { productHref, restaurantHref, sellerHref } from "@/lib/routes"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { UserGreeting } from "@/components/layout/user-greeting"
 import { NotificationBell } from "@/components/notifications/notification-bell"
@@ -152,7 +153,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
     <>
       <div
         ref={headerRef}
-        className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-gradient-to-br from-servido-950 via-servido-800 to-servido-700 px-4 pb-3 pt-3 shadow-lg shadow-servido-950/50 lg:hidden"
+        className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-gradient-to-br from-servido-950 via-servido-800 to-servido-700 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-lg shadow-servido-950/50 lg:hidden"
       >
         <div className="flex items-center justify-between gap-2">
           <Link
@@ -221,7 +222,7 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                   {searchResults.map((product) => (
                     <Link
                       key={product.id}
-                      href={`/product/${product.id}`}
+                      href={productHref(product.id)}
                       className="flex items-center gap-3 px-3 py-2.5 hover:bg-purple-50"
                       onClick={() => setShowSearchResults(false)}
                     >
@@ -310,8 +311,8 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                         {
                           href:
                             currentUser.businessType === "restaurant" && currentUser.restaurantId
-                              ? `/restaurantes/${currentUser.restaurantId}`
-                              : `/seller/${currentUser.firebaseUser.uid}`,
+                              ? restaurantHref(currentUser.restaurantId)
+                              : sellerHref(currentUser.firebaseUser.uid),
                           label: tm("myStore"),
                           icon: Store,
                         },

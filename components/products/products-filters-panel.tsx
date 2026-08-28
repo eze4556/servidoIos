@@ -90,8 +90,8 @@ function FilterChip({
       className={cn(
         "rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-200",
         selected
-          ? "bg-purple-700 text-white shadow-md shadow-purple-200"
-          : "bg-white text-gray-600 ring-1 ring-gray-200 hover:ring-purple-300 hover:text-purple-800"
+          ? "bg-servido-800 text-white shadow-md shadow-servido-950/20"
+          : "bg-white text-slate-600 ring-1 ring-servido-950/10 hover:text-servido-900 hover:ring-servido-300"
       )}
     >
       {label}
@@ -109,9 +109,9 @@ function FilterSection({
   children: ReactNode
 }) {
   return (
-    <section className="rounded-2xl bg-gray-50/80 p-4 ring-1 ring-gray-100">
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+    <section className="rounded-2xl bg-slate-50/80 p-4 ring-1 ring-servido-950/5">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-servido-950">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-servido-50 text-servido-800">
           <Icon className="h-3.5 w-3.5" />
         </span>
         {title}
@@ -193,7 +193,7 @@ export function ProductsFiltersPanel({
           placeholder={tf("searchByName")}
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
-          className="rounded-full border-0 bg-white py-2.5 pl-10 pr-10 shadow-sm ring-1 ring-gray-200 focus-visible:ring-2 focus-visible:ring-purple-300"
+          className="rounded-full border-0 bg-white py-2.5 pl-10 pr-10 shadow-sm ring-1 ring-servido-950/10 focus-visible:ring-2 focus-visible:ring-servido-300"
         />
         {searchTerm && (
           <button
@@ -205,13 +205,13 @@ export function ProductsFiltersPanel({
           </button>
         )}
         {searchTerm !== debouncedSearchTerm && (
-          <Loader2 className="absolute right-9 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-purple-600" />
+          <Loader2 className="absolute right-9 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-servido-800" />
         )}
       </div>
 
       {/* Tipo — segmented control */}
       <FilterSection title={tf("type")} icon={Package}>
-        <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-white p-1 ring-1 ring-gray-200">
+        <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-white p-1 ring-1 ring-servido-950/10">
           {[
             { label: tf("typeAll"), value: "all" as const, icon: Sparkles },
             { label: tp("productsChip"), value: false as const, icon: Package },
@@ -224,8 +224,8 @@ export function ProductsFiltersPanel({
               className={cn(
                 "flex flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-[11px] font-semibold transition-all",
                 isServiceFilter === value
-                  ? "bg-purple-700 text-white shadow-sm"
-                  : "text-gray-500 hover:bg-purple-50 hover:text-purple-800"
+                  ? "bg-servido-800 text-white shadow-sm"
+                  : "text-slate-500 hover:bg-servido-50 hover:text-servido-900"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -326,8 +326,8 @@ export function ProductsFiltersPanel({
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all",
                   sortBy === value
-                    ? "bg-purple-700 text-white shadow-md shadow-purple-200"
-                    : "bg-white text-gray-600 ring-1 ring-gray-200 hover:ring-purple-300"
+                    ? "bg-servido-800 text-white shadow-md shadow-servido-950/20"
+                    : "bg-white text-slate-600 ring-1 ring-servido-950/10 hover:ring-servido-300"
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -343,7 +343,7 @@ export function ProductsFiltersPanel({
         {activeCount > 0 && (
           <Button
             variant="outline"
-            className="w-full rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50"
+            className="w-full rounded-full border-servido-200 text-servido-900 hover:bg-servido-50"
             onClick={onClearFilters}
           >
             {activeCount === 1
@@ -368,16 +368,16 @@ export function ProductsFiltersPanelHeader({ activeCount }: { activeCount: numbe
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-700 text-white shadow-md">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-servido-950 text-servido-gold shadow-md">
           <Tag className="h-4 w-4" />
         </span>
         <div>
-          <h2 className="text-lg font-bold text-purple-900">{tf("title")}</h2>
-          <p className="text-xs text-gray-500">{tf("refineSearch")}</p>
+          <h2 className="text-lg font-semibold tracking-tight text-servido-950">{tf("title")}</h2>
+          <p className="text-xs text-slate-500">{tf("refineSearch")}</p>
         </div>
       </div>
       {activeCount > 0 && (
-        <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-bold text-purple-800">
+        <span className="rounded-full bg-servido-50 px-2.5 py-1 text-xs font-bold text-servido-800">
           {activeCount === 1
             ? tf("activeCount", { count: activeCount })
             : tf("activeCountPlural", { count: activeCount })}

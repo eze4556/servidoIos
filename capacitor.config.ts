@@ -1,27 +1,35 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from "@capacitor/cli"
 
 const config: CapacitorConfig = {
-  appId: 'ar.com.servido.app',
-  appName: 'Servido',
-  webDir: '.next',
+  appId: "ar.com.servido.app",
+  appName: "Servido",
+  // Salida del export estático de Next (next build con output: "export").
+  // No apuntar a ".next": es el build interno de Next, no una raíz web servible.
+  webDir: "out",
+  android: {
+    // https evita que Firebase/Firestore traten el origen como inseguro.
+    androidScheme: "https",
+  },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000,
-      backgroundColor: "#8B5CF6",
-      showSpinner: true,
-      spinnerColor: "#FFFFFF"
+      launchShowDuration: 1500,
+      launchAutoHide: true,
+      backgroundColor: "#2e1065",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
     },
     StatusBar: {
-      style: 'dark',
-      backgroundColor: '#8B5CF6'
+      // Iconos claros sobre el fondo servido-950.
+      style: "DARK",
+      backgroundColor: "#2e1065",
+      overlaysWebView: false,
     },
-    Geolocation: {
-      // Permisos nativos listos en:
-      // - native/android/AndroidManifest.xml
-      // - native/ios/Info.plist
-    }
-  }
-};
+    Keyboard: {
+      resize: "native",
+      resizeOnFullScreen: true,
+    },
+  },
+}
 
-export default config;
-
+export default config

@@ -1,5 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore"
 import { db } from "@/lib/firebase-admin"
+import { sendPushToUser } from "@/lib/push/send-push"
 
 export type ServerNotificationInput = {
   userId: string
@@ -43,5 +44,16 @@ export async function createNotificationAdmin(input: ServerNotificationInput): P
     meta: input.meta || null,
     createdAt: FieldValue.serverTimestamp(),
   })
+
+  // Va después de escribir el documento y sin await sobre el resultado del
+  // envío: la notificación en Firestore es la que cuenta, la push es el aviso.
+  // sendPushToUser no lanza, así que no puede romper el flujo que llamó acá.
+  await sendPushToUser(userId, {
+    title,
+    body,
+    link: input.link || null,
+    type: input.type || "system",
+  })
+
   return ref.id
 }

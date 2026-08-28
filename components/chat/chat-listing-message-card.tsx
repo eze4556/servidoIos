@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { usePriceFormat } from "@/hooks/use-price-format"
+import { productHref, withParams } from "@/lib/routes"
 
 export function ChatListingMessageCard({
   title,
@@ -23,7 +24,8 @@ export function ChatListingMessageCard({
   }
 }) {
   const { formatPrice } = usePriceFormat()
-  const productHref = `/product/${productId}?buy=1`
+  const detailHref = productHref(productId)
+  const buyHref = withParams(detailHref, { buy: "1" })
 
   return (
     <div className="min-w-[220px] max-w-[260px] overflow-hidden rounded-xl border border-servido-200/60 bg-white">
@@ -40,10 +42,10 @@ export function ChatListingMessageCard({
         )}
         <div className="flex flex-col gap-2 pt-1">
           <Button asChild size="sm" variant="outline" className="h-9 w-full rounded-full text-xs">
-            <Link href={`/product/${productId}`}>{labels.viewProduct}</Link>
+            <Link href={detailHref}>{labels.viewProduct}</Link>
           </Button>
           <Button asChild size="sm" className="h-9 w-full rounded-full bg-servido-800 text-xs hover:bg-servido-900">
-            <Link href={productHref}>{labels.buyNow}</Link>
+            <Link href={buyHref}>{labels.buyNow}</Link>
           </Button>
         </div>
       </div>

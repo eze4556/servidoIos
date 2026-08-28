@@ -3,7 +3,9 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
+import { useRouteId } from "@/hooks/use-route-id"
+import { categoryHref, sellerHref } from "@/lib/routes"
 import Link from "next/link"
 import {
   doc,
@@ -59,6 +61,7 @@ import { HomeProductCard } from "@/components/home/home-product-card"
 import { HomeSectionHeader } from "@/components/home/home-section-header"
 import { RecommendProductDialog } from "@/components/reseller/recommend-product-dialog"
 import { saveResellerAttribution, buildReferralPayloadForProducts } from "@/lib/reseller/attribution-storage"
+import { apiUrl } from "@/lib/api-base"
 
 interface ProductMedia {
   type: "image" | "video"
@@ -146,7 +149,7 @@ interface Coupon {
   createdAt: any
 }
 
-export default function ProductDetailPage() {
+export function ProductDetail() {
   const { formatPrice, formatPriceNumber } = usePriceFormat()
   const tp = useTranslations("product")
   const tReseller = useTranslations("resellerProgram")
@@ -154,7 +157,7 @@ export default function ProductDetailPage() {
   const tr = useTranslations("reviews")
   const tApi = useTranslations("apiErrors")
   const phoneBlockedLabel = tr("phoneBlocked")
-  const params = useParams()
+  const productId = useRouteId()
   const router = useRouter()
   const { addItem, getItemQuantity } = useCart()
   const { currentUser, authLoading } = useAuth()
@@ -209,10 +212,10 @@ export default function ProductDetailPage() {
   const productMedia = product ? getProductMedia(product) : []
 
   useEffect(() => {
-    if (params.id && !authLoading) {
-      fetchProductDetails(params.id as string)
+    if (productId && !authLoading) {
+      fetchProductDetails(productId)
     }
-  }, [params.id, currentUser, authLoading])
+  }, [productId, currentUser, authLoading])
 
   // Reset selectedMediaIndex when product changes
   useEffect(() => {
@@ -231,7 +234,7 @@ export default function ProductDetailPage() {
     const ref = new URLSearchParams(window.location.search).get("ref")?.trim()
     if (!ref) return
     saveResellerAttribution(product.id, ref)
-    void fetch("/api/reseller/click", {
+    void fetch(apiUrl("/api/reseller/click"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: ref }),
@@ -825,7 +828,7 @@ export default function ProductDetailPage() {
         }}
         breadcrumbs={[
           { name: tp("home"), href: "/" },
-          ...(category ? [{ name: category.name, href: `/category/${category.id}` }] : []),
+          ...(category ? [{ name: category.name, href: categoryHref(category.id) }] : []),
           { name: product.name },
         ]}
         isFavorite={isFavorite}
@@ -1013,14 +1016,14 @@ export default function ProductDetailPage() {
                         <Store className="h-5 w-5 text-servido-800" />
                       </div>
                       <div>
-                        <Link href={`/seller/${seller.id}`} className="font-semibold text-servido-950 hover:text-servido-800">
+                        <Link href={sellerHref(seller.id)} className="font-semibold text-servido-950 hover:text-servido-800">
                           {seller.name}
                         </Link>
                         <p className="text-xs text-slate-500">{tp("verifiedSeller")}</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Link href={`/seller/${seller.id}`}>
+                      <Link href={sellerHref(seller.id)}>
                         <Button variant="outline" size="sm" className="rounded-full border-servido-200">
                           {tp("viewStore")}
                         </Button>

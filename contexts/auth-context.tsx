@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore"
 import { auth, db } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import { getSubscriptionSnapshot, type SubscriptionStatus } from "@/lib/subscription-utils"
+import { unregisterPushToken } from "@/lib/push/register"
 import { getMercadoPagoConnectionSnapshot, type MercadoPagoConnectionStatus } from "@/lib/mercadopago-connection"
 import { notifySubscriptionReminder } from "@/lib/notifications"
 
@@ -195,6 +196,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleLogout = useCallback(async () => {
     try {
+      // Antes del signOut: dar de baja el token necesita un idToken válido, y
+      // si no se borra, el próximo usuario del teléfono recibiría las
+      // notificaciones de este.
+      await unregisterPushToken()
       await signOut(auth)
       router.push("/login")
     } catch (error) {

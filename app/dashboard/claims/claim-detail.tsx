@@ -1,15 +1,15 @@
 "use client"
 
 import { useAuth } from "@/contexts/auth-context"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
+import { useRouteId } from "@/hooks/use-route-id"
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { ClaimDetail } from "@/components/claims/claim-detail"
 import { getClaim } from "@/lib/claims"
 
-export default function ClaimDetailPage() {
-  const params = useParams<{ id: string }>()
-  const claimId = Array.isArray(params.id) ? params.id[0] : params.id
+export function ClaimDetailScreen() {
+  const claimId = useRouteId() ?? ""
   const { currentUser, authLoading } = useAuth()
   const router = useRouter()
   const [role, setRole] = useState<"buyer" | "seller" | null>(null)

@@ -7,6 +7,7 @@ import { Calendar, Gauge, MapPin } from "lucide-react"
 import { formatVehiclePrice } from "@/lib/vehicles/format-vehicle-price"
 import type { VehicleListing } from "@/types/vehicle-listing"
 import { cn } from "@/lib/utils"
+import { vehicleHref } from "@/lib/routes"
 
 interface VehicleCardProps {
   listing: VehicleListing
@@ -36,7 +37,7 @@ export function VehicleCard({ listing, selected = false, onHover }: VehicleCardP
       onMouseEnter={onHover}
     >
       <Link
-        href={`/autos/${listing.id}`}
+        href={vehicleHref(listing.id)}
         className="flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-servido-600 sm:flex-row"
       >
         <div className="relative aspect-[16/10] shrink-0 overflow-hidden bg-slate-200 sm:aspect-auto sm:w-[42%] sm:min-h-[188px] lg:w-[260px]">

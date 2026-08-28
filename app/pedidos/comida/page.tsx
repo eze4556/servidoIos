@@ -14,6 +14,7 @@ import { formatOrderItemSelections } from "@/types/restaurant"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
 import { getDeliveryChatId } from "@/lib/delivery-chat"
+import { chatHref } from "@/lib/routes"
 import { BuyerCadeteTracking } from "@/components/delivery/buyer-cadete-tracking"
 import { shouldTrackCadeteStatus } from "@/lib/cadete-live-location"
 
@@ -144,7 +145,7 @@ export default function FoodOrdersPage() {
                   order.status !== "entregado" &&
                   order.status !== "cancelado" && (
                     <Button asChild size="sm" variant="outline" className="mt-3 rounded-full">
-                      <Link href={`/chat/${getDeliveryChatId(order.id)}`}>
+                      <Link href={chatHref(getDeliveryChatId(order.id))}>
                         <MessageCircle className="mr-2 h-4 w-4" />
                         {t("chatCadete")}
                       </Link>

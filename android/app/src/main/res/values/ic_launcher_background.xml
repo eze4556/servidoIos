@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo del icono adaptativo. Plano y no en degradado porque cada
+         launcher recorta el icono con una forma distinta. -->
+    <color name="ic_launcher_background">#6D28D9</color>
+    <!-- Acento del icono chico de notificación (ver el meta-data del manifest). -->
+    <color name="servido_notification">#6D28D9</color>
+</resources>

@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import { subscribeUserChats, type ChatListItem } from "@/lib/story-chat"
 import { isServidoOfficialChat } from "@/lib/servido-official"
+import { chatHref } from "@/lib/routes"
 import { ServidoOfficialLabel } from "@/components/chat/servido-official-label"
 import { ServidoOfficialAvatar } from "@/components/chat/servido-official-avatar"
 import { isChatUnread, useChatUnread } from "@/components/chat/chat-unread-context"
@@ -68,15 +69,18 @@ export default function MensajesPage() {
   })
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-lg flex-col bg-white lg:min-h-screen lg:border-x lg:border-gray-100">
-      <header className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+    <div className="lg:min-h-screen lg:bg-gradient-to-b lg:from-slate-50 lg:via-white lg:to-purple-50/30 lg:py-8">
+    <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-lg flex-col overflow-hidden bg-white lg:min-h-[calc(100vh-8rem)] lg:max-w-2xl lg:rounded-[1.75rem] lg:shadow-[0_24px_60px_-32px_rgba(46,16,101,0.32)] lg:ring-1 lg:ring-servido-950/5">
+      <header className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] lg:border-servido-950/5 lg:px-6 lg:pt-5">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-servido-800 text-white">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-servido-800 text-white lg:rounded-2xl lg:bg-servido-950 lg:text-servido-gold lg:shadow-md">
             <MessageCircle className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl font-bold text-gray-900">{t("listTitle")}</h1>
-            <p className="text-xs text-gray-500">{t("listSubtitle")}</p>
+            <h1 className="text-xl font-bold text-servido-950 lg:font-semibold lg:tracking-tight">
+              {t("listTitle")}
+            </h1>
+            <p className="text-xs text-slate-500">{t("listSubtitle")}</p>
           </div>
         </div>
         <div className="relative mt-3">
@@ -85,7 +89,7 @@ export default function MensajesPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("searchPlaceholder")}
-            className="h-10 w-full rounded-full bg-gray-100 pl-9 pr-4 text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-servido-700/20"
+            className="h-10 w-full rounded-full bg-gray-100 pl-9 pr-4 text-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-servido-700/20 lg:bg-slate-100/80 lg:ring-1 lg:ring-servido-950/5"
           />
         </div>
       </header>
@@ -109,14 +113,17 @@ export default function MensajesPage() {
             <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-servido-50 text-servido-800">
               <MessageCircle className="h-8 w-8" />
             </span>
-            <p className="font-semibold text-gray-900">
+            <p className="font-semibold text-servido-950">
               {chats.length === 0 ? t("emptyNoChats") : t("emptyNoResults")}
             </p>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               {chats.length === 0 ? t("emptyHintStories") : t("emptyHintSearch")}
             </p>
             {chats.length === 0 && (
-              <Button asChild className="mt-5 rounded-full bg-servido-800">
+              <Button
+                asChild
+                className="mt-6 rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
+              >
                 <Link href="/historias">{t("viewStories")}</Link>
               </Button>
             )}
@@ -136,8 +143,8 @@ export default function MensajesPage() {
               return (
                 <li key={chat.id}>
                   <Link
-                    href={`/chat/${chat.id}`}
-                    className={`flex items-center gap-3 border-b border-gray-50 px-4 py-3.5 transition active:bg-gray-50 ${
+                    href={chatHref(chat.id)}
+                    className={`flex items-center gap-3 border-b border-gray-50 px-4 py-3.5 transition active:bg-gray-50 lg:px-6 lg:hover:bg-slate-50/80 ${
                       unread ? "bg-servido-50/60" : ""
                     }`}
                   >
@@ -166,7 +173,7 @@ export default function MensajesPage() {
                         ) : (
                           <p
                             className={`truncate ${
-                              unread ? "font-bold text-gray-900" : "font-semibold text-gray-900"
+                              unread ? "font-bold text-servido-950" : "font-semibold text-servido-950"
                             }`}
                           >
                             {other}
@@ -207,6 +214,7 @@ export default function MensajesPage() {
           </ul>
         )}
       </div>
+    </div>
     </div>
   )
 }

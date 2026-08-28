@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, use } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { doc, getDoc, collection, getDocs, query, where } from "firebase/firestore"
@@ -32,9 +32,10 @@ import {
 } from "@/lib/restaurant-menu"
 import { getMenuItemFromPrice, mapMenuPromotionDoc } from "@/lib/restaurant-options"
 import { usePriceFormat } from "@/hooks/use-price-format"
+import { useRouteId } from "@/hooks/use-route-id"
 
-export default function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export function RestaurantDetail() {
+  const id = useRouteId() ?? ""
   const t = useTranslations("restaurants")
   const { formatPrice, formatPriceNumber } = usePriceFormat()
   const { addItem } = useFoodCart()

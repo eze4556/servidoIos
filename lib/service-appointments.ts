@@ -23,6 +23,7 @@ import type {
   WeekdayKey,
 } from "@/types/service-appointments"
 import { DEFAULT_SERVICE_SCHEDULE } from "@/types/service-appointments"
+import { apiUrl } from "@/lib/api-base"
 
 const COLLECTION = "serviceAppointments"
 const SLOT_LOCKS = "serviceSlotLocks"
@@ -479,7 +480,7 @@ export async function requestServiceAppointment(input: {
   }
 
   try {
-    const res = await fetch("/api/services/appointments", {
+    const res = await fetch(apiUrl("/api/services/appointments"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

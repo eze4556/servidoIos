@@ -18,6 +18,7 @@ import { usePriceFormat } from "@/hooks/use-price-format"
 import { useToast } from "@/hooks/use-toast"
 import { AdminPager } from "@/components/admin/admin-pager"
 import { usePagedList } from "@/hooks/use-paged-list"
+import { apiUrl } from "@/lib/api-base"
 
 type CadeteRow = {
   id: string
@@ -81,7 +82,7 @@ export function AdminDeliverySettlementsPanel() {
     setLoadingSummary(true)
     try {
       const token = await user.getIdToken()
-      const res = await fetch("/api/admin/delivery-settlements/summary", {
+      const res = await fetch(apiUrl("/api/admin/delivery-settlements/summary"), {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -97,7 +98,7 @@ export function AdminDeliverySettlementsPanel() {
     setLoadingCadetes(true)
     try {
       const token = await user.getIdToken()
-      const res = await fetch("/api/admin/cadete-payouts?status=pending_payout", {
+      const res = await fetch(apiUrl("/api/admin/cadete-payouts?status=pending_payout"), {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -113,7 +114,7 @@ export function AdminDeliverySettlementsPanel() {
     setLoadingRestaurants(true)
     try {
       const token = await user.getIdToken()
-      const res = await fetch("/api/admin/restaurant-commissions?status=pending_collection", {
+      const res = await fetch(apiUrl("/api/admin/restaurant-commissions?status=pending_collection"), {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -132,7 +133,7 @@ export function AdminDeliverySettlementsPanel() {
   const generateCadetes = async () => {
     setGenerating("cadetes")
     try {
-      const res = await fetch("/api/admin/cadete-payouts", {
+      const res = await fetch(apiUrl("/api/admin/cadete-payouts"), {
         method: "POST",
         headers: await authHeaders(),
       })
@@ -153,7 +154,7 @@ export function AdminDeliverySettlementsPanel() {
   const generateRestaurants = async () => {
     setGenerating("restaurants")
     try {
-      const res = await fetch("/api/admin/restaurant-commissions", {
+      const res = await fetch(apiUrl("/api/admin/restaurant-commissions"), {
         method: "POST",
         headers: await authHeaders(),
       })
@@ -174,7 +175,7 @@ export function AdminDeliverySettlementsPanel() {
   const markCadetePaid = async (batchId: string) => {
     setMarking(batchId)
     try {
-      const res = await fetch("/api/admin/cadete-payouts", {
+      const res = await fetch(apiUrl("/api/admin/cadete-payouts"), {
         method: "PATCH",
         headers: await authHeaders(),
         body: JSON.stringify({ batchId }),
@@ -193,7 +194,7 @@ export function AdminDeliverySettlementsPanel() {
   const markRestaurantPaid = async (batchId: string) => {
     setMarking(batchId)
     try {
-      const res = await fetch("/api/admin/restaurant-commissions", {
+      const res = await fetch(apiUrl("/api/admin/restaurant-commissions"), {
         method: "PATCH",
         headers: await authHeaders(),
         body: JSON.stringify({ batchId }),

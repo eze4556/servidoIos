@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useRouteId } from "@/hooks/use-route-id"
+import { productHref } from "@/lib/routes"
 import { doc, getDoc, collection, query, where, getDocs, orderBy, deleteDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { Button } from "@/components/ui/button"
@@ -81,7 +82,7 @@ interface Product {
   couponEndDate?: any
 }
 
-export default function SellerProfilePage() {
+export function SellerProfile() {
   const { formatPrice } = usePriceFormat()
   const ts = useTranslations("sellerStore")
   const tp = useTranslations("product")
@@ -91,8 +92,7 @@ export default function SellerProfilePage() {
   const locale = useLocale()
   const { toast } = useToast()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
-  const params = useParams()
-  const sellerId = params.id as string
+  const sellerId = useRouteId() ?? ""
   const { currentUser } = useAuth()
   const { addItem } = useCart()
 
@@ -586,7 +586,7 @@ export default function SellerProfilePage() {
 
                       <div className="space-y-2">
                         <h3 className="line-clamp-2 font-semibold text-servido-950">
-                          <Link href={`/product/${product.id}`} className="hover:text-servido-800">
+                          <Link href={productHref(product.id)} className="hover:text-servido-800">
                             {product.name}
                           </Link>
                         </h3>
@@ -695,7 +695,7 @@ export default function SellerProfilePage() {
 
                       <div className="space-y-2">
                         <h3 className="line-clamp-2 font-semibold text-servido-950">
-                          <Link href={`/product/${service.id}`} className="hover:text-servido-800">
+                          <Link href={productHref(service.id)} className="hover:text-servido-800">
                             {service.name}
                           </Link>
                         </h3>

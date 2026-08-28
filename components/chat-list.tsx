@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Loader2, MessageSquare, Frown } from "lucide-react"
 import { getChatProductImage } from "@/lib/image-utils"
+import { chatHref } from "@/lib/routes"
 
 interface Chat {
   id: string
@@ -116,7 +117,7 @@ export function ChatList({ userId, role }: ChatListProps) {
           : t("dateUnknown")
 
         return (
-          <Link key={chat.id} href={`/chat/${chat.id}`} className="block w-full">
+          <Link key={chat.id} href={chatHref(chat.id)} className="block w-full">
             <Card className="w-full transition-shadow hover:shadow-md">
               <CardContent className="flex w-full items-center gap-3 p-3 sm:gap-4 sm:p-4">
                 <Avatar className="h-10 w-10 flex-shrink-0 sm:h-12 sm:w-12">

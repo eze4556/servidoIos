@@ -1,4 +1,5 @@
 import { defaultLocale, isAppLocale, LOCALE_COOKIE, type AppLocale } from "@/i18n/config"
+import { apiUrl } from "@/lib/api-base"
 
 export interface WelcomeEmailData {
   user_name: string
@@ -28,7 +29,7 @@ function readClientLocale(): AppLocale {
  */
 export const sendWelcomeEmail = async (data: WelcomeEmailData): Promise<void> => {
   try {
-    const response = await fetch("/api/email/welcome", {
+    const response = await fetch(apiUrl("/api/email/welcome"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -54,7 +55,7 @@ export const sendWelcomeEmail = async (data: WelcomeEmailData): Promise<void> =>
 /** Aviso al cadete cuando admin aprueba o rechaza. No bloquea la acción admin. */
 export const sendCadeteStatusEmail = async (data: CadeteStatusEmailData): Promise<void> => {
   try {
-    const response = await fetch("/api/email/cadete-status", {
+    const response = await fetch(apiUrl("/api/email/cadete-status"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

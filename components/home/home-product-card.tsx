@@ -6,6 +6,7 @@ import { SimpleImage } from "@/components/ui/simple-image"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useTranslations } from "next-intl"
 import { ArrowUpRight, Sparkles, Star } from "lucide-react"
+import { productHref } from "@/lib/routes"
 
 interface HomeProductCardProps {
   id: string
@@ -42,7 +43,7 @@ export function HomeProductCard({
     `/placeholder.svg?height=200&width=200&query=${imageQuery || name}`
 
   return (
-    <Link href={`/product/${id}`} className="group block h-full">
+    <Link href={productHref(id)} className="group block h-full">
       <Card className="home-product-card product-card-fixed overflow-hidden rounded-2xl border-0 bg-white shadow-[0_10px_30px_-18px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 lg:rounded-3xl">
         <div className="product-image-container relative overflow-hidden bg-gradient-to-br from-slate-50 to-servido-50/50">
           {badge && (

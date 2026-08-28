@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { ServiceBookingCard } from "@/components/services/service-booking-card"
 import type { ServiceSchedule } from "@/types/service-appointments"
+import { categoryHref } from "@/lib/routes"
 
 // Props extendidos para lógica de favoritos, compartir, reseñas y preguntas
 interface ServiceDetailProps {
@@ -142,8 +143,8 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
           {service.categoryName && (
             <>
               <BreadcrumbItem>
-                <BreadcrumbLink asChild href={`/category/${service.category}`}>
-                  <Link href={`/category/${service.category}`}>{service.categoryName}</Link>
+                <BreadcrumbLink asChild href={categoryHref(service.category ?? "")}>
+                  <Link href={categoryHref(service.category ?? "")}>{service.categoryName}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from "firebase/firestore"
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ArrowLeft, AlertCircle, Loader2, Package } from "lucide-react"
 import { HomeProductCard } from "@/components/home/home-product-card"
+import { useRouteId } from "@/hooks/use-route-id"
 
 interface Product {
   id: string
@@ -31,10 +32,10 @@ interface Category {
   description?: string
 }
 
-export default function CategoryProductsPage() {
+export function CategoryDetail() {
   const tc = useTranslations("categoryPage")
   const tr = useTranslations("reviews")
-  const params = useParams()
+  const categoryId = useRouteId()
   const router = useRouter()
 
   const [category, setCategory] = useState<Category | null>(null)
@@ -43,10 +44,10 @@ export default function CategoryProductsPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (params.id) {
-      void fetchCategoryAndProducts(params.id as string)
+    if (categoryId) {
+      void fetchCategoryAndProducts(categoryId)
     }
-  }, [params.id])
+  }, [categoryId])
 
   const fetchCategoryAndProducts = async (categoryId: string) => {
     setLoading(true)

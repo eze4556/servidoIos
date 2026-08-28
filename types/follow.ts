@@ -1,4 +1,5 @@
 import type { StoryAuthorType } from "@/types/story"
+import { restaurantHref, sellerHref } from "@/lib/routes"
 
 export type FollowTargetType = StoryAuthorType // "store" | "restaurant"
 
@@ -20,7 +21,7 @@ export function followDocId(userId: string, targetUserId: string): string {
 
 export function profilePathForFollow(follow: Pick<Follow, "targetType" | "targetUserId" | "restaurantId">): string {
   if (follow.targetType === "restaurant") {
-    return `/restaurantes/${follow.restaurantId || follow.targetUserId}`
+    return restaurantHref(follow.restaurantId || follow.targetUserId)
   }
-  return `/seller/${follow.targetUserId}`
+  return sellerHref(follow.targetUserId)
 }

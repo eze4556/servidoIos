@@ -1,4 +1,5 @@
 import { auth } from "@/lib/firebase"
+import { apiUrl } from "@/lib/api-base"
 
 /** Imagen de producto vía API (sin CORS de Firebase Storage en el cliente). */
 export async function fetchProductImageFile(productId: string, filename?: string): Promise<File> {
@@ -7,7 +8,7 @@ export async function fetchProductImageFile(productId: string, filename?: string
     throw new Error("not_authenticated")
   }
   const token = await user.getIdToken()
-  const res = await fetch(`/api/reseller/product-image?productId=${encodeURIComponent(productId)}`, {
+  const res = await fetch(apiUrl(`/api/reseller/product-image?productId=${encodeURIComponent(productId)}`), {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) {

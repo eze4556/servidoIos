@@ -17,6 +17,7 @@ import {
   type CachedLocation,
 } from "@/lib/location-cache"
 import { hasValidCoordinates } from "@/lib/geo"
+import { apiUrl } from "@/lib/api-base"
 
 interface SetManualLocationInput {
   location: string
@@ -53,7 +54,7 @@ const PRECISE_GEO_OPTIONS: PositionOptions = {
 }
 
 async function reverseGeocode(latitude: number, longitude: number): Promise<string | null> {
-  const response = await fetch(`/api/geocoding?lat=${latitude}&lon=${longitude}`)
+  const response = await fetch(apiUrl(`/api/geocoding?lat=${latitude}&lon=${longitude}`))
   const data = await response.json()
   return data.success ? data.location : null
 }

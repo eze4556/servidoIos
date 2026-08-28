@@ -105,7 +105,13 @@ export function ChatUnreadProvider({ children }: { children: ReactNode }) {
         lastTsRef.current.set(chat.id, ts)
 
         const fromOther = !chat.lastMessageSenderId || chat.lastMessageSenderId !== uid
-        const viewingThis = pathnameRef.current === `/chat/${chat.id}`
+        // Contempla las dos formas de URL del chat: /chat/id en la web y
+        // /chat?chatId=id en la app. Se lee de window en lugar de
+        // useSearchParams para no forzar un Suspense en un provider global.
+        const viewingThis =
+          pathnameRef.current === `/chat/${chat.id}` ||
+          (pathnameRef.current === "/chat" &&
+            new URLSearchParams(window.location.search).get("chatId") === chat.id)
         if (fromOther && !viewingThis && isChatUnread(chat, uid)) {
           playIncomingMessageSound()
         }

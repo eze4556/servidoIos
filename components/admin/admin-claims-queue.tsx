@@ -27,6 +27,7 @@ import {
 import { CLAIM_STATUSES, isClaimOpen, type ClaimDoc, type ClaimEvent, type ClaimMessage } from "@/types/claims"
 import type { SellerClaimHistory } from "@/types/claim-moderation"
 import { CLAIM_SANCTION_TYPES, type ClaimSanctionType } from "@/types/claim-moderation"
+import { apiUrl } from "@/lib/api-base"
 
 type RefundErrorCode =
   | "missing_payment"
@@ -113,7 +114,7 @@ export function AdminClaimsQueue({
     setSellerHistoryLoading(true)
     try {
       const token = await user.getIdToken()
-      const res = await fetch(`/api/admin/claims/seller-history?sellerId=${encodeURIComponent(sellerId)}`, {
+      const res = await fetch(apiUrl(`/api/admin/claims/seller-history?sellerId=${encodeURIComponent(sellerId)}`), {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -132,7 +133,7 @@ export function AdminClaimsQueue({
     setRefundError(null)
     try {
       const token = await user.getIdToken()
-      const res = await fetch(`/api/admin/claims/refund?claimId=${encodeURIComponent(claimId)}`, {
+      const res = await fetch(apiUrl(`/api/admin/claims/refund?claimId=${encodeURIComponent(claimId)}`), {
         headers: { Authorization: `Bearer ${token}` },
       })
       const data = await res.json()
@@ -475,7 +476,7 @@ export function AdminClaimsQueue({
                             const user = auth.currentUser
                             if (!user || !selected) return
                             const token = await user.getIdToken()
-                            const res = await fetch("/api/admin/claims/sanction", {
+                            const res = await fetch(apiUrl("/api/admin/claims/sanction"), {
                               method: "POST",
                               headers: {
                                 Authorization: `Bearer ${token}`,
@@ -691,7 +692,7 @@ export function AdminClaimsQueue({
                         if (!user) return
                         setRefundError(null)
                         const token = await user.getIdToken()
-                        const res = await fetch("/api/admin/claims/refund", {
+                        const res = await fetch(apiUrl("/api/admin/claims/refund"), {
                           method: "POST",
                           headers: {
                             Authorization: `Bearer ${token}`,

@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { SimpleImage } from "@/components/ui/simple-image"
+import { resolveStoredHref } from "@/lib/routes"
 
 export interface ModernBannerData {
   id: string
@@ -21,7 +22,7 @@ interface HomeModernBannerProps {
 export function HomeModernBanner({ banner, variant = "hero", badge }: HomeModernBannerProps) {
   const subtitle = banner.subtitle || banner.description
   const ctaText = banner.ctaText || "Ver más"
-  const href = banner.linkUrl || "/products"
+  const href = banner.linkUrl ? resolveStoredHref(banner.linkUrl) : "/products"
   const isHero = variant === "hero"
 
   return (

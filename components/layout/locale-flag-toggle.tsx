@@ -1,10 +1,10 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Check, ChevronDown, Heart, Rocket } from "lucide-react"
-import { LOCALE_COOKIE, type AppLocale } from "@/i18n/config"
+import { type AppLocale } from "@/i18n/config"
+import { switchLocale } from "@/i18n/client-locale"
 import { cn } from "@/lib/utils"
 import {
   DropdownMenu,
@@ -43,17 +43,12 @@ const COMING_SOON_MARKETS: SoonMarket[] = [
   { flagCode: "mx", countryKey: "countryMexico" },
 ]
 
-function setLocaleCookie(locale: AppLocale) {
-  document.cookie = `${LOCALE_COOKIE}=${locale};path=/;max-age=31536000;SameSite=Lax`
-}
-
 export function LocaleFlagToggle({
   className,
   variant = "light",
   compact = false,
 }: LocaleFlagToggleProps) {
   const locale = useLocale() as AppLocale
-  const router = useRouter()
   const t = useTranslations("header")
   const tp = useTranslations("header.localePicker")
 
@@ -61,8 +56,7 @@ export function LocaleFlagToggle({
 
   const switchTo = (next: AppLocale) => {
     if (next === locale) return
-    setLocaleCookie(next)
-    router.refresh()
+    switchLocale(next)
   }
 
   const triggerClass =

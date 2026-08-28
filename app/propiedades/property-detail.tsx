@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
+import { useRouteId } from "@/hooks/use-route-id"
+import { chatHref, propertyHref } from "@/lib/routes"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -25,9 +27,8 @@ import { startPropertyListingChat } from "@/lib/chat-start"
 import type { PropertyListing } from "@/types/property-listing"
 import { useToast } from "@/components/ui/use-toast"
 
-export default function PropertyDetailPage() {
-  const params = useParams()
-  const id = typeof params.id === "string" ? params.id : ""
+export function PropertyDetail() {
+  const id = useRouteId() ?? ""
   const t = useTranslations("properties")
   const locale = useLocale()
   const router = useRouter()
@@ -56,7 +57,7 @@ export default function PropertyDetailPage() {
   const handleContact = async () => {
     if (!listing) return
     if (!uid) {
-      router.push(`/login?redirect=/propiedades/${listing.id}`)
+      router.push(`/login?redirect=${encodeURIComponent(propertyHref(listing.id))}`)
       return
     }
     if (uid === listing.sellerId) {
@@ -83,7 +84,7 @@ export default function PropertyDetailPage() {
         propertyThumbnail: thumb,
         initialMessage,
       })
-      router.push(`/chat/${chatId}`)
+      router.push(chatHref(chatId))
     } catch {
       toast({ title: t("chatError"), variant: "destructive" })
     } finally {

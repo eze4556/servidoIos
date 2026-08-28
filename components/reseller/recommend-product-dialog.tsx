@@ -26,6 +26,7 @@ import {
   Send,
   Sparkles,
 } from "lucide-react"
+import { apiUrl } from "@/lib/api-base"
 
 type RecommendProductDialogProps = {
   open: boolean
@@ -61,7 +62,7 @@ export function RecommendProductDialog({
     setLoadingLink(true)
     try {
       const token = await user.getIdToken()
-      const res = await fetch("/api/reseller/link", {
+      const res = await fetch(apiUrl("/api/reseller/link"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +91,7 @@ export function RecommendProductDialog({
       const url = productUrlWithRef(origin, productId, data.code)
       setCode(data.code)
       setShareUrl(url)
-      void fetch("/api/reseller/click", {
+      void fetch(apiUrl("/api/reseller/click"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: data.code }),

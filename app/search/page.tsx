@@ -13,6 +13,7 @@ import { usePriceFormat } from "@/hooks/use-price-format"
 import { useTranslations } from "next-intl"
 import { HomeProductCard } from "@/components/home/home-product-card"
 import { cn } from "@/lib/utils"
+import { productHref } from "@/lib/routes"
 
 type SearchProduct = {
   id: string
@@ -200,7 +201,7 @@ export default function SearchPage() {
               {products.map((product) => (
                 <Link
                   key={product.id}
-                  href={`/product/${product.id}`}
+                  href={productHref(product.id)}
                   className="group flex gap-4 overflow-hidden rounded-2xl bg-white p-3 shadow-[0_12px_32px_-20px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-18px_rgba(46,16,101,0.35)] lg:rounded-3xl lg:p-4"
                 >
                   <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-28 sm:w-28">

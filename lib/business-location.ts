@@ -1,6 +1,7 @@
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { hasValidCoordinates, type BusinessLocation } from "@/lib/geo"
+import { apiUrl } from "@/lib/api-base"
 
 export function parseBusinessLocation(data: Record<string, unknown> | undefined | null): BusinessLocation | null {
   if (!data) return null
@@ -111,7 +112,7 @@ export interface GeocodeSearchResult {
 }
 
 export async function searchPlaces(query: string): Promise<GeocodeSearchResult[]> {
-  const response = await fetch(`/api/geocoding/search?q=${encodeURIComponent(query.trim())}`)
+  const response = await fetch(apiUrl(`/api/geocoding/search?q=${encodeURIComponent(query.trim())}`))
   const data = await response.json()
   return Array.isArray(data.results) ? data.results : []
 }

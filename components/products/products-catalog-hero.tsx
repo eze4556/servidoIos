@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowUpRight, Package } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { categoryHref } from "@/lib/routes"
 
 interface CategoryChip {
   id: string
@@ -53,7 +54,7 @@ export function ProductsCatalogHero({ categories = [], totalCount }: ProductsCat
               {categories.slice(0, 8).map((category) => (
                 <Link
                   key={category.id}
-                  href={`/category/${category.id}`}
+                  href={categoryHref(category.id)}
                   className="group inline-flex shrink-0 items-center gap-1.5 rounded-2xl bg-servido-50 px-4 py-2 text-sm font-medium text-servido-900 transition-all hover:bg-servido-100"
                 >
                   <Package className="h-3.5 w-3.5" />

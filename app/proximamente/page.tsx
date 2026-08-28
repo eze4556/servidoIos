@@ -1,9 +1,11 @@
+"use client"
+
 import { Suspense } from "react"
-import { getTranslations } from "next-intl/server"
+import { useTranslations } from "next-intl"
 import ProximamenteContent from "./proximamente-content"
 
-export default async function ProximamentePage() {
-  const t = await getTranslations("proximamente")
+export default function ProximamentePage() {
+  const t = useTranslations("proximamente")
 
   return (
     <Suspense

@@ -1,43 +1,26 @@
 import { getRequestConfig } from "next-intl/server"
 import { cookies } from "next/headers"
 import { defaultLocale, isAppLocale, LOCALE_COOKIE, type AppLocale } from "./config"
-import esMessages from "../messages/es.json"
-import ptBRMessages from "../messages/pt-BR.json"
-import infoTermsEs from "../messages/legal/infoTerms.es.json"
-import infoTermsPt from "../messages/legal/infoTerms.pt-BR.json"
-import infoPrivacyEs from "../messages/legal/infoPrivacy.es.json"
-import infoPrivacyPt from "../messages/legal/infoPrivacy.pt-BR.json"
-import infoCareersEs from "../messages/legal/infoCareers.es.json"
-import infoCareersPt from "../messages/legal/infoCareers.pt-BR.json"
-import adminDashboardEs from "../messages/adminDashboard.es.json"
-import adminDashboardPt from "../messages/adminDashboard.pt-BR.json"
+import { loadMessages } from "./load-messages"
 
-function mergeLocaleMessages(base: typeof esMessages, legal: Record<string, unknown>) {
-  return { ...base, ...legal } as typeof esMessages
-}
+// En el build de Capacitor (output: "export") no hay request: cookies() rompe el
+// prerender. Se arranca con el idioma por defecto y IntlProvider lo corrige en
+// el cliente leyendo la cookie al montar.
+const isStaticExport = process.env.CAPACITOR === "1"
 
-const messagesByLocale: Record<AppLocale, typeof esMessages> = {
-  es: mergeLocaleMessages(esMessages, {
-    ...infoTermsEs,
-    ...infoPrivacyEs,
-    ...infoCareersEs,
-    ...adminDashboardEs,
-  }),
-  "pt-BR": mergeLocaleMessages(ptBRMessages, {
-    ...infoTermsPt,
-    ...infoPrivacyPt,
-    ...infoCareersPt,
-    ...adminDashboardPt,
-  }),
+async function resolveLocale(): Promise<AppLocale> {
+  if (isStaticExport) return defaultLocale
+
+  const cookieStore = await cookies()
+  const fromCookie = cookieStore.get(LOCALE_COOKIE)?.value
+  return isAppLocale(fromCookie) ? fromCookie : defaultLocale
 }
 
 export default getRequestConfig(async () => {
-  const cookieStore = await cookies()
-  const fromCookie = cookieStore.get(LOCALE_COOKIE)?.value
-  const locale: AppLocale = isAppLocale(fromCookie) ? fromCookie : defaultLocale
+  const locale = await resolveLocale()
 
   return {
     locale,
-    messages: messagesByLocale[locale] ?? messagesByLocale[defaultLocale],
+    messages: await loadMessages(locale),
   }
 })

@@ -1,12 +1,14 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
-import { NextIntlClientProvider } from "next-intl"
 import { getLocale, getMessages } from "next-intl/server"
+import { IntlProvider } from "@/components/providers/intl-provider"
+import type { AppLocale } from "@/i18n/config"
 import "./globals.css"
 import { CartProvider } from "@/contexts/cart-context"
 import { FoodCartProvider } from "@/contexts/food-cart-context"
 import { AuthProvider } from "@/contexts/auth-context"
+import { PushRegistrar } from "@/components/providers/push-registrar"
 import { LocationProvider } from "@/contexts/location-context"
 import { CacheProvider } from "@/contexts/cache-context"
 import { AppChrome } from "@/components/layout/app-chrome"
@@ -20,7 +22,6 @@ export const metadata: Metadata = {
   title: "Servido - Marketplace de Productos y Servicios",
   description: "Compra y vende productos y servicios en el marketplace más completo de Argentina. Conectamos compradores con vendedores de calidad.",
   generator: 'Next.js',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
   openGraph: {
     title: 'Servido - Marketplace de Productos y Servicios',
     description: 'Estamos trabajando para ofrecerte la mejor experiencia. Muy pronto podrás encontrar miles de productos, servicios y comercios en Argentina.',
@@ -52,6 +53,17 @@ export const metadata: Metadata = {
   }
 }
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  // Sin viewport-fit=cover, env(safe-area-inset-*) devuelve 0 en iOS y en
+  // Android edge-to-edge, dejando inservible el manejo de safe areas.
+  viewportFit: "cover",
+  themeColor: "#2e1065",
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale()
   const messages = await getMessages()
@@ -59,10 +71,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale === "pt-BR" ? "pt-BR" : "es"} className="h-full">
       <body className={`${inter.className} flex min-h-full flex-col`}>
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <IntlProvider
+          initialLocale={locale as AppLocale}
+          initialMessages={messages as Record<string, unknown>}
+        >
           <NProgressProvider>
             <CacheProvider>
               <AuthProvider>
+                <PushRegistrar />
                 <LocationProvider>
                   <CartProvider>
                     <FoodCartProvider>
@@ -76,7 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </AuthProvider>
             </CacheProvider>
           </NProgressProvider>
-        </NextIntlClientProvider>
+        </IntlProvider>
       </body>
     </html>
   )

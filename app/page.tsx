@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react"
 import { AlertCircle, LayoutGrid, Sparkles, Star, Tag } from "lucide-react"
 import { collection, getDocs, query, orderBy, limit, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { categoryHref } from "@/lib/routes"
 import { HomeSectionHeader } from "@/components/home/home-section-header"
 import { HomeSearchHero } from "@/components/home/home-search-hero"
 import { HomeAnimatedPromo } from "@/components/home/home-animated-promo"
@@ -172,7 +173,7 @@ export default function HomePage() {
 
     const fromCategories = categories.slice(0, 4).map((category) => ({
       label: category.name,
-      href: `/category/${category.id}`,
+      href: categoryHref(category.id),
     }))
 
     return [...fromCategories.slice(0, 3), { label: th("chipServices"), href: "/services" }]

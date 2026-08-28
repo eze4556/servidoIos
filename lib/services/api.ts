@@ -1,5 +1,6 @@
 import { Subscription, PaymentPreference } from '@/types/payments'
 import { auth } from '@/lib/firebase' // Importar instancia de auth
+import { API_BASE } from '@/lib/api-base'
 
 interface ApiResponse<T = any> {
   data?: T
@@ -7,7 +8,8 @@ interface ApiResponse<T = any> {
 }
 
 export class ApiService {
-  private static baseUrl = ""
+  // Vacío en la web (mismo origen); en el APK apunta al backend real.
+  private static baseUrl = API_BASE
 
   private static async fetchApi<T>(endpoint: string, options: RequestInit = {}, authRequired = false): Promise<ApiResponse<T>> {
     try {

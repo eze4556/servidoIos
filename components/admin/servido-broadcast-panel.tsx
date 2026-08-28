@@ -17,6 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Megaphone } from "lucide-react"
 import { describeApiError } from "@/lib/i18n/translate-client-error"
+import { apiUrl } from "@/lib/api-base"
 
 type Audience = "all" | "buyers" | "sellers" | "restaurants" | "resellers" | "cadetes" | "city" | "country"
 
@@ -42,7 +43,7 @@ export function ServidoBroadcastPanel() {
       const user = auth.currentUser
       if (!user) throw new Error(t("notLoggedIn"))
       const token = await user.getIdToken()
-      const res = await fetch("/api/admin/broadcast", {
+      const res = await fetch(apiUrl("/api/admin/broadcast"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

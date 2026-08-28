@@ -2,6 +2,7 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore } from 'firebase-admin/firestore'
 import { getStorage } from 'firebase-admin/storage'
+import { getMessaging } from 'firebase-admin/messaging'
 
 let app: any
 const projectId =
@@ -49,4 +50,6 @@ function getAdminStorageBucket() {
   return adminStorage.bucket()
 }
 
-export { app, auth, db, getAdminStorageBucket }
+const messaging = getMessaging(app)
+
+export { app, auth, db, messaging, getAdminStorageBucket }

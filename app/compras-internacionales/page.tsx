@@ -1,9 +1,11 @@
+"use client"
+
 import { Suspense } from "react"
-import { getTranslations } from "next-intl/server"
+import { useTranslations } from "next-intl"
 import ComprasInternacionalesContent from "./compras-internacionales-content"
 
-export default async function ComprasInternacionalesPage() {
-  const t = await getTranslations("internationalPurchases")
+export default function ComprasInternacionalesPage() {
+  const t = useTranslations("internationalPurchases")
 
   return (
     <Suspense
