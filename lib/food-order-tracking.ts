@@ -1,6 +1,7 @@
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { notifyFoodOrderStatus } from "@/lib/notifications"
+import { apiUrl } from "@/lib/api-base"
 import type { FoodOrder, FoodOrderStatus } from "@/types/restaurant"
 
 /** Estados visibles para el comprador (comida / delivery). */
@@ -22,6 +23,29 @@ const RESTAURANT_DELIVERY_FLOW: FoodOrderStatus[] = [
   "listo",
   "despachado",
 ]
+
+async function notifyCadetePool(orderId: string): Promise<void> {
+  try {
+    const { auth } = await import("@/lib/firebase")
+    const token = await auth.currentUser?.getIdToken()
+    if (!token) return
+    const response = await fetch(apiUrl("/api/food-orders/notify-available"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ orderId }),
+    })
+    if (!response.ok) {
+      const data = (await response.json().catch(() => null)) as { error?: string } | null
+      throw new Error(data?.error || `HTTP ${response.status}`)
+    }
+  } catch (error) {
+    // El cambio de estado ya ocurrió; un fallo de push no debe revertirlo.
+    console.error("[food-order] no se pudo avisar al pool de cadetes", error)
+  }
+}
 
 const RESTAURANT_PICKUP_FLOW: FoodOrderStatus[] = ["confirmado", "en_preparacion", "listo", "entregado"]
 
@@ -125,4 +149,12 @@ export async function setFoodOrderStatus(params: {
     status: nextStatus,
     restaurantName: order.restaurantName,
   })
+
+  if (
+    params.actor === "restaurant" &&
+    (nextStatus === "listo" || nextStatus === "despachado") &&
+    !order.cadeteId
+  ) {
+    void notifyCadetePool(order.id)
+  }
 }

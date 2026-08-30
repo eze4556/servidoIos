@@ -11,7 +11,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import { notifyFoodOrderStatus } from "@/lib/notifications"
+import { dispatchAppNotifications, notifyFoodOrderStatus } from "@/lib/notifications"
 import { ensureDeliveryChatForOrder } from "@/lib/delivery-chat"
 import { getNextFoodOrderStatus, setFoodOrderStatus } from "@/lib/food-order-tracking"
 import type { FoodOrder, FoodOrderStatus } from "@/types/restaurant"
@@ -211,6 +211,7 @@ export async function claimFoodOrder(
   const orderRef = doc(db, "foodOrders", orderId)
   let buyerId = ""
   let restaurantName = ""
+  let restaurantOwnerId = ""
 
   await runTransaction(db, async (transaction) => {
     const snap = await transaction.get(orderRef)
@@ -235,6 +236,7 @@ export async function claimFoodOrder(
 
     buyerId = data.buyerId
     restaurantName = data.restaurantName
+    restaurantOwnerId = String(data.restaurantOwnerId || "")
 
     transaction.update(orderRef, {
       cadeteId,
@@ -251,6 +253,19 @@ export async function claimFoodOrder(
     status: "en_camino",
     restaurantName,
   })
+  if (restaurantOwnerId) {
+    void dispatchAppNotifications([
+      {
+        userId: restaurantOwnerId,
+        type: "food_order",
+        title: "Cadete asignado",
+        body: `${cadeteName} tomó el pedido y está en camino.`,
+        link: "/dashboard/restaurant",
+        dedupeKey: `food_order_claimed_${orderId}`,
+        meta: { orderId, cadeteId, cadeteName },
+      },
+    ])
+  }
 
   try {
     const orderSnap = await getDoc(orderRef)

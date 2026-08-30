@@ -15,6 +15,7 @@ import {
   writeBatch
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import { dispatchAppNotifications } from '@/lib/notifications'
 import type { 
   CentralizedPurchase, 
   PurchaseItem, 
@@ -797,22 +798,15 @@ async function createCentralizedShippingNotification(
       }
     }
 
-    const notificationData = {
+    await dispatchAppNotifications([{
       userId: buyerId,
       type: "centralized_shipping",
       title: statusTitles[status],
-      description,
       body: description,
       link: "/dashboard/buyer",
-      purchaseId,
-      productName,
-      shippingStatus: status,
-      trackingNumber: trackingNumber || null,
-      carrierName: carrierName || null,
-      read: false,
-      isRead: false,
-      createdAt: serverTimestamp(),
+      dedupeKey: `centralized_shipping_${purchaseId}_${status}`,
       meta: {
+        purchaseId,
         shippingStatus: status,
         productName,
         trackingNumber: trackingNumber || "",
@@ -824,9 +818,7 @@ async function createCentralizedShippingNotification(
           carrierName: carrierName || "",
         },
       },
-    }
-
-    await addDoc(collection(db, "notifications"), notificationData)
+    }])
   } catch (error) {
     console.error('Error creating centralized shipping notification:', error)
   }

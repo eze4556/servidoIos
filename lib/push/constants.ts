@@ -9,6 +9,12 @@
 export const PUSH_TOKENS_SUBCOLLECTION = "pushTokens"
 
 /**
+ * Índice privado mantenido por el servidor para garantizar que un token FCM
+ * pertenezca a una sola cuenta a la vez.
+ */
+export const PUSH_TOKEN_OWNERS_COLLECTION = "pushTokenOwners"
+
+/**
  * Canal de Android. Lo crea el cliente al iniciar y el servidor lo nombra en
  * cada envío; si los dos ids no coinciden, Android usa un canal por defecto sin
  * sonido y las notificaciones pasan desapercibidas.

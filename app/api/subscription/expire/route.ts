@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/firebase-admin"
 import { getSubscriptionSnapshot } from "@/lib/subscription-utils"
 import type { QueryDocumentSnapshot } from "firebase-admin/firestore"
+import { createNotificationAdmin } from "@/lib/notifications-server"
 
 export const runtime = "nodejs"
 
@@ -65,6 +66,18 @@ export async function GET(request: NextRequest) {
             { merge: true }
           )
         }
+        await createNotificationAdmin({
+          userId: docSnap.id,
+          type: "subscription",
+          title: "Tu suscripción venció",
+          body: "Renovala para seguir publicando y recibiendo pedidos.",
+          link:
+            userData.businessType === "restaurant"
+              ? "/dashboard/restaurant"
+              : "/dashboard/seller",
+          dedupeKey: `subscription_expired_${docSnap.id}_${now.toISOString().slice(0, 10)}`,
+          meta: { expiredAt: now.toISOString() },
+        })
       }),
     )
 

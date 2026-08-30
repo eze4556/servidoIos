@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { assertChatMessageAllowed } from "@/lib/chat-content-guard"
+import { notifyChatMessage } from "@/lib/chat-notifications"
 
 export async function startVehicleListingChat(params: {
   listingId: string
@@ -63,13 +64,21 @@ export async function startVehicleListingChat(params: {
     })
   }
 
-  await addDoc(collection(db, "chats", chatId, "messages"), {
+  const messageRef = await addDoc(collection(db, "chats", chatId, "messages"), {
     senderId: params.buyerId,
     senderName: params.buyerName,
     text,
     timestamp: serverTimestamp(),
     source: "vehicle_inquiry",
     vehicleListingId: params.listingId,
+  })
+
+  void notifyChatMessage({
+    chatId,
+    messageId: messageRef.id,
+    recipientId: params.sellerId,
+    senderName: params.buyerName,
+    preview: text,
   })
 
   return chatId
@@ -128,13 +137,21 @@ export async function startPropertyListingChat(params: {
     })
   }
 
-  await addDoc(collection(db, "chats", chatId, "messages"), {
+  const messageRef = await addDoc(collection(db, "chats", chatId, "messages"), {
     senderId: params.buyerId,
     senderName: params.buyerName,
     text,
     timestamp: serverTimestamp(),
     source: "property_inquiry",
     propertyListingId: params.listingId,
+  })
+
+  void notifyChatMessage({
+    chatId,
+    messageId: messageRef.id,
+    recipientId: params.sellerId,
+    senderName: params.buyerName,
+    preview: text,
   })
 
   return chatId

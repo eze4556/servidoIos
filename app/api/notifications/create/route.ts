@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth as adminAuth, db } from "@/lib/firebase-admin"
 import { createNotificationAdmin, type ServerNotificationInput } from "@/lib/notifications-server"
+import { isFirestoreAdmin } from "@/lib/admin-auth-server"
 
 type IncomingNotification = ServerNotificationInput & {
   meta?: Record<string, unknown> | null
 }
 
-async function canNotifyUser(actorUid: string, notification: IncomingNotification): Promise<boolean> {
+const cleanId = (value: unknown) => String(value || "").trim()
+
+async function canNotifyUser(
+  actorUid: string,
+  actorIsAdmin: boolean,
+  notification: IncomingNotification
+): Promise<boolean> {
   const targetUserId = String(notification.userId || "").trim()
   if (!targetUserId) return false
-  if (targetUserId === actorUid) return true
+  if (targetUserId === actorUid || actorIsAdmin) return true
 
   const appointmentId = notification.meta?.appointmentId
   if (typeof appointmentId === "string" && appointmentId.trim()) {
@@ -29,6 +36,54 @@ async function canNotifyUser(actorUid: string, notification: IncomingNotificatio
     return isParty && isTargetParty
   }
 
+  const chatId = notification.meta?.chatId
+  if (typeof chatId === "string" && chatId.trim()) {
+    const snap = await db.collection("chats").doc(chatId.trim()).get()
+    if (!snap.exists) return false
+    const data = snap.data() || {}
+    const participants = Array.isArray(data.participantIds)
+      ? data.participantIds.map(cleanId).filter(Boolean)
+      : [data.buyerId, data.sellerId].map(cleanId).filter(Boolean)
+    const parties = new Set(participants)
+    return parties.has(actorUid) && parties.has(targetUserId)
+  }
+
+  const orderId = notification.meta?.orderId
+  if (typeof orderId === "string" && orderId.trim()) {
+    const snap = await db.collection("foodOrders").doc(orderId.trim()).get()
+    if (!snap.exists) return false
+    const data = snap.data() || {}
+    let restaurantOwnerId = String(data.restaurantOwnerId || "").trim()
+    if (!restaurantOwnerId && data.restaurantId) {
+      const restaurant = await db.collection("restaurants").doc(String(data.restaurantId)).get()
+      restaurantOwnerId = String(restaurant.data()?.ownerId || "").trim()
+    }
+    const parties = new Set(
+      [data.buyerId, restaurantOwnerId, data.cadeteId].map(cleanId).filter(Boolean)
+    )
+    return parties.has(actorUid) && parties.has(targetUserId)
+  }
+
+  const purchaseId = notification.meta?.purchaseId
+  if (typeof purchaseId === "string" && purchaseId.trim()) {
+    const id = purchaseId.trim()
+    const purchase = await db.collection("purchases").doc(id).get()
+    if (purchase.exists) {
+      const data = purchase.data() || {}
+      const parties = new Set([data.buyerId, data.sellerId].map(cleanId).filter(Boolean))
+      return parties.has(actorUid) && parties.has(targetUserId)
+    }
+
+    const centralized = await db.collection("centralizedPurchases").doc(id).get()
+    if (!centralized.exists) return false
+    const data = centralized.data() || {}
+    const sellerIds = Array.isArray(data.items)
+      ? data.items.map((item: { vendedorId?: unknown }) => String(item?.vendedorId || ""))
+      : []
+    const parties = new Set([String(data.compradorId || ""), ...sellerIds].filter(Boolean))
+    return parties.has(actorUid) && parties.has(targetUserId)
+  }
+
   return false
 }
 
@@ -40,6 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim())
+    const actorIsAdmin = await isFirestoreAdmin(decoded.uid)
     const body = await request.json().catch(() => null)
     const list = Array.isArray(body?.notifications)
       ? (body.notifications as IncomingNotification[])
@@ -56,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     const ids: string[] = []
     for (const item of list) {
-      const allowed = await canNotifyUser(decoded.uid, item)
+      const allowed = await canNotifyUser(decoded.uid, actorIsAdmin, item)
       if (!allowed) {
         return NextResponse.json(
           { error: `No autorizado para notificar a ${item.userId || "?"}` },

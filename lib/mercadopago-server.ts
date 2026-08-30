@@ -12,6 +12,7 @@ import { processResellerAttributionAfterPurchase } from "@/lib/reseller/process-
 import { sendResellerNotifications } from "@/lib/reseller/reseller-notifications"
 import { assertSellerCanReceiveSales } from "@/lib/claim-seller-moderation-server"
 import type { ResellerAttributionLine } from "@/types/reseller"
+import { createNotificationAdmin } from "@/lib/notifications-server"
 
 export type ShippingAddress = {
   fullName: string
@@ -848,6 +849,119 @@ function normalizePurchaseSourceData(sourceData: any) {
   }
 }
 
+async function resolvePurchaseParties(purchaseId: string, fallbackSource?: any) {
+  const [purchaseSnap, centralizedSnap] = await Promise.all([
+    adminDb.collection("purchases").doc(purchaseId).get(),
+    adminDb.collection("centralizedPurchases").doc(purchaseId).get(),
+  ])
+  const purchase = purchaseSnap.data() || {}
+  const centralized = centralizedSnap.data() || {}
+  const source = fallbackSource || (centralizedSnap.exists ? centralized : purchase)
+  const rawItems = Array.isArray(source?.items)
+    ? source.items
+    : Array.isArray(source?.products)
+      ? source.products
+      : Array.isArray(purchase?.products)
+        ? purchase.products
+        : []
+
+  const buyerId = String(
+    purchase.buyerId || centralized.compradorId || source?.buyerId || source?.compradorId || ""
+  ).trim()
+  const sellerIds = new Set<string>()
+  const productIds = new Set<string>()
+
+  for (const item of rawItems) {
+    const sellerId = String(item?.sellerId || item?.vendedorId || "").trim()
+    if (sellerId) sellerIds.add(sellerId)
+    const productId = String(
+      item?.productId || item?.productoId || item?.id || item?.product?.id || ""
+    ).trim()
+    if (productId) productIds.add(productId)
+  }
+
+  // Algunas compras antiguas guardan sólo productId; completar vendedor desde
+  // products evita perder el aviso.
+  await Promise.all(
+    [...productIds].map(async (productId) => {
+      const product = await adminDb.collection("products").doc(productId).get()
+      const sellerId = String(product.data()?.sellerId || "").trim()
+      if (sellerId) sellerIds.add(sellerId)
+    })
+  )
+
+  return { buyerId, sellerIds: [...sellerIds] }
+}
+
+async function notifyMarketplacePayment(params: {
+  purchaseId: string
+  paymentId: string
+  status: "approved" | "rejected" | "refunded"
+  fallbackSource?: any
+  stockIssue?: boolean
+}) {
+  const parties = await resolvePurchaseParties(params.purchaseId, params.fallbackSource)
+  const notifications = []
+
+  if (parties.buyerId) {
+    const title =
+      params.status === "approved"
+        ? params.stockIssue
+          ? "Pago aprobado con un problema de stock"
+          : "Compra confirmada"
+        : params.status === "refunded"
+          ? "Compra reembolsada"
+          : "Pago rechazado"
+    const body =
+      params.status === "approved"
+        ? params.stockIssue
+          ? "Recibimos el pago, pero uno de los productos no tenía stock suficiente. Revisaremos tu compra."
+          : "Recibimos tu pago correctamente. Podés seguir el pedido desde tus compras."
+        : params.status === "refunded"
+          ? "El reembolso de tu compra fue registrado."
+          : "No pudimos aprobar el pago. Podés intentarlo nuevamente."
+    notifications.push(
+      createNotificationAdmin({
+        userId: parties.buyerId,
+        type: "payment",
+        title,
+        body,
+        link: "/dashboard/buyer",
+        dedupeKey: `purchase_payment_${params.paymentId}_${params.status}_buyer`,
+        meta: { purchaseId: params.purchaseId, paymentId: params.paymentId, status: params.status },
+      })
+    )
+  }
+
+  for (const sellerId of parties.sellerIds) {
+    const title =
+      params.status === "approved"
+        ? "Nueva venta"
+        : params.status === "refunded"
+          ? "Venta reembolsada"
+          : "Pago de compra rechazado"
+    const body =
+      params.status === "approved"
+        ? "Se acreditó una nueva venta. Revisá el pedido desde tu panel."
+        : params.status === "refunded"
+          ? "Se registró el reembolso de una venta."
+          : "El pago de una compra no fue aprobado."
+    notifications.push(
+      createNotificationAdmin({
+        userId: sellerId,
+        type: "payment",
+        title,
+        body,
+        link: "/dashboard/seller",
+        dedupeKey: `purchase_payment_${params.paymentId}_${params.status}_seller_${sellerId}`,
+        meta: { purchaseId: params.purchaseId, paymentId: params.paymentId, status: params.status },
+      })
+    )
+  }
+
+  await Promise.all(notifications)
+}
+
 async function handleApprovedPurchase(paymentInfo: any, purchaseId: string) {
   logFirestoreAccess("doc", "pending_purchases", purchaseId)
   const pendingPurchaseRef = adminDb.collection("pending_purchases").doc(purchaseId)
@@ -965,6 +1079,19 @@ async function handleApprovedPurchase(paymentInfo: any, purchaseId: string) {
     transaction.delete(pendingPurchaseRef)
   })
 
+  try {
+    const failed = await failedPurchaseRef.get()
+    await notifyMarketplacePayment({
+      purchaseId,
+      paymentId: String(paymentInfo.id),
+      status: "approved",
+      fallbackSource: pendingPreRead.data(),
+      stockIssue: failed.exists,
+    })
+  } catch (notificationError) {
+    console.error("purchase approved notifications failed", purchaseId, notificationError)
+  }
+
   if (preAttribution?.length && preBuyerId) {
     try {
       const intents = await processResellerAttributionAfterPurchase({
@@ -990,6 +1117,11 @@ async function handleRejectedPurchase(paymentInfo: any, purchaseId: string) {
   const centralizedPurchaseRef = adminDb.collection("centralizedPurchases").doc(purchaseId)
   logFirestoreAccess("doc", "purchases", purchaseId)
   const legacyPurchaseRef = adminDb.collection("purchases").doc(purchaseId)
+  const [pendingBefore, centralizedBefore] = await Promise.all([
+    pendingPurchaseRef.get(),
+    centralizedPurchaseRef.get(),
+  ])
+  const notificationSource = pendingBefore.data() || centralizedBefore.data()
 
   logFirestoreAccess("runTransaction", "pending_purchases", purchaseId)
   logFirestoreAccess("runTransaction", "centralizedPurchases", purchaseId)
@@ -1029,6 +1161,17 @@ async function handleRejectedPurchase(paymentInfo: any, purchaseId: string) {
     logFirestoreAccess("transaction.delete", "pending_purchases", purchaseId)
     transaction.delete(pendingPurchaseRef)
   })
+
+  try {
+    await notifyMarketplacePayment({
+      purchaseId,
+      paymentId: String(paymentInfo.id),
+      status: "rejected",
+      fallbackSource: notificationSource,
+    })
+  } catch (notificationError) {
+    console.error("purchase rejected notifications failed", purchaseId, notificationError)
+  }
 }
 
 async function handleRefundedPurchase(paymentInfo: any, purchaseId: string) {
@@ -1071,6 +1214,16 @@ async function handleRefundedPurchase(paymentInfo: any, purchaseId: string) {
       updatedAt: new Date(),
     }, { merge: true })
   })
+
+  try {
+    await notifyMarketplacePayment({
+      purchaseId,
+      paymentId: String(paymentInfo.id),
+      status: "refunded",
+    })
+  } catch (notificationError) {
+    console.error("purchase refunded notifications failed", purchaseId, notificationError)
+  }
 }
 
 async function handleSubscriptionPayment(externalReference: string, paymentInfo: any) {

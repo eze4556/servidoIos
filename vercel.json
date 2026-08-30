@@ -13,6 +13,10 @@
     {
       "path": "/api/cron/claims-sla",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/service-appointment-reminders",
+      "schedule": "*/15 * * * *"
     }
   ],
   "functions": {

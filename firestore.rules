@@ -307,9 +307,10 @@ service cloud.firestore {
     match /notifications/{id} {
       allow read: if isAdmin()
         || (signedIn() && resource.data.userId == uid());
-      // Varios flujos cliente crean notifs para otro user (pedido, chat, etc.)
-      allow create: if signedIn()
-        && request.resource.data.keys().hasAll(['userId']);
+      // Las altas pasan únicamente por /api/notifications/create con Admin SDK.
+      // Permitirlas al cliente dejaría que cualquier cuenta envíe avisos a
+      // cualquier uid y, además, saltearía FCM.
+      allow create: if false;
       allow update: if isAdmin()
         || (signedIn() && resource.data.userId == uid());
       allow delete: if isAdmin()

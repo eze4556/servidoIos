@@ -75,6 +75,7 @@ import {
 } from "firebase/firestore"
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { deleteStoragePathAsAdmin } from "@/lib/admin-storage-client"
+import { dispatchAppNotifications } from "@/lib/notifications"
 import { Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
@@ -853,27 +854,28 @@ export default function AdminDashboard() {
       await addDoc(collection(db, "manualPayments"), paymentRecord)
 
       // Crear notificación para el vendedor
-      const notificationData = {
+      const paymentDescription = t("toasts.paymentProcessedDescription", {
+        amount: fmtNum(paymentMarkingModal.monto),
+        method:
+          paymentMethod === "bank_transfer"
+            ? t("notifications.paymentMethodBank")
+            : paymentMethod === "mercadopago"
+              ? t("notifications.paymentMethodMercadoPago")
+              : t("notifications.paymentMethodCash"),
+      })
+      await dispatchAppNotifications([{
         userId: vendedorId,
         type: "payment_completed",
         title: t("toasts.paymentProcessedTitle"),
-        description: t("toasts.paymentProcessedDescription", {
-          amount: fmtNum(paymentMarkingModal.monto),
-          method:
-            paymentMethod === "bank_transfer"
-              ? t("notifications.paymentMethodBank")
-              : paymentMethod === "mercadopago"
-                ? t("notifications.paymentMethodMercadoPago")
-                : t("notifications.paymentMethodCash"),
-        }),
-        compraId,
-        monto: paymentMarkingModal.monto,
-        metodoPago: paymentMethod,
-        isRead: false,
-        createdAt: serverTimestamp()
-      }
-
-      await addDoc(collection(db, "notifications"), notificationData)
+        body: paymentDescription,
+        link: "/dashboard/seller",
+        dedupeKey: `admin_payment_${compraId}_${vendedorId}`,
+        meta: {
+          purchaseId: compraId,
+          amount: paymentMarkingModal.monto,
+          paymentMethod,
+        },
+      }])
 
       // Actualizar datos locales
       await fetchSalesData()
@@ -992,21 +994,19 @@ export default function AdminDashboard() {
 
       // Crear notificación para el comprador
       const sale = salesData.find(s => s.compraId === compraId)
-      if (sale) {
-        const notificationData = {
-          userId: sale.compradorEmail,
+      if (sale?.buyerId) {
+        const description = t("toasts.shippingUpdateDescription", {
+          status: getShippingStatusLabel(t, newStatus),
+        })
+        await dispatchAppNotifications([{
+          userId: sale.buyerId,
           type: "shipping_update",
           title: t("toasts.shippingUpdateTitle"),
-          description: t("toasts.shippingUpdateDescription", {
-            status: getShippingStatusLabel(t, newStatus),
-          }),
-          compraId,
-          estadoEnvio: newStatus,
-          isRead: false,
-          createdAt: serverTimestamp()
-        }
-
-        await addDoc(collection(db, "notifications"), notificationData)
+          body: description,
+          link: "/dashboard/buyer",
+          dedupeKey: `admin_shipping_${compraId}_${newStatus}`,
+          meta: { purchaseId: compraId, shippingStatus: newStatus },
+        }])
       }
 
       // Actualizar datos locales
@@ -1418,6 +1418,18 @@ export default function AdminDashboard() {
       }
 
       await updateDoc(userRef, updates)
+      if (user?.role === "cadete") {
+        await dispatchAppNotifications([{
+          userId,
+          type: "system",
+          title: nextActive ? "Cuenta de cadete activada" : "Cuenta de cadete desactivada",
+          body: nextActive
+            ? "Ya podés ingresar y tomar pedidos disponibles."
+            : "Tu cuenta de cadete fue desactivada. Contactá a soporte si necesitás ayuda.",
+          link: "/dashboard/cadete",
+          meta: { cadeteStatus: nextActive ? "approved" : "rejected" },
+        }])
+      }
       setUsers(
         users.map((u) =>
           u.id === userId
@@ -1443,6 +1455,15 @@ export default function AdminDashboard() {
         isActive: true,
         approvedAt: serverTimestamp(),
       })
+      await dispatchAppNotifications([{
+        userId,
+        type: "system",
+        title: "Cuenta de cadete aprobada",
+        body: "Tu registro fue aprobado. Ya podés ingresar y tomar pedidos.",
+        link: "/dashboard/cadete",
+        dedupeKey: `cadete_approved_${userId}`,
+        meta: { cadeteStatus: "approved" },
+      }])
       setUsers(
         users.map((u) => (u.id === userId ? { ...u, status: "approved", isActive: true } : u))
       )
@@ -1467,6 +1488,15 @@ export default function AdminDashboard() {
         isActive: false,
         rejectedAt: serverTimestamp(),
       })
+      await dispatchAppNotifications([{
+        userId,
+        type: "system",
+        title: "Registro de cadete rechazado",
+        body: "No pudimos aprobar tu registro. Revisá tus datos o contactá a soporte.",
+        link: "/dashboard/cadete",
+        dedupeKey: `cadete_rejected_${userId}`,
+        meta: { cadeteStatus: "rejected" },
+      }])
       setUsers(
         users.map((u) => (u.id === userId ? { ...u, status: "rejected", isActive: false } : u))
       )

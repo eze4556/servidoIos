@@ -1,12 +1,10 @@
 import {
-  addDoc,
   collection,
   doc,
   getDocs,
   limit,
   onSnapshot,
   query,
-  serverTimestamp,
   updateDoc,
   where,
   type Unsubscribe,
@@ -21,56 +19,6 @@ export function isNotificationRead(n: Pick<AppNotification, "read" | "isRead">):
 
 export function getNotificationBody(n: Pick<AppNotification, "body" | "description">): string {
   return String(n.body || n.description || "").trim()
-}
-
-/**
- * Crea una notificación in-app (cliente).
- * Si viene `dedupeKey` y ya existe una igual para el usuario, no duplica.
- * Preferí `dispatchAppNotifications` para avisar a otro usuario (usa Admin API).
- */
-export async function createAppNotification(input: CreateAppNotificationInput): Promise<string | null> {
-  const userId = String(input.userId || "").trim()
-  const title = String(input.title || "").trim()
-  const body = String(input.body || "").trim()
-  if (!userId || !title || !body) return null
-
-  const dedupeKey = input.dedupeKey ? String(input.dedupeKey).trim() : ""
-  if (dedupeKey) {
-    try {
-      const existing = await getDocs(
-        query(
-          collection(db, "notifications"),
-          where("userId", "==", userId),
-          where("dedupeKey", "==", dedupeKey),
-          limit(1)
-        )
-      )
-      if (!existing.empty) return existing.docs[0].id
-    } catch (err) {
-      // Índice faltante u otra falla: seguimos e intentamos crear
-      console.warn("createAppNotification dedupe skip:", err)
-    }
-  }
-
-  try {
-    const ref = await addDoc(collection(db, "notifications"), {
-      userId,
-      type: input.type || "system",
-      title,
-      body,
-      description: body,
-      link: input.link || null,
-      read: false,
-      isRead: false,
-      dedupeKey: dedupeKey || null,
-      meta: input.meta || null,
-      createdAt: serverTimestamp(),
-    })
-    return ref.id
-  } catch (err) {
-    console.error("createAppNotification failed:", err)
-    return null
-  }
 }
 
 /**
@@ -103,13 +51,11 @@ export async function dispatchAppNotifications(items: CreateAppNotificationInput
     const data = (await res.json()) as { ids?: string[] }
     return Array.isArray(data.ids) ? data.ids : []
   } catch (err) {
-    console.warn("dispatchAppNotifications API failed, fallback client:", err)
-    const ids: string[] = []
-    for (const item of list) {
-      const id = await createAppNotification(item)
-      if (id) ids.push(id)
-    }
-    return ids
+    // No escribir directo en Firestore como fallback: esa vía obligaba a
+    // permitir que cualquier usuario autenticado notificara a cualquier uid y
+    // además perdía el push. La API es el único pipeline autorizado.
+    console.error("dispatchAppNotifications API failed:", err)
+    return []
   }
 }
 
@@ -182,7 +128,7 @@ export async function notifySubscriptionReminder(params: {
           params.planLabel ? ` (${params.planLabel})` : ""
         }. Podés renovar desde tu panel.`
 
-  await createAppNotification({
+  await dispatchAppNotifications([{
     userId: params.userId,
     type: "subscription",
     title,
@@ -195,7 +141,7 @@ export async function notifySubscriptionReminder(params: {
       i18nKey,
       i18nParams: { days, planLabel: params.planLabel || "" },
     },
-  })
+  }])
 }
 
 export async function notifyFoodOrderStatus(params: {
@@ -228,7 +174,7 @@ export async function notifyFoodOrderStatus(params: {
       ? `Tu comida${place} ya fue entregada. ¡Buen provecho!`
       : `${title}${place}.`
 
-  await createAppNotification({
+  await dispatchAppNotifications([{
     userId: buyerId,
     type: "food_order",
     title,
@@ -242,5 +188,5 @@ export async function notifyFoodOrderStatus(params: {
       i18nKey,
       i18nParams: { restaurantName: params.restaurantName ?? "" },
     },
-  })
+  }])
 }

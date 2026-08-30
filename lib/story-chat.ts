@@ -16,6 +16,7 @@ import {
 import { db } from "@/lib/firebase"
 import type { Story } from "@/types/story"
 import { assertChatMessageAllowed, CHAT_CONTENT_BLOCKED } from "@/lib/chat-content-guard"
+import { notifyChatMessage } from "@/lib/chat-notifications"
 
 export { CHAT_CONTENT_BLOCKED }
 
@@ -168,13 +169,21 @@ export async function replyToStory(params: {
     })
   }
 
-  await addDoc(collection(db, "chats", chatId, "messages"), {
+  const messageRef = await addDoc(collection(db, "chats", chatId, "messages"), {
     senderId: params.senderId,
     senderName: params.senderName,
     text,
     timestamp: serverTimestamp(),
     source: "story_reply",
     storyId: params.story.id,
+  })
+
+  void notifyChatMessage({
+    chatId,
+    messageId: messageRef.id,
+    recipientId: params.story.authorId,
+    senderName: params.senderName,
+    preview: text,
   })
 
   return chatId

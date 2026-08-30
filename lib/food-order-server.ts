@@ -15,6 +15,7 @@ import {
   quotePickupCommission,
 } from "@/lib/delivery-pricing"
 import { hasValidCoordinates } from "@/lib/geo"
+import { createNotificationAdmin } from "@/lib/notifications-server"
 import type {
   DeliveryMode,
   FoodOrderItem,
@@ -42,6 +43,23 @@ export type CreateFoodOrderPayload = {
   paymentMethod: RestaurantPaymentMethod
   deliveryLat?: number
   deliveryLng?: number
+}
+
+async function notifyRestaurantNewFoodOrder(params: {
+  orderId: string
+  ownerId: string
+  restaurantName?: string
+}): Promise<void> {
+  if (!params.ownerId) return
+  await createNotificationAdmin({
+    userId: params.ownerId,
+    type: "food_order",
+    title: "Nuevo pedido",
+    body: `Recibiste un nuevo pedido${params.restaurantName ? ` en ${params.restaurantName}` : ""}.`,
+    link: "/dashboard/restaurant",
+    dedupeKey: `food_order_new_${params.orderId}`,
+    meta: { orderId: params.orderId },
+  })
 }
 
 /** @deprecated use CreateFoodOrderPayload */
@@ -315,6 +333,11 @@ export async function createFoodOrder(request: Request, body: CreateFoodOrderPay
       commissionStatus: "pending",
       paymentStatus: "approved",
     })
+    await notifyRestaurantNewFoodOrder({
+      orderId,
+      ownerId,
+      restaurantName: String((baseOrder as { restaurantName?: unknown }).restaurantName || ""),
+    })
     return {
       orderId,
       paymentMethod,
@@ -427,6 +450,35 @@ export async function updateFoodOrderPaymentStatus(
       : {}),
     ...(paymentStatus === "cancelled" || paymentStatus === "rejected" ? { status: "cancelado" } : {}),
   })
+
+  if (paymentStatus === "approved") {
+    await Promise.all([
+      notifyRestaurantNewFoodOrder({
+        orderId,
+        ownerId: String(data.restaurantOwnerId || ""),
+        restaurantName: String(data.restaurantName || ""),
+      }),
+      createNotificationAdmin({
+        userId: String(data.buyerId || ""),
+        type: "food_order",
+        title: "Pago aprobado",
+        body: `Tu pedido${data.restaurantName ? ` en ${data.restaurantName}` : ""} fue recibido.`,
+        link: "/pedidos/comida",
+        dedupeKey: `food_order_payment_${orderId}_approved`,
+        meta: { orderId, paymentStatus },
+      }),
+    ])
+  } else if (paymentStatus === "rejected" || paymentStatus === "cancelled") {
+    await createNotificationAdmin({
+      userId: String(data.buyerId || ""),
+      type: "food_order",
+      title: paymentStatus === "rejected" ? "Pago rechazado" : "Pago cancelado",
+      body: "No pudimos confirmar el pago de tu pedido. Podés intentarlo nuevamente.",
+      link: "/pedidos/comida",
+      dedupeKey: `food_order_payment_${orderId}_${paymentStatus}`,
+      meta: { orderId, paymentStatus },
+    })
+  }
 
   // Silenciar unused — isDelivery se usará cuando accrue al entregar
   void isDelivery

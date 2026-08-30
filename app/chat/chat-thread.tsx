@@ -43,6 +43,7 @@ import { validateChatMessageText } from "@/lib/chat-content-guard"
 import { fetchProductListingForChat } from "@/lib/chat-listing-share"
 import { ChatListingMessageCard } from "@/components/chat/chat-listing-message-card"
 import { ChatShareProductSheet } from "@/components/chat/chat-share-product-sheet"
+import { notifyChatMessage } from "@/lib/chat-notifications"
 
 interface Chat {
   id: string
@@ -325,13 +326,14 @@ export function ChatThread() {
     setSending(true)
     setError(null)
     try {
-      await addDoc(collection(db, "chats", chatId, "messages"), {
+      const senderName =
+        currentUser.name ||
+        currentUser.firebaseUser.displayName ||
+        currentUser.firebaseUser.email?.split("@")[0] ||
+        t("defaultUser")
+      const messageRef = await addDoc(collection(db, "chats", chatId, "messages"), {
         senderId: currentUser.firebaseUser.uid,
-        senderName:
-          currentUser.name ||
-          currentUser.firebaseUser.displayName ||
-          currentUser.firebaseUser.email?.split("@")[0] ||
-          t("defaultUser"),
+        senderName,
         text,
         messageType: "text",
         timestamp: serverTimestamp(),
@@ -340,6 +342,15 @@ export function ChatThread() {
         lastMessage: text,
         lastMessageSenderId: currentUser.firebaseUser.uid,
         lastMessageTimestamp: serverTimestamp(),
+      })
+      const recipientId =
+        currentUser.firebaseUser.uid === chat.buyerId ? chat.sellerId : chat.buyerId
+      void notifyChatMessage({
+        chatId,
+        messageId: messageRef.id,
+        recipientId,
+        senderName,
+        preview: text,
       })
       setNewMessage("")
       inputRef.current?.focus()
@@ -363,13 +374,14 @@ export function ChatThread() {
         return
       }
       const preview = t("sharedListingLabel")
-      await addDoc(collection(db, "chats", chatId, "messages"), {
+      const senderName =
+        currentUser.name ||
+        currentUser.firebaseUser.displayName ||
+        currentUser.firebaseUser.email?.split("@")[0] ||
+        t("defaultUser")
+      const messageRef = await addDoc(collection(db, "chats", chatId, "messages"), {
         senderId: currentUser.firebaseUser.uid,
-        senderName:
-          currentUser.name ||
-          currentUser.firebaseUser.displayName ||
-          currentUser.firebaseUser.email?.split("@")[0] ||
-          t("defaultUser"),
+        senderName,
         text: preview,
         messageType: "listing",
         listingKind: "product",
@@ -384,6 +396,17 @@ export function ChatThread() {
         lastMessageSenderId: currentUser.firebaseUser.uid,
         lastMessageTimestamp: serverTimestamp(),
       })
+      if (chat) {
+        const recipientId =
+          currentUser.firebaseUser.uid === chat.buyerId ? chat.sellerId : chat.buyerId
+        void notifyChatMessage({
+          chatId,
+          messageId: messageRef.id,
+          recipientId,
+          senderName,
+          preview,
+        })
+      }
       setShareSheetOpen(false)
     } catch (err) {
       console.error(err)

@@ -1,5 +1,6 @@
-import { doc, updateDoc, getDoc, collection, query, where, getDocs, orderBy, addDoc, serverTimestamp } from "firebase/firestore"
+import { doc, updateDoc, getDoc, collection, query, where, getDocs, orderBy } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { dispatchAppNotifications } from "@/lib/notifications"
 import type { 
   ShippingInfo, 
   ShippingStatus, 
@@ -131,22 +132,15 @@ export async function createShippingNotification(
       }
     }
 
-    const notificationData = {
+    const ids = await dispatchAppNotifications([{
       userId: buyerId,
       type: "shipping",
       title: statusTitles[status],
-      description,
       body: description,
       link: "/dashboard/buyer",
-      purchaseId,
-      productName,
-      shippingStatus: status,
-      trackingNumber: trackingNumber || null,
-      carrierName: carrierName || null,
-      read: false,
-      isRead: false,
-      createdAt: serverTimestamp(),
+      dedupeKey: `shipping_${purchaseId}_${status}`,
       meta: {
+        purchaseId,
         shippingStatus: status,
         productName,
         trackingNumber: trackingNumber || "",
@@ -158,11 +152,11 @@ export async function createShippingNotification(
           carrierName: carrierName || "",
         },
       },
-    }
-
-    await addDoc(collection(db, "notifications"), notificationData)
+    }])
     
-    return { success: true }
+    return ids.length > 0
+      ? { success: true }
+      : { success: false, error: "No se pudo crear la notificación de envío" }
   } catch (error) {
     console.error("Error creating shipping notification:", error)
     return { 

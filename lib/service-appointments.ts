@@ -14,7 +14,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import { createAppNotification, dispatchAppNotifications } from "@/lib/notifications"
+import { dispatchAppNotifications } from "@/lib/notifications"
 import type {
   ServiceAppointment,
   ServiceAppointmentStatus,
@@ -425,39 +425,40 @@ async function requestServiceAppointmentClient(input: {
     minute: "2-digit",
   })
 
-  await createAppNotification({
-    userId: input.buyerId,
-    type: "service",
-    title: "Reserva enviada",
-    body: `Pediste turno para "${input.serviceName}" el ${when}. Te avisamos cuando el prestador confirme.`,
-    link: "/dashboard/buyer?tab=appointments",
-    dedupeKey: `service_appt_buyer_${apptRef.id}_pending`,
-    meta: {
-      appointmentId: apptRef.id,
-      serviceId: input.serviceId,
-      i18nKey: "service.buyerPending",
-      i18nParams: { serviceName: input.serviceName, whenIso: input.start.toISOString() },
-    },
-  })
-
-  await createAppNotification({
-    userId: input.sellerId,
-    type: "service",
-    title: "Nueva reserva de servicio",
-    body: `${input.buyerName || "Un cliente"} pidió turno para "${input.serviceName}" el ${when}.`,
-    link: "/dashboard/seller?tab=agenda",
-    dedupeKey: `service_appt_created_${apptRef.id}`,
-    meta: {
-      appointmentId: apptRef.id,
-      serviceId: input.serviceId,
-      i18nKey: "service.sellerNew",
-      i18nParams: {
-        serviceName: input.serviceName,
-        buyerName: input.buyerName || "",
-        whenIso: input.start.toISOString(),
+  await dispatchAppNotifications([
+    {
+      userId: input.buyerId,
+      type: "service",
+      title: "Reserva enviada",
+      body: `Pediste turno para "${input.serviceName}" el ${when}. Te avisamos cuando el prestador confirme.`,
+      link: "/dashboard/buyer?tab=appointments",
+      dedupeKey: `service_appt_buyer_${apptRef.id}_pending`,
+      meta: {
+        appointmentId: apptRef.id,
+        serviceId: input.serviceId,
+        i18nKey: "service.buyerPending",
+        i18nParams: { serviceName: input.serviceName, whenIso: input.start.toISOString() },
       },
     },
-  })
+    {
+      userId: input.sellerId,
+      type: "service",
+      title: "Nueva reserva de servicio",
+      body: `${input.buyerName || "Un cliente"} pidió turno para "${input.serviceName}" el ${when}.`,
+      link: "/dashboard/seller?tab=agenda",
+      dedupeKey: `service_appt_created_${apptRef.id}`,
+      meta: {
+        appointmentId: apptRef.id,
+        serviceId: input.serviceId,
+        i18nKey: "service.sellerNew",
+        i18nParams: {
+          serviceName: input.serviceName,
+          buyerName: input.buyerName || "",
+          whenIso: input.start.toISOString(),
+        },
+      },
+    },
+  ])
 
   return apptRef.id
 }
@@ -536,7 +537,7 @@ export async function syncAppointmentNotificationsForUser(userId: string): Promi
     const whenIso = appointmentStartDate(appt)?.toISOString() || ""
     const i18nKey =
       appt.status === "confirmed" ? "service.syncBuyerConfirmed" : "service.syncBuyerPending"
-    const id = await createAppNotification({
+    const [id] = await dispatchAppNotifications([{
       userId,
       type: "service",
       title: appt.status === "confirmed" ? "Turno confirmado" : "Reserva enviada",
@@ -554,7 +555,7 @@ export async function syncAppointmentNotificationsForUser(userId: string): Promi
         i18nKey,
         i18nParams: { serviceName: appt.serviceName, whenIso },
       },
-    })
+    }])
     if (id) created += 1
   }
 
@@ -562,7 +563,7 @@ export async function syncAppointmentNotificationsForUser(userId: string): Promi
     if (appt.status !== "pending") continue
     const when = formatAppointmentWhen(appt)
     const whenIso = appointmentStartDate(appt)?.toISOString() || ""
-    const id = await createAppNotification({
+    const [id] = await dispatchAppNotifications([{
       userId,
       type: "service",
       title: "Nueva reserva de servicio",
@@ -580,7 +581,7 @@ export async function syncAppointmentNotificationsForUser(userId: string): Promi
           whenIso,
         },
       },
-    })
+    }])
     if (id) created += 1
   }
 

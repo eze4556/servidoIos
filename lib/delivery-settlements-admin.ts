@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore"
 import { db as adminDb } from "@/lib/firebase-admin"
 import { getTuesdaySettlementWindow } from "@/lib/delivery-settlements"
 import type { BankPayoutInfo } from "@/types/delivery-settlements"
+import { createNotificationAdmin } from "@/lib/notifications-server"
 
 function roundMoney(amount: number) {
   return Math.round(amount * 100) / 100
@@ -71,6 +72,16 @@ export async function generateCadetePayoutBatches(adminId: string) {
       })
     }
     await writer.close()
+
+    await createNotificationAdmin({
+      userId: cadeteId,
+      type: "payment",
+      title: "Liquidación preparada",
+      body: `Tu liquidación por ${group.orderIds.length} entrega${group.orderIds.length === 1 ? "" : "s"} está lista para pagar.`,
+      link: "/dashboard/cadete",
+      dedupeKey: `cadete_payout_ready_${batchRef.id}`,
+      meta: { batchId: batchRef.id, amount: roundMoney(group.amount) },
+    })
 
     created.push({
       id: batchRef.id,
@@ -159,7 +170,12 @@ export async function markCadetePayoutPaid(batchId: string, adminId: string) {
   const ref = adminDb.collection("cadetePayoutBatches").doc(batchId)
   const snap = await ref.get()
   if (!snap.exists) throw new Error("NOT_FOUND")
-  const data = snap.data() as { status?: string; orderIds?: string[] }
+  const data = snap.data() as {
+    status?: string
+    orderIds?: string[]
+    cadeteId?: string
+    amount?: number
+  }
   if (data.status === "paid") return { already: true }
 
   await ref.update({
@@ -177,6 +193,17 @@ export async function markCadetePayoutPaid(batchId: string, adminId: string) {
     })
   }
   await writer.close()
+  if (data.cadeteId) {
+    await createNotificationAdmin({
+      userId: data.cadeteId,
+      type: "payment",
+      title: "Transferencia realizada",
+      body: `Marcamos como pagada tu liquidación${data.amount ? ` de $${data.amount}` : ""}.`,
+      link: "/dashboard/cadete",
+      dedupeKey: `cadete_payout_paid_${batchId}`,
+      meta: { batchId, amount: data.amount || 0 },
+    })
+  }
   return { already: false }
 }
 

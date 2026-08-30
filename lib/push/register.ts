@@ -16,10 +16,16 @@ export const isPushAvailable = () => Capacitor.isNativePlatform()
 /** Se guarda para poder dar de baja el token exacto al cerrar sesión. */
 let currentToken: string | null = null
 
+export type ForegroundPush = {
+  title: string
+  body: string
+  link?: string
+}
+
 async function authorizedFetch(method: "POST" | "DELETE", token: string) {
   const idToken = await auth?.currentUser?.getIdToken()
-  if (!idToken) return
-  await fetch(apiUrl("/api/push/register"), {
+  if (!idToken) throw new Error("No hay una sesión válida para registrar push")
+  const response = await fetch(apiUrl("/api/push/register"), {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -27,6 +33,10 @@ async function authorizedFetch(method: "POST" | "DELETE", token: string) {
     },
     body: JSON.stringify({ token, platform: Capacitor.getPlatform() }),
   })
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(data?.error || `No se pudo ${method === "POST" ? "registrar" : "borrar"} push (${response.status})`)
+  }
 }
 
 /**
@@ -38,7 +48,8 @@ async function authorizedFetch(method: "POST" | "DELETE", token: string) {
  * @returns función para desmontar los listeners.
  */
 export async function initPushNotifications(
-  onOpenLink: (href: string) => void
+  onOpenLink: (href: string) => void,
+  onForegroundPush?: (notification: ForegroundPush) => void
 ): Promise<() => void> {
   if (!isPushAvailable()) return () => {}
 
@@ -55,17 +66,37 @@ export async function initPushNotifications(
       name: "Servido",
       description: "Pedidos, mensajes y novedades",
       importance: 5,
-      visibility: 1,
+      // Oculta el contenido sensible en la pantalla bloqueada.
+      visibility: 0,
     })
   }
 
   const listeners = [
     await PushNotifications.addListener("registration", (token) => {
+      const previousToken = currentToken
       currentToken = token.value
-      void authorizedFetch("POST", token.value)
+      void (async () => {
+        // FCM puede rotar el token. Borrar el anterior evita duplicados hasta
+        // que el servidor detecte que quedó inválido.
+        if (previousToken && previousToken !== token.value) {
+          await authorizedFetch("DELETE", previousToken).catch((error) => {
+            console.warn("[push] no se pudo borrar el token anterior", error)
+          })
+        }
+        await authorizedFetch("POST", token.value)
+      })().catch((error) => {
+        console.error("[push] el backend rechazó el registro", error)
+      })
     }),
     await PushNotifications.addListener("registrationError", (error) => {
       console.error("[push] no se pudo registrar el dispositivo", error)
+    }),
+    await PushNotifications.addListener("pushNotificationReceived", (notification) => {
+      onForegroundPush?.({
+        title: notification.title || "Servido",
+        body: notification.body || "",
+        link: typeof notification.data?.link === "string" ? notification.data.link : undefined,
+      })
     }),
     await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
       const link = action.notification.data?.link
@@ -88,11 +119,19 @@ export async function unregisterPushToken(): Promise<void> {
   if (!isPushAvailable() || !currentToken) return
   const token = currentToken
   currentToken = null
+
   try {
     await authorizedFetch("DELETE", token)
+  } catch (error) {
+    // Aunque no haya sesión o falle la API, revocar el token local impide que
+    // el dispositivo siga recibiendo avisos de la cuenta anterior.
+    console.warn("[push] no se pudo borrar el token del backend", error)
+  }
+
+  try {
     const { PushNotifications } = await import("@capacitor/push-notifications")
     await PushNotifications.unregister()
   } catch (error) {
-    console.error("[push] no se pudo dar de baja el token", error)
+    console.error("[push] no se pudo revocar el token del dispositivo", error)
   }
 }
