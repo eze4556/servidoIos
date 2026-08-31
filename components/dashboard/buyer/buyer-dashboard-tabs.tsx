@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Clock, CreditCard, Download, Heart, Loader2, MessageSquare, Package, PackageCheck, ShoppingBag, Sparkles, User, XCircle } from "lucide-react"
+import { AlertCircle, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Clock, CreditCard, Download, Heart, Loader2, MessageSquare, Package, PackageCheck, ShoppingBag, Sparkles, User, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"

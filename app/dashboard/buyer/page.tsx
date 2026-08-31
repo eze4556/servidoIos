@@ -25,6 +25,8 @@ import { getBuyerPurchases } from "@/lib/centralized-payments-api"
 import type { CentralizedPurchase, PurchaseItem } from "@/types/centralized-payments"
 import * as XLSX from "xlsx"
 import { usePriceFormat } from "@/hooks/use-price-format"
+import { startProductListingChat } from "@/lib/chat-start"
+import { chatHref } from "@/lib/routes"
 
 
 // Mantenemos la interface Purchase original para compatibilidad
@@ -267,12 +269,38 @@ export default function BuyerDashboardPage() {
     }
   }
 
-  const handleChatWithSeller = async (_purchase: CompraProductoBuyer) => {
-    toast({
-      title: td("errorTitle"),
-      description: td("chatDisabled"),
-      duration: 4000,
-    })
+  const handleChatWithSeller = async (purchase: CompraProductoBuyer) => {
+    if (!currentUser) {
+      router.push("/login")
+      return
+    }
+    try {
+      const buyerName =
+        currentUser.name ||
+        currentUser.firebaseUser.displayName ||
+        currentUser.firebaseUser.email?.split("@")[0] ||
+        "Comprador"
+      const chatId = await startProductListingChat({
+        productId: purchase.productId,
+        productName: purchase.productName,
+        productImageUrl: purchase.productImageUrl,
+        buyerId: currentUser.firebaseUser.uid,
+        buyerName,
+        sellerId: purchase.vendedorId,
+        sellerName: purchase.vendedorNombre || "Vendedor",
+        initialMessage: purchase.isService
+          ? "¡Hola! Quisiera consultar sobre el servicio que compré."
+          : "¡Hola! Quisiera consultar sobre mi compra.",
+      })
+      router.push(chatHref(chatId))
+    } catch (error) {
+      console.error("Error opening seller chat:", error)
+      toast({
+        title: td("errorTitle"),
+        description: "No se pudo abrir el chat. Intentá nuevamente.",
+        variant: "destructive",
+      })
+    }
   }
 
   // Confirmar entrega del producto

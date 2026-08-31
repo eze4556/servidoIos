@@ -55,7 +55,7 @@ function useRoleBadge(pathname: string, role?: string) {
   if (pathname.startsWith("/dashboard/seller")) return tr("seller")
   if (pathname.startsWith("/dashboard/buyer")) return tr("buyer")
   if (pathname.startsWith("/admin")) return tr("admin")
-  if (role === "seller" && pathname.startsWith(`/seller/`)) return tr("seller")
+  if (role === "seller" && pathname.startsWith("/seller")) return tr("seller")
   return null
 }
 

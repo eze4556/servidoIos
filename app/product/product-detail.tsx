@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useRouteId } from "@/hooks/use-route-id"
-import { categoryHref, sellerHref } from "@/lib/routes"
+import { categoryHref, chatHref, sellerHref } from "@/lib/routes"
 import Link from "next/link"
 import {
   doc,
@@ -62,6 +62,7 @@ import { HomeSectionHeader } from "@/components/home/home-section-header"
 import { RecommendProductDialog } from "@/components/reseller/recommend-product-dialog"
 import { saveResellerAttribution, buildReferralPayloadForProducts } from "@/lib/reseller/attribution-storage"
 import { apiUrl } from "@/lib/api-base"
+import { notifyChatMessage } from "@/lib/chat-notifications"
 
 interface ProductMedia {
   type: "image" | "video"
@@ -132,23 +133,6 @@ interface Question {
   createdAt: any
 }
 
-interface Coupon {
-  id: string
-  code: string
-  name: string
-  description?: string | null
-  discountType: "percentage" | "fixed"
-  discountValue: number
-  minPurchase?: number | null
-  maxDiscount?: number | null
-  usageLimit?: number | null
-  applicableTo: "all" | "sellers" | "buyers"
-  startDate?: any | null
-  endDate?: any | null
-  isActive: boolean
-  createdAt: any
-}
-
 export function ProductDetail() {
   const { formatPrice, formatPriceNumber } = usePriceFormat()
   const tp = useTranslations("product")
@@ -182,7 +166,6 @@ export function ProductDetail() {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [favoriteId, setFavoriteId] = useState<string | null>(null)
-  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
 
   // Review form state
   const [reviewRating, setReviewRating] = useState(0)
@@ -214,6 +197,9 @@ export function ProductDetail() {
   useEffect(() => {
     if (productId && !authLoading) {
       fetchProductDetails(productId)
+    } else if (!productId && !authLoading) {
+      setError(tp("notFound"))
+      setLoading(false)
     }
   }, [productId, currentUser, authLoading])
 
@@ -244,7 +230,6 @@ export function ProductDetail() {
   const fetchProductDetails = async (productId: string) => {
     setLoading(true)
     setError(null)
-    setAppliedCoupon(null)
 
     try {
       // Fetch product
@@ -257,23 +242,6 @@ export function ProductDetail() {
 
       const productData = { id: productDoc.id, ...productDoc.data() } as Product
       setProduct(productData)
-
-      // Fetch coupon details if couponId exists and is valid today
-      if (productData.couponId && productData.couponStartDate && productData.couponEndDate) {
-        const now = new Date()
-        const startDate = productData.couponStartDate.toDate() // Convert Firestore Timestamp to Date
-        const endDate = productData.couponEndDate.toDate() // Convert Firestore Timestamp to Date
-
-        if (now >= startDate && now <= endDate) {
-          const couponDoc = await getDoc(doc(db, "coupons", productData.couponId))
-          if (couponDoc.exists()) {
-            const couponData = { id: couponDoc.id, ...couponDoc.data() } as Coupon
-            if (couponData.isActive && (couponData.applicableTo === "all" || couponData.applicableTo === "buyers")) {
-              setAppliedCoupon(couponData)
-            }
-          }
-        }
-      }
 
       // Save to recently viewed
       if (productData) {
@@ -385,8 +353,7 @@ export function ProductDetail() {
       isService: product.isService,
       sellerId: product.sellerId,
       stock: product.stock,
-      appliedCoupon: appliedCoupon,
-      condition: product.condition,
+      condition: product.condition ?? undefined,
       freeShipping: product.freeShipping,
       shippingCost: product.shippingCost,
     })
@@ -627,67 +594,82 @@ export function ProductDetail() {
     }
   }
 
-  // const handleContactSeller = async () => {
-  //   if (!currentUser) {
-  //     alert("Debes iniciar sesión para contactar al vendedor.")
-  //     router.push("/login")
-  //     return
-  //   }
-  //   if (!product || !seller) {
-  //     setError("No se pudo obtener la información del producto o vendedor.")
-  //     return
-  //   }
-
-  //   const existingChatQuery = query(
-  //     collection(db, "chats"),
-  //     where("productId", "==", product.id),
-  //     where("buyerId", "==", currentUser.firebaseUser.uid),
-  //     where("sellerId", "==", seller.id),
-  //     limit(1),
-  //   )
-  //   const existingChatSnapshot = await getDocs(existingChatQuery)
-
-  //   if (existingChatSnapshot.docs.length > 0) {
-  //     const existingChatId = existingChatSnapshot.docs[0].id
-  //     router.push(`/chat/${existingChatId}`)
-  //   } else {
-  //     try {
-  //       const firstImage = productMedia.find((m) => m.type === "image")
-  //       const newChatData = {
-  //         productId: product.id,
-  //         buyerId: currentUser.firebaseUser.uid,
-  //         sellerId: seller.id,
-  //         buyerName: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email?.split("@")?.[0] || "Comprador",
-  //         sellerName: seller.name || seller.email?.split("@")[0] || "Vendedor",
-  //         productName: product.name,
-  //         productImageUrl: firstImage?.url || product.imageUrl || null,
-  //         lastMessage: "¡Hola! Me interesa este producto.",
-  //         lastMessageTimestamp: serverTimestamp(),
-  //         createdAt: serverTimestamp(),
-  //       }
-  //       const docRef = await addDoc(collection(db, "chats"), newChatData)
-
-  //       await addDoc(collection(db, "chats", docRef.id, "messages"), {
-  //         senderId: currentUser.firebaseUser.uid,
-  //         senderName: currentUser.firebaseUser.displayName || currentUser.firebaseUser.email?.split("@")?.[0] || "Comprador",
-  //         text: "¡Hola! Me interesa este producto.",
-  //         timestamp: serverTimestamp(),
-  //       })
-
-  //       router.push(`/chat/${docRef.id}`)
-  //     } catch (err) {
-  //       console.error("Error creating chat:", err)
-  //       setError("Error al iniciar el chat. Inténtalo de nuevo.")
-  //     }
-  //   }
-  // }
-
   const handleContactSeller = async () => {
-    toast({
-      title: tc("error"),
-      description: tp("chatDisabled"),
-      duration: 4000,
-    })
+    if (!currentUser) {
+      toast({ title: tc("error"), description: tp("loginRequired"), variant: "destructive" })
+      router.push("/login")
+      return
+    }
+    if (!product || !seller) {
+      toast({ title: tc("error"), description: "No se pudo cargar la información del vendedor." })
+      return
+    }
+    if (currentUser.firebaseUser.uid === seller.id) return
+
+    try {
+      // Consultar por producto usa el índice automático; luego se filtra la
+      // pareja en memoria para no depender de un índice compuesto de 3 campos.
+      const existing = await getDocs(
+        query(collection(db, "chats"), where("productId", "==", product.id), limit(50))
+      )
+      const previous = existing.docs.find((chatDoc) => {
+        const data = chatDoc.data()
+        return data.buyerId === currentUser.firebaseUser.uid && data.sellerId === seller.id
+      })
+      if (previous) {
+        router.push(chatHref(previous.id))
+        return
+      }
+
+      const senderName =
+        currentUser.name ||
+        currentUser.firebaseUser.displayName ||
+        currentUser.firebaseUser.email?.split("@")[0] ||
+        "Comprador"
+      const initialMessage = product.isService
+        ? "¡Hola! Me interesa este servicio."
+        : "¡Hola! Me interesa este producto."
+      const firstImage = productMedia.find((media) => media.type === "image")
+      const chatRef = await addDoc(collection(db, "chats"), {
+        type: "product",
+        productId: product.id,
+        buyerId: currentUser.firebaseUser.uid,
+        sellerId: seller.id,
+        buyerName: senderName,
+        sellerName: seller.name || seller.email?.split("@")[0] || "Vendedor",
+        participantIds: [currentUser.firebaseUser.uid, seller.id],
+        productName: product.name,
+        productImageUrl: firstImage?.url || product.imageUrl || null,
+        lastMessage: initialMessage,
+        lastMessageSenderId: currentUser.firebaseUser.uid,
+        lastMessageTimestamp: serverTimestamp(),
+        deletedBy: [],
+        createdAt: serverTimestamp(),
+      })
+      const messageRef = await addDoc(collection(db, "chats", chatRef.id, "messages"), {
+        senderId: currentUser.firebaseUser.uid,
+        senderName,
+        text: initialMessage,
+        messageType: "text",
+        timestamp: serverTimestamp(),
+      })
+
+      void notifyChatMessage({
+        chatId: chatRef.id,
+        messageId: messageRef.id,
+        recipientId: seller.id,
+        senderName,
+        preview: initialMessage,
+      })
+      router.push(chatHref(chatRef.id))
+    } catch (err) {
+      console.error("Error creating chat:", err)
+      toast({
+        title: tc("error"),
+        description: "No se pudo iniciar el chat. Intentá nuevamente.",
+        variant: "destructive",
+      })
+    }
   }
 
   // Función para manejar la compra directa
@@ -766,21 +748,7 @@ export function ProductDetail() {
     }
   }
 
-  // Function to calculate discounted price
-  const calculateDiscountedPrice = (originalPrice: number, coupon: Coupon): number => {
-    let discountedPrice = originalPrice
-    if (coupon.discountType === "percentage") {
-      discountedPrice = originalPrice * (1 - coupon.discountValue / 100)
-      if (coupon.maxDiscount && (originalPrice - discountedPrice) > coupon.maxDiscount) {
-        discountedPrice = originalPrice - coupon.maxDiscount
-      }
-    } else if (coupon.discountType === "fixed") {
-      discountedPrice = originalPrice - coupon.discountValue
-    }
-    return Math.max(0, discountedPrice) // Ensure price doesn't go below 0
-  }
-
-  const finalPrice = product && appliedCoupon ? calculateDiscountedPrice(product.price, appliedCoupon) : product?.price || 0;
+  const finalPrice = product?.price || 0
 
   if (loading || authLoading) {
     return (
@@ -936,16 +904,6 @@ export function ProductDetail() {
               <div className="border-t border-servido-950/[0.06] pt-4">
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span className="text-3xl font-bold tracking-tight text-servido-800 sm:text-4xl">{formatPrice(finalPrice)}</span>
-                  {appliedCoupon && finalPrice < product.price && (
-                    <>
-                      <span className="text-lg text-gray-400 line-through">{formatPrice(product.price)}</span>
-                      <Badge className="rounded-full bg-emerald-500 text-white">
-                        {appliedCoupon.discountType === "percentage"
-                          ? `${appliedCoupon.discountValue}% OFF`
-                          : `$${appliedCoupon.discountValue} OFF`}
-                      </Badge>
-                    </>
-                  )}
                 </div>
                 {!product.freeShipping && product.shippingCost !== undefined && (
                   <p className="mt-2 flex items-center gap-2 text-sm text-gray-600">
@@ -1387,7 +1345,7 @@ export function ProductDetail() {
                       relatedProduct.name
                     )}
                     media={relatedProduct.media}
-                    condition={relatedProduct.condition}
+                    condition={relatedProduct.condition ?? undefined}
                     freeShipping={relatedProduct.freeShipping}
                     shippingCost={relatedProduct.shippingCost}
                     allowResellerShare={relatedProduct.allowResellerShare}

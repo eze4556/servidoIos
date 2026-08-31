@@ -15,7 +15,7 @@ export function DesktopChatFab() {
   const { unreadCount } = useChatUnread()
   const [fabHidden, setFabHidden] = useState(false)
 
-  const onMessaging = pathname?.startsWith("/mensajes") || pathname?.startsWith("/chat/")
+  const onMessaging = pathname?.startsWith("/mensajes") || pathname?.startsWith("/chat")
   if (!currentUser || onMessaging || fabHidden) return null
 
   return (

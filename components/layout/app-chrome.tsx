@@ -24,7 +24,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const isPropiedadesRoute = pathname?.startsWith("/propiedades")
   const isVerticalCatalogRoute = isAutosRoute || isPropiedadesRoute
   const isMessagingList = pathname?.startsWith("/mensajes")
-  const isChatThread = pathname?.startsWith("/chat/")
+  const isChatThread = pathname?.startsWith("/chat")
   const isMessagingRoute = isMessagingList || isChatThread
 
   const showMobileHeader =

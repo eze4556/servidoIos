@@ -53,7 +53,11 @@ export function IntlProvider({
   }, [initialLocale])
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider
+      locale={locale}
+      messages={messages}
+      timeZone="America/Argentina/Buenos_Aires"
+    >
       {children}
     </NextIntlClientProvider>
   )

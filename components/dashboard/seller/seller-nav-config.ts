@@ -5,7 +5,6 @@ import {
   PlusCircle,
   Settings,
   ShoppingBag,
-  Tag,
   Share2,
   Truck,
   BarChart3,
@@ -14,14 +13,15 @@ import {
 import type { DashboardNavItem } from "@/components/dashboard/dashboard-sidebar"
 import type { SellerDashboardTab } from "@/components/dashboard/seller/seller-dashboard-shell"
 
-const navTabIds: SellerDashboardTab[] = [
+type SellerNavTab = Exclude<SellerDashboardTab, "create-coupons">
+
+const navTabIds: SellerNavTab[] = [
   "dashboard",
   "stats",
   "products",
   "addProduct",
   "addService",
   "agenda",
-  "create-coupons",
   "resellerProgram",
   "shipping",
   "claims",
@@ -36,7 +36,6 @@ const navIcons = {
   addProduct: PlusCircle,
   addService: PlusCircle,
   agenda: CalendarDays,
-  "create-coupons": Tag,
   resellerProgram: Share2,
   shipping: Truck,
   claims: AlertTriangle,
@@ -44,14 +43,13 @@ const navIcons = {
   profile: Settings,
 } as const
 
-const navGroups: Record<SellerDashboardTab, string> = {
+const navGroups: Record<SellerNavTab, string> = {
   dashboard: "principal",
   stats: "principal",
   products: "tienda",
   addProduct: "tienda",
   addService: "tienda",
   agenda: "operaciones",
-  "create-coupons": "tienda",
   resellerProgram: "tienda",
   shipping: "operaciones",
   claims: "operaciones",

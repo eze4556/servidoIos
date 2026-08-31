@@ -47,7 +47,7 @@ import { notifyChatMessage } from "@/lib/chat-notifications"
 
 interface Chat {
   id: string
-  type?: "product" | "story" | "delivery" | "servido"
+  type?: "product" | "story" | "delivery" | "servido" | "seller" | "vehicle" | "property"
   productId?: string
   foodOrderId?: string
   storyId?: string

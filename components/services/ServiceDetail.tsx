@@ -158,8 +158,7 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
 
       {/* Imagen principal con overlay de botones */}
       <div className="w-full aspect-square relative rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-        <SimpleImage src={mainImage} alt={service.name} className="w-full h-full object-cover" className="object-cover"
-        />
+        <SimpleImage src={mainImage} alt={service.name} className="h-full w-full object-cover" />
         {/* Overlay botones */}
         <div className="absolute top-4 right-4 flex gap-2 z-10">
           <Button

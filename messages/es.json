@@ -1063,7 +1063,6 @@
     "answerMin": "La respuesta debe tener al menos 5 caracteres.",
     "answerNoPhone": "No se permiten números de teléfono en las respuestas por seguridad.",
     "answerSubmitError": "Error al enviar la respuesta. Inténtalo de nuevo.",
-    "chatDisabled": "Funcionalidad de chat temporalmente deshabilitada",
     "favoriteAdded": "Producto añadido a favoritos.",
     "favoriteRemoved": "Producto eliminado de favoritos.",
     "reviewSuccess": "Reseña enviada exitosamente. ¡Gracias por tu opinión!",
@@ -1141,8 +1140,7 @@
     "deleteConfirm": "¿Estás seguro de que querés eliminar este {item}?",
     "itemProduct": "producto",
     "itemService": "servicio",
-    "deleteError": "Error al eliminar el producto",
-    "chatDisabled": "Funcionalidad de chat temporalmente deshabilitada"
+    "deleteError": "Error al eliminar el producto"
   },
   "coupons": {
     "title": "Cupón de descuento",
@@ -1574,7 +1572,6 @@
     "removeFavoriteConfirm": "¿Estás seguro de que quieres eliminar este producto de tus favoritos?",
     "favoriteRemoved": "Producto eliminado de favoritos.",
     "favoriteRemoveError": "Error al eliminar el producto de favoritos.",
-    "chatDisabled": "Funcionalidad de chat temporalmente deshabilitada",
     "deliveryLoginRequired": "Debes iniciar sesión para confirmar la entrega.",
     "deliveryConfirm": "¿Confirmas que has recibido el producto en perfectas condiciones?",
     "purchaseNotFound": "No se encontró la compra especificada.",

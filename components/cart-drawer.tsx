@@ -18,7 +18,6 @@ import type { CartItem } from "@/contexts/cart-context"
 import { getCartItemImage } from "@/lib/image-utils"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { ShippingForm, type ShippingAddress } from "@/components/cart/shipping-form"
-import { CouponInput } from "@/components/ui/coupon-input"
 import { saveCheckoutSessionId } from "@/components/checkout/multi-seller-checkout-continue"
 import { useTranslations } from "next-intl"
 import { translateClientError } from "@/lib/i18n/translate-client-error"
@@ -41,10 +40,6 @@ export function CartDrawer() {
     getItemQuantity, 
     getTotalPrice,
     getSubtotal,
-    getDiscountAmount,
-    appliedCoupon,
-    applyCoupon,
-    removeCoupon,
     getItemsByVendor,
     getVendorCount,
     getTotalCommission,
@@ -431,23 +426,6 @@ export function CartDrawer() {
               </div>
             ) : (
               <div className="p-4 space-y-6">
-                {/* Cupón de descuento */}
-                {items.length > 0 && (
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl border border-purple-200 p-4 shadow-sm">
-                    <CouponInput
-                      onCouponApplied={applyCoupon}
-                      onCouponRemoved={removeCoupon}
-                      appliedCoupon={appliedCoupon}
-                      subtotal={getSubtotal()}
-                      items={items.map(item => ({
-                        sellerId: item.sellerId,
-                        id: item.id,
-                        name: item.name
-                      }))}
-                    />
-                  </div>
-                )}
-
                 {/* Productos */}
                 {items.length > 0 ? (
                   <div className="space-y-4">
@@ -518,23 +496,9 @@ export function CartDrawer() {
                                 
                                 {/* Precio */}
                                 <div className="mt-2">
-                                  {item.appliedCoupon && item.discountedPrice < item.price ? (
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-lg font-bold text-gray-900">
-                                        {formatPrice(item.discountedPrice)}
-                                      </span>
-                                      <span className="text-sm text-gray-500 line-through">
-                                        {formatPrice(item.price)}
-                                      </span>
-                                      <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                                        {Math.round(((item.price - item.discountedPrice) / item.price) * 100)}% OFF
-                                      </Badge>
-                                    </div>
-                                  ) : (
-                                    <span className="text-lg font-bold text-gray-900">
-                                      {formatPrice(item.price)}
-                                    </span>
-                                  )}
+                                  <span className="text-lg font-bold text-gray-900">
+                                    {formatPrice(item.price)}
+                                  </span>
                                 </div>
                                 
                                 {/* Información adicional */}
@@ -635,13 +599,6 @@ export function CartDrawer() {
                     <span className="text-gray-600">{t("productsCount", { count: items.length })}</span>
                     <span className="font-medium">{formatPriceNumber(getSubtotal())}</span>
                   </div>
-                  
-                  {appliedCoupon && (
-                    <div className="flex justify-between text-green-600">
-                      <span>{t("discount")} ({appliedCoupon.discountType === "percentage" ? `${appliedCoupon.discountValue}%` : `$${appliedCoupon.discountValue}`})</span>
-                      <span className="font-medium">-{formatPriceNumber(getDiscountAmount())}</span>
-                    </div>
-                  )}
                   
                   {getTotalShipping() > 0 && (
                     <div className="flex justify-between text-blue-600">

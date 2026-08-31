@@ -47,7 +47,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-import { useState, useEffect, type FormEvent, type ChangeEvent, type DragEvent, useMemo } from "react"
+import { useState, useEffect, type FormEvent, type ChangeEvent, type DragEvent, useMemo, useRef } from "react"
 import { db, storage, auth } from "@/lib/firebase"
 import {
   collection,
@@ -182,6 +182,7 @@ interface Coupon {
   minPurchase?: number | null
   maxDiscount?: number | null
   usageLimit?: number | null
+  usedCount?: number
   applicableTo: "all" | "sellers" | "buyers"
   startDate?: any | null
   endDate?: any | null
@@ -425,6 +426,7 @@ export default function SellerDashboardPage() {
   const [brands, setBrands] = useState<Brand[]>([])
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
   const [catalogLoadedForUid, setCatalogLoadedForUid] = useState<string | null>(null)
+  const editRequestHandledRef = useRef<string | null>(null)
 
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -691,7 +693,6 @@ export default function SellerDashboardPage() {
       tab === "shipping" ||
       tab === "claims" ||
       tab === "earnings" ||
-      tab === "create-coupons" ||
       tab === "profile"
     ) {
       setActiveTab(tab)
@@ -1054,51 +1055,6 @@ export default function SellerDashboardPage() {
     // Ya no necesitamos verificar conexión con MercadoPago individual
     setIsLoading(false);
   }, [authLoading, currentUser])
-
-  // Fetch coupons on component mount
-  useEffect(() => {
-    const fetchCoupons = async () => {
-      try {
-        const q = query(collection(db, "coupons"), where("isActive", "==", true))
-        const querySnapshot = await getDocs(q)
-        const couponsData = querySnapshot.docs.map(doc => {
-          const data = doc.data()
-          return {
-            id: doc.id,
-            code: data.code,
-            name: data.name,
-            description: data.description || null,
-            discountType: data.discountType,
-            discountValue: data.discountValue,
-            minPurchase: data.minPurchase || null,
-            maxDiscount: data.maxDiscount || null,
-            usageLimit: data.usageLimit || null,
-            applicableTo: data.applicableTo,
-            startDate: data.startDate || null,
-            endDate: data.endDate || null,
-            isActive: data.isActive === false ? false : true, // Ensure isActive is boolean
-            createdAt: data.createdAt,
-          } as Coupon
-        })
-        setAvailableCoupons(couponsData.filter(c => c.applicableTo === "all" || c.applicableTo === "sellers"))
-      } catch (error) {
-        console.error("Error fetching coupons:", error)
-        toast({
-          title: t("alerts.errorTitle"),
-          description: t("coupons.availableLoadError"),
-          variant: "destructive",
-        })
-      }
-    }
-    fetchCoupons()
-  }, [toast, t])
-
-  // Fetch my coupons when create-coupons tab is active
-  useEffect(() => {
-    if (activeTab === "create-coupons" && currentUser) {
-      fetchMyCoupons()
-    }
-  }, [activeTab, currentUser])
 
   // 2. Refrescar el perfil del usuario al entrar a las pestañas de añadir producto o servicio
   useEffect(() => {
@@ -1726,6 +1682,22 @@ export default function SellerDashboardPage() {
       setActiveTab("addProduct")
     }
   }
+
+  useEffect(() => {
+    const editId = searchParams.get("edit")
+    if (!editId || editRequestHandledRef.current === editId) return
+    const product = myProducts.find((item) => item.id === editId)
+    if (!product) return
+
+    editRequestHandledRef.current = editId
+    handleEditProduct(product)
+
+    // La intención ya quedó cargada en el formulario; limpiar el query evita
+    // reabrir la edición al refrescar o volver atrás.
+    const nextUrl = new URL(window.location.href)
+    nextUrl.searchParams.delete("edit")
+    window.history.replaceState({}, "", `${nextUrl.pathname}${nextUrl.search}`)
+  }, [myProducts, searchParams])
 
   const handleDeleteProduct = async (productId: string) => {
     if (!window.confirm(t("products.deleteConfirm"))) {
@@ -3339,8 +3311,16 @@ export default function SellerDashboardPage() {
                 <CardDescription>Comunícate con tus clientes y resuelve sus dudas.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Funcionalidad de chat temporalmente deshabilitada</p>
+                <div className="flex flex-col items-center gap-4 py-8 text-center">
+                  <div className="rounded-full bg-servido-100 p-4 text-servido-800">
+                    <MessageSquare className="h-7 w-7" />
+                  </div>
+                  <p className="max-w-md text-muted-foreground">
+                    Revisá las consultas de compradores y respondé desde la bandeja de mensajes.
+                  </p>
+                  <Button asChild className="rounded-full bg-servido-950 px-6 hover:bg-servido-800">
+                    <Link href="/mensajes">Abrir mensajes</Link>
+                  </Button>
                 </div>
                 {!currentUser?.firebaseUser.uid && <p className="text-center text-gray-500">Inicia sesión para ver tus chats.</p>}
               </CardContent>

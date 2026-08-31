@@ -3,13 +3,116 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
+  limit,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { assertChatMessageAllowed } from "@/lib/chat-content-guard"
 import { notifyChatMessage } from "@/lib/chat-notifications"
+
+export async function startProductListingChat(params: {
+  productId: string
+  productName: string
+  productImageUrl?: string | null
+  buyerId: string
+  buyerName: string
+  sellerId: string
+  sellerName: string
+  initialMessage?: string
+}): Promise<string> {
+  if (params.buyerId === params.sellerId) throw new Error("PRODUCT_CHAT_SELF")
+  const text = (params.initialMessage || "¡Hola! Me interesa este producto.").trim()
+  assertChatMessageAllowed(text)
+
+  const existing = await getDocs(
+    query(collection(db, "chats"), where("productId", "==", params.productId), limit(50))
+  )
+  const previous = existing.docs.find((chatDoc) => {
+    const data = chatDoc.data()
+    return data.buyerId === params.buyerId && data.sellerId === params.sellerId
+  })
+  if (previous) return previous.id
+
+  const chatRef = await addDoc(collection(db, "chats"), {
+    type: "product",
+    productId: params.productId,
+    productName: params.productName,
+    productImageUrl: params.productImageUrl || null,
+    buyerId: params.buyerId,
+    buyerName: params.buyerName,
+    sellerId: params.sellerId,
+    sellerName: params.sellerName,
+    participantIds: [params.buyerId, params.sellerId],
+    lastMessage: text,
+    lastMessageSenderId: params.buyerId,
+    lastMessageTimestamp: serverTimestamp(),
+    deletedBy: [],
+    createdAt: serverTimestamp(),
+  })
+  const messageRef = await addDoc(collection(db, "chats", chatRef.id, "messages"), {
+    senderId: params.buyerId,
+    senderName: params.buyerName,
+    text,
+    messageType: "text",
+    timestamp: serverTimestamp(),
+  })
+  void notifyChatMessage({
+    chatId: chatRef.id,
+    messageId: messageRef.id,
+    recipientId: params.sellerId,
+    senderName: params.buyerName,
+    preview: text,
+  })
+  return chatRef.id
+}
+
+export async function startSellerChat(params: {
+  buyerId: string
+  buyerName: string
+  sellerId: string
+  sellerName: string
+}): Promise<string> {
+  if (params.buyerId === params.sellerId) throw new Error("SELLER_CHAT_SELF")
+  const chatId = `seller_${params.sellerId}_${params.buyerId}`
+  const chatRef = doc(db, "chats", chatId)
+  const existing = await getDoc(chatRef)
+  if (existing.exists()) return chatId
+
+  const text = "¡Hola! Quisiera hacerte una consulta."
+  await setDoc(chatRef, {
+    type: "seller",
+    buyerId: params.buyerId,
+    buyerName: params.buyerName,
+    sellerId: params.sellerId,
+    sellerName: params.sellerName,
+    participantIds: [params.buyerId, params.sellerId],
+    lastMessage: text,
+    lastMessageSenderId: params.buyerId,
+    lastMessageTimestamp: serverTimestamp(),
+    deletedBy: [],
+    createdAt: serverTimestamp(),
+  })
+  const messageRef = await addDoc(collection(db, "chats", chatId, "messages"), {
+    senderId: params.buyerId,
+    senderName: params.buyerName,
+    text,
+    messageType: "text",
+    timestamp: serverTimestamp(),
+  })
+  void notifyChatMessage({
+    chatId,
+    messageId: messageRef.id,
+    recipientId: params.sellerId,
+    senderName: params.buyerName,
+    preview: text,
+  })
+  return chatId
+}
 
 export async function startVehicleListingChat(params: {
   listingId: string

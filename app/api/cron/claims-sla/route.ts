@@ -6,7 +6,7 @@ export const maxDuration = 60
 
 function isAuthorizedCron(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
-  if (!cronSecret) return true
+  if (!cronSecret) return process.env.NODE_ENV !== "production"
   const authorizationHeader = request.headers.get("authorization") || request.headers.get("Authorization")
   return authorizationHeader === `Bearer ${cronSecret}`
 }

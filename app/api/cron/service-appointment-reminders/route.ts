@@ -7,7 +7,8 @@ export const runtime = "nodejs"
 
 function isAuthorizedCron(request: NextRequest) {
   const secret = process.env.CRON_SECRET
-  return !secret || request.headers.get("authorization") === `Bearer ${secret}`
+  if (!secret) return process.env.NODE_ENV !== "production"
+  return request.headers.get("authorization") === `Bearer ${secret}`
 }
 
 export async function GET(request: NextRequest) {

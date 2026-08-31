@@ -19,7 +19,6 @@ import {
   Star,
   Megaphone,
   AlertTriangle,
-  Percent,
   Calendar,
   Eye,
   EyeOff,
@@ -299,7 +298,6 @@ export default function AdminDashboard() {
           { tab: "sales", label: t("nav.sales"), icon: DollarSign },
           { tab: "resellerPayouts", label: t("nav.resellerPayouts"), icon: TrendingUp },
           { tab: "deliverySettlements", label: t("nav.deliverySettlements"), icon: Banknote },
-          { tab: "coupons", label: t("nav.coupons"), icon: Percent },
           { tab: "subscriptionPricing", label: t("nav.subscriptionPricing"), icon: CreditCard },
         ],
       },
@@ -659,7 +657,6 @@ export default function AdminDashboard() {
           ({
             id: doc.id,
             ...doc.data(),
-            averageRating: Number.parseFloat((Math.random() * 5).toFixed(1)), // Simulate average rating
           }) as Product,
       )
       setProducts(productsData) // Update products state for overview count
@@ -685,11 +682,6 @@ export default function AdminDashboard() {
       const alertsQuery = query(collection(db, "offerAlerts"), orderBy("createdAt", "desc"))
       const alertSnapshot = await getDocs(alertsQuery)
       setOfferAlerts(alertSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as OfferAlert))
-
-      // Cargar cupones
-      const couponsQuery = query(collection(db, "coupons"), orderBy("createdAt", "desc"))
-      const couponSnapshot = await getDocs(couponsQuery)
-      setCoupons(couponSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Coupon))
 
       // Cargar datos de ventas si está en la pestaña de ventas
       if (activeTab === "sales") {
@@ -2284,7 +2276,6 @@ export default function AdminDashboard() {
               <TabsTrigger value="servidoBroadcast">{t("tabs.servidoBroadcast")}</TabsTrigger>
               <TabsTrigger value="resellerPayouts">{t("tabs.resellerPayouts")}</TabsTrigger>
               <TabsTrigger value="deliverySettlements">{t("tabs.deliverySettlements")}</TabsTrigger>
-              <TabsTrigger value="coupons">{t("tabs.coupons")}</TabsTrigger>
               <TabsTrigger value="subscriptionPricing">{t("tabs.subscriptionPricing")}</TabsTrigger>
             </TabsList>
 
@@ -2478,20 +2469,6 @@ export default function AdminDashboard() {
                     <CardContent>
                       <div className="text-2xl font-semibold tabular-nums">{banners.filter((b) => b.isActive).length}</div>
                       <p className="text-xs text-slate-500">{t("common.ofTotal", { total: banners.length })}</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="admin-kpi">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium text-slate-500">{t("overview.activeCoupons")}</CardTitle>
-                      <Percent className="h-4 w-4 text-slate-400" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-semibold tabular-nums">{coupons.filter((c) => c.isActive).length}</div>
-                      <p className="text-xs text-slate-500">
-                        {t("overview.totalCouponUses", {
-                          count: coupons.reduce((total, coupon) => total + coupon.usedCount, 0),
-                        })}
-                      </p>
                     </CardContent>
                   </Card>
                 </div>

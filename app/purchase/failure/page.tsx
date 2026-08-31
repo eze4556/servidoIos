@@ -101,7 +101,7 @@ export default function PurchaseFailurePage() {
         </Button>
 
         <Button asChild variant="ghost" className="w-full rounded-full text-slate-600">
-          <Link href="/contact">
+          <Link href="mailto:servido.interno@gmail.com?subject=Ayuda%20con%20un%20pago">
             <HelpCircle className="mr-2 h-4 w-4" />
             {t("needHelp")}
           </Link>

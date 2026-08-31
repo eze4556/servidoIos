@@ -2,39 +2,18 @@
 
 import type React from "react"
 import { createContext, useContext, useReducer, useEffect, ReactNode } from "react"
-// No longer importing CartItemType from @/types/payment as it's not found
-
-interface Coupon {
-  id: string
-  code: string
-  name: string
-  description?: string | null
-  discountType: "percentage" | "fixed"
-  discountValue: number
-  minPurchase?: number | null
-  maxDiscount?: number | null
-  usageLimit?: number | null
-  applicableTo: "all" | "sellers" | "buyers"
-  sellerId?: string | null // Campo para cupones específicos de vendedor
-  startDate?: any | null
-  endDate?: any | null
-  isActive: boolean
-  createdAt: any
-}
-
 export interface CartItem {
   id: string
   name: string
   description?: string
   price: number // Original price
-  discountedPrice: number // Price after coupon application
+  discountedPrice: number // Compatibilidad con el checkout; siempre coincide con price
   quantity: number
   imageUrl?: string
   media?: any[]
   isService: boolean
   sellerId: string
   stock?: number
-  appliedCoupon?: Coupon | null // Details of the applied coupon
   condition?: 'nuevo' | 'usado'
   freeShipping?: boolean
   shippingCost?: number
@@ -42,7 +21,6 @@ export interface CartItem {
 
 interface CartState {
   items: CartItem[]
-  appliedCoupon: Coupon | null
 }
 
 type CartAction =
@@ -50,12 +28,9 @@ type CartAction =
   | { type: "REMOVE_ITEM"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "CLEAR_CART" }
-  | { type: "APPLY_COUPON"; payload: Coupon }
-  | { type: "REMOVE_COUPON" }
 
 interface CartContextType {
   items: CartItem[]
-  appliedCoupon: Coupon | null
   addItem: (item: CartItem) => void
   removeFromCart: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
@@ -63,9 +38,6 @@ interface CartContextType {
   getItemQuantity: (id: string) => number
   getTotalPrice: () => number
   getSubtotal: () => number
-  getDiscountAmount: () => number
-  applyCoupon: (coupon: Coupon) => void
-  removeCoupon: () => void
   // 🆕 NUEVAS FUNCIONES PARA SISTEMA CENTRALIZADO
   getItemsByVendor: () => { [sellerId: string]: CartItem[] }
   getVendorCount: () => number
@@ -81,19 +53,22 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case "ADD_ITEM":
-      const existingItem = state.items.find(item => item.id === action.payload.id)
+      const normalizedItem = {
+        ...action.payload,
+        discountedPrice: action.payload.price,
+      } as CartItem & { appliedCoupon?: unknown }
+      delete normalizedItem.appliedCoupon
+      const existingItem = state.items.find(item => item.id === normalizedItem.id)
       if (existingItem) {
-        // If item exists, update quantity and ensure price (and discountedPrice) are consistent
         return {
           ...state,
           items: state.items.map(item =>
-            item.id === action.payload.id
+            item.id === normalizedItem.id
               ? { 
                   ...item, 
-                  quantity: item.quantity + action.payload.quantity, 
-                  price: action.payload.price, // Update to latest original price
-                  discountedPrice: action.payload.discountedPrice, // Update to latest discounted price
-                  appliedCoupon: action.payload.appliedCoupon // Update to latest coupon
+                  quantity: item.quantity + normalizedItem.quantity, 
+                  price: normalizedItem.price,
+                  discountedPrice: normalizedItem.price,
                 }
               : item
           )
@@ -101,7 +76,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       }
       return {
         ...state,
-        items: [...state.items, action.payload]
+        items: [...state.items, normalizedItem]
       }
 
     case "REMOVE_ITEM":
@@ -124,19 +99,6 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       return {
         ...state,
         items: [],
-        appliedCoupon: null
-    }
-
-    case "APPLY_COUPON":
-      return {
-        ...state,
-        appliedCoupon: action.payload
-      }
-
-    case "REMOVE_COUPON":
-      return {
-        ...state,
-        appliedCoupon: null
       }
 
     default:
@@ -145,12 +107,11 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, { items: [], appliedCoupon: null })
+  const [state, dispatch] = useReducer(cartReducer, { items: [] })
 
   // Load cart from localStorage on initial render
   useEffect(() => {
     const storedCart = localStorage.getItem("servido-cart")
-    const storedCoupon = localStorage.getItem("servido-applied-coupon")
     
     if (storedCart) {
       dispatch({ type: "CLEAR_CART" }) // Clear existing items
@@ -161,30 +122,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })
     }
 
-    if (storedCoupon) {
-      try {
-        const coupon = JSON.parse(storedCoupon)
-        dispatch({ type: "APPLY_COUPON", payload: coupon })
-      } catch (error) {
-        console.error('Error loading applied coupon:', error)
-        localStorage.removeItem("servido-applied-coupon")
-      }
-    }
+    localStorage.removeItem("servido-applied-coupon")
   }, [])
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("servido-cart", JSON.stringify(state.items))
   }, [state.items])
-
-  // Save applied coupon to localStorage whenever it changes
-  useEffect(() => {
-    if (state.appliedCoupon) {
-      localStorage.setItem("servido-applied-coupon", JSON.stringify(state.appliedCoupon))
-    } else {
-      localStorage.removeItem("servido-applied-coupon")
-    }
-  }, [state.appliedCoupon])
 
   const addItem = (item: CartItem) => {
     dispatch({ type: "ADD_ITEM", payload: item })
@@ -202,66 +146,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "CLEAR_CART" })
   }
 
-  const applyCoupon = (coupon: Coupon) => {
-    dispatch({ type: "APPLY_COUPON", payload: coupon })
-  }
-
-  const removeCoupon = () => {
-    dispatch({ type: "REMOVE_COUPON" })
-  }
-
   const getItemQuantity = (id: string) => {
     const item = state.items.find(item => item.id === id)
     return item ? item.quantity : 0
   }
 
   const getTotalPrice = (): number => {
-    const subtotal = getSubtotal()
-    const discount = getDiscountAmount()
-    return Math.max(0, subtotal - discount)
+    return getSubtotal()
   }
 
   const getSubtotal = (): number => {
     return state.items.reduce((total, item) => total + item.price * item.quantity, 0)
-  }
-
-  const getDiscountAmount = (): number => {
-    if (!state.appliedCoupon) return 0
-    
-    // Si el cupón es específico de un vendedor, solo aplicar a productos de ese vendedor
-    if (state.appliedCoupon.sellerId) {
-      const vendorItems = state.items.filter(item => item.sellerId === state.appliedCoupon!.sellerId)
-      const vendorSubtotal = vendorItems.reduce((total, item) => total + item.price * item.quantity, 0)
-      
-      let discount = 0
-      if (state.appliedCoupon.discountType === "percentage") {
-        discount = vendorSubtotal * (state.appliedCoupon.discountValue / 100)
-        // Aplicar descuento máximo si está definido
-        if (state.appliedCoupon.maxDiscount) {
-          discount = Math.min(discount, state.appliedCoupon.maxDiscount)
-        }
-      } else if (state.appliedCoupon.discountType === "fixed") {
-        discount = Math.min(state.appliedCoupon.discountValue, vendorSubtotal)
-      }
-      
-      return discount
-    }
-    
-    // Para cupones generales, aplicar a todo el subtotal
-    const subtotal = getSubtotal()
-    let discount = 0
-    
-    if (state.appliedCoupon.discountType === "percentage") {
-      discount = subtotal * (state.appliedCoupon.discountValue / 100)
-      // Aplicar descuento máximo si está definido
-      if (state.appliedCoupon.maxDiscount) {
-        discount = Math.min(discount, state.appliedCoupon.maxDiscount)
-      }
-    } else if (state.appliedCoupon.discountType === "fixed") {
-      discount = Math.min(state.appliedCoupon.discountValue, subtotal)
-    }
-    
-    return discount
   }
 
   // 🆕 NUEVAS FUNCIONES PARA SISTEMA CENTRALIZADO
@@ -288,7 +183,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const getVendorSubtotal = (sellerId: string): number => {
     return state.items
       .filter(item => item.sellerId === sellerId)
-      .reduce((total, item) => total + item.discountedPrice * item.quantity, 0)
+      .reduce((total, item) => total + item.price * item.quantity, 0)
   }
 
   const canCreateCentralizedPurchase = (): boolean => {
@@ -297,7 +192,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return state.items.every(item => 
       item.id && item.id.trim() !== '' &&
       item.quantity > 0 && 
-      item.discountedPrice > 0 &&
+      item.price > 0 &&
       item.sellerId && item.sellerId.trim() !== '' &&
       item.name && item.name.trim() !== ''
     )
@@ -326,7 +221,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider
       value={{
         items: state.items,
-        appliedCoupon: state.appliedCoupon,
         addItem,
         removeFromCart,
         updateQuantity,
@@ -334,9 +228,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         getItemQuantity,
         getTotalPrice,
         getSubtotal,
-        getDiscountAmount,
-        applyCoupon,
-        removeCoupon,
         getItemsByVendor,
         getVendorCount,
         getTotalCommission,

@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useRouteId } from "@/hooks/use-route-id"
-import { productHref } from "@/lib/routes"
-import { doc, getDoc, collection, query, where, getDocs, orderBy, deleteDoc } from "firebase/firestore"
+import { chatHref, productHref } from "@/lib/routes"
+import { addDoc, doc, getDoc, collection, query, where, getDocs, orderBy, deleteDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,6 +39,7 @@ import { useCart } from "@/contexts/cart-context"
 import { FollowButton } from "@/components/follows/follow-button"
 import { useLocale, useTranslations } from "next-intl"
 import { useToast } from "@/components/ui/use-toast"
+import { startSellerChat } from "@/lib/chat-start"
 
 interface SellerProfile {
   uid: string
@@ -83,6 +85,7 @@ interface Product {
 }
 
 export function SellerProfile() {
+  const router = useRouter()
   const { formatPrice } = usePriceFormat()
   const ts = useTranslations("sellerStore")
   const tp = useTranslations("product")
@@ -112,10 +115,15 @@ export function SellerProfile() {
   // Estados para interacciones
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
   const [favoriting, setFavoriting] = useState<string | null>(null)
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const fetchSellerData = async () => {
-      if (!sellerId) return
+      if (!sellerId) {
+        setError(ts("notFound"))
+        setLoading(false)
+        return
+      }
 
       try {
         setLoading(true)
@@ -169,6 +177,21 @@ export function SellerProfile() {
 
     fetchSellerData()
   }, [sellerId])
+
+  useEffect(() => {
+    const userId = currentUser?.firebaseUser.uid
+    if (!userId) {
+      setFavoriteIds(new Set())
+      return
+    }
+    void getDocs(query(collection(db, "favorites"), where("userId", "==", userId)))
+      .then((snapshot) => {
+        setFavoriteIds(
+          new Set(snapshot.docs.map((favorite) => String(favorite.data().productId || "")).filter(Boolean))
+        )
+      })
+      .catch((error) => console.error("Error loading favorites:", error))
+  }, [currentUser?.firebaseUser.uid])
 
   // Filtrar y ordenar productos
   const getFilteredItems = (items: Product[]) => {
@@ -253,17 +276,40 @@ export function SellerProfile() {
 
   const handleAddToFavorites = async (productId: string) => {
     if (!currentUser) {
-      window.location.href = "/login"
+      router.push("/login")
       return
     }
 
     setFavoriting(productId)
     try {
-      // Aquí implementarías la lógica para agregar a favoritos
-      // Por ahora solo simulamos
-      await new Promise(resolve => setTimeout(resolve, 500))
+      const userId = currentUser.firebaseUser.uid
+      const snapshot = await getDocs(query(collection(db, "favorites"), where("userId", "==", userId)))
+      const existing = snapshot.docs.find((favorite) => favorite.data().productId === productId)
+      if (existing) {
+        await deleteDoc(existing.ref)
+        setFavoriteIds((previous) => {
+          const next = new Set(previous)
+          next.delete(productId)
+          return next
+        })
+        toast({ title: tp("favoriteRemoved") })
+      } else {
+        const item = [...products, ...services].find((product) => product.id === productId)
+        if (!item) throw new Error("Producto inexistente")
+        await addDoc(collection(db, "favorites"), {
+          userId,
+          productId,
+          name: item.name,
+          price: item.price,
+          imageUrl: getProductThumbnail(item.media, item.imageUrl, item.name),
+          addedAt: serverTimestamp(),
+        })
+        setFavoriteIds((previous) => new Set(previous).add(productId))
+        toast({ title: tp("favoriteAdded") })
+      }
     } catch (error) {
       console.error("Error adding to favorites:", error)
+      toast({ title: tc("error"), description: tp("favoriteError"), variant: "destructive" })
     } finally {
       setFavoriting(null)
     }
@@ -272,27 +318,33 @@ export function SellerProfile() {
   // Verificar si el usuario actual es el propietario de la tienda
   const isOwner = currentUser?.firebaseUser.uid === sellerId
 
-  // const handleContactSeller = async () => {
-  //   if (!currentUser) {
-  //     window.location.href = "/login"
-  //     return
-  //   }
-
-  //   // No permitir contactarse a sí mismo
-  //   if (isOwner) {
-  //     return
-  //   }
-
-  //   // Aquí implementarías la lógica para iniciar chat
-  //   window.location.href = `/chat/${sellerId}`
-  // }
-
   const handleContactSeller = async () => {
-    toast({
-      title: tc("error"),
-      description: ts("chatDisabled"),
-      duration: 4000,
-    })
+    if (!currentUser) {
+      router.push("/login")
+      return
+    }
+    if (isOwner || !seller) return
+    try {
+      const buyerName =
+        currentUser.name ||
+        currentUser.firebaseUser.displayName ||
+        currentUser.firebaseUser.email?.split("@")[0] ||
+        "Comprador"
+      const chatId = await startSellerChat({
+        buyerId: currentUser.firebaseUser.uid,
+        buyerName,
+        sellerId,
+        sellerName: seller.displayName || seller.email?.split("@")[0] || "Vendedor",
+      })
+      router.push(chatHref(chatId))
+    } catch (error) {
+      console.error("Error starting seller chat:", error)
+      toast({
+        title: tc("error"),
+        description: "No se pudo iniciar el chat. Intentá nuevamente.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleDeleteProduct = async (productId: string, isService: boolean) => {
@@ -320,8 +372,7 @@ export function SellerProfile() {
 
   const handleEditProduct = (productId: string) => {
     if (!isOwner) return
-    // Redirigir a la página de edición
-    window.location.href = `/dashboard/seller/edit/${productId}`
+    router.push(`/dashboard/seller?edit=${encodeURIComponent(productId)}`)
   }
 
   if (loading) {
@@ -434,12 +485,11 @@ export function SellerProfile() {
             </p>
           )}
 
-          <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3 md:gap-4">
             {[
               { value: products.length, label: ts("statProducts") },
               { value: services.length, label: ts("statServices") },
               { value: daysActive, label: ts("statDaysActive") },
-              { value: "4.8", label: ts("statRating") },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -549,7 +599,9 @@ export function SellerProfile() {
                               {favoriting === product.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <Heart className="h-4 w-4" />
+                                <Heart
+                                  className={`h-4 w-4 ${favoriteIds.has(product.id) ? "fill-red-500 text-red-500" : ""}`}
+                                />
                               )}
                             </Button>
                           )}
@@ -663,7 +715,9 @@ export function SellerProfile() {
                               {favoriting === service.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <Heart className="h-4 w-4" />
+                              <Heart
+                                className={`h-4 w-4 ${favoriteIds.has(service.id) ? "fill-red-500 text-red-500" : ""}`}
+                              />
                               )}
                             </Button>
                           )}

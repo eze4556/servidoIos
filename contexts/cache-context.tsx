@@ -45,7 +45,7 @@ export function CacheProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   // Establecer datos en cache
-  const setCache = useCallback(<T>(key: string, data: T, ttl: number = CACHE_CONFIG.defaultTTL) => {
+  const setCache = useCallback(<T,>(key: string, data: T, ttl: number = CACHE_CONFIG.defaultTTL) => {
     const size = calculateSize(data)
     
   
@@ -96,7 +96,7 @@ export function CacheProvider({ children }: { children: React.ReactNode }) {
   }, [cache, totalSize, calculateSize])
 
   // Obtener datos del cache
-  const getCache = useCallback(<T>(key: string): T | null => {
+  const getCache = useCallback(<T,>(key: string): T | null => {
     const entry = cache.get(key)
     if (!entry) return null
 
@@ -181,7 +181,7 @@ export function CacheProvider({ children }: { children: React.ReactNode }) {
   }, [cache, totalSize])
 
   // Precargar datos (get or fetch)
-  const preloadData = useCallback(async <T>(
+  const preloadData = useCallback(async <T,>(
     key: string, 
     fetcher: () => Promise<T>, 
     ttl: number = CACHE_CONFIG.defaultTTL

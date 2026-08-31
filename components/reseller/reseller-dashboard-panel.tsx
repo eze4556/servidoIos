@@ -33,6 +33,7 @@ import {
 } from "@/lib/reseller/reseller-dashboard-data"
 import { productUrlWithRef } from "@/lib/reseller/attribution-storage"
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard"
+import { Copy, ExternalLink, Link2, Loader2, Receipt, TrendingUp, Wallet } from "lucide-react"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useToast } from "@/components/ui/use-toast"
 import { ResellerAdvancedStats } from "@/components/dashboard/advanced-stats/reseller-advanced-stats"
