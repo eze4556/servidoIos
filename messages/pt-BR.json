@@ -423,7 +423,15 @@
     "actionOutside": "Estou na porta",
     "actionAdvance": "Atualizar status",
     "chatWithBuyer": "Chat com comprador",
-    "sharingLocation": "Compartindo localização com o cliente"
+    "locationConsentTitle": "Compartilhar sua localização",
+    "locationConsentBody": "Para que o cliente veja quanto falta, o Servido precisa da sua localização enquanto você faz esta entrega.",
+    "locationConsentPointWho": "Só o cliente deste pedido e o estabelecimento veem.",
+    "locationConsentPointWhen": "É compartilhada apenas com o pedido em andamento e o app aberto.",
+    "locationConsentPointStop": "Ao entregar ela para sozinha, e você pode interromper antes quando quiser.",
+    "locationConsentAccept": "Ativar rastreamento",
+    "locationConsentDeclineHint": "Sem ativar você ainda pode fazer a entrega, mas o cliente não vai te ver no mapa.",
+    "locationSharingActive": "Compartilhando localização com o cliente",
+    "locationStopSharing": "Parar de compartilhar"
   },
   "restaurantOnboarding": {
     "title": "Complete seu perfil",
@@ -813,6 +821,7 @@
     "close": "Fechar",
     "currentLocation": "Localização atual",
     "useGps": "Usar minha localização atual",
+    "gpsRationale": "Usamos sua localização apenas para mostrar lojas, entregas e serviços perto de você. Você pode alterá-la ou digitá-la quando quiser.",
     "orSearch": "ou busque",
     "searchPlaceholder": "Cidade, bairro ou CEP...",
     "clear": "Limpar",

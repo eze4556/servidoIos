@@ -12,7 +12,6 @@ import {
   markLocationDenied,
   migrateLegacyLocationCache,
   readLocationCache,
-  wasLocationDenied,
   writeLocationCache,
   type CachedLocation,
 } from "@/lib/location-cache"
@@ -170,6 +169,46 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     [persistLocation]
   )
 
+  /**
+   * Ubicación aproximada por IP. Se usa al abrir la app porque no dispara el
+   * permiso del sistema: Google Play pide que el permiso de ubicación se
+   * solicite a partir de una acción del usuario y con una explicación, no de
+   * arranque. El GPS queda detrás del botón del selector de ubicación.
+   */
+  const resolveFromIp = useCallback(
+    async (showLoading = true) => {
+      if (isFetchingRef.current) return
+      isFetchingRef.current = true
+      if (showLoading) setLoadingLocation(true)
+
+      try {
+        const response = await fetch(apiUrl("/api/geolocation"))
+        const data = await response.json()
+        const location = typeof data?.location === "string" ? data.location : null
+
+        if (data?.success && location) {
+          const latitude = Number(data.coordinates?.lat)
+          const longitude = Number(data.coordinates?.lon)
+          await persistLocation(
+            location,
+            Number.isFinite(latitude) ? latitude : 0,
+            Number.isFinite(longitude) ? longitude : 0,
+            "ip"
+          )
+          return
+        }
+
+        setLoadingLocation(false)
+      } catch (error) {
+        console.error("Error resolving location by IP:", error)
+        setLoadingLocation(false)
+      } finally {
+        isFetchingRef.current = false
+      }
+    },
+    [persistLocation]
+  )
+
   const loadFromFirestore = useCallback(async (): Promise<boolean> => {
     const user = currentUserRef.current
     if (!user) return false
@@ -219,11 +258,6 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    if (wasLocationDenied() && cached) {
-      hasResolvedRef.current = true
-      return
-    }
-
     if (currentUserRef.current) {
       const loadedFromProfile = await loadFromFirestore()
       if (loadedFromProfile) {
@@ -232,16 +266,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    if (wasLocationDenied()) {
-      setUserLocation(cached?.location || "Ubicación no disponible")
-      setLoadingLocation(false)
-      hasResolvedRef.current = true
-      return
-    }
-
-    await resolveFromGps(false, !cached)
+    await resolveFromIp(!cached)
     hasResolvedRef.current = true
-  }, [applyCachedLocation, loadFromFirestore, resolveFromGps])
+  }, [applyCachedLocation, loadFromFirestore, resolveFromIp])
 
   const refreshLocation = useCallback(async () => {
     clearLocationDenied()

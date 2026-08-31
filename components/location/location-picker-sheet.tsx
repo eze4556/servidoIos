@@ -189,6 +189,9 @@ export function LocationPickerSheet() {
             {t("useGps")}
           </Button>
 
+          {/* Explicación previa al permiso del sistema, exigida por Google Play. */}
+          <p className="-mt-2 px-1 text-xs leading-snug text-gray-500">{t("gpsRationale")}</p>
+
           <div className="relative flex items-center gap-3">
             <span className="h-px flex-1 bg-gray-200" />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">

@@ -54,20 +54,23 @@ service cloud.firestore {
         : uid();
     }
 
-    function isChatParticipant() {
+    // Los chats viejos no siempre tienen participantIds, así que cada campo se
+    // consulta sólo si existe: leer una clave ausente aborta la evaluación y
+    // Firestore lo devuelve como "permisos insuficientes".
+    function isChatParticipantData(data) {
       return signedIn() && (
-        uid() in resource.data.participantIds
-        || resource.data.buyerId == uid()
-        || resource.data.sellerId == uid()
+        ('participantIds' in data && uid() in data.participantIds)
+        || ('buyerId' in data && data.buyerId == uid())
+        || ('sellerId' in data && data.sellerId == uid())
       );
     }
 
+    function isChatParticipant() {
+      return resource != null && isChatParticipantData(resource.data);
+    }
+
     function isChatParticipantCreate() {
-      return signedIn() && (
-        uid() in request.resource.data.participantIds
-        || request.resource.data.buyerId == uid()
-        || request.resource.data.sellerId == uid()
-      );
+      return isChatParticipantData(request.resource.data);
     }
 
     // ─── users ─────────────────────────────────────────────────
@@ -275,7 +278,10 @@ service cloud.firestore {
 
     // ─── Chats ─────────────────────────────────────────────────
     match /chats/{chatId} {
-      allow read: if isAdmin() || isChatParticipant();
+      // Un chat que todavía no existe tiene que poder consultarse: los flujos
+      // que reusan un id fijo (historias, vendedor) preguntan antes de crearlo.
+      allow get: if signedIn() && (isAdmin() || resource == null || isChatParticipant());
+      allow list: if isAdmin() || isChatParticipant();
 
       allow create: if isChatParticipantCreate();
 
@@ -284,15 +290,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
-        function parentChat() {
-          return get(/databases/$(database)/documents/chats/$(chatId)).data;
+        function chatPath() {
+          return /databases/$(database)/documents/chats/$(chatId);
         }
         function canAccessParent() {
           return signedIn() && (
             isAdmin()
-            || uid() in parentChat().participantIds
-            || parentChat().buyerId == uid()
-            || parentChat().sellerId == uid()
+            || (exists(chatPath()) && isChatParticipantData(get(chatPath()).data))
           );
         }
 

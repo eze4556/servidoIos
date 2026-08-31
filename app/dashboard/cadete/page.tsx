@@ -35,6 +35,8 @@ import { getNextFoodOrderStatus } from "@/lib/food-order-tracking"
 import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
 import type { FoodOrder } from "@/types/restaurant"
 import { useCadeteLiveTracking } from "@/hooks/use-cadete-live-tracking"
+import { CadeteLocationConsent } from "@/components/delivery/cadete-location-consent"
+import { grantLocationConsent, hasLocationConsent, revokeLocationConsent } from "@/lib/location-consent"
 import { usePriceFormat } from "@/hooks/use-price-format"
 
 const DEFAULT_TITLE_KEY = "defaultTitle" as const
@@ -91,10 +93,30 @@ export default function CadeteDashboardPage() {
   const cadeteName = currentUser?.name || currentUser?.firebaseUser.displayName || t("defaultName")
   const cadeteZone = currentUser?.zone
 
+  // El consentimiento se lee en un efecto porque localStorage no existe en el
+  // primer render del server component padre.
+  const [locationConsent, setLocationConsent] = useState(false)
+
+  useEffect(() => {
+    setLocationConsent(hasLocationConsent(uid))
+  }, [uid])
+
+  const acceptLocationConsent = useCallback(() => {
+    if (!uid) return
+    grantLocationConsent(uid)
+    setLocationConsent(true)
+  }, [uid])
+
+  const cancelLocationConsent = useCallback(() => {
+    if (!uid) return
+    revokeLocationConsent(uid)
+    setLocationConsent(false)
+  }, [uid])
+
   const { lastCoords } = useCadeteLiveTracking({
     orderId: active?.id || null,
     status: active?.status || null,
-    enabled: Boolean(uid && approved && active),
+    enabled: Boolean(uid && approved && active && locationConsent),
   })
 
   const resolveRestaurantAddress = useCallback(async (order: FoodOrder | null) => {
@@ -294,7 +316,13 @@ export default function CadeteDashboardPage() {
             </p>
           )}
 
-          <p className="text-sm uppercase tracking-wide text-slate-400">{t("pickupAt")}</p>
+          <CadeteLocationConsent
+            granted={locationConsent}
+            onGrant={acceptLocationConsent}
+            onRevoke={cancelLocationConsent}
+          />
+
+          <p className="mt-5 text-sm uppercase tracking-wide text-slate-400">{t("pickupAt")}</p>
           <h1 className="mt-1 text-3xl font-bold leading-tight">{active.restaurantName}</h1>
           {pickupAddress && <p className="mt-1 text-sm text-slate-400">{pickupAddress}</p>}
 
@@ -386,8 +414,6 @@ export default function CadeteDashboardPage() {
             )}
             <p className="mt-2 text-sm leading-snug text-amber-100/80">{t("cadetePayDisclaimer")}</p>
           </div>
-          <p className="mt-3 text-center text-xs text-sky-300/90">{t("sharingLocation")}</p>
-
           <div className="mt-4 rounded-2xl bg-slate-900/80 p-4 ring-1 ring-slate-800">
             <p className="text-xs uppercase text-slate-500">{t("orderLabel")}</p>
             <ul className="mt-2 space-y-1 text-base text-slate-200">
