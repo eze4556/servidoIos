@@ -164,6 +164,147 @@
     "backHomeAria": "Voltar ao início",
     "myPanelLabel": "Meu painel"
   },
+  "appTutorial": {
+    "badge": "Tutorial",
+    "title": "Como usar o Servido",
+    "subtitle": "Guia rápido de cada seção. Você pode abrir de novo quando quiser.",
+    "sectionsLabel": "Seções",
+    "close": "Fechar",
+    "gotIt": "Entendi",
+    "hintReopen": "Reabra o tutorial com o botão Ajuda.",
+    "fabLabel": "Ajuda",
+    "fabShort": "Ajuda",
+    "fabAria": "Abrir tutorial do Servido",
+    "sections": {
+      "home": {
+        "label": "Explorar",
+        "title": "Início e exploração",
+        "intro": "Assim você encontra produtos, comida, stories e serviços perto de você."
+      },
+      "buyer": {
+        "label": "Comprador",
+        "title": "Seu painel de comprador",
+        "intro": "Daí você acompanha compras, reclamações, horários e mensagens."
+      },
+      "seller": {
+        "label": "Loja",
+        "title": "Seu painel de vendedor",
+        "intro": "Publique, cobre com Mercado Pago e gerencie envios. Só 8% por venda."
+      },
+      "restaurant": {
+        "label": "Restaurante",
+        "title": "Painel do estabelecimento",
+        "intro": "Monte o cardápio, atenda pedidos e acompanhe o delivery. Comissão 12% sobre a comida."
+      },
+      "cadete": {
+        "label": "Entregador",
+        "title": "Painel do entregador",
+        "intro": "Aceite pedidos da sua zona, compartilhe localização e receba por quilômetro."
+      }
+    },
+    "steps": {
+      "homeExplore": {
+        "title": "Explore o catálogo",
+        "body": "No Início e em Produtos você vê o que há por perto. Também pode entrar em Restaurantes, Carros e Imóveis."
+      },
+      "homeSearch": {
+        "title": "Busque o que precisa",
+        "body": "Use a lupa do cabeçalho ou a página de busca para filtrar por nome ou categoria."
+      },
+      "homeLocation": {
+        "title": "Sua localização",
+        "body": "Toque na localização para escolher a cidade ou usar o GPS. Serve para mostrar lojas e entregas próximas."
+      },
+      "homeStories": {
+        "title": "Stories",
+        "body": "Em Histórias você vê promoções de negócios próximos. Pode responder dali e abrir um chat."
+      },
+      "homeCart": {
+        "title": "Carrinho e pagamento",
+        "body": "Adicione produtos ou comida ao carrinho e pague com Mercado Pago."
+      },
+      "buyerOrders": {
+        "title": "Minhas compras",
+        "body": "Veja o status de cada pedido, a entrega e converse com o vendedor."
+      },
+      "buyerClaims": {
+        "title": "Reclamações",
+        "body": "Se houve um problema, abra uma reclamação na compra. O vendedor responde em 72 h."
+      },
+      "buyerFavorites": {
+        "title": "Favoritos",
+        "body": "Salve produtos para depois pelo coração ou pela aba Favoritos."
+      },
+      "buyerAppointments": {
+        "title": "Meus horários",
+        "body": "Se comprou um serviço, aqui vê as reservas e o status."
+      },
+      "buyerChat": {
+        "title": "Mensagens",
+        "body": "Fale com o vendedor ou o entregador em Mensagens. Também chegam push na app."
+      },
+      "buyerReseller": {
+        "title": "Revendedor",
+        "body": "Compartilhe links de produtos e ganhe por cada venda atribuída à sua indicação."
+      },
+      "sellerPublish": {
+        "title": "Publicar",
+        "body": "Em Adicionar produto ou serviço você carrega fotos, preço e estoque. Carros e imóveis são grátis."
+      },
+      "sellerCommission": {
+        "title": "Comissão 8%",
+        "body": "Não precisa de assinatura mensal. A Servido retém 8% sobre o produto; o frete não tem comissão."
+      },
+      "sellerMp": {
+        "title": "Conectar Mercado Pago",
+        "body": "No Perfil vincule sua conta do MP para receber. Sem isso as vendas não se completam."
+      },
+      "sellerShipping": {
+        "title": "Envios",
+        "body": "Ao vender um produto físico, informe o rastreio em Envios."
+      },
+      "sellerClaims": {
+        "title": "Reclamações",
+        "body": "Responda em até 72 h. Pode propor reenvio ou reembolso; o admin executa no MP."
+      },
+      "sellerEarnings": {
+        "title": "Minhas vendas",
+        "body": "Consulte receitas, comissões e status dos recebimentos."
+      },
+      "restaurantMenu": {
+        "title": "Cardápio",
+        "body": "Cadastre pratos, preços e opções. É o que o cliente vê no seu local."
+      },
+      "restaurantOrders": {
+        "title": "Pedidos",
+        "body": "Aceite, prepare e marque pronto. Cliente e entregador veem o status em tempo real."
+      },
+      "restaurantCommission": {
+        "title": "Comissão 12%",
+        "body": "Sem mensalidade. A Servido cobra 12% sobre a comida do pedido."
+      },
+      "restaurantDelivery": {
+        "title": "Delivery",
+        "body": "Quando o pedido está pronto, um entregador da zona pode aceitá-lo."
+      },
+      "cadeteAvailable": {
+        "title": "Pedidos disponíveis",
+        "body": "Veja os pedidos prontos na sua zona. Aceite um para começar a entrega."
+      },
+      "cadeteLocation": {
+        "title": "Compartilhar localização",
+        "body": "Antes do rastreio aparece um aviso. Só ao ativar o GPS é compartilhado com o cliente (app aberta)."
+      },
+      "cadeteStatuses": {
+        "title": "Status da entrega",
+        "body": "Avance: a caminho, chegando, na porta e entregue."
+      },
+      "cadetePay": {
+        "title": "Seu pagamento",
+        "body": "Você recebe por quilômetro. As liquidações ficam no painel."
+      }
+    }
+  },
   "apiErrors": {
     "unauthorized": "Não autorizado",
     "noSession": "Você precisa entrar na conta",
@@ -1478,6 +1619,7 @@
     "explore": "Explorar",
     "footerChat": "Chat / mensagens",
     "footerCatalog": "Explorar catálogo",
+    "footerTutorial": "Como usar o Servido",
     "nav": {
       "dashboard": {
         "label": "Resumo",
@@ -1732,15 +1874,15 @@
     "subscription": {
       "expired": {
         "title": "Sua assinatura venceu",
-        "body": "Renove para continuar publicando e recebendo pedidos."
+        "body": "O marketplace já opera só com comissão 8%. Você pode continuar publicando sem mensalidade."
       },
       "tomorrow": {
         "title": "Sua assinatura vence amanhã",
-        "body": "Você pode renovar no painel do vendedor."
+        "body": "Quando terminar, você continua vendendo só com a comissão de 8%."
       },
       "days": {
         "title": "Sua assinatura vence em {days} dias",
-        "body": "Restam {days} dias de acesso{planSuffix}. Você pode renovar no painel."
+        "body": "Restam {days} dias de adesão{planSuffix}. Depois você opera só com comissão 8%."
       },
       "planSuffix": " ({planLabel})"
     },
@@ -2177,6 +2319,7 @@
     "footerStore": "Minha loja",
     "footerVehicles": "Anunciar carros",
     "footerProperties": "Anunciar imóveis",
+    "footerTutorial": "Como usar o Servido",
     "viewCatalog": "Ver catálogo",
     "nav": {
       "dashboard": {
@@ -2361,15 +2504,19 @@
       "activeWithRenewal": "Assinatura ativa com renovação automática",
       "expiredReactivate": "Sua assinatura venceu ou o pagamento falhou. Reative para voltar a publicar.",
       "activateMonthlyPrompt": "Ative a assinatura mensal automática para publicar produtos e serviços",
+      "commissionOnlySummary": "Publique sem mensalidade. A Servido cobra 8% por cada venda.",
+      "commissionModelBanner": "Modelo comissão 8%",
+      "commissionModelBody": "Não é mais necessária assinatura mensal. A Servido cobra 8% por cada venda (sobre o produto; o frete não tem comissão).",
+      "mpNotConnectedHint": "Conecte o Mercado Pago em Perfil para poder receber suas vendas.",
       "actionActivate": "Ativar assinatura mensal",
       "actionReactivate": "Reativar assinatura",
       "noAuth": "Não há usuário autenticado",
       "noInitPoint": "Não foi recebido um ponto de início da assinatura",
       "cancelConfirm": "Cancelar a assinatura?\n\nA renovação automática será interrompida. Se ainda restar tempo do mês já pago, você continua operando até essa data.",
       "cancelImmediateTitle": "Assinatura cancelada",
-      "cancelImmediateDescription": "Você não tem mais acesso para publicar. Pode reativar quando quiser.",
+      "cancelImmediateDescription": "Seu plano passou a comissão 8%. Você pode continuar publicando sem mensalidade.",
       "cancelUntilTitle": "Renovação cancelada",
-      "cancelUntilDescription": "Continue operando até {date}. Depois o acesso será suspenso.",
+      "cancelUntilDescription": "Continue com a adesão até {date}. Depois opera só com comissão 8%.",
       "cancelDefaultDescription": "Não será renovada no próximo mês.",
       "cancelError": "Não foi possível cancelar a assinatura",
       "redirecting": "Redirecionando…",
@@ -2381,7 +2528,7 @@
       "cardTitle": "Configurações",
       "cardDescription": "Gerencie seu perfil e configurações da conta.",
       "tabProfile": "Meu perfil",
-      "tabSubscription": "Assinatura",
+      "tabSubscription": "Plano e comissão",
       "tabSettings": "Configurações gerais",
       "photoAlt": "Foto de perfil",
       "uploadingPhoto": "Enviando…",
@@ -2390,31 +2537,34 @@
       "displayName": "Nome do vendedor",
       "email": "E-mail",
       "mpTitle": "Mercado Pago",
-      "subscriptionManageTitle": "Gestão da assinatura",
+      "subscriptionManageTitle": "Plano e comissão",
       "subscriptionActiveTitle": "Assinatura ativa",
       "subscriptionActiveDescRenewal": "Sua assinatura mensal está ativa e renova automaticamente. Você pode criar e vender produtos e serviços.",
       "subscriptionActiveDescCancelled": "Você cancelou a renovação automática. Continue operando até o fim do período já pago.",
-      "statusCardTitle": "Status da sua assinatura",
-      "statusCardDescCancelled": "A adesão no Mercado Pago não será mais renovada.",
-      "statusCardDescActive": "Sua assinatura do marketplace está ativa e funcionando.",
+      "legacySubscriptionTitle": "Você tem uma assinatura anterior",
+      "legacySubscriptionDescription": "O marketplace não exige mais mensalidade. Você pode cancelar a renovação e continuar vendendo só com a comissão de 8%.",
+      "statusCardTitle": "Status da sua adesão",
+      "statusCardDescCancelled": "A adesão no Mercado Pago não será renovada.",
+      "statusCardDescActive": "Adesão mensal ativa (modelo anterior).",
       "statusLabelUntilPeriod": "Ativa até o fim do período",
       "statusLabelActive": "Assinatura ativa",
       "sameSubscriptionNote": "A mesma assinatura habilita produtos e serviços.",
       "benefitProducts": "Produtos: você pode criar e gerenciar produtos",
       "benefitServices": "Serviços: você pode criar e gerenciar serviços",
-      "benefitPayments": "Pagamentos: receba por suas publicações",
+      "benefitPayments": "Pagamentos: receba pagamentos pelas suas publicações",
       "benefitSupport": "Suporte: acesso a suporte prioritário",
-      "cancelledPeriodNote": "Você já cancelou a renovação. Quando o período terminar, será necessário reativar para continuar publicando.",
+      "cancelledPeriodNote": "A renovação já está cancelada. Quando terminar o período pago, você continua operando com comissão 8%.",
       "requiredTitle": "Assinatura necessária",
       "requiredDescription": "Sua assinatura venceu. Renove para voltar a publicar produtos e serviços.",
-      "marketplaceTitle": "Assinatura do marketplace",
-      "marketplaceDescription": "Ative a assinatura mensal automática para criar e oferecer produtos e serviços.",
-      "mpDebitNote": "É debitado todo mês pelo Mercado Pago. Se o pagamento falhar, o acesso fica suspenso até regularizar.",
+      "marketplaceTitle": "Modelo do marketplace",
+      "marketplaceDescription": "Publique produtos e serviços sem mensalidade. A Servido cobra 8% por cada venda.",
+      "mpDebitNote": "É debitado todos os meses com Mercado Pago. Se o pagamento falhar, o acesso é suspenso até regularizar.",
       "whySubscriptionTitle": "Para que você precisa da assinatura?",
       "whyCreateProducts": "Criar produtos: publique seus produtos físicos",
       "whyCreateServices": "Criar serviços: publique seus serviços profissionais",
       "whyManageOffers": "Gerenciar ofertas: administre suas publicações ativas",
       "whyFullAccess": "Acesso completo: use todas as ferramentas de vendedor",
+      "commissionNote": "Comissão Servido: 8% sobre o produto (o frete não tem comissão)",
       "blockedNote": "Nota: se o pagamento mensal falhar ou você cancelar a adesão, produtos e serviços ficam bloqueados até reativar.",
       "monthlyPrice": "Preço mensal:",
       "priceLoading": "Carregando…",

@@ -11,6 +11,7 @@ import {
 } from "@/components/dashboard/dashboard-sidebar"
 import { DashboardShellLayout } from "@/components/dashboard/dashboard-shell-layout"
 import { buildSellerNavItems, getSellerPageMeta } from "@/components/dashboard/seller/seller-nav-config"
+import { useTutorial } from "@/components/tutorial/tutorial-provider"
 
 export type SellerDashboardTab =
   | "dashboard"
@@ -52,6 +53,7 @@ export function SellerDashboardShell({
   children,
 }: SellerDashboardShellProps) {
   const t = useTranslations("sellerDashboard")
+  const { openTutorial } = useTutorial()
   const navItems = useMemo(() => buildSellerNavItems(isEditing, t), [isEditing, t])
   const pageMeta = getSellerPageMeta(activeTab, isEditing, t)
 
@@ -65,6 +67,8 @@ export function SellerDashboardShell({
     userName,
     userPhoto,
     onLogout,
+    onOpenTutorial: () => openTutorial("seller"),
+    tutorialLabel: t("footerTutorial"),
     footerLinks: [
       { label: t("footerStore"), href: storeHref || "/dashboard/seller", icon: Store },
       { label: t("footerVehicles"), href: "/dashboard/seller/vehicles", icon: Car },

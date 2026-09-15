@@ -312,13 +312,10 @@ export default function SellerDashboardPage() {
   const router = useRouter()
   const { toast } = useToast()
   const searchParams = useSearchParams()
+  // Modelo actual: solo comisión 8%. La suscripción quedó legacy para quien
+  // todavía la tiene activa (puede cancelar renovación), pero ya no bloquea publicar.
   const hasActiveSubscription = currentUser?.subscriptionStatus === "active"
   const cancelAtPeriodEnd = Boolean(currentUser?.subscriptionCancelAtPeriodEnd)
-  const subscriptionRequiredMessage = t("subscription.requiredPublish")
-  const subscriptionActiveMessage = cancelAtPeriodEnd
-    ? t("subscription.activeUntilPeriodEnd")
-    : t("subscription.activeAutoRenew")
-  const subscriptionBlockedMessage = t("subscription.blockedPublish")
 
   const subscriptionEndsAt = currentUser?.subscriptionEndsAt ?? null
   const subscriptionDaysRemaining = currentUser?.subscriptionDaysRemaining ?? null
@@ -349,16 +346,8 @@ export default function SellerDashboardPage() {
       return t("subscription.activeWithRenewal")
     }
 
-    if (subscriptionEndsAt) {
-      return t("subscription.expiredReactivate")
-    }
-
-    return t("subscription.activateMonthlyPrompt")
+    return t("subscription.commissionOnlySummary")
   }, [hasActiveSubscription, cancelAtPeriodEnd, subscriptionEndsAt, subscriptionDaysRemaining, t, dateLocale])
-  const subscriptionActionLabel =
-    subscriptionEndsAt && !hasActiveSubscription
-      ? t("subscription.actionReactivate")
-      : t("subscription.actionActivate")
 
   const mercadoPagoStatus = currentUser?.mercadoPagoStatus ?? "not_connected"
   const mercadoPagoConnected = mercadoPagoStatus === "connected"
@@ -386,36 +375,12 @@ export default function SellerDashboardPage() {
       : t("mercadoPago.statusNotConnected")
   const mercadoPagoBadgeVariant = mercadoPagoConnected ? "default" : mercadoPagoTokenExpired ? "destructive" : "secondary"
 
-  const renderSubscriptionGate = (showActionButton = true) => (
-    <div
-      className={`mb-4 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
-        hasActiveSubscription ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        {hasActiveSubscription ? (
-          <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />
-        ) : (
-          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
-        )}
-        <div className="flex flex-col">
-          <span className={`text-sm font-medium ${hasActiveSubscription ? "text-emerald-800" : "text-amber-800"}`}>
-            {hasActiveSubscription ? subscriptionActiveMessage : subscriptionRequiredMessage}
-          </span>
-          <span className={`text-xs ${hasActiveSubscription ? "text-emerald-700" : "text-amber-700"}`}>
-            {subscriptionStatusSummary}
-          </span>
-        </div>
-      </div>
-      {showActionButton && !hasActiveSubscription && (
-        <Button
-          onClick={() => setActiveTab("profile")}
-          variant="outline"
-          size="sm"
-          className="shrink-0 rounded-full border-amber-300 text-amber-800 hover:bg-amber-100"
-        >
-          {subscriptionActionLabel}
-        </Button>
+  const renderCommissionBanner = () => (
+    <div className="mb-4 rounded-2xl border border-servido-200 bg-servido-50/80 p-4">
+      <p className="text-sm font-semibold text-servido-900">{t("subscription.commissionModelBanner")}</p>
+      <p className="mt-1 text-xs leading-relaxed text-servido-800">{t("subscription.commissionModelBody")}</p>
+      {!mercadoPagoConnected && (
+        <p className="mt-2 text-xs font-medium text-amber-800">{t("subscription.mpNotConnectedHint")}</p>
       )}
     </div>
   )
@@ -1740,10 +1705,6 @@ export default function SellerDashboardPage() {
   // Modificar handleSubmitProduct para usar validación visual
   const handleSubmitProduct = async (e: FormEvent) => {
     e.preventDefault()
-    if (!hasActiveSubscription) {
-      setError(subscriptionBlockedMessage)
-      return
-    }
 
     setProductFormTouched(true)
     const errors = validateProductForm()
@@ -2135,10 +2096,6 @@ export default function SellerDashboardPage() {
   // Nuevo handleSubmitService para validación visual
   const handleSubmitService = async (e: FormEvent) => {
     e.preventDefault()
-    if (!hasActiveSubscription) {
-      setError(subscriptionBlockedMessage)
-      return
-    }
 
     setServiceFormTouched(true)
     const errors = validateServiceForm()
@@ -2707,7 +2664,7 @@ export default function SellerDashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {renderSubscriptionGate()}
+                {renderCommissionBanner()}
                 {/* Resumen de errores */}
                 {productFormTouched && Object.keys(productFormErrors).length > 0 && (
                   <Alert variant="destructive" className="mb-4">
@@ -2721,7 +2678,7 @@ export default function SellerDashboardPage() {
                     </Alert>
                 )}
                 <form onSubmit={handleSubmitProduct} className="space-y-6">
-                  <fieldset disabled={!hasActiveSubscription} style={{ opacity: hasActiveSubscription ? 1 : 0.5 }}>
+                  <fieldset>
                   {/* Media Upload Section */}
                   <div>
                     <Label htmlFor="productMedia" className="text-base">
@@ -2984,7 +2941,7 @@ export default function SellerDashboardPage() {
                     )}
                   </div>
                   <div className="flex gap-2 pt-4">
-                      <Button type="submit" disabled={submittingProduct || !hasActiveSubscription}>
+                      <Button type="submit" disabled={submittingProduct}>
                       {submittingProduct ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -3016,8 +2973,7 @@ export default function SellerDashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Notificación de suscripción */}
-                {renderSubscriptionGate()}
+                {renderCommissionBanner()}
                 {/* Resumen de errores */}
                 {serviceFormTouched && Object.keys(serviceFormErrors).length > 0 && (
                   <Alert variant="destructive" className="mb-4">
@@ -3031,7 +2987,7 @@ export default function SellerDashboardPage() {
                     </Alert>
                 )}
                 <form onSubmit={handleSubmitService} className="space-y-6 relative">
-                  <fieldset disabled={!hasActiveSubscription} style={{ opacity: hasActiveSubscription ? 1 : 0.5 }}>
+                  <fieldset>
                     {/* Media Upload Section */}
                     <div>
                       <Label htmlFor="serviceMedia" className="text-base">{t("media.serviceLabel")}</Label>
@@ -3290,7 +3246,7 @@ export default function SellerDashboardPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="submit" className="w-full" disabled={submittingProduct || validatingImages || uploadingMedia || !hasActiveSubscription}>
+                  <Button type="submit" className="w-full" disabled={submittingProduct || validatingImages || uploadingMedia}>
                     {submittingProduct
                       ? t("serviceForm.saving")
                       : isEditing
@@ -3478,143 +3434,75 @@ export default function SellerDashboardPage() {
                   <TabsContent value="subscription" className="space-y-6 mt-6">
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold">{t("profile.subscriptionManageTitle")}</h3>
-                      
+
                       {hasActiveSubscription ? (
                         <div className="space-y-4">
-                                                     <Alert className="border-green-200 bg-green-50">
-                             <CheckCircle className="h-4 w-4 text-green-600" />
-                             <AlertTitle className="text-green-800">{t("profile.subscriptionActiveTitle")}</AlertTitle>
-                             <AlertDescription className="text-green-700">
-                               {cancelAtPeriodEnd
-                                 ? t("profile.subscriptionActiveDescCancelled")
-                                 : t("profile.subscriptionActiveDescRenewal")}
-                             </AlertDescription>
-                           </Alert>
-                           
-                           <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
-                             <CardHeader>
-                               <CardTitle>{t("profile.statusCardTitle")}</CardTitle>
-                               <CardDescription>
-                                 {cancelAtPeriodEnd
-                                   ? t("profile.statusCardDescCancelled")
-                                   : t("profile.statusCardDescActive")}
-                               </CardDescription>
-                             </CardHeader>
-                             <CardContent className="space-y-3">
-                               <div className="flex items-center gap-2">
-                                 <CheckCircle className="h-5 w-5 text-green-600" />
-                                 <span className="font-semibold">
-                                   {cancelAtPeriodEnd ? t("profile.statusLabelUntilPeriod") : t("profile.statusLabelActive")}
-                                 </span>
-                               </div>
-                                <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-                                  <p className="text-sm font-medium text-green-800">{subscriptionStatusSummary}</p>
-                                  <p className="text-xs text-green-700">
-                                    {t("profile.sameSubscriptionNote")}
-                                  </p>
+                          <Alert className="border-amber-200 bg-amber-50">
+                            <AlertTriangle className="h-4 w-4 text-amber-600" />
+                            <AlertTitle className="text-amber-900">{t("profile.legacySubscriptionTitle")}</AlertTitle>
+                            <AlertDescription className="text-amber-800">
+                              {t("profile.legacySubscriptionDescription")}
+                            </AlertDescription>
+                          </Alert>
+
+                          <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
+                            <CardHeader>
+                              <CardTitle>{t("profile.statusCardTitle")}</CardTitle>
+                              <CardDescription>
+                                {cancelAtPeriodEnd
+                                  ? t("profile.statusCardDescCancelled")
+                                  : t("profile.statusCardDescActive")}
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                                <p className="text-sm font-medium text-green-800">{subscriptionStatusSummary}</p>
+                              </div>
+                              {!cancelAtPeriodEnd ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="w-full border-red-200 text-red-700 hover:bg-red-50"
+                                  disabled={cancellingSubscription}
+                                  onClick={() => void handleCancelSubscription()}
+                                >
+                                  {cancellingSubscription ? t("subscription.cancelling") : t("subscription.cancelButton")}
+                                </Button>
+                              ) : (
+                                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                                  {t("profile.cancelledPeriodNote")}
                                 </div>
-                               <div className="text-sm text-gray-600">
-                                 <p>• {t("profile.benefitProducts")}</p>
-                                 <p>• {t("profile.benefitServices")}</p>
-                                 <p>• {t("profile.benefitPayments")}</p>
-                                 <p>• {t("profile.benefitSupport")}</p>
-                               </div>
-                               {!cancelAtPeriodEnd ? (
-                                 <Button
-                                   type="button"
-                                   variant="outline"
-                                   className="w-full border-red-200 text-red-700 hover:bg-red-50"
-                                   disabled={cancellingSubscription}
-                                   onClick={() => void handleCancelSubscription()}
-                                 >
-                                   {cancellingSubscription ? t("subscription.cancelling") : t("subscription.cancelButton")}
-                                 </Button>
-                               ) : (
-                                 <div className="space-y-2">
-                                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                                     {t("profile.cancelledPeriodNote")}
-                                   </div>
-                                   <Button
-                                     type="button"
-                                     className="w-full rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
-                                     disabled={subscribing}
-                                     onClick={handleSubscribe}
-                                   >
-                                     {subscribing ? t("subscription.redirecting") : t("subscription.reactivateRenewal")}
-                                   </Button>
-                                 </div>
-                               )}
-                             </CardContent>
-                           </Card>
+                              )}
+                            </CardContent>
+                          </Card>
                         </div>
                       ) : (
                         <div className="space-y-4">
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                             <AlertTitle>{t("profile.requiredTitle")}</AlertTitle>
-                    <AlertDescription>
-                               {t("profile.requiredDescription")}
-                    </AlertDescription>
-                  </Alert>
-                           
-                <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
-                  <CardHeader>
-                               <CardTitle>{t("profile.marketplaceTitle")}</CardTitle>
-                    <CardDescription>
-                                 {t("profile.marketplaceDescription")}
-                    </CardDescription>
-                  </CardHeader>
-                             <CardContent className="space-y-4">
-                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-                                  <p className="text-sm font-medium text-blue-800">{subscriptionStatusSummary}</p>
-                                  <p className="text-xs text-blue-700">
-                                    {t("profile.mpDebitNote")}
-                                  </p>
-                                </div>
-                               <div className="text-sm text-gray-600">
-                                 <p className="font-semibold mb-2">{t("profile.whySubscriptionTitle")}</p>
-                                 <ul className="space-y-1">
-                                   <li>• {t("profile.whyCreateProducts")}</li>
-                                   <li>• {t("profile.whyCreateServices")}</li>
-                                   <li>• {t("profile.whyManageOffers")}</li>
-                                   <li>• {t("profile.whyFullAccess")}</li>
-                                 </ul>
-                      </div>
-                               <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                                  <p className="text-sm text-blue-800">
-                                    {t("profile.blockedNote")}
-                                  </p>
-                                </div>
-                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">{t("profile.monthlyPrice")}</span>
-                          <span className="text-lg font-bold text-servido-800">
-                            {loadingSubscriptionPrice ? (
-                              <span className="flex items-center gap-2">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                {t("profile.priceLoading")}
-                              </span>
-                            ) : subscriptionPrice ? (
-                              `ARS ${subscriptionPrice.toFixed(2)}`
-                            ) : (
-                              t("profile.priceUnavailable")
-                            )}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {t("profile.priceAdminNote")}
-                        </p>
-                      </div>
-                      
-                      <Button
-                        onClick={handleSubscribe}
-                        disabled={subscribing}
-                                 className="w-full rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
-                      >
-                                  {subscribing ? t("subscription.redirecting") : subscriptionActionLabel}
-                      </Button>
-                             </CardContent>
-                           </Card>
+                          <Alert className="border-servido-200 bg-servido-50">
+                            <CheckCircle className="h-4 w-4 text-servido-800" />
+                            <AlertTitle className="text-servido-900">{t("subscription.commissionModelBanner")}</AlertTitle>
+                            <AlertDescription className="text-servido-800">
+                              {t("subscription.commissionModelBody")}
+                            </AlertDescription>
+                          </Alert>
+
+                          <Card className="rounded-2xl border-servido-950/5 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)]">
+                            <CardHeader>
+                              <CardTitle>{t("profile.marketplaceTitle")}</CardTitle>
+                              <CardDescription>{t("profile.marketplaceDescription")}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3 text-sm text-gray-600">
+                              <p>• {t("profile.whyCreateProducts")}</p>
+                              <p>• {t("profile.whyCreateServices")}</p>
+                              <p>• {t("profile.whyManageOffers")}</p>
+                              <p>• {t("profile.commissionNote")}</p>
+                              {!mercadoPagoConnected && (
+                                <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                                  {t("subscription.mpNotConnectedHint")}
+                                </p>
+                              )}
+                            </CardContent>
+                          </Card>
                         </div>
                       )}
                     </div>

@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, LogOut, Sparkles, User } from "lucide-react"
+import { ArrowLeft, BookOpen, LogOut, Sparkles, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
@@ -29,6 +29,8 @@ interface DashboardSidebarProps<T extends string> {
   onLogout: () => void
   footerLinks?: { label: string; href: string; icon: LucideIcon }[]
   onNavClick?: () => void
+  onOpenTutorial?: () => void
+  tutorialLabel?: string
 }
 
 const groupLabelKeys: Record<string, string> = {
@@ -119,6 +121,8 @@ export function DashboardSidebar<T extends string>({
   onLogout,
   footerLinks = [],
   onNavClick,
+  onOpenTutorial,
+  tutorialLabel,
 }: DashboardSidebarProps<T>) {
   const tShell = useTranslations("dashboardShell")
   const groups = groupNavItems(navItems)
@@ -213,8 +217,22 @@ export function DashboardSidebar<T extends string>({
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className="space-y-2 border-t border-white/10 p-4">
+        {/* Footer: safe-area para que "Cerrar sesión" no quede bajo la barra del sistema */}
+        <div className="space-y-2 border-t border-white/10 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {onOpenTutorial && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-10 w-full justify-start rounded-xl bg-white/5 text-purple-100 hover:bg-white/10 hover:text-white"
+              onClick={() => {
+                onOpenTutorial()
+                onNavClick?.()
+              }}
+            >
+              <BookOpen className="mr-2 h-4 w-4" />
+              {tutorialLabel || "Cómo usar"}
+            </Button>
+          )}
           {footerLinks.map(({ label, href, icon: Icon }) => (
             <Button
               key={href}

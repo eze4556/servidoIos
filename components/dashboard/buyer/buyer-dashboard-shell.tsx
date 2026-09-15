@@ -11,6 +11,7 @@ import {
 } from "@/components/dashboard/dashboard-sidebar"
 import { DashboardShellLayout } from "@/components/dashboard/dashboard-shell-layout"
 import { buildBuyerNavItems, getBuyerPageMeta } from "@/components/dashboard/buyer/buyer-nav-config"
+import { useTutorial } from "@/components/tutorial/tutorial-provider"
 
 export type BuyerDashboardTab =
   | "dashboard"
@@ -46,6 +47,7 @@ export function BuyerDashboardShell({
   children,
 }: BuyerDashboardShellProps) {
   const t = useTranslations("buyerDashboard")
+  const { openTutorial } = useTutorial()
   const navItems = useMemo(() => buildBuyerNavItems(t), [t])
   const pageMeta = getBuyerPageMeta(activeTab, t)
 
@@ -59,6 +61,8 @@ export function BuyerDashboardShell({
     userName,
     userPhoto,
     onLogout,
+    onOpenTutorial: () => openTutorial("buyer"),
+    tutorialLabel: t("footerTutorial"),
     footerLinks: [
       { label: t("footerChat"), href: "/mensajes", icon: MessageCircle },
       { label: t("footerCatalog"), href: "/products", icon: Sparkles },

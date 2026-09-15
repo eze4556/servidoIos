@@ -10,6 +10,9 @@ import { MobileAppHeader } from "@/components/layout/mobile-app-header"
 import { LocationPickerSheet } from "@/components/location/location-picker-sheet"
 import { ChatUnreadProvider } from "@/components/chat/chat-unread-context"
 import { DesktopChatFab } from "@/components/chat/desktop-chat-fab"
+import { TutorialProvider } from "@/components/tutorial/tutorial-provider"
+import { AppTutorialDialog } from "@/components/tutorial/app-tutorial-dialog"
+import { TutorialFab } from "@/components/tutorial/tutorial-fab"
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -50,46 +53,50 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <ChatUnreadProvider>
-      <>
-        <div
-          className={`flex min-h-full max-w-[100vw] flex-1 flex-col overflow-x-hidden ${
-            needsTopInset ? "pt-[env(safe-area-inset-top)] lg:pt-0" : ""
-          }`}
-        >
-          {showMobileHeader && <MobileAppHeader />}
-          {!isChatThread && (
-            <div className="hidden lg:block">
-              <Header />
-            </div>
-          )}
-          <main
-            className={`min-w-0 max-w-full flex-1 overflow-x-hidden ${
-              isMessagingRoute
-                ? "pb-[7rem] lg:pb-0"
-                : isVerticalCatalogRoute
-                  ? "bg-servido-950 pb-[7rem] lg:pb-0"
-                  : `pb-[7rem] ${isHomeRoute ? "lg:pb-16" : ""}`
+      <TutorialProvider>
+        <>
+          <div
+            className={`flex min-h-full max-w-[100vw] flex-1 flex-col overflow-x-hidden ${
+              needsTopInset ? "pt-[env(safe-area-inset-top)] lg:pt-0" : ""
             }`}
           >
-            {children}
-          </main>
-          {!isHomeRoute && !isMessagingRoute && (
-            <div className={isVerticalCatalogRoute ? "hidden lg:block" : undefined}>
-              <Footer />
-            </div>
-          )}
-          {isHomeRoute && (
-            <div className="hidden lg:block">
-              <Footer />
-            </div>
-          )}
-          <DesktopChatFab />
-          <LocationPickerSheet />
-        </div>
-        <Suspense fallback={null}>
-          <TabBar />
-        </Suspense>
-      </>
+            {showMobileHeader && <MobileAppHeader />}
+            {!isChatThread && (
+              <div className="hidden lg:block">
+                <Header />
+              </div>
+            )}
+            <main
+              className={`min-w-0 max-w-full flex-1 overflow-x-hidden ${
+                isMessagingRoute
+                  ? "pb-[7rem] lg:pb-0"
+                  : isVerticalCatalogRoute
+                    ? "bg-servido-950 pb-[7rem] lg:pb-0"
+                    : `pb-[7rem] ${isHomeRoute ? "lg:pb-16" : ""}`
+              }`}
+            >
+              {children}
+            </main>
+            {!isHomeRoute && !isMessagingRoute && (
+              <div className={isVerticalCatalogRoute ? "hidden lg:block" : undefined}>
+                <Footer />
+              </div>
+            )}
+            {isHomeRoute && (
+              <div className="hidden lg:block">
+                <Footer />
+              </div>
+            )}
+            <DesktopChatFab />
+            <LocationPickerSheet />
+            <TutorialFab />
+            <AppTutorialDialog />
+          </div>
+          <Suspense fallback={null}>
+            <TabBar />
+          </Suspense>
+        </>
+      </TutorialProvider>
     </ChatUnreadProvider>
   )
 }
