@@ -18,6 +18,7 @@ import {
   PlusCircle,
   Star,
   Megaphone,
+  Sparkles,
   AlertTriangle,
   Calendar,
   Eye,
@@ -107,6 +108,7 @@ import { getCadeteStatusLabel } from "@/lib/i18n/cadete-labels"
 import { getPurchaseStatusLabel, getShippingStatusLabel } from "@/lib/i18n/shipping-status-label"
 import SubscriptionPricingManager from "@/components/admin/subscription-pricing-manager"
 import { ServidoBroadcastPanel } from "@/components/admin/servido-broadcast-panel"
+import { ServidoStoriesPanel } from "@/components/admin/servido-stories-panel"
 import { AdminResellerPayoutsPanel } from "@/components/admin/admin-reseller-payouts-panel"
 import { AdminDeliverySettlementsPanel } from "@/components/admin/admin-delivery-settlements-panel"
 import { AdminDatetimeWeather } from "@/components/admin/admin-datetime-weather"
@@ -308,6 +310,7 @@ export default function AdminDashboard() {
           { tab: "banners", label: t("nav.banners"), icon: ImageIcon },
           { tab: "alerts", label: t("nav.alerts"), icon: AlertTriangle },
           { tab: "servidoBroadcast", label: t("nav.servidoBroadcast"), icon: Megaphone },
+          { tab: "servidoStories", label: t("nav.servidoStories"), icon: Sparkles },
         ],
       },
     ],
@@ -3936,6 +3939,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="servidoBroadcast" className="admin-tab mt-4">
               <ServidoBroadcastPanel />
+            </TabsContent>
+
+            <TabsContent value="servidoStories" className="admin-tab mt-4">
+              <ServidoStoriesPanel />
             </TabsContent>
 
             <TabsContent value="resellerPayouts" className="admin-tab mt-4">

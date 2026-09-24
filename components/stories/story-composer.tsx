@@ -397,15 +397,18 @@ export function StoryComposer({
         <Label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
           {t("imageLabel")}
         </Label>
-        <label className="flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-purple-200 bg-purple-50/40 transition-colors hover:bg-purple-50">
+        <label className="flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-servido-200 bg-gradient-to-b from-servido-50/80 to-white transition-colors hover:border-servido-400 hover:from-servido-50">
           {preview ? (
-            <div className="relative aspect-[9/16] w-full max-h-[420px]">
+            <div className="relative aspect-[9/16] w-full max-h-[420px] bg-black">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt={t("previewAlt")} className="h-full w-full object-cover" />
+              <img src={preview} alt={t("previewAlt")} className="h-full w-full object-contain" />
+              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
+                9:16
+              </span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-servido-800 shadow-sm">
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-servido-800 shadow-sm ring-1 ring-servido-100">
                 <ImagePlus className="h-7 w-7" />
               </span>
               <p className="text-sm font-medium text-gray-800">{t("pickPhoto")}</p>

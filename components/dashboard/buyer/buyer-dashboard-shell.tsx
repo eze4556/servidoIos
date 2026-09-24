@@ -22,6 +22,7 @@ export type BuyerDashboardTab =
   | "appointments"
   | "favorites"
   | "reseller"
+  | "openStore"
   | "profile"
 
 

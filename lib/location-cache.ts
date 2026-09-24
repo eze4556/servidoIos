@@ -9,6 +9,8 @@ export interface CachedLocation {
 const CACHE_KEY = "servido:location"
 const DENIED_KEY = "servido:location-denied"
 const TTL_MS = 24 * 60 * 60 * 1000
+/** GPS se refresca seguido: 15 min alcanza para no clavar un barrio viejo. */
+const PRECISE_TTL_MS = 15 * 60 * 1000
 
 /** Acorta direcciones largas para mostrar en navbar */
 export function formatShortLocation(location: string, maxLen = 42): string {
@@ -58,6 +60,18 @@ export function writeLocationCache(data: CachedLocation): void {
 
 export function isCacheFresh(cache: CachedLocation): boolean {
   return Date.now() - cache.updatedAt < TTL_MS
+}
+
+/** Solo GPS/manual sirven para “cerca tuyo”. La IP no es precisa. */
+export function isPreciseLocation(cache: CachedLocation | null | undefined): boolean {
+  if (!cache) return false
+  const source = cache.source
+  return source === "gps" || source === "manual"
+}
+
+export function isPreciseCacheFresh(cache: CachedLocation): boolean {
+  if (!isPreciseLocation(cache)) return false
+  return Date.now() - cache.updatedAt < PRECISE_TTL_MS
 }
 
 export function markLocationDenied(): void {

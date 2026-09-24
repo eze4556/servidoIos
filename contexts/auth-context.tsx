@@ -235,7 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (currentUser.businessType === "restaurant") return "/dashboard/restaurant"
         return "/dashboard/seller?tab=addProduct"
       default:
-        return "/dashboard/buyer?tab=reseller"
+        return "/dashboard/buyer?tab=openStore"
     }
   }, [currentUser])
 

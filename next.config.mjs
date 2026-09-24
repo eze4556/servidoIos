@@ -17,6 +17,7 @@ const baseConfig = {
     "@firebase/firestore",
     "@firebase/storage",
   ],
+  transpilePackages: ["@imgly/background-removal", "onnxruntime-web"],
   eslint: {
     ignoreDuringBuilds: true,
   },

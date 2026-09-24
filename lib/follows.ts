@@ -97,6 +97,8 @@ export function sortStoryGroupsByFollowing(
 ): StoryAuthorGroup[] {
   if (followedIds.size === 0) return groups
   return [...groups].sort((a, b) => {
+    if (a.authorType === "platform" && b.authorType !== "platform") return -1
+    if (b.authorType === "platform" && a.authorType !== "platform") return 1
     const aF = followedIds.has(a.authorId) ? 1 : 0
     const bF = followedIds.has(b.authorId) ? 1 : 0
     if (aF !== bF) return bF - aF

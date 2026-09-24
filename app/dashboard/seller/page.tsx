@@ -71,7 +71,8 @@ import { translateClientError } from "@/lib/i18n/translate-client-error"
 import { getDateFnsLocale } from "@/lib/i18n/date-locale"
 import { useAuth } from "@/contexts/auth-context"
 // import { ChatList } from "@/components/chat-list"
-import { hasWhiteBackground, isValidVideoFile, getVideoDuration } from "@/lib/image-validation"
+import { isValidVideoFile, getVideoDuration } from "@/lib/image-validation"
+import { applyWhiteBackground } from "@/lib/apply-white-background"
 // import { ConnectMercadoPagoButton } from "@/components/ui/connect-mercadopago-button" // ELIMINADO
 import { useToast } from "@/components/ui/use-toast"
 import { ApiService } from "@/lib/services/api"
@@ -1458,7 +1459,14 @@ export default function SellerDashboardPage() {
       const file = files[i]
 
       if (file.type.startsWith("image/")) {
-        // Image validation removed - no longer requiring white background
+        try {
+          const processed = await applyWhiteBackground(file)
+          validFiles.push(processed)
+        } catch (err) {
+          console.error("applyWhiteBackground failed:", file.name, err)
+          errors.push(`${file.name}: No se pudo poner fondo blanco. Probá con otra foto.`)
+        }
+        continue
       } else if (file.type.startsWith("video/")) {
         // Validate video file
         if (!isValidVideoFile(file)) {
@@ -2694,6 +2702,7 @@ export default function SellerDashboardPage() {
                               <li><strong>{t("media.reqImages")}</strong></li>
                               <li><strong>{t("media.reqVideos")}</strong></li>
                             <li>{t("media.reqFormats")}</li>
+                            <li>{t("media.autoWhiteBgHint")}</li>
                           </ul>
                         </AlertDescription>
                       </Alert>
@@ -3001,6 +3010,7 @@ export default function SellerDashboardPage() {
                               <li><strong>{t("media.reqImages")}</strong></li>
                               <li><strong>{t("media.reqVideos")}</strong></li>
                               <li>{t("media.reqFormats")}</li>
+                              <li>{t("media.autoWhiteBgHint")}</li>
                             </ul>
                           </AlertDescription>
                         </Alert>

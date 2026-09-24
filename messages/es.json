@@ -158,6 +158,7 @@
     "groupTienda": "Tienda",
     "groupOperaciones": "Operaciones",
     "groupGuardado": "Guardado",
+    "groupVender": "Vender",
     "groupCuenta": "Cuenta",
     "openPanelMenu": "Abrir menú del panel",
     "panelMenuTitle": "Menú del panel",
@@ -776,7 +777,8 @@
     "authorType": {
       "restaurant": "Restaurante",
       "store": "Tienda",
-      "reseller": "Revendedor"
+      "reseller": "Revendedor",
+      "platform": "Servido"
     },
     "deleteStory": "Borrar historia",
     "close": "Cerrar",
@@ -1621,6 +1623,7 @@
       "appointments": { "label": "Mis turnos", "description": "Reservas de servicios" },
       "favorites": { "label": "Favoritos", "description": "Guardados para después" },
       "reseller": { "label": "Revendedor", "description": "Recomendaciones y cobros" },
+      "openStore": { "label": "Abrir tienda", "description": "Empezá a vender productos" },
       "profile": { "label": "Mi perfil", "description": "Cuenta y datos" }
     },
     "pages": {
@@ -1632,7 +1635,27 @@
       "appointments": { "title": "Mis turnos", "subtitle": "Reservas de servicios que pediste" },
       "favorites": { "title": "Favoritos", "subtitle": "Productos que guardaste para más tarde" },
       "reseller": { "title": "Revendedor", "subtitle": "Tus recomendaciones, ventas y cobros" },
+      "openStore": { "title": "Abrir mi tienda", "subtitle": "Convertí tu cuenta en vendedor y publicá productos" },
       "profile": { "title": "Mi perfil", "subtitle": "Gestioná tu cuenta y preferencias" }
+    },
+    "openStore": {
+      "storeCardTitle": "Abrir mi tienda",
+      "storeCardHint": "Publicá productos o servicios propios y cobrá con Mercado Pago.",
+      "resellerCardTitle": "Ganar recomendando",
+      "resellerCardHint": "Compartí productos de otros y ganá comisión. Sin abrir tienda.",
+      "formTitle": "Datos de tu negocio",
+      "formSubtitle": "Con esto pasás a ser vendedor en la misma cuenta. Después vas a conectar Mercado Pago en el panel.",
+      "storeNameLabel": "Nombre del negocio",
+      "storeNamePlaceholder": "Ej: Tienda de Juan",
+      "locationLabel": "Ubicación del local",
+      "locationHelper": "Se usa para historias cercanas y envíos.",
+      "termsPrefix": "Acepto los",
+      "termsLink": "términos y condiciones",
+      "termsSuffix": " para vender en Servido.",
+      "submitButton": "Abrir mi tienda",
+      "submitting": "Abriendo tienda…",
+      "submitFailed": "No se pudo abrir la tienda. Probá de nuevo.",
+      "notLoggedIn": "Tenés que iniciar sesión."
     },
     "statsTotalPurchases": "Compras totales",
     "statsTotalSpent": "Total gastado",
@@ -2554,19 +2577,20 @@
     "media": {
       "productLabel": "Imágenes y videos del producto",
       "serviceLabel": "Imágenes y videos del servicio",
-      "reqImages": "Imágenes: se recomienda usar imágenes de alta calidad con fondo blanco para mejores ventas",
+      "reqImages": "Imágenes: al subirles se les pone fondo blanco automáticamente",
       "reqVideos": "Videos: máximo 60 segundos y 50 MB de tamaño",
       "reqFormats": "Formatos soportados: JPG, PNG, WebP para imágenes | MP4, WebM para videos",
       "newFiles": "Nuevos archivos seleccionados:",
       "currentMedia": "Media actual:",
-      "validating": "Validando archivos...",
+      "validating": "Quitando fondo y aplicando blanco…",
       "uploading": "Subiendo archivos...",
       "video": "Video",
       "imageBadge": "imagen",
       "videoBadge": "video",
       "dropHere": "¡Soltá los archivos acá!",
       "dragHere": "Arrastrá imágenes y videos acá",
-      "orClick": "o hacé clic para seleccionar archivos"
+      "orClick": "o hacé clic para seleccionar archivos",
+      "autoWhiteBgHint": "Las fotos se publican con fondo blanco automático. La primera vez puede tardar unos segundos."
     },
     "productForm": {
       "addTitle": "Añadir nuevo producto",

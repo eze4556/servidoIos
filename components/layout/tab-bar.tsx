@@ -22,7 +22,7 @@ function getSellHref(user: { role?: string; businessType?: string } | null): str
       if (user.businessType === "restaurant") return "/dashboard/restaurant"
       return "/dashboard/seller?tab=addProduct"
     default:
-      return "/dashboard/buyer?tab=reseller"
+      return "/dashboard/buyer?tab=openStore"
   }
 }
 
@@ -47,7 +47,8 @@ export function TabBar() {
   const isFavorites = pathname.startsWith("/favorites")
   const isSell =
     pathname === sellHref ||
-    (pathname.startsWith("/dashboard/buyer") && tabParam === "reseller") ||
+    (pathname.startsWith("/dashboard/buyer") &&
+      (tabParam === "reseller" || tabParam === "openStore")) ||
     (pathname.startsWith("/dashboard/seller") &&
       (tabParam === "addProduct" || tabParam === "addService")) ||
     pathname.startsWith("/historias/nueva")

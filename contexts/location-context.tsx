@@ -8,15 +8,18 @@ import { useAuth } from "@/contexts/auth-context"
 import {
   clearLocationDenied,
   formatShortLocation,
-  isCacheFresh,
+  isPreciseCacheFresh,
+  isPreciseLocation,
   markLocationDenied,
   migrateLegacyLocationCache,
   readLocationCache,
+  wasLocationDenied,
   writeLocationCache,
   type CachedLocation,
 } from "@/lib/location-cache"
 import { hasValidCoordinates } from "@/lib/geo"
 import { apiUrl } from "@/lib/api-base"
+import { getLocationPermissionState, getPreciseCoords, requestLocationPermission } from "@/lib/device-geolocation"
 
 interface SetManualLocationInput {
   location: string
@@ -36,32 +39,15 @@ interface LocationContextType {
   closeLocationPicker: () => void
   refreshLocation: () => Promise<void>
   setManualLocation: (input: SetManualLocationInput) => Promise<void>
+  hasPreciseLocation: boolean
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined)
-
-const FAST_GEO_OPTIONS: PositionOptions = {
-  enableHighAccuracy: false,
-  timeout: 8000,
-  maximumAge: 30 * 60 * 1000,
-}
-
-const PRECISE_GEO_OPTIONS: PositionOptions = {
-  enableHighAccuracy: true,
-  timeout: 15000,
-  maximumAge: 0,
-}
 
 async function reverseGeocode(latitude: number, longitude: number): Promise<string | null> {
   const response = await fetch(apiUrl(`/api/geocoding?lat=${latitude}&lon=${longitude}`))
   const data = await response.json()
   return data.success ? data.location : null
-}
-
-function getCurrentPosition(options: PositionOptions): Promise<GeolocationPosition> {
-  return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, options)
-  })
 }
 
 export function LocationProvider({ children }: { children: React.ReactNode }) {
@@ -82,7 +68,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const applyCachedLocation = useCallback((cache: CachedLocation) => {
     setUserLocation(cache.location)
     setLocationSource(cache.source ?? null)
-    if (hasValidCoordinates(cache.latitude, cache.longitude)) {
+    if (isPreciseLocation(cache) && hasValidCoordinates(cache.latitude, cache.longitude)) {
       setCoordinates({ latitude: cache.latitude, longitude: cache.longitude })
     } else {
       setCoordinates(null)
@@ -120,7 +106,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       writeLocationCache({ location, latitude, longitude, updatedAt: Date.now(), source })
       setUserLocation(location)
       setLocationSource(source)
-      if (hasValidCoordinates(latitude, longitude)) {
+      if (source !== "ip" && hasValidCoordinates(latitude, longitude)) {
         setCoordinates({ latitude, longitude })
       } else {
         setCoordinates(null)
@@ -132,28 +118,34 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   )
 
   const resolveFromGps = useCallback(
-    async (precise = false, showLoading = true) => {
-      if (!navigator.geolocation) {
-        setUserLocation("Geolocalización no soportada")
-        setLoadingLocation(false)
-        return
-      }
-
+    async (showLoading = true) => {
       if (isFetchingRef.current) return
       isFetchingRef.current = true
       if (showLoading) setLoadingLocation(true)
 
       try {
-        const position = await getCurrentPosition(precise ? PRECISE_GEO_OPTIONS : FAST_GEO_OPTIONS)
-        const { latitude, longitude } = position.coords
-        const location = await reverseGeocode(latitude, longitude)
-
-        if (location) {
-          await persistLocation(location, latitude, longitude, "gps")
-        } else {
-          setUserLocation("Ubicación no disponible")
+        const permission = await getLocationPermissionState()
+        if (permission === "denied") {
+          markLocationDenied()
           setLoadingLocation(false)
+          return
         }
+        if (permission === "prompt") {
+          const next = await requestLocationPermission()
+          if (next === "denied") {
+            markLocationDenied()
+            setLoadingLocation(false)
+            return
+          }
+        }
+
+        const coords = await getPreciseCoords()
+        if (!hasValidCoordinates(coords.lat, coords.lng)) {
+          setLoadingLocation(false)
+          return
+        }
+        const location = await reverseGeocode(coords.lat, coords.lng)
+        await persistLocation(location || "Mi ubicación", coords.lat, coords.lng, "gps")
       } catch (error) {
         const geoError = error as GeolocationPositionError
         if (geoError?.code === 1) {
@@ -187,14 +179,12 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         const location = typeof data?.location === "string" ? data.location : null
 
         if (data?.success && location) {
-          const latitude = Number(data.coordinates?.lat)
-          const longitude = Number(data.coordinates?.lon)
-          await persistLocation(
-            location,
-            Number.isFinite(latitude) ? latitude : 0,
-            Number.isFinite(longitude) ? longitude : 0,
-            "ip"
-          )
+          const existing = readLocationCache()
+          if (isPreciseLocation(existing)) {
+            setLoadingLocation(false)
+            return
+          }
+          await persistLocation(location, 0, 0, "ip")
           return
         }
 
@@ -234,7 +224,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       })
       setUserLocation(location)
       setLocationSource(source)
-      if (hasValidCoordinates(coordinates?.latitude, coordinates?.longitude)) {
+      if (source !== "ip" && hasValidCoordinates(coordinates?.latitude, coordinates?.longitude)) {
         setCoordinates({
           latitude: coordinates!.latitude!,
           longitude: coordinates!.longitude!,
@@ -252,7 +242,16 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     const cached = migrateLegacyLocationCache() ?? readLocationCache()
     if (cached) {
       applyCachedLocation(cached)
-      if (isCacheFresh(cached)) {
+      if (isPreciseCacheFresh(cached)) {
+        hasResolvedRef.current = true
+        return
+      }
+    }
+
+    if (!wasLocationDenied()) {
+      await resolveFromGps(!cached)
+      const afterGps = readLocationCache()
+      if (isPreciseLocation(afterGps)) {
         hasResolvedRef.current = true
         return
       }
@@ -260,7 +259,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
     if (currentUserRef.current) {
       const loadedFromProfile = await loadFromFirestore()
-      if (loadedFromProfile) {
+      const profileCache = readLocationCache()
+      if (loadedFromProfile && isPreciseLocation(profileCache)) {
         hasResolvedRef.current = true
         return
       }
@@ -268,11 +268,11 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
     await resolveFromIp(!cached)
     hasResolvedRef.current = true
-  }, [applyCachedLocation, loadFromFirestore, resolveFromIp])
+  }, [applyCachedLocation, loadFromFirestore, resolveFromGps, resolveFromIp])
 
   const refreshLocation = useCallback(async () => {
     clearLocationDenied()
-    await resolveFromGps(true, true)
+    await resolveFromGps(true)
   }, [resolveFromGps])
 
   const setManualLocation = useCallback(
@@ -293,7 +293,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     const cached = migrateLegacyLocationCache() ?? readLocationCache()
     if (cached) {
       applyCachedLocation(cached)
-      if (isCacheFresh(cached)) {
+      if (isPreciseCacheFresh(cached)) {
         hasResolvedRef.current = true
         return
       }
@@ -323,7 +323,14 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   }, [currentUser, loadFromFirestore])
 
   const shortLocation = useMemo(() => formatShortLocation(userLocation), [userLocation])
-  const hasValidLocation = hasValidCoordinates(coordinates?.latitude, coordinates?.longitude)
+  const hasPreciseLocation = isPreciseLocation({
+    location: userLocation,
+    latitude: coordinates?.latitude ?? 0,
+    longitude: coordinates?.longitude ?? 0,
+    updatedAt: Date.now(),
+    source: locationSource ?? undefined,
+  })
+  const hasValidLocation = hasPreciseLocation && hasValidCoordinates(coordinates?.latitude, coordinates?.longitude)
 
   return (
     <LocationContext.Provider
@@ -339,6 +346,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         closeLocationPicker,
         refreshLocation,
         setManualLocation,
+        hasPreciseLocation,
       }}
     >
       {children}

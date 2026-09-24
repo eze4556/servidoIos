@@ -52,7 +52,7 @@ export default function HistoriasPage() {
         if (hasValidLocation && coordinates) {
           stories = filterStoriesNearby(stories, coordinates.latitude, coordinates.longitude)
         } else {
-          stories = []
+          stories = stories.filter((s) => s.authorType === "platform")
         }
         if (!cancelled) setGroups(groupStoriesByAuthor(stories))
       } catch (error) {

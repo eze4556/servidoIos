@@ -38,6 +38,7 @@ const groupLabelKeys: Record<string, string> = {
   tienda: "groupTienda",
   operaciones: "groupOperaciones",
   guardado: "groupGuardado",
+  vender: "groupVender",
   cuenta: "groupCuenta",
 }
 

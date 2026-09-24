@@ -8,6 +8,7 @@ import {
   type BuyerDashboardTab,
 } from "@/components/dashboard/buyer/buyer-dashboard-shell"
 import { ResellerDashboardPanel } from "@/components/reseller/reseller-dashboard-panel"
+import { OpenStorePanel } from "@/components/dashboard/buyer/open-store-panel"
 import { BuyerDashboardTabs } from "@/components/dashboard/buyer/buyer-dashboard-tabs"
 import { BuyerAdvancedStats } from "@/components/dashboard/advanced-stats/buyer-advanced-stats"
 
@@ -117,6 +118,7 @@ export default function BuyerDashboardPage() {
       tab === "appointments" ||
       tab === "favorites" ||
       tab === "reseller" ||
+      tab === "openStore" ||
       tab === "stats" ||
       tab === "profile" ||
       tab === "dashboard"
@@ -638,7 +640,9 @@ export default function BuyerDashboardPage() {
 
       {activeTab === "reseller" && <ResellerDashboardPanel />}
 
-      {activeTab !== "reseller" && activeTab !== "stats" && (
+      {activeTab === "openStore" && <OpenStorePanel />}
+
+      {activeTab !== "reseller" && activeTab !== "openStore" && activeTab !== "stats" && (
       <BuyerDashboardTabs
         activeTab={activeTab}
         loadingData={loadingData}

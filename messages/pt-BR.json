@@ -158,6 +158,7 @@
     "groupTienda": "Loja",
     "groupOperaciones": "Operações",
     "groupGuardado": "Salvos",
+    "groupVender": "Vender",
     "groupCuenta": "Conta",
     "openPanelMenu": "Abrir menu do painel",
     "panelMenuTitle": "Menu do painel",
@@ -776,7 +777,8 @@
     "authorType": {
       "restaurant": "Restaurante",
       "store": "Loja",
-      "reseller": "Revendedor"
+      "reseller": "Revendedor",
+      "platform": "Servido"
     },
     "deleteStory": "Excluir história",
     "close": "Fechar",
@@ -1649,6 +1651,10 @@
         "label": "Favoritos",
         "description": "Salvos para depois"
       },
+      "openStore": {
+        "label": "Abrir loja",
+        "description": "Comece a vender produtos"
+      },
       "reseller": {
         "label": "Revendedor",
         "description": "Indicações e cobranças"
@@ -1687,6 +1693,10 @@
         "title": "Favoritos",
         "subtitle": "Produtos salvos para mais tarde"
       },
+      "openStore": {
+        "title": "Abrir minha loja",
+        "subtitle": "Transforme sua conta em vendedor e publique produtos"
+      },
       "reseller": {
         "title": "Revendedor",
         "subtitle": "Suas indicações, vendas e cobranças"
@@ -1695,6 +1705,25 @@
         "title": "Meu perfil",
         "subtitle": "Gerencie sua conta e preferências"
       }
+    },
+    "openStore": {
+      "storeCardTitle": "Abrir minha loja",
+      "storeCardHint": "Publique produtos ou serviços próprios e cobre com Mercado Pago.",
+      "resellerCardTitle": "Ganhar recomendando",
+      "resellerCardHint": "Compartilhe produtos de outros e ganhe comissão. Sem abrir loja.",
+      "formTitle": "Dados do seu negócio",
+      "formSubtitle": "Com isso você passa a ser vendedor na mesma conta. Depois conecta o Mercado Pago no painel.",
+      "storeNameLabel": "Nome do negócio",
+      "storeNamePlaceholder": "Ex: Loja do João",
+      "locationLabel": "Localização da loja",
+      "locationHelper": "Usado para histórias próximas e entregas.",
+      "termsPrefix": "Aceito os",
+      "termsLink": "termos e condições",
+      "termsSuffix": " para vender no Servido.",
+      "submitButton": "Abrir minha loja",
+      "submitting": "Abrindo loja…",
+      "submitFailed": "Não foi possível abrir a loja. Tente de novo.",
+      "notLoggedIn": "Você precisa entrar na conta."
     },
     "statsTotalPurchases": "Compras totais",
     "statsTotalSpent": "Total gasto",
@@ -2748,19 +2777,20 @@
     "media": {
       "productLabel": "Imagens e vídeos do produto",
       "serviceLabel": "Imagens e vídeos do serviço",
-      "reqImages": "Imagens: recomendamos alta qualidade com fundo branco para melhores vendas",
+      "reqImages": "Imagens: ao enviar, o fundo branco é aplicado automaticamente",
       "reqVideos": "Vídeos: máximo 60 segundos e 50 MB",
       "reqFormats": "Formatos: JPG, PNG, WebP para imagens | MP4, WebM para vídeos",
       "newFiles": "Novos arquivos selecionados:",
       "currentMedia": "Mídia atual:",
-      "validating": "Validando arquivos...",
+      "validating": "Removendo fundo e aplicando branco…",
       "uploading": "Enviando arquivos...",
       "video": "Vídeo",
       "imageBadge": "imagem",
       "videoBadge": "vídeo",
       "dropHere": "Solte os arquivos aqui!",
       "dragHere": "Arraste imagens e vídeos aqui",
-      "orClick": "ou clique para selecionar arquivos"
+      "orClick": "ou clique para selecionar arquivos",
+      "autoWhiteBgHint": "As fotos são publicadas com fundo branco automático. Na primeira vez pode demorar alguns segundos."
     },
     "productForm": {
       "addTitle": "Adicionar novo produto",

@@ -139,6 +139,8 @@ export function filterStoriesNearby(
   if (!hasValidCoordinates(viewerLat, viewerLng)) return stories
 
   return stories.filter((story) => {
+    // Historias oficiales de Servido siempre visibles
+    if (story.authorType === "platform") return true
     if (!hasValidCoordinates(story.authorLatitude, story.authorLongitude)) return false
     return (
       distanceKm(viewerLat, viewerLng, story.authorLatitude!, story.authorLongitude!) <= radiusKm
@@ -208,6 +210,8 @@ export function groupStoriesByAuthor(stories: Story[]): StoryAuthorGroup[] {
   }
 
   return Array.from(map.values()).sort((a, b) => {
+    if (a.authorType === "platform" && b.authorType !== "platform") return -1
+    if (b.authorType === "platform" && a.authorType !== "platform") return 1
     const aLatest = a.stories[a.stories.length - 1]?.createdAt.getTime() || 0
     const bLatest = b.stories[b.stories.length - 1]?.createdAt.getTime() || 0
     return bLatest - aLatest

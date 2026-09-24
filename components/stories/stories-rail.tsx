@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { useAuth } from "@/contexts/auth-context"
 import type { StoryAuthorGroup } from "@/types/story"
 import { cn } from "@/lib/utils"
+import { StoryCreateRing, StoryRing, resolveStoryAvatar } from "@/components/stories/story-ring"
 
 interface StoriesRailProps {
   groups: StoryAuthorGroup[]
@@ -36,21 +37,10 @@ function YourStoryCircle({
           <button
             type="button"
             onClick={onOpenOwn}
-            className="rounded-full bg-gradient-to-tr from-servido-gold via-orange-400 to-servido-700 p-[2.5px] transition-transform hover:scale-105 lg:from-[#feda75] lg:via-[#d62976] lg:to-[#4f5bd5]"
+            className="transition-transform hover:scale-105"
             aria-label={labels.viewYourStory}
           >
-            <span className="relative flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-full bg-white p-[2px] lg:h-[62px] lg:w-[62px]">
-              <span className="relative h-full w-full overflow-hidden rounded-full bg-purple-100">
-                {photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photo} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="flex h-full w-full items-center justify-center text-sm font-bold text-servido-800">
-                    {displayName.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </span>
-            </span>
+            <StoryRing photoURL={photo} name={displayName} size="md" className="lg:[&>span]:h-[66px] lg:[&>span]:w-[66px]" />
           </button>
           <Link
             href="/historias/nueva"
@@ -60,7 +50,7 @@ function YourStoryCircle({
             <Plus className="h-3 w-3" />
           </Link>
         </div>
-        <span className="w-full truncate text-center text-[10px] font-semibold text-gray-700">
+        <span className="w-full truncate text-center text-[10px] font-semibold text-gray-800">
           {labels.yourStory}
         </span>
       </div>
@@ -70,14 +60,8 @@ function YourStoryCircle({
   return (
     <div className="flex w-16 shrink-0 flex-col items-center gap-1.5 lg:w-[4.75rem]">
       <Link href="/historias/nueva" className="flex w-full flex-col items-center gap-1.5">
-        <span className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-servido-700 to-servido-950 text-white shadow-md ring-2 ring-gray-100 lg:h-[66px] lg:w-[66px]">
-          {photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover opacity-40" />
-          ) : null}
-          <Plus className="relative z-10 h-6 w-6" />
-        </span>
-        <span className="w-full truncate text-center text-[10px] font-semibold text-gray-700">
+        <StoryCreateRing photoURL={photo || null} />
+        <span className="w-full truncate text-center text-[10px] font-semibold text-gray-800">
           {labels.yourStory}
         </span>
       </Link>
@@ -118,8 +102,8 @@ export function StoriesRail({
       <div className={cn("flex gap-3 overflow-hidden px-1", className)}>
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex w-16 shrink-0 flex-col items-center gap-1.5 lg:w-[4.75rem]">
-            <div className="h-14 w-14 animate-pulse rounded-full bg-purple-100 lg:h-[66px] lg:w-[66px] lg:bg-gray-200" />
-            <div className="h-2 w-12 animate-pulse rounded bg-purple-50" />
+            <div className="h-14 w-14 animate-pulse rounded-full bg-servido-100 lg:h-[66px] lg:w-[66px]" />
+            <div className="h-2 w-12 animate-pulse rounded bg-servido-50" />
           </div>
         ))}
       </div>
@@ -152,36 +136,31 @@ export function StoriesRail({
         />
       )}
 
-      {otherGroups.map((group, index) => (
-        <button
-          key={group.authorId}
-          type="button"
-          onClick={() => openOther(index)}
-          className="group flex w-16 shrink-0 flex-col items-center gap-1.5 lg:w-[4.75rem]"
-        >
-          <span className="rounded-full bg-gradient-to-tr from-servido-gold via-orange-400 to-servido-700 p-[2.5px] transition-transform group-hover:scale-105 lg:from-[#feda75] lg:via-[#d62976] lg:to-[#4f5bd5]">
-            <span className="relative flex h-[50px] w-[50px] items-center justify-center overflow-hidden rounded-full bg-white p-[2px] lg:h-[62px] lg:w-[62px]">
-              <span className="relative h-full w-full overflow-hidden rounded-full bg-purple-100">
-                {group.authorPhotoURL ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={group.authorPhotoURL}
-                    alt={group.authorName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="flex h-full w-full items-center justify-center text-sm font-bold text-servido-800">
-                    {group.authorName.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </span>
+      {otherGroups.map((group, index) => {
+        const isPlatform = group.authorType === "platform"
+        const avatar = resolveStoryAvatar(group.authorId, group.authorPhotoURL, group.authorType)
+        return (
+          <button
+            key={group.authorId}
+            type="button"
+            onClick={() => openOther(index)}
+            className="group flex w-16 shrink-0 flex-col items-center gap-1.5 lg:w-[4.75rem]"
+          >
+            <span className="transition-transform group-hover:scale-105">
+              <StoryRing
+                photoURL={avatar}
+                name={group.authorName}
+                size="md"
+                isPlatform={isPlatform}
+                className="lg:[&>span]:h-[66px] lg:[&>span]:w-[66px]"
+              />
             </span>
-          </span>
-          <span className="w-full truncate text-center text-[10px] font-medium text-gray-700">
-            {group.authorName}
-          </span>
-        </button>
-      ))}
+            <span className="w-full truncate text-center text-[10px] font-medium text-gray-700">
+              {isPlatform ? "Servido" : group.authorName}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }

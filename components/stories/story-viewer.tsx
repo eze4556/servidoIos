@@ -64,7 +64,7 @@ export function StoryViewer({
   const isAuthor = Boolean(
     currentUser && story && currentUser.firebaseUser.uid === story.authorId
   )
-  const canReply = Boolean(open && story && !isAuthor)
+  const canReply = Boolean(open && story && !isAuthor && group?.authorType !== "platform")
   const replyActive = replyFocused || replySending || Boolean(replySentChatId)
 
   useEffect(() => {
@@ -464,10 +464,12 @@ export function StoryViewer({
                 ? t("authorType.restaurant")
                 : group.authorType === "reseller"
                   ? t("authorType.reseller")
-                  : t("authorType.store")}
+                  : group.authorType === "platform"
+                    ? t("authorType.platform")
+                    : t("authorType.store")}
             </p>
           </div>
-          {!isAuthor && (
+          {!isAuthor && group.authorType !== "platform" && (
             <FollowButton
               variant="story"
               targetUserId={group.authorId}

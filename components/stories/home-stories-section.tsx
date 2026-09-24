@@ -64,7 +64,7 @@ export function HomeStoriesSection({ className }: HomeStoriesSectionProps) {
         if (hasValidLocation && coordinates) {
           stories = filterStoriesNearby(stories, coordinates.latitude, coordinates.longitude)
         } else {
-          stories = []
+          stories = stories.filter((s) => s.authorType === "platform")
         }
         if (!cancelled) setGroups(groupStoriesByAuthor(stories))
       } catch (error) {
@@ -79,24 +79,27 @@ export function HomeStoriesSection({ className }: HomeStoriesSectionProps) {
     }
   }, [loadingLocation, hasValidLocation, coordinates?.latitude, coordinates?.longitude])
 
-  // Sin zona: igual mostramos “Tu historia” si puede publicar
+  // Sin zona: historias oficiales + “Tu historia” si puede publicar
   if (!loadingLocation && !hasValidLocation) {
     return (
       <div className={className}>
-        {canPost && (
+        {(canPost || displayGroups.length > 0) && (
           <div className="mb-2">
             <StoriesRail
-              groups={[]}
-              loading={false}
-              alwaysShowCreate
-              onOpenAuthor={() => undefined}
+              groups={displayGroups}
+              loading={loading}
+              alwaysShowCreate={canPost}
+              onOpenAuthor={(index) => {
+                setAuthorIndex(index)
+                setViewerOpen(true)
+              }}
             />
           </div>
         )}
         <button
           type="button"
           onClick={openLocationPicker}
-          className="flex w-full min-w-0 items-center gap-3 rounded-2xl bg-purple-50/80 px-3 py-3 text-left ring-1 ring-purple-100"
+          className="flex w-full min-w-0 items-center gap-3 rounded-2xl bg-servido-50/80 px-3 py-3 text-left ring-1 ring-servido-100"
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-servido-800 shadow-sm">
             <MapPin className="h-5 w-5" />
@@ -110,6 +113,13 @@ export function HomeStoriesSection({ className }: HomeStoriesSectionProps) {
             </span>
           </span>
         </button>
+        <StoryViewer
+          groups={displayGroups}
+          initialAuthorIndex={authorIndex}
+          open={viewerOpen}
+          onClose={() => setViewerOpen(false)}
+          onStoryDeleted={(storyId) => setGroups((prev) => removeStoryFromGroups(prev, storyId))}
+        />
       </div>
     )
   }
