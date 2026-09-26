@@ -68,11 +68,13 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             )}
             <main
               className={`min-w-0 max-w-full flex-1 overflow-x-hidden ${
-                isMessagingRoute
-                  ? "pb-[7rem] lg:pb-0"
-                  : isVerticalCatalogRoute
-                    ? "bg-servido-950 pb-[7rem] lg:pb-0"
-                    : `pb-[7rem] ${isHomeRoute ? "lg:pb-16" : ""}`
+                isChatThread
+                  ? "pb-0"
+                  : isMessagingList
+                    ? "pb-[7rem] lg:pb-0"
+                    : isVerticalCatalogRoute
+                      ? "bg-servido-950 pb-[7rem] lg:pb-0"
+                      : `pb-[7rem] ${isHomeRoute ? "lg:pb-16" : ""}`
               }`}
             >
               {children}

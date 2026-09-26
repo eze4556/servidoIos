@@ -442,7 +442,7 @@ export function ChatThread() {
 
   if (authLoading || (loading && !chat)) {
     return (
-      <div className="flex h-[calc(100dvh-6.5rem)] items-center justify-center bg-[#f5f3fa] lg:h-[100dvh]">
+      <div className="flex h-[100dvh] items-center justify-center bg-[#f5f3fa]">
         <Loader2 className="h-8 w-8 animate-spin text-servido-800" />
       </div>
     )
@@ -450,7 +450,7 @@ export function ChatThread() {
 
   if ((error && !chat) || !currentUser) {
     return (
-      <div className="flex h-[calc(100dvh-6.5rem)] flex-col items-center justify-center bg-[#f5f3fa] p-4 lg:h-[100dvh]">
+      <div className="flex h-[100dvh] flex-col items-center justify-center bg-[#f5f3fa] p-4">
         <Alert variant="destructive" className="max-w-md">
           <Info className="h-4 w-4" />
           <AlertTitle>{t("alertTitle")}</AlertTitle>
@@ -482,7 +482,7 @@ export function ChatThread() {
   const otherLastReadMs = getOtherLastReadMs(chat.lastReadAt, otherId)
 
   return (
-    <div className="fixed inset-x-0 top-0 bottom-[6.5rem] z-40 flex flex-col bg-[#f5f3fa] lg:inset-0">
+    <div className="fixed inset-x-0 top-0 bottom-0 z-40 flex flex-col bg-[#f5f3fa] lg:inset-0">
       <header className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-servido-950 px-2 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] text-white">
         <button
           type="button"

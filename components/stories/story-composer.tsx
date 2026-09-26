@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { urlToImageFile } from "@/lib/url-to-image-file"
 import { fetchProductImageFile } from "@/lib/reseller/fetch-product-image-file"
+import { getRestaurantLogoUrl } from "@/types/restaurant"
 
 interface SellerProductOption {
   id: string
@@ -77,13 +78,16 @@ export function StoryComposer({
   const [loadingLocation, setLoadingLocation] = useState(true)
   const [resellerProductName, setResellerProductName] = useState<string | null>(null)
   const [loadingResellerProduct, setLoadingResellerProduct] = useState(false)
+  const [restaurantLogoUrl, setRestaurantLogoUrl] = useState<string | null>(null)
 
   const isResellerRecommendMode = Boolean(initialProductId && initialRefCode)
 
   const isRestaurant = currentUser?.businessType === "restaurant"
   const restaurantId = currentUser?.restaurantId || currentUser?.firebaseUser.uid
   const restaurantLink = isRestaurant && restaurantId ? restaurantStoryLink(restaurantId) : null
-  const hasProfilePhoto = Boolean(currentUser?.photoURL || currentUser?.firebaseUser.photoURL)
+  const profilePhotoURL =
+    currentUser?.photoURL || currentUser?.firebaseUser.photoURL || restaurantLogoUrl || null
+  const hasProfilePhoto = Boolean(profilePhotoURL)
   const remainingToday = Math.max(0, STORY_DAILY_LIMIT - todayCount)
   const atLimit = remainingToday <= 0
   const hasBusinessLocation = hasValidCoordinates(
@@ -117,6 +121,20 @@ export function StoryComposer({
         if (!cancelled) {
           setTodayCount(count)
           setBusinessLocation(loc)
+        }
+
+        if (isRestaurant && restaurantId) {
+          try {
+            const restaurantSnap = await getDoc(doc(db, "restaurants", restaurantId))
+            if (!cancelled && restaurantSnap.exists()) {
+              const data = restaurantSnap.data() as { logoUrl?: string; imageUrl?: string }
+              setRestaurantLogoUrl(getRestaurantLogoUrl(data))
+            }
+          } catch (logoErr) {
+            console.warn("Could not load restaurant logo for story:", logoErr)
+          }
+        } else if (!cancelled) {
+          setRestaurantLogoUrl(null)
         }
 
         try {
@@ -175,7 +193,7 @@ export function StoryComposer({
     return () => {
       cancelled = true
     }
-  }, [currentUser, t, isResellerRecommendMode])
+  }, [currentUser, t, isResellerRecommendMode, isRestaurant, restaurantId])
 
   useEffect(() => {
     if (!isResellerRecommendMode || !initialProductId) return
@@ -309,7 +327,7 @@ export function StoryComposer({
           currentUser.firebaseUser.displayName ||
           currentUser.firebaseUser.email?.split("@")[0] ||
           t("defaultSeller"),
-        authorPhotoURL: currentUser.photoURL || currentUser.firebaseUser.photoURL,
+        authorPhotoURL: profilePhotoURL,
         authorType: isResellerRecommendMode ? "reseller" : isRestaurant ? "restaurant" : "store",
         file,
         caption,

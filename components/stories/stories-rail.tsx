@@ -40,7 +40,7 @@ function YourStoryCircle({
             className="transition-transform hover:scale-105"
             aria-label={labels.viewYourStory}
           >
-            <StoryRing photoURL={photo} name={displayName} size="md" className="lg:[&>span]:h-[66px] lg:[&>span]:w-[66px]" />
+            <StoryRing photoURL={photo} name={displayName} size="md" className="lg:h-[66px] lg:w-[66px]" />
           </button>
           <Link
             href="/historias/nueva"
@@ -152,7 +152,7 @@ export function StoriesRail({
                 name={group.authorName}
                 size="md"
                 isPlatform={isPlatform}
-                className="lg:[&>span]:h-[66px] lg:[&>span]:w-[66px]"
+                className="lg:h-[66px] lg:w-[66px]"
               />
             </span>
             <span className="w-full truncate text-center text-[10px] font-medium text-gray-700">

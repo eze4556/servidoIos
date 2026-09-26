@@ -42,6 +42,11 @@ export function TabBar() {
     return null
   }
 
+  // En el hilo de chat la barra tapa el input cuando abre el teclado (iOS/Android).
+  if (pathname.startsWith("/chat")) {
+    return null
+  }
+
   const tabParam = searchParams.get("tab")
   const isHome = pathname === "/"
   const isFavorites = pathname.startsWith("/favorites")
