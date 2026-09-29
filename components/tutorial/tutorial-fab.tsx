@@ -18,7 +18,9 @@ export function TutorialFab() {
     pathname?.startsWith("/login") ||
     pathname?.startsWith("/signup") ||
     pathname?.startsWith("/admin") ||
-    pathname?.startsWith("/chat")
+    pathname?.startsWith("/chat") ||
+    pathname?.startsWith("/lives/") ||
+    pathname?.startsWith("/dashboard/seller/live")
   ) {
     return null
   }

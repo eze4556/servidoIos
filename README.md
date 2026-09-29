@@ -44,6 +44,12 @@ La ruta de archivos es `vehicles/{tuUserId}/{listingId}/...`.
 NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=tu_emailjs_key
 NEXT_PUBLIC_EMAILJS_SERVICE_ID=tu_service_id
 NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=tu_template_id
+
+# LiveKit (Lives MVP — tiendas de productos/servicios)
+# Creá un proyecto en https://cloud.livekit.io y copiá URL + API Key/Secret
+NEXT_PUBLIC_LIVEKIT_URL=wss://tu-proyecto.livekit.cloud
+LIVEKIT_API_KEY=tu_api_key
+LIVEKIT_API_SECRET=tu_api_secret
 ```
 
 ### Características

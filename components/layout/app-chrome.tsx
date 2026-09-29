@@ -28,14 +28,19 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const isVerticalCatalogRoute = isAutosRoute || isPropiedadesRoute
   const isMessagingList = pathname?.startsWith("/mensajes")
   const isChatThread = pathname?.startsWith("/chat")
+  const isLiveImmersive =
+    pathname?.startsWith("/lives/") || pathname?.startsWith("/dashboard/seller/live")
   const isMessagingRoute = isMessagingList || isChatThread
+  // /lives?id=… (APK) también es fullscreen; el overlay z-[80] tapa la tab bar.
+  const isFullscreenChrome = isChatThread || isLiveImmersive
 
   const showMobileHeader =
     !isHomeRoute &&
     !isAdminRoute &&
     !isAuthRoute &&
     !isDashboardRoute &&
-    !isMessagingRoute
+    !isMessagingRoute &&
+    !isLiveImmersive
 
   if (isAdminRoute) {
     return <>{children}</>
@@ -47,9 +52,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Las rutas sin header mobile quedarían debajo de la barra de estado en la
-  // app nativa (edge-to-edge). Las de mensajería resuelven su propio inset.
-  const needsTopInset = !showMobileHeader && !isMessagingRoute
+  // Mensajería y lives manejan su propio safe-area a pantalla completa.
+  const needsTopInset = !showMobileHeader && !isMessagingRoute && !isLiveImmersive
 
   return (
     <ChatUnreadProvider>
@@ -61,14 +65,14 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             }`}
           >
             {showMobileHeader && <MobileAppHeader />}
-            {!isChatThread && (
+            {!isFullscreenChrome && (
               <div className="hidden lg:block">
                 <Header />
               </div>
             )}
             <main
               className={`min-w-0 max-w-full flex-1 overflow-x-hidden ${
-                isChatThread
+                isFullscreenChrome
                   ? "pb-0"
                   : isMessagingList
                     ? "pb-[7rem] lg:pb-0"
@@ -79,7 +83,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             >
               {children}
             </main>
-            {!isHomeRoute && !isMessagingRoute && (
+            {!isHomeRoute && !isMessagingRoute && !isLiveImmersive && (
               <div className={isVerticalCatalogRoute ? "hidden lg:block" : undefined}>
                 <Footer />
               </div>
@@ -89,14 +93,16 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
                 <Footer />
               </div>
             )}
-            <DesktopChatFab />
+            {!isFullscreenChrome && <DesktopChatFab />}
             <LocationPickerSheet />
-            <TutorialFab />
+            {!isFullscreenChrome && <TutorialFab />}
             <AppTutorialDialog />
           </div>
-          <Suspense fallback={null}>
-            <TabBar />
-          </Suspense>
+          {!isFullscreenChrome && (
+            <Suspense fallback={null}>
+              <TabBar />
+            </Suspense>
+          )}
         </>
       </TutorialProvider>
     </ChatUnreadProvider>

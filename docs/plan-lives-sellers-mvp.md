@@ -1,25 +1,42 @@
-# Lives nativos para tiendas (MVP) — pendiente de implementar
+# Lives nativos para tiendas (MVP) — en implementación
 
-Estado: **aprobado para implementar más adelante**. No ejecutar hasta indicación explícita.
+Estado: **en curso**. Primera versión para sellers de productos/servicios.
 
 ## Decisiones cerradas
 
 - Nivel: Fase B nativa (stream dentro de Servido).
-- Quién transmite: solo `role === "seller"` y `businessType !== "restaurant"` (productos + servicios).
-- Proveedor: LiveKit Cloud (plan Build gratis al inicio).
+- Quién transmite: solo `role === "seller"` y `businessType !== "restaurant"`.
+- Proveedor: LiveKit Cloud.
 - Fuera del MVP: restaurantes, creators, replay, cupones live-only, agenda avanzada.
 
-## Resumen para el cliente
+## Env requerido
 
-El vendedor transmite desde Servido; el comprador mira, chatea y compra sin salir. Primera versión solo tiendas de productos y servicios, con productos pinneados, chat, rail En vivo y aviso a seguidores.
+```env
+NEXT_PUBLIC_LIVEKIT_URL=wss://….livekit.cloud
+LIVEKIT_API_KEY=…
+LIVEKIT_API_SECRET=…
+```
 
-## Flujo técnico (MVP)
+## Qué ya está en el código
 
-1. Cuenta LiveKit + env (`NEXT_PUBLIC_LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`).
-2. APIs: token, start, end, pin.
-3. Firestore `lives` + mensajes de sala.
-4. UI LiveStudio (seller) + viewer (buyer).
-5. Rail home `/lives` + push a seguidores.
-6. Permisos cámara/mic Android.
+1. Tipos `types/live.ts`
+2. APIs: `/api/lives/start`, `/api/lives/[id]/end|pin|token|chat`
+3. Cliente `lib/lives.ts` + LiveKit server helper
+4. UI: LiveStudio (`/dashboard/seller/live`), viewer (`/lives` y `/lives/[id]`), rail en home
+5. Push a seguidores al iniciar (hasta 80)
+6. Reglas Firestore + índices compuestos
+7. Permisos Android cámara/mic
 
-Plan Cursor detallado: `lives_sellers_mvp` (archivo de plan en `.cursor/plans`).
+## Pendiente operativo
+
+- Crear proyecto LiveKit Cloud y cargar env en `.env.local` + Vercel
+- Deploy reglas/índices Firestore (`firebase deploy --only firestore`)
+- Probar host + viewer en web y Capacitor
+- Nuevo AAB cuando Lives esté listo para Play Store
+
+## Flujo
+
+1. Seller abre `/dashboard/seller/live` → start → token LiveKit → publica cam/mic
+2. Seguidores reciben notificación → `/lives/{id}`
+3. Viewer mira, chatea y toca **Comprar** si hay producto pinneado
+4. Seller termina → room LiveKit borrada + `status: ended`

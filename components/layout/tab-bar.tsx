@@ -42,8 +42,13 @@ export function TabBar() {
     return null
   }
 
-  // En el hilo de chat la barra tapa el input cuando abre el teclado (iOS/Android).
-  if (pathname.startsWith("/chat")) {
+  // Pantallas a pantalla completa: chat, living room y estudio en vivo.
+  if (
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/lives/") ||
+    (pathname.startsWith("/lives") && searchParams.get("id")) ||
+    pathname.startsWith("/dashboard/seller/live")
+  ) {
     return null
   }
 

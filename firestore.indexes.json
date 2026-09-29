@@ -586,6 +586,22 @@
         { "fieldPath": "buyerId", "order": "ASCENDING" },
         { "fieldPath": "purchaseKey", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "lives",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "startedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lives",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "sellerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -16,6 +16,7 @@ import { HomeMobileHero } from "@/components/home/home-mobile-hero"
 import { HomeCategoryPills } from "@/components/home/home-category-pills"
 import { HomeBannerCarousel } from "@/components/home/home-banner-carousel"
 import { HomeStoriesSection } from "@/components/stories/home-stories-section"
+import { LivesRail } from "@/components/lives/lives-rail"
 import { HomeProductGrid } from "@/components/home/home-product-grid"
 import { HomeVerticalSpotlights } from "@/components/home/home-vertical-spotlights"
 import { useTranslations } from "next-intl"
@@ -257,6 +258,9 @@ export default function HomePage() {
             </div>
             <div className="rounded-[1.75rem] bg-white/70 p-4 shadow-[0_18px_40px_-28px_rgba(46,16,101,0.35)] ring-1 ring-servido-950/5 backdrop-blur-sm">
               <HomeStoriesSection />
+            </div>
+            <div className="mt-4 rounded-[1.75rem] bg-white/70 p-4 shadow-[0_18px_40px_-28px_rgba(46,16,101,0.35)] ring-1 ring-servido-950/5 backdrop-blur-sm">
+              <LivesRail />
             </div>
           </div>
 

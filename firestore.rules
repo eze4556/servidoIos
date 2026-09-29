@@ -188,6 +188,22 @@ service cloud.firestore {
         || (signedIn() && resource.data.authorId == uid());
     }
 
+    // ─── Lives (MVP) ───────────────────────────────────────────
+    // Create/update vía Admin SDK (/api/lives/*). Cliente: lectura pública
+    // de lives activos + chat en sala (mensajes solo create propio).
+    match /lives/{liveId} {
+      allow read: if resource.data.status == 'live'
+        || (signedIn() && resource.data.sellerId == uid())
+        || isAdmin();
+      allow create, update, delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if signedIn();
+        // Escritura solo vía /api/lives/[id]/chat (Admin SDK + rate limit).
+        allow create, update, delete: if false;
+      }
+    }
+
     // ─── Autos / propiedades ───────────────────────────────────
     match /vehicleListings/{listingId} {
       allow read: if resource.data.status == 'active'

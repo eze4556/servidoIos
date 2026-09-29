@@ -27,6 +27,7 @@ const detailRoutes: DetailRoute[] = [
   { base: "/seller", appBase: "/seller", key: "id" },
   { base: "/category", appBase: "/category", key: "id" },
   { base: "/chat", appBase: "/chat", key: "chatId" },
+  { base: "/lives", appBase: "/lives", key: "id" },
   { base: "/restaurantes", appBase: "/restaurantes/detalle", key: "id" },
   { base: "/propiedades", appBase: "/propiedades/detalle", key: "id" },
   { base: "/autos", appBase: "/autos/detalle", key: "id" },
@@ -82,6 +83,7 @@ export const productHref = (id: string) => detailHref("/product", id)
 export const sellerHref = (id: string) => detailHref("/seller", id)
 export const categoryHref = (id: string) => detailHref("/category", id)
 export const chatHref = (id: string) => detailHref("/chat", id)
+export const liveHref = (id: string) => detailHref("/lives", id)
 export const restaurantHref = (id: string) => detailHref("/restaurantes", id)
 export const propertyHref = (id: string) => detailHref("/propiedades", id)
 export const vehicleHref = (id: string) => detailHref("/autos", id)
