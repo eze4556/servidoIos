@@ -22,6 +22,8 @@ import type { LiveSession } from "@/types/live"
 import { LiveRoomShell, LiveHostControlsSlot } from "@/components/lives/live-room-shell"
 import { LiveChatPanel } from "@/components/lives/live-chat-panel"
 import { LivePinBar } from "@/components/lives/live-pin-bar"
+import { LiveStatusScreen } from "@/components/lives/live-status-screen"
+import { LiveCameraPreview, type LiveFacingMode } from "@/components/lives/live-preview"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LIVE_TITLE_MAX_LEN } from "@/types/live"
@@ -46,6 +48,10 @@ export function LiveStudio() {
   const [serverUrl, setServerUrl] = useState<string | null>(null)
   const [products, setProducts] = useState<ProductOption[]>([])
   const [pinning, setPinning] = useState(false)
+  const [roomKey, setRoomKey] = useState(0)
+  const [showEnded, setShowEnded] = useState(false)
+  const [facing, setFacing] = useState<LiveFacingMode>("user")
+  const [previewOn, setPreviewOn] = useState(true)
 
   const uid = currentUser?.firebaseUser.uid
   const canGoLive =
@@ -100,6 +106,7 @@ export function LiveStudio() {
       if (!next || next.status === "ended") {
         setLive(next)
         setToken(null)
+        setShowEnded(true)
         return
       }
       setLive(next)
@@ -109,10 +116,15 @@ export function LiveStudio() {
   async function handleStart() {
     setStarting(true)
     setError(null)
+    setShowEnded(false)
+    // Liberar la cámara del preview antes de que LiveKit la tome.
+    setPreviewOn(false)
+    await new Promise((r) => setTimeout(r, 200))
     try {
       const res = await startLiveApi(title || "En vivo")
       setToken(res.token)
       setServerUrl(res.serverUrl)
+      setRoomKey((k) => k + 1)
       setLive({
         id: res.liveId,
         sellerId: uid || "",
@@ -127,6 +139,7 @@ export function LiveStudio() {
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar")
+      setPreviewOn(true)
     } finally {
       setStarting(false)
     }
@@ -141,6 +154,7 @@ export function LiveStudio() {
       setToken(null)
       setServerUrl(null)
       setLive((prev) => (prev ? { ...prev, status: "ended" } : null))
+      setShowEnded(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo finalizar")
     } finally {
@@ -170,6 +184,25 @@ export function LiveStudio() {
     )
   }
 
+  if (showEnded && (!token || live?.status === "ended")) {
+    return (
+      <LiveStatusScreen
+        kind="ended"
+        title="Terminaste el vivo"
+        body="Cuando quieras, podés volver a transmitir."
+        onRetry={() => {
+          setShowEnded(false)
+          setLive(null)
+          setError(null)
+          setPreviewOn(true)
+        }}
+        retryLabel="Transmitir de nuevo"
+        secondaryHref="/dashboard/seller"
+        secondaryLabel="Volver al panel"
+      />
+    )
+  }
+
   if (live?.status === "live" && token && serverUrl) {
     return (
       <div className="fixed inset-0 z-[80] bg-black">
@@ -177,10 +210,12 @@ export function LiveStudio() {
           token={token}
           serverUrl={serverUrl}
           isHost
+          hostIdentity={uid || live.sellerId}
+          liveId={live.id}
+          roomKey={roomKey}
+          initialFacingMode={facing}
+          onRetry={() => setRoomKey((k) => k + 1)}
           sideControls={<LiveHostControlsSlot />}
-          onDisconnected={() => {
-            void handleEnd()
-          }}
         >
           {/* Header tipo Instagram */}
           <div className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-black/75 via-black/25 to-transparent px-3 pb-10 pt-[max(0.65rem,env(safe-area-inset-top))]">
@@ -253,15 +288,15 @@ export function LiveStudio() {
   const mediaSupport = getLiveMediaSupport()
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8">
-      <div className="mb-6 flex items-center gap-3">
+    <div className="mx-auto max-w-lg px-4 py-6 pb-10">
+      <div className="mb-5 flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-600 text-white">
           <Radio className="h-6 w-6" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-servido-950">Transmitir en vivo</h1>
           <p className="text-sm text-slate-600">
-            Solo tiendas de productos y servicios. Tus seguidores reciben un aviso.
+            Mirate en el espejo, elegí cámara y salí al aire cuando estés listo.
           </p>
         </div>
       </div>
@@ -270,7 +305,24 @@ export function LiveStudio() {
         <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-950">
           {mediaSupport.reason}
         </div>
-      ) : null}
+      ) : previewOn ? (
+        <div className="mb-5">
+          <LiveCameraPreview
+            facing={facing}
+            onFacingChange={setFacing}
+            mirrorFront
+            className="mx-auto w-full max-w-sm"
+          />
+          <p className="mt-2 text-center text-xs text-slate-500">
+            La frontal se ve en espejo solo para vos; el público la ve normal.
+          </p>
+        </div>
+      ) : (
+        <div className="mb-5 flex aspect-[9/16] max-h-[min(40vh,320px)] w-full items-center justify-center rounded-[1.75rem] bg-black text-sm text-white/70">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          Liberando cámara…
+        </div>
+      )}
 
       <label className="mb-2 block text-sm font-medium text-servido-950">Título del vivo</label>
       <Input
@@ -296,7 +348,7 @@ export function LiveStudio() {
         ) : (
           <Radio className="mr-2 h-4 w-4" />
         )}
-        Empezar transmisión
+        {starting ? "Conectando…" : "Salir al aire"}
       </Button>
 
       <p className="mt-4 text-xs text-slate-500">

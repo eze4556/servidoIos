@@ -90,6 +90,11 @@ function LivesList() {
                     <span className="truncate font-semibold text-servido-950">{live.title}</span>
                   </div>
                   <p className="truncate text-sm text-slate-600">{live.sellerName}</p>
+                  <p className="mt-0.5 text-xs font-medium text-red-600">
+                    {live.viewerCount === 1
+                      ? "1 mirando"
+                      : `${live.viewerCount} mirando`}
+                  </p>
                 </div>
               </Link>
             </li>

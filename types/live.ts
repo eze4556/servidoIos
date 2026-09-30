@@ -20,6 +20,8 @@ export interface LiveSession {
   title: string
   status: LiveStatus
   viewerCount: number
+  /** Pico máximo de espectadores en esta transmisión. */
+  peakViewerCount?: number
   pinnedProduct?: LivePinnedProduct | null
   startedAt: Date
   endedAt?: Date | null

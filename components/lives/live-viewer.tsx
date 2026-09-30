@@ -1,16 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowLeft, Loader2, Radio } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { getLiveSession, getLiveTokenApi, subscribeLiveSession } from "@/lib/lives"
 import type { LiveSession } from "@/types/live"
 import { LiveRoomShell } from "@/components/lives/live-room-shell"
 import { LiveChatPanel } from "@/components/lives/live-chat-panel"
 import { LivePinBar } from "@/components/lives/live-pin-bar"
-import { Button } from "@/components/ui/button"
+import { LiveStatusScreen } from "@/components/lives/live-status-screen"
 import { sellerHref } from "@/lib/routes"
 
 export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
@@ -23,6 +23,21 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
   const [serverUrl, setServerUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [ended, setEnded] = useState(false)
+  const [roomKey, setRoomKey] = useState(0)
+  const [bootKey, setBootKey] = useState(0)
+
+  const retryRoom = useCallback(() => {
+    setRoomKey((k) => k + 1)
+  }, [])
+
+  const retryBoot = useCallback(() => {
+    setError(null)
+    setEnded(false)
+    setToken(null)
+    setServerUrl(null)
+    setBootKey((k) => k + 1)
+  }, [])
 
   useEffect(() => {
     if (!liveId) {
@@ -35,6 +50,7 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
     async function boot() {
       setLoading(true)
       setError(null)
+      setEnded(false)
       try {
         const session = await getLiveSession(liveId)
         if (cancelled) return
@@ -45,7 +61,7 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
         }
         setLive(session)
         if (session.status !== "live") {
-          setError("Este vivo ya terminó")
+          setEnded(true)
           return
         }
         if (!currentUser) {
@@ -56,6 +72,7 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
         if (cancelled) return
         setToken(access.token)
         setServerUrl(access.serverUrl)
+        setRoomKey((k) => k + 1)
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "No se pudo abrir el vivo")
@@ -69,7 +86,7 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
     return () => {
       cancelled = true
     }
-  }, [liveId, currentUser?.firebaseUser.uid, authLoading])
+  }, [liveId, currentUser?.firebaseUser.uid, authLoading, bootKey])
 
   useEffect(() => {
     if (!liveId) return
@@ -77,42 +94,74 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
       setLive(next)
       if (next && next.status === "ended") {
         setToken(null)
-        setError("El vendedor finalizó la transmisión")
+        setEnded(true)
       }
     })
   }, [liveId])
 
   if (authLoading || loading) {
+    return <LiveStatusScreen kind="connecting" secondaryLabel="Cancelar" secondaryHref="/lives" />
+  }
+
+  if (!liveId) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-black">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
-      </div>
+      <LiveStatusScreen
+        kind="error"
+        title="Vivo no válido"
+        body="El enlace de esta transmisión no es correcto."
+        onRetry={() => router.push("/lives")}
+        retryLabel="Ir a lives"
+      />
     )
   }
 
-  if (!liveId || error || !live || !token || !serverUrl) {
+  if (ended) {
     return (
-      <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
-        <Radio className="h-10 w-10 text-servido-800" />
-        <h1 className="text-lg font-bold text-servido-950">En vivo</h1>
-        <p className="text-sm text-slate-600">{error || "No hay transmisión disponible"}</p>
-        <div className="flex gap-2">
-          <Button asChild variant="outline" className="rounded-full">
-            <Link href="/lives">Ver lives activos</Link>
-          </Button>
-          {!currentUser ? (
-            <Button asChild className="rounded-full">
-              <Link href="/login">Iniciar sesión</Link>
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <LiveStatusScreen
+        kind="ended"
+        title={live ? `${live.sellerName} terminó el vivo` : undefined}
+        body="Podés mirar otros lives activos o volver al inicio."
+        secondaryHref="/lives"
+        secondaryLabel="Ver lives activos"
+      />
+    )
+  }
+
+  if (!currentUser) {
+    return (
+      <LiveStatusScreen
+        kind="error"
+        title="Iniciá sesión"
+        body="Para ver el vivo necesitás una cuenta en Servido."
+        secondaryHref={`/login?redirect=${encodeURIComponent(`/lives/${liveId}`)}`}
+        secondaryLabel="Iniciar sesión"
+      />
+    )
+  }
+
+  if (error || !live || !token || !serverUrl) {
+    return (
+      <LiveStatusScreen
+        kind="error"
+        title="No se pudo abrir el vivo"
+        body={error || "No hay transmisión disponible"}
+        onRetry={retryBoot}
+        secondaryHref="/lives"
+      />
     )
   }
 
   return (
     <div className="fixed inset-0 z-[80] bg-black">
-      <LiveRoomShell token={token} serverUrl={serverUrl} isHost={false}>
+      <LiveRoomShell
+        token={token}
+        serverUrl={serverUrl}
+        isHost={false}
+        hostIdentity={live.sellerId}
+        liveId={live.id}
+        roomKey={roomKey}
+        onRetry={retryRoom}
+      >
         <div className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-black/75 via-black/25 to-transparent px-3 pb-10 pt-[max(0.65rem,env(safe-area-inset-top))]">
           <div className="pointer-events-auto flex items-center gap-2">
             <button

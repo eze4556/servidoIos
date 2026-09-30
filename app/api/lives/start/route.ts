@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       title,
       status: "live",
       viewerCount: 0,
+      peakViewerCount: 0,
       pinnedProduct: null,
       startedAt: FieldValue.serverTimestamp(),
       endedAt: null,

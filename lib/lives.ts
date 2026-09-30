@@ -48,6 +48,7 @@ export function mapLiveSession(id: string, data: Record<string, unknown>): LiveS
     title: String(data.title || "En vivo"),
     status: (data.status as LiveStatus) || "ended",
     viewerCount: Number(data.viewerCount) || 0,
+    peakViewerCount: Number(data.peakViewerCount) || 0,
     pinnedProduct: mapPinned(data.pinnedProduct),
     startedAt: toDate(data.startedAt),
     endedAt: data.endedAt ? toDate(data.endedAt) : null,
@@ -192,6 +193,18 @@ export async function pinProductApi(
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || "No se pudo fijar el producto")
   return (data.pinnedProduct as LivePinnedProduct | null) ?? null
+}
+
+export async function reportViewerCountApi(liveId: string, viewerCount: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/lives/${encodeURIComponent(liveId)}/viewers`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ viewerCount }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error || "No se pudo actualizar espectadores")
+  }
 }
 
 export async function getLiveTokenApi(liveId: string): Promise<{

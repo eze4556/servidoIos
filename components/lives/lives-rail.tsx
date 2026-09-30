@@ -77,6 +77,11 @@ export function LivesRail({ className }: { className?: string }) {
             <span className="w-full truncate text-center text-[10px] font-medium text-gray-700">
               {live.sellerName}
             </span>
+            {live.viewerCount > 0 ? (
+              <span className="text-[9px] font-medium text-red-600">
+                {live.viewerCount} mirando
+              </span>
+            ) : null}
           </Link>
         ))}
       </div>
