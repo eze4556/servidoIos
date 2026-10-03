@@ -55,8 +55,15 @@ function FloatingLayer({ items }: { items: FloatingReaction[] }) {
 /**
  * Reacciones en tiempo real vía LiveKit data channel (sin chat).
  * Botones a la derecha + emojis flotando.
+ * `compact`: grilla 2×2 (útil en el host, donde también van mic/cámara).
  */
-export function LiveReactions({ className }: { className?: string }) {
+export function LiveReactions({
+  className,
+  compact = false,
+}: {
+  className?: string
+  compact?: boolean
+}) {
   const connectionState = useConnectionState()
   const connected = connectionState === ConnectionState.Connected
   const [floating, setFloating] = useState<FloatingReaction[]>([])
@@ -108,7 +115,10 @@ export function LiveReactions({ className }: { className?: string }) {
       <FloatingLayer items={floating} />
       <div
         className={cn(
-          "pointer-events-auto flex flex-col items-center gap-2",
+          "pointer-events-auto",
+          compact
+            ? "grid grid-cols-2 gap-1.5"
+            : "flex flex-col items-center gap-2",
           className
         )}
       >
@@ -117,7 +127,10 @@ export function LiveReactions({ className }: { className?: string }) {
             key={emoji}
             type="button"
             onClick={() => void react(emoji)}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-black/50 text-xl shadow-lg ring-1 ring-white/20 backdrop-blur-md active:scale-90"
+            className={cn(
+              "flex items-center justify-center rounded-full bg-black/50 shadow-lg ring-1 ring-white/20 backdrop-blur-md active:scale-90",
+              compact ? "h-10 w-10 text-lg" : "h-11 w-11 text-xl"
+            )}
             aria-label={`Reaccionar ${emoji}`}
           >
             {emoji}

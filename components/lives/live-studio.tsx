@@ -302,7 +302,7 @@ export function LiveStudio() {
 
           {/* Abajo: productos + chat (deja espacio a la derecha para controles) */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-16">
-            <div className="pointer-events-auto mr-14 space-y-2.5">
+            <div className="pointer-events-auto mr-[5.75rem] space-y-2.5">
               {(live.pinnedProducts?.length || live.pinnedProduct) ? (
                 <LivePinBar
                   products={live.pinnedProducts}

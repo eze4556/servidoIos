@@ -226,11 +226,11 @@ export function HostSideControls({ className }: { className?: string }) {
   }, [localParticipant, facing, flipping])
 
   return (
-    <div className={cn("flex flex-col items-center gap-3", className)}>
+    <div className={cn("flex flex-col items-center gap-2", className)}>
       <button
         type="button"
         onClick={() => void toggleMic()}
-        className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-black/50 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md active:scale-95"
+        className="flex h-11 w-11 flex-col items-center justify-center rounded-full bg-black/55 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md active:scale-95"
         aria-label={micOn ? "Silenciar micrófono" : "Activar micrófono"}
       >
         {micOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
@@ -238,7 +238,7 @@ export function HostSideControls({ className }: { className?: string }) {
       <button
         type="button"
         onClick={() => void toggleCam()}
-        className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-black/50 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md active:scale-95"
+        className="flex h-11 w-11 flex-col items-center justify-center rounded-full bg-black/55 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md active:scale-95"
         aria-label={camOn ? "Apagar cámara" : "Encender cámara"}
       >
         {camOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
@@ -247,7 +247,7 @@ export function HostSideControls({ className }: { className?: string }) {
         type="button"
         onClick={() => void flipCamera()}
         disabled={flipping}
-        className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-black/50 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md active:scale-95 disabled:opacity-50"
+        className="flex h-11 w-11 flex-col items-center justify-center rounded-full bg-black/55 text-white shadow-lg ring-1 ring-white/25 backdrop-blur-md active:scale-95 disabled:opacity-50"
         aria-label={
           facing === "user" ? "Cambiar a cámara trasera" : "Cambiar a cámara frontal"
         }
@@ -351,33 +351,34 @@ export function LiveRoomShell({
         isHost={isHost}
         className="absolute right-3 top-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] z-40"
       />
-      {/* Reacciones: viewer a la derecha; host un poco más arriba para no tapar cam/mic */}
-      <LiveReactions
+      {/* Una sola columna derecha: reacciones arriba, controles abajo (evita solapes). */}
+      <div
         className={cn(
-          "absolute right-3 z-40",
-          isHost
-            ? "bottom-[min(58vh,30rem)]"
-            : "bottom-[min(52vh,27rem)]"
+          "pointer-events-auto absolute right-3 z-40 flex flex-col items-center gap-2.5",
+          // Encima del bloque de productos/chat (~parte inferior)
+          "bottom-[max(11.5rem,calc(env(safe-area-inset-bottom)+10.5rem))]"
         )}
-      />
-      {!isHost ? (
-        <div className="pointer-events-auto absolute bottom-[min(42vh,22rem)] right-3 z-40 flex flex-col items-center gap-2">
-          <ViewerMuteButton
-            muted={viewerMuted}
-            onToggle={() => setViewerMuted((m) => !m)}
-          />
-          {viewerMuted ? (
-            <span className="rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
-              Sin sonido
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-      {sideControls ? (
-        <div className="pointer-events-auto absolute bottom-[min(42vh,22rem)] right-3 z-40 flex flex-col items-center">
-          {sideControls}
-        </div>
-      ) : null}
+      >
+        <LiveReactions compact={isHost} />
+        {isHost ? (
+          <>
+            <span className="h-px w-8 bg-white/20" aria-hidden />
+            {sideControls}
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <ViewerMuteButton
+              muted={viewerMuted}
+              onToggle={() => setViewerMuted((m) => !m)}
+            />
+            {viewerMuted ? (
+              <span className="rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+                Sin sonido
+              </span>
+            ) : null}
+          </div>
+        )}
+      </div>
       {children}
     </LiveKitRoom>
   )
