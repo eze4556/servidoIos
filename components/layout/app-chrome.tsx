@@ -13,6 +13,7 @@ import { DesktopChatFab } from "@/components/chat/desktop-chat-fab"
 import { TutorialProvider } from "@/components/tutorial/tutorial-provider"
 import { AppTutorialDialog } from "@/components/tutorial/app-tutorial-dialog"
 import { TutorialFab } from "@/components/tutorial/tutorial-fab"
+import { LiveFollowerBanner } from "@/components/lives/live-follower-banner"
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -97,6 +98,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             <LocationPickerSheet />
             {!isFullscreenChrome && <TutorialFab />}
             <AppTutorialDialog />
+            {!isFullscreenChrome && <LiveFollowerBanner />}
           </div>
           {!isFullscreenChrome && (
             <Suspense fallback={null}>

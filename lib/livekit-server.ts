@@ -41,19 +41,22 @@ export async function createLiveParticipantToken(params: {
   identity: string
   name: string
   canPublish: boolean
+  /** Preview del rail: sin publicar ni data channel; TTL corto. */
+  preview?: boolean
 }): Promise<string> {
   const { apiKey, apiSecret } = getLiveKitCredentials()
+  const preview = Boolean(params.preview)
   const at = new AccessToken(apiKey, apiSecret, {
     identity: params.identity,
     name: params.name,
-    ttl: "6h",
+    ttl: preview ? "30m" : "6h",
   })
   at.addGrant({
     roomJoin: true,
     room: params.roomName,
-    canPublish: params.canPublish,
+    canPublish: preview ? false : params.canPublish,
     canSubscribe: true,
-    canPublishData: true,
+    canPublishData: !preview,
   })
   return at.toJwt()
 }

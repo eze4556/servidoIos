@@ -68,10 +68,14 @@ export async function POST(request: NextRequest) {
       status: "live",
       viewerCount: 0,
       peakViewerCount: 0,
+      buyClickCount: 0,
+      chatMessageCount: 0,
       pinnedProduct: null,
+      pinnedProducts: [],
       startedAt: FieldValue.serverTimestamp(),
       endedAt: null,
       followersNotifiedAt: null,
+      metrics: null,
       createdAt: FieldValue.serverTimestamp(),
     })
 
@@ -86,6 +90,7 @@ export async function POST(request: NextRequest) {
     void notifyFollowersLiveStarted({
       sellerId: auth.user.uid,
       sellerName: auth.user.name,
+      sellerPhotoURL: auth.user.photoURL,
       liveId,
       title,
     }).catch((err) => console.warn("[lives] notify followers", err))

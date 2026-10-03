@@ -22,12 +22,19 @@ import type { LiveSession } from "@/types/live"
 import { LiveRoomShell, LiveHostControlsSlot } from "@/components/lives/live-room-shell"
 import { LiveChatPanel } from "@/components/lives/live-chat-panel"
 import { LivePinBar } from "@/components/lives/live-pin-bar"
-import { LiveStatusScreen } from "@/components/lives/live-status-screen"
 import { LiveCameraPreview, type LiveFacingMode } from "@/components/lives/live-preview"
+import { LiveShareButton } from "@/components/lives/live-share-button"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { LIVE_TITLE_MAX_LEN } from "@/types/live"
+import {
+  LIVE_TITLE_MAX_LEN,
+  LIVE_TITLE_TEMPLATES,
+  LIVE_PINNED_MAX,
+  type LiveMetrics,
+} from "@/types/live"
 import { getLiveMediaSupport } from "@/lib/live-media"
+import { cn } from "@/lib/utils"
+import { LiveMetricsScreen } from "@/components/lives/live-metrics-screen"
 
 type ProductOption = {
   id: string
@@ -50,6 +57,7 @@ export function LiveStudio() {
   const [pinning, setPinning] = useState(false)
   const [roomKey, setRoomKey] = useState(0)
   const [showEnded, setShowEnded] = useState(false)
+  const [metrics, setMetrics] = useState<LiveMetrics | null>(null)
   const [facing, setFacing] = useState<LiveFacingMode>("user")
   const [previewOn, setPreviewOn] = useState(true)
 
@@ -117,6 +125,7 @@ export function LiveStudio() {
     setStarting(true)
     setError(null)
     setShowEnded(false)
+    setMetrics(null)
     // Liberar la cámara del preview antes de que LiveKit la tome.
     setPreviewOn(false)
     await new Promise((r) => setTimeout(r, 200))
@@ -135,6 +144,7 @@ export function LiveStudio() {
         status: "live",
         viewerCount: 0,
         pinnedProduct: null,
+        pinnedProducts: [],
         startedAt: new Date(),
       })
     } catch (err) {
@@ -150,10 +160,13 @@ export function LiveStudio() {
     setEnding(true)
     setError(null)
     try {
-      await endLiveApi(live.id)
+      const res = await endLiveApi(live.id)
+      setMetrics(res.metrics || null)
       setToken(null)
       setServerUrl(null)
-      setLive((prev) => (prev ? { ...prev, status: "ended" } : null))
+      setLive((prev) =>
+        prev ? { ...prev, status: "ended", metrics: res.metrics || null } : null
+      )
       setShowEnded(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo finalizar")
@@ -162,13 +175,24 @@ export function LiveStudio() {
     }
   }
 
-  async function handlePin(productId: string | null) {
+  async function handlePin(
+    productId: string | null,
+    action: "add" | "remove" | "focus" | "clear" = "add"
+  ) {
     if (!live) return
     setPinning(true)
     setError(null)
     try {
-      const pinned = await pinProductApi(live.id, productId)
-      setLive((prev) => (prev ? { ...prev, pinnedProduct: pinned } : prev))
+      const result = await pinProductApi(live.id, productId, action)
+      setLive((prev) =>
+        prev
+          ? {
+              ...prev,
+              pinnedProduct: result.pinnedProduct,
+              pinnedProducts: result.pinnedProducts,
+            }
+          : prev
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo fijar")
     } finally {
@@ -185,20 +209,30 @@ export function LiveStudio() {
   }
 
   if (showEnded && (!token || live?.status === "ended")) {
+    const summary =
+      metrics ||
+      live?.metrics ||
+      ({
+        durationSeconds: live?.startedAt
+          ? Math.max(0, Math.floor((Date.now() - live.startedAt.getTime()) / 1000))
+          : 0,
+        peakViewerCount: live?.peakViewerCount || live?.viewerCount || 0,
+        chatMessageCount: live?.chatMessageCount || 0,
+        buyClickCount: live?.buyClickCount || 0,
+        followersNotifiedCount: live?.followersNotifiedCount || 0,
+      } satisfies LiveMetrics)
+
     return (
-      <LiveStatusScreen
-        kind="ended"
-        title="Terminaste el vivo"
-        body="Cuando quieras, podés volver a transmitir."
+      <LiveMetricsScreen
+        metrics={summary}
+        title={live?.title}
         onRetry={() => {
           setShowEnded(false)
           setLive(null)
+          setMetrics(null)
           setError(null)
           setPreviewOn(true)
         }}
-        retryLabel="Transmitir de nuevo"
-        secondaryHref="/dashboard/seller"
-        secondaryLabel="Volver al panel"
       />
     )
   }
@@ -232,11 +266,28 @@ export function LiveStudio() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-white">{live.sellerName}</p>
                   <p className="truncate text-[11px] text-white/70">{live.title}</p>
+                  {live.followersNotifiedAt ? (
+                    <p className="truncate text-[10px] text-emerald-300/90">
+                      {live.followersNotifiedCount && live.followersNotifiedCount > 0
+                        ? `Avisamos a ${live.followersNotifiedCount} seguidor${
+                            live.followersNotifiedCount === 1 ? "" : "es"
+                          }`
+                        : "Ya avisamos a tus seguidores"}
+                    </p>
+                  ) : (
+                    <p className="truncate text-[10px] text-white/55">Avisando a seguidores…</p>
+                  )}
                 </div>
                 <span className="shrink-0 rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                   En vivo
                 </span>
               </div>
+              <LiveShareButton
+                liveId={live.id}
+                sellerName={live.sellerName}
+                title={live.title}
+                compact
+              />
               <Button
                 type="button"
                 size="sm"
@@ -249,29 +300,80 @@ export function LiveStudio() {
             </div>
           </div>
 
-          {/* Abajo: producto + chat (deja espacio a la derecha para controles) */}
+          {/* Abajo: productos + chat (deja espacio a la derecha para controles) */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-16">
             <div className="pointer-events-auto mr-14 space-y-2.5">
-              {live.pinnedProduct ? (
+              {(live.pinnedProducts?.length || live.pinnedProduct) ? (
                 <LivePinBar
+                  products={live.pinnedProducts}
                   product={live.pinnedProduct}
                   canUnpin
-                  onUnpin={() => void handlePin(null)}
+                  onUnpin={(id) => void handlePin(id, "remove")}
+                  onFocus={(id) => void handlePin(id, "focus")}
                 />
               ) : null}
-              <select
-                className="w-full rounded-full border border-white/20 bg-black/45 px-3 py-2 text-sm text-white outline-none backdrop-blur-md"
-                disabled={pinning}
-                value={live.pinnedProduct?.productId || ""}
-                onChange={(e) => void handlePin(e.target.value || null)}
-              >
-                <option value="">📌 Fijar producto…</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+
+              <div className="rounded-2xl border border-white/15 bg-black/45 p-2 backdrop-blur-md">
+                <div className="mb-1.5 flex items-center justify-between px-1">
+                  <p className="text-[11px] font-semibold text-white/85">
+                    Productos en el vivo
+                  </p>
+                  <p className="text-[10px] text-white/50">
+                    {live.pinnedProducts?.length || 0}/{LIVE_PINNED_MAX}
+                  </p>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {products.length === 0 ? (
+                    <p className="px-1 text-xs text-white/55">No tenés productos cargados.</p>
+                  ) : (
+                    products.map((p) => {
+                      const pinned = (live.pinnedProducts || []).some(
+                        (x) => x.productId === p.id
+                      )
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          disabled={pinning}
+                          onClick={() =>
+                            void handlePin(p.id, pinned ? "remove" : "add")
+                          }
+                          className={cn(
+                            "flex w-[4.5rem] shrink-0 flex-col items-center gap-1 rounded-xl p-1.5 text-center transition",
+                            pinned
+                              ? "bg-amber-400/20 ring-2 ring-amber-400"
+                              : "bg-white/5 ring-1 ring-white/10"
+                          )}
+                        >
+                          <span className="relative h-10 w-10 overflow-hidden rounded-lg bg-white/10">
+                            {p.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={p.imageUrl}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="flex h-full w-full items-center justify-center text-[10px] text-white/50">
+                                —
+                              </span>
+                            )}
+                            {pinned ? (
+                              <span className="absolute inset-x-0 bottom-0 bg-amber-400 text-[8px] font-bold text-servido-950">
+                                ON
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="line-clamp-2 w-full text-[9px] leading-tight text-white/90">
+                            {p.name}
+                          </span>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+
               <LiveChatPanel liveId={live.id} compact />
             </div>
           </div>
@@ -325,13 +427,36 @@ export function LiveStudio() {
       )}
 
       <label className="mb-2 block text-sm font-medium text-servido-950">Título del vivo</label>
+      <div className="mb-2.5 flex flex-wrap gap-1.5">
+        {LIVE_TITLE_TEMPLATES.map((tpl) => {
+          const selected = title === tpl
+          return (
+            <button
+              key={tpl}
+              type="button"
+              onClick={() => setTitle(tpl)}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-[0.98]",
+                selected
+                  ? "bg-servido-950 text-white shadow-sm"
+                  : "bg-servido-50 text-servido-900 ring-1 ring-servido-950/10 hover:bg-servido-100"
+              )}
+            >
+              {tpl}
+            </button>
+          )
+        })}
+      </div>
       <Input
         value={title}
         onChange={(e) => setTitle(e.target.value.slice(0, LIVE_TITLE_MAX_LEN))}
-        placeholder="Ej. Novedades de la semana"
+        placeholder="Elegí una plantilla o escribí tu título"
         maxLength={LIVE_TITLE_MAX_LEN}
-        className="mb-4"
+        className="mb-1"
       />
+      <p className="mb-4 text-right text-[11px] text-slate-400">
+        {title.length}/{LIVE_TITLE_MAX_LEN}
+      </p>
 
       {error ? (
         <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
@@ -351,7 +476,10 @@ export function LiveStudio() {
         {starting ? "Conectando…" : "Salir al aire"}
       </Button>
 
-      <p className="mt-4 text-xs text-slate-500">
+      <p className="mt-3 text-center text-xs font-medium text-servido-800">
+        Al salir al aire avisamos a tus seguidores (push + aviso en la app).
+      </p>
+      <p className="mt-2 text-xs text-slate-500">
         Usá https://www.servido.com.ar o la app Android. En HTTP por IP local el celular bloquea la
         cámara.
       </p>

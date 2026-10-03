@@ -105,6 +105,13 @@ function resolveByI18nKey(
     }
   }
 
+  if (i18nKey.startsWith("live.")) {
+    return {
+      title: t(`${i18nKey}.title`, params),
+      body: t(`${i18nKey}.body`, params),
+    }
+  }
+
   return null
 }
 
@@ -201,6 +208,19 @@ export function resolveAppNotificationDisplay(
   if (n.type === "service") {
     const legacy = legacyService(meta, t, locale)
     if (legacy) return legacy
+  }
+  if (n.type === "live_started") {
+    const sellerName = String(meta.sellerName || "")
+    const liveTitle = String(meta.liveTitle || "")
+    if (sellerName) {
+      const resolved = resolveByI18nKey(
+        "live.started",
+        { sellerName, liveTitle: liveTitle || "En vivo" },
+        t,
+        locale
+      )
+      if (resolved) return resolved
+    }
   }
 
   return { title: n.title, body: getNotificationBody(n) }

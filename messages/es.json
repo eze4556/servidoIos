@@ -1879,6 +1879,12 @@
         "title": "Pedido cancelado",
         "body": "Tu pedido fue cancelado — {productName}"
       }
+    },
+    "live": {
+      "started": {
+        "title": "{sellerName} está en vivo ahora",
+        "body": "“{liveTitle}” · Tocá para mirar"
+      }
     }
   },
   "notifications": {

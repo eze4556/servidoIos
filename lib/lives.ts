@@ -11,7 +11,13 @@ import {
   type Unsubscribe,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import type { LiveChatMessage, LivePinnedProduct, LiveSession, LiveStatus } from "@/types/live"
+import type {
+  LiveChatMessage,
+  LiveMetrics,
+  LivePinnedProduct,
+  LiveSession,
+  LiveStatus,
+} from "@/types/live"
 import { API_BASE } from "@/lib/api-base"
 import { auth } from "@/lib/firebase"
 
@@ -35,10 +41,29 @@ function mapPinned(raw: unknown): LivePinnedProduct | null {
     price: Number(p.price) || 0,
     imageUrl: (p.imageUrl as string | null | undefined) ?? null,
     currency: String(p.currency || "ARS"),
+    category: (p.category as string | null | undefined) ?? null,
   }
 }
 
+function mapPinnedList(
+  listRaw: unknown,
+  fallback: unknown
+): LivePinnedProduct[] {
+  const source = Array.isArray(listRaw) ? listRaw : fallback ? [fallback] : []
+  const out: LivePinnedProduct[] = []
+  for (const item of source) {
+    const mapped = mapPinned(item)
+    if (!mapped) continue
+    if (out.some((p) => p.productId === mapped.productId)) continue
+    out.push(mapped)
+  }
+  return out
+}
+
 export function mapLiveSession(id: string, data: Record<string, unknown>): LiveSession {
+  const pinnedProducts = mapPinnedList(data.pinnedProducts, data.pinnedProduct)
+  const pinnedProduct =
+    mapPinned(data.pinnedProduct) || pinnedProducts[0] || null
   return {
     id,
     sellerId: String(data.sellerId || ""),
@@ -49,10 +74,27 @@ export function mapLiveSession(id: string, data: Record<string, unknown>): LiveS
     status: (data.status as LiveStatus) || "ended",
     viewerCount: Number(data.viewerCount) || 0,
     peakViewerCount: Number(data.peakViewerCount) || 0,
-    pinnedProduct: mapPinned(data.pinnedProduct),
+    buyClickCount: Number(data.buyClickCount) || 0,
+    chatMessageCount: Number(data.chatMessageCount) || 0,
+    pinnedProduct,
+    pinnedProducts,
     startedAt: toDate(data.startedAt),
     endedAt: data.endedAt ? toDate(data.endedAt) : null,
     followersNotifiedAt: data.followersNotifiedAt ? toDate(data.followersNotifiedAt) : null,
+    followersNotifiedCount: Number(data.followersNotifiedCount) || 0,
+    metrics: mapLiveMetrics(data.metrics),
+  }
+}
+
+function mapLiveMetrics(raw: unknown): LiveMetrics | null {
+  if (!raw || typeof raw !== "object") return null
+  const m = raw as Record<string, unknown>
+  return {
+    durationSeconds: Math.max(0, Math.floor(Number(m.durationSeconds) || 0)),
+    peakViewerCount: Math.max(0, Math.floor(Number(m.peakViewerCount) || 0)),
+    chatMessageCount: Math.max(0, Math.floor(Number(m.chatMessageCount) || 0)),
+    buyClickCount: Math.max(0, Math.floor(Number(m.buyClickCount) || 0)),
+    followersNotifiedCount: Math.max(0, Math.floor(Number(m.followersNotifiedCount) || 0)),
   }
 }
 
@@ -172,27 +214,59 @@ export async function startLiveApi(title: string): Promise<{
   return data
 }
 
-export async function endLiveApi(liveId: string): Promise<void> {
+export async function endLiveApi(liveId: string): Promise<{
+  ok: boolean
+  alreadyEnded?: boolean
+  metrics: LiveMetrics
+}> {
   const res = await fetch(`${API_BASE}/api/lives/${encodeURIComponent(liveId)}/end`, {
     method: "POST",
     headers: await authHeaders(),
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || "No se pudo finalizar el vivo")
+  return data
 }
 
-export async function pinProductApi(
+/** Registra un clic en “Comprar ahora” (best-effort). */
+export async function reportLiveBuyClickApi(
   liveId: string,
-  productId: string | null
-): Promise<LivePinnedProduct | null> {
-  const res = await fetch(`${API_BASE}/api/lives/${encodeURIComponent(liveId)}/pin`, {
+  productId: string
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/lives/${encodeURIComponent(liveId)}/buy-click`, {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ productId }),
   })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error || "No se pudo registrar el clic")
+  }
+}
+
+export async function pinProductApi(
+  liveId: string,
+  productId: string | null,
+  action: "add" | "remove" | "focus" | "clear" = "add"
+): Promise<{ pinnedProduct: LivePinnedProduct | null; pinnedProducts: LivePinnedProduct[] }> {
+  const res = await fetch(`${API_BASE}/api/lives/${encodeURIComponent(liveId)}/pin`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({
+      productId,
+      action: productId === null ? "clear" : action,
+    }),
+  })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || "No se pudo fijar el producto")
-  return (data.pinnedProduct as LivePinnedProduct | null) ?? null
+  return {
+    pinnedProduct: (data.pinnedProduct as LivePinnedProduct | null) ?? null,
+    pinnedProducts: Array.isArray(data.pinnedProducts)
+      ? (data.pinnedProducts as LivePinnedProduct[])
+      : data.pinnedProduct
+        ? [data.pinnedProduct as LivePinnedProduct]
+        : [],
+  }
 }
 
 export async function reportViewerCountApi(liveId: string, viewerCount: number): Promise<void> {
@@ -219,6 +293,22 @@ export async function getLiveTokenApi(liveId: string): Promise<{
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || "No se pudo obtener acceso al vivo")
+  return data
+}
+
+/** Token solo-suscripción para el thumb del rail (no cuenta como viewer). */
+export async function getLivePreviewTokenApi(liveId: string): Promise<{
+  token: string
+  serverUrl: string
+  roomName: string
+}> {
+  const res = await fetch(`${API_BASE}/api/lives/${encodeURIComponent(liveId)}/token`, {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ preview: true }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || "No se pudo obtener preview")
   return data
 }
 

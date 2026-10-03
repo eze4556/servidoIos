@@ -46,7 +46,8 @@ export async function POST(request: NextRequest, context: Ctx) {
     const userName = String(userData.name || userData.displayName || "Usuario")
     const userPhotoURL = (userData.photoURL as string | null | undefined) || null
 
-    const ref = await db.collection("lives").doc(liveId).collection("messages").add({
+    const liveRef = db.collection("lives").doc(liveId)
+    const ref = await liveRef.collection("messages").add({
       liveId,
       userId: auth.uid,
       userName,
@@ -54,6 +55,10 @@ export async function POST(request: NextRequest, context: Ctx) {
       text,
       createdAt: FieldValue.serverTimestamp(),
     })
+
+    await liveRef
+      .update({ chatMessageCount: FieldValue.increment(1) })
+      .catch((err) => console.warn("[lives/chat] chatMessageCount", err))
 
     return NextResponse.json({ id: ref.id })
   } catch (err) {

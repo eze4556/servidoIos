@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 import { getLiveMediaSupport } from "@/lib/live-media"
 import { LiveStatusScreen } from "@/components/lives/live-status-screen"
 import { LiveViewerCountBadge } from "@/components/lives/live-viewer-count"
+import { LiveReactions } from "@/components/lives/live-reactions"
 
 function LiveConnectionOverlay({
   isHost,
@@ -349,6 +350,15 @@ export function LiveRoomShell({
         liveId={liveId}
         isHost={isHost}
         className="absolute right-3 top-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] z-40"
+      />
+      {/* Reacciones: viewer a la derecha; host un poco más arriba para no tapar cam/mic */}
+      <LiveReactions
+        className={cn(
+          "absolute right-3 z-40",
+          isHost
+            ? "bottom-[min(58vh,30rem)]"
+            : "bottom-[min(52vh,27rem)]"
+        )}
       />
       {!isHost ? (
         <div className="pointer-events-auto absolute bottom-[min(42vh,22rem)] right-3 z-40 flex flex-col items-center gap-2">

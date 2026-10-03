@@ -8,6 +8,7 @@ export type AppNotificationType =
   | "promo"
   | "reseller"
   | "claim"
+  | "live_started"
   | "system"
 
 export interface AppNotification {

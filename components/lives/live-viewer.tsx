@@ -11,6 +11,8 @@ import { LiveRoomShell } from "@/components/lives/live-room-shell"
 import { LiveChatPanel } from "@/components/lives/live-chat-panel"
 import { LivePinBar } from "@/components/lives/live-pin-bar"
 import { LiveStatusScreen } from "@/components/lives/live-status-screen"
+import { FollowButton } from "@/components/follows/follow-button"
+import { LiveShareButton } from "@/components/lives/live-share-button"
 import { sellerHref } from "@/lib/routes"
 
 export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
@@ -172,32 +174,57 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <Link
-              href={sellerHref(live.sellerId)}
-              className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-black/35 py-1.5 pl-1.5 pr-3 backdrop-blur-md"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-servido-800 text-sm font-bold text-white">
-                {live.sellerPhotoURL ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={live.sellerPhotoURL} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  live.sellerName.charAt(0).toUpperCase()
-                )}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-white">{live.sellerName}</p>
-                <p className="truncate text-[11px] text-white/70">{live.title}</p>
-              </div>
-              <span className="shrink-0 rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                En vivo
-              </span>
-            </Link>
+            <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-black/35 py-1.5 pl-1.5 pr-2 backdrop-blur-md">
+              <Link
+                href={sellerHref(live.sellerId)}
+                className="flex min-w-0 flex-1 items-center gap-2"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-servido-800 text-sm font-bold text-white">
+                  {live.sellerPhotoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={live.sellerPhotoURL} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    live.sellerName.charAt(0).toUpperCase()
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-semibold text-white">{live.sellerName}</p>
+                    <span className="shrink-0 rounded bg-red-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">
+                      En vivo
+                    </span>
+                  </div>
+                  <p className="truncate text-[11px] text-white/70">{live.title}</p>
+                </div>
+              </Link>
+              <FollowButton
+                targetUserId={live.sellerId}
+                targetType="store"
+                targetName={live.sellerName}
+                targetPhotoURL={live.sellerPhotoURL}
+                variant="story"
+                className="shrink-0"
+              />
+              <LiveShareButton
+                liveId={live.id}
+                sellerName={live.sellerName}
+                title={live.title}
+                compact
+              />
+            </div>
           </div>
         </div>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-16">
           <div className="pointer-events-auto max-w-[88%] space-y-2.5">
-            {live.pinnedProduct ? <LivePinBar product={live.pinnedProduct} /> : null}
+            {live.pinnedProduct || (live.pinnedProducts && live.pinnedProducts.length > 0) ? (
+              <LivePinBar
+                liveId={live.id}
+                trackBuyClicks
+                products={live.pinnedProducts}
+                product={live.pinnedProduct}
+              />
+            ) : null}
             <LiveChatPanel liveId={live.id} compact />
           </div>
         </div>

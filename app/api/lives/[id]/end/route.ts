@@ -1,12 +1,67 @@
 import { NextRequest, NextResponse } from "next/server"
-import { FieldValue } from "firebase-admin/firestore"
+import { FieldValue, Timestamp, type DocumentData } from "firebase-admin/firestore"
 import { db } from "@/lib/firebase-admin"
 import { requireLiveSeller } from "@/lib/lives-auth"
 import { getRoomService, isLiveKitConfigured } from "@/lib/livekit-server"
+import type { LiveMetrics } from "@/types/live"
 
 export const runtime = "nodejs"
 
 type Ctx = { params: Promise<{ id: string }> }
+
+function toMillis(value: unknown): number {
+  if (!value) return Date.now()
+  if (value instanceof Timestamp) return value.toMillis()
+  if (typeof value === "object" && value !== null && "toMillis" in value) {
+    try {
+      return (value as Timestamp).toMillis()
+    } catch {
+      /* fallthrough */
+    }
+  }
+  if (typeof value === "object" && value !== null && "seconds" in value) {
+    return Number((value as { seconds: number }).seconds) * 1000
+  }
+  const n = new Date(value as string | number).getTime()
+  return Number.isFinite(n) ? n : Date.now()
+}
+
+function emptyMetrics(): LiveMetrics {
+  return {
+    durationSeconds: 0,
+    peakViewerCount: 0,
+    chatMessageCount: 0,
+    buyClickCount: 0,
+    followersNotifiedCount: 0,
+  }
+}
+
+async function buildMetrics(liveId: string, data: DocumentData): Promise<LiveMetrics> {
+  const startedMs = toMillis(data.startedAt)
+  const endedMs = data.endedAt ? toMillis(data.endedAt) : Date.now()
+  const durationSeconds = Math.max(0, Math.floor((endedMs - startedMs) / 1000))
+
+  let chatMessageCount = Math.max(0, Math.floor(Number(data.chatMessageCount) || 0))
+  if (!chatMessageCount) {
+    try {
+      const agg = await db.collection("lives").doc(liveId).collection("messages").count().get()
+      chatMessageCount = agg.data().count || 0
+    } catch {
+      /* keep 0 */
+    }
+  }
+
+  return {
+    durationSeconds,
+    peakViewerCount: Math.max(
+      0,
+      Math.floor(Number(data.peakViewerCount) || Number(data.viewerCount) || 0)
+    ),
+    chatMessageCount,
+    buyClickCount: Math.max(0, Math.floor(Number(data.buyClickCount) || 0)),
+    followersNotifiedCount: Math.max(0, Math.floor(Number(data.followersNotifiedCount) || 0)),
+  }
+}
 
 export async function POST(request: NextRequest, context: Ctx) {
   try {
@@ -30,13 +85,22 @@ export async function POST(request: NextRequest, context: Ctx) {
     }
 
     if (data.status === "ended") {
-      return NextResponse.json({ ok: true, alreadyEnded: true })
+      const existing = data.metrics as LiveMetrics | undefined
+      const metrics = existing?.durationSeconds != null ? existing : await buildMetrics(liveId, data)
+      return NextResponse.json({ ok: true, alreadyEnded: true, metrics })
     }
+
+    const metrics = await buildMetrics(liveId, {
+      ...data,
+      endedAt: Timestamp.now(),
+    })
 
     await ref.update({
       status: "ended",
       endedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
+      chatMessageCount: metrics.chatMessageCount,
+      metrics,
     })
 
     if (isLiveKitConfigured()) {
@@ -48,7 +112,7 @@ export async function POST(request: NextRequest, context: Ctx) {
       }
     }
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, metrics })
   } catch (err) {
     console.error("[lives/end]", err)
     return NextResponse.json(

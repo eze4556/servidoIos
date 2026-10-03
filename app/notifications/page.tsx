@@ -33,6 +33,7 @@ import {
   UtensilsCrossed,
   Calendar,
   AlertCircle,
+  Radio,
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import {
@@ -96,6 +97,7 @@ function iconFor(type: string, shippingStatus?: string) {
   if (type === "subscription" || type === "payment") return CreditCard
   if (type === "service") return Calendar
   if (type === "promo") return BellRing
+  if (type === "live_started") return Radio
   return AlertCircle
 }
 
@@ -284,20 +286,39 @@ export default function NotificationsPage() {
             const Icon = iconFor(String(n.type), shippingStatus)
             const servidoOfficial = isServidoOfficialNotification(meta)
 
+            const isLive = String(n.type) === "live_started"
+            const sellerPhoto =
+              typeof meta.sellerPhotoURL === "string" ? meta.sellerPhotoURL : null
+
             return (
               <Card
                 key={n.id}
                 className={`overflow-hidden rounded-2xl border-0 bg-white shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-22px_rgba(46,16,101,0.32)] ${
-                  unread ? "ring-1 ring-servido-300" : "ring-1 ring-servido-950/5"
+                  isLive
+                    ? unread
+                      ? "ring-2 ring-red-500/70"
+                      : "ring-1 ring-red-200"
+                    : unread
+                      ? "ring-1 ring-servido-300"
+                      : "ring-1 ring-servido-950/5"
                 }`}
               >
                 <CardContent className="flex items-start gap-4 p-4">
                   {servidoOfficial ? (
                     <ServidoOfficialAvatar size={28} className="mt-0.5 shrink-0" />
+                  ) : isLive && sellerPhoto ? (
+                    <span className="relative mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-red-500">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={sellerPhoto} alt="" className="h-full w-full object-cover" />
+                    </span>
                   ) : (
                     <span
                       className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                        unread ? "bg-servido-950 text-servido-gold" : "bg-servido-50 text-servido-800"
+                        isLive
+                          ? "bg-red-600 text-white"
+                          : unread
+                            ? "bg-servido-950 text-servido-gold"
+                            : "bg-servido-50 text-servido-800"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -309,7 +330,13 @@ export default function NotificationsPage() {
                         {display.title}
                       </h3>
                       {unread && (
-                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-servido-gold ring-2 ring-servido-gold/25" />
+                        <span
+                          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ring-2 ${
+                            isLive
+                              ? "bg-red-500 ring-red-500/25"
+                              : "bg-servido-gold ring-servido-gold/25"
+                          }`}
+                        />
                       )}
                     </div>
                     {display.body && <p className="mt-1 text-sm text-slate-600">{display.body}</p>}
@@ -319,10 +346,12 @@ export default function NotificationsPage() {
                     <Button
                       type="button"
                       variant="link"
-                      className="mt-2 h-auto p-0 text-sm font-semibold text-servido-800"
+                      className={`mt-2 h-auto p-0 text-sm font-semibold ${
+                        isLive ? "text-red-600" : "text-servido-800"
+                      }`}
                       onClick={() => handleViewDetail(n)}
                     >
-                      {t("viewDetail")}
+                      {isLive ? "Mirar vivo" : t("viewDetail")}
                     </Button>
                   </div>
                 </CardContent>

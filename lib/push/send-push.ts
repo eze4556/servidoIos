@@ -63,6 +63,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
     // FCM admite como máximo 500 tokens por multicast.
     for (let offset = 0; offset < tokens.length; offset += 500) {
       const chunk = tokens.slice(offset, offset + 500)
+      const isLive = payload.type === "live_started"
       const result = await messaging.sendEachForMulticast({
         tokens: chunk,
         notification: { title: payload.title, body: payload.body },
@@ -77,7 +78,8 @@ export async function sendPushToUser(userId: string, payload: PushPayload): Prom
           notification: {
             channelId: ANDROID_CHANNEL_ID,
             icon: "ic_stat_servido",
-            color: "#6d28d9",
+            color: isLive ? "#dc2626" : "#6d28d9",
+            ...(isLive ? { tag: "servido_live_started" } : {}),
           },
         },
       })

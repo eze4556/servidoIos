@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import { useParticipants, useConnectionState } from "@livekit/components-react"
 import { ConnectionState } from "livekit-client"
 import { reportViewerCountApi } from "@/lib/lives"
+import { isLivePreviewIdentity } from "@/types/live"
 import { Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -33,7 +34,10 @@ export function LiveViewerCountBadge({
   const lastSent = useRef<number | null>(null)
   const connected = connectionState === ConnectionState.Connected
 
-  const viewerCount = participants.filter((p) => p.identity !== hostIdentity).length
+  // Excluye host y previews del rail (identity preview:…).
+  const viewerCount = participants.filter(
+    (p) => p.identity !== hostIdentity && !isLivePreviewIdentity(p.identity)
+  ).length
 
   useEffect(() => {
     if (!isHost || !liveId || !connected) return

@@ -1980,6 +1980,12 @@
         "title": "Pedido cancelado",
         "body": "Seu pedido foi cancelado — {productName}"
       }
+    },
+    "live": {
+      "started": {
+        "title": "{sellerName} está ao vivo agora",
+        "body": "“{liveTitle}” · Toque para assistir"
+      }
     }
   },
   "notifications": {
