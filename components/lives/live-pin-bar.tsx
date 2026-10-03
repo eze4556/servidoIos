@@ -2,24 +2,26 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, ChevronRight, ShoppingBag, X } from "lucide-react"
+import { ChevronLeft, ChevronRight, Pencil, ShoppingBag, X } from "lucide-react"
 import type { LivePinnedProduct } from "@/types/live"
 import { reportLiveBuyClickApi } from "@/lib/lives"
-import { productHref } from "@/lib/routes"
+import { productHref, withParams } from "@/lib/routes"
 import { cn } from "@/lib/utils"
 
-function formatPrice(product: LivePinnedProduct) {
+function formatPrice(amount: number, currency?: string) {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
-    currency: product.currency || "ARS",
+    currency: currency || "ARS",
     maximumFractionDigits: 0,
-  }).format(product.price || 0)
+  }).format(amount || 0)
 }
 
 function PinCard({
   product,
   canUnpin,
   onUnpin,
+  onEditPrice,
+  onBuyInLive,
   featured,
   liveId,
   trackBuyClicks,
@@ -27,23 +29,35 @@ function PinCard({
   product: LivePinnedProduct
   canUnpin?: boolean
   onUnpin?: (productId: string) => void
+  onEditPrice?: (product: LivePinnedProduct) => void
+  /** Compra embebida en el vivo (sin ir a la ficha). */
+  onBuyInLive?: (product: LivePinnedProduct) => void
   featured?: boolean
   liveId?: string
   trackBuyClicks?: boolean
 }) {
   const router = useRouter()
   const [buying, setBuying] = useState(false)
+  const original = product.originalPrice ?? product.price
+  const hasDeal = original > product.price
 
   const goBuy = async () => {
     if (buying) return
     setBuying(true)
-    const href = productHref(product.productId)
     try {
       if (trackBuyClicks && liveId) {
         await reportLiveBuyClickApi(liveId, product.productId).catch(() => undefined)
       }
-    } finally {
+      if (onBuyInLive) {
+        onBuyInLive(product)
+        return
+      }
+      const href = liveId
+        ? withParams(productHref(product.productId), { liveId })
+        : productHref(product.productId)
       router.push(href)
+    } finally {
+      setBuying(false)
     }
   }
 
@@ -67,29 +81,59 @@ function PinCard({
         </div>
         <div className="min-w-0 flex-1 pr-6">
           <p className="line-clamp-2 text-sm font-semibold leading-snug">{product.title}</p>
-          <p className="mt-1 text-xl font-bold tracking-tight text-amber-300">
-            {formatPrice(product)}
-          </p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <p className="text-xl font-bold tracking-tight text-amber-300">
+              {formatPrice(product.price, product.currency)}
+            </p>
+            {hasDeal ? (
+              <p className="text-xs text-white/50 line-through">
+                {formatPrice(original, product.currency)}
+              </p>
+            ) : null}
+          </div>
+          {hasDeal ? (
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
+              Precio del vivo
+            </p>
+          ) : null}
         </div>
-        {canUnpin && onUnpin ? (
-          <button
-            type="button"
-            onClick={() => onUnpin(product.productId)}
-            className="absolute right-2 top-2 rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
-            aria-label="Quitar producto"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        ) : null}
+        <div className="absolute right-2 top-2 flex items-center gap-0.5">
+          {onEditPrice ? (
+            <button
+              type="button"
+              onClick={() => onEditPrice(product)}
+              className="rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+              aria-label="Cambiar precio del vivo"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          ) : null}
+          {canUnpin && onUnpin ? (
+            <button
+              type="button"
+              onClick={() => onUnpin(product.productId)}
+              className="rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+              aria-label="Quitar producto"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
       </div>
-      <button
-        type="button"
-        disabled={buying}
-        onClick={() => void goBuy()}
-        className="flex w-full items-center justify-center rounded-full bg-amber-400 py-2.5 text-sm font-bold text-servido-950 shadow-md active:scale-[0.99] disabled:opacity-70"
-      >
-        Comprar ahora
-      </button>
+      {onBuyInLive || !canUnpin ? (
+        <button
+          type="button"
+          disabled={buying}
+          onClick={() => void goBuy()}
+          className="flex w-full items-center justify-center rounded-full bg-amber-400 py-2.5 text-sm font-bold text-servido-950 shadow-md active:scale-[0.99] disabled:opacity-70"
+        >
+          Comprar ahora
+        </button>
+      ) : (
+        <p className="text-center text-[11px] text-white/55">
+          Los espectadores ven Comprar con este precio
+        </p>
+      )}
     </div>
   )
 }
@@ -102,6 +146,8 @@ export function LivePinBar({
   onUnpin,
   canUnpin,
   onFocus,
+  onEditPrice,
+  onBuyInLive,
   liveId,
   trackBuyClicks = false,
 }: {
@@ -113,6 +159,9 @@ export function LivePinBar({
   canUnpin?: boolean
   /** Host: al cambiar de slide, enfocar ese producto */
   onFocus?: (productId: string) => void
+  /** Host: editar precio especial del vivo */
+  onEditPrice?: (product: LivePinnedProduct) => void
+  onBuyInLive?: (product: LivePinnedProduct) => void
   liveId?: string
   /** Solo viewers: cuenta clics en Comprar para métricas del host */
   trackBuyClicks?: boolean
@@ -170,6 +219,8 @@ export function LivePinBar({
               product={p}
               canUnpin={canUnpin}
               onUnpin={onUnpin}
+              onEditPrice={onEditPrice}
+              onBuyInLive={onBuyInLive}
               featured={i === index}
               liveId={liveId}
               trackBuyClicks={trackBuyClicks}

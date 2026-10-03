@@ -146,8 +146,13 @@ function LiveRailCard({
             {live.title}
           </span>
           {pinned ? (
-            <span className="mt-0.5 inline-flex max-w-full truncate rounded-md bg-white/95 px-1.5 py-0.5 text-[9px] font-bold text-servido-950">
+            <span className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate rounded-md bg-white/95 px-1.5 py-0.5 text-[9px] font-bold text-servido-950">
               {formatPrice(pinned.price, pinned.currency)}
+              {pinned.originalPrice && pinned.originalPrice > pinned.price ? (
+                <span className="font-medium text-slate-400 line-through">
+                  {formatPrice(pinned.originalPrice, pinned.currency)}
+                </span>
+              ) : null}
             </span>
           ) : null}
         </span>

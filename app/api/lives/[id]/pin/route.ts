@@ -7,7 +7,9 @@ import { LIVE_PINNED_MAX, type LivePinnedProduct } from "@/types/live"
 export const runtime = "nodejs"
 
 type Ctx = { params: Promise<{ id: string }> }
-type PinAction = "add" | "remove" | "focus" | "clear"
+type PinAction = "add" | "remove" | "focus" | "clear" | "setPrice"
+
+const MAX_LIVE_PRICE = 99_999_999
 
 function firstImageUrl(data: Record<string, unknown>): string | null {
   if (typeof data.imageUrl === "string" && data.imageUrl) return data.imageUrl
@@ -32,6 +34,15 @@ function firstImageUrl(data: Record<string, unknown>): string | null {
   return null
 }
 
+function parseLivePrice(raw: unknown): number | null {
+  if (raw === undefined || raw === null || raw === "") return null
+  const n = typeof raw === "number" ? raw : Number(String(raw).replace(",", "."))
+  if (!Number.isFinite(n)) return null
+  const rounded = Math.round(n)
+  if (rounded < 1 || rounded > MAX_LIVE_PRICE) return null
+  return rounded
+}
+
 function normalizeList(raw: unknown, fallback: unknown): LivePinnedProduct[] {
   const source = Array.isArray(raw) ? raw : fallback ? [fallback] : []
   const out: LivePinnedProduct[] = []
@@ -41,10 +52,13 @@ function normalizeList(raw: unknown, fallback: unknown): LivePinnedProduct[] {
     const productId = String(p.productId || "")
     if (!productId) continue
     if (out.some((x) => x.productId === productId)) continue
+    const price = Number(p.price) || 0
+    const originalRaw = Number(p.originalPrice)
     out.push({
       productId,
       title: String(p.title || "Producto"),
-      price: Number(p.price) || 0,
+      price,
+      originalPrice: Number.isFinite(originalRaw) && originalRaw > 0 ? originalRaw : price,
       imageUrl: (p.imageUrl as string | null | undefined) ?? null,
       currency: String(p.currency || "ARS"),
       category: (p.category as string | null | undefined) ?? null,
@@ -55,7 +69,8 @@ function normalizeList(raw: unknown, fallback: unknown): LivePinnedProduct[] {
 
 async function loadPinnedProduct(
   productId: string,
-  sellerUid: string
+  sellerUid: string,
+  livePrice?: number | null
 ): Promise<LivePinnedProduct | { error: string; status: number }> {
   const productSnap = await db.collection("products").doc(productId).get()
   if (!productSnap.exists) {
@@ -66,10 +81,14 @@ async function loadPinnedProduct(
   if (ownerId && ownerId !== sellerUid) {
     return { error: "Ese producto no es de tu tienda", status: 403 }
   }
+  const catalogPrice = Math.max(0, Math.round(Number(product.price) || 0))
+  const price =
+    typeof livePrice === "number" && livePrice >= 1 ? livePrice : catalogPrice || 1
   return {
     productId,
     title: String(product.name || product.title || "Producto"),
-    price: Number(product.price) || 0,
+    price,
+    originalPrice: catalogPrice || price,
     imageUrl: firstImageUrl(product as Record<string, unknown>),
     currency: String(product.currency || "ARS"),
     category: product.category ? String(product.category) : null,
@@ -89,6 +108,14 @@ export async function POST(request: NextRequest, context: Ctx) {
       productIdRaw === null || productIdRaw === undefined || productIdRaw === ""
         ? null
         : String(productIdRaw).trim()
+    const livePrice = parseLivePrice(body?.price)
+
+    if (body?.price !== undefined && body?.price !== null && body?.price !== "" && livePrice === null) {
+      return NextResponse.json(
+        { error: "Precio inválido. Usá un número entero mayor a 0." },
+        { status: 400 }
+      )
+    }
 
     const ref = db.collection("lives").doc(liveId)
     const snap = await ref.get()
@@ -143,10 +170,54 @@ export async function POST(request: NextRequest, context: Ctx) {
       return NextResponse.json({ pinnedProduct: found, pinnedProducts: reordered })
     }
 
-    // add (default) — si ya está, lo pone al frente
-    const loaded = await loadPinnedProduct(productId, auth.user.uid)
+    if (action === "setPrice") {
+      if (livePrice === null) {
+        return NextResponse.json({ error: "Indicá el precio del vivo" }, { status: 400 })
+      }
+      const idx = list.findIndex((p) => p.productId === productId)
+      if (idx < 0) {
+        return NextResponse.json({ error: "Ese producto no está fijado" }, { status: 404 })
+      }
+      const updated: LivePinnedProduct = {
+        ...list[idx],
+        price: livePrice,
+        originalPrice: list[idx].originalPrice || list[idx].price,
+      }
+      list = [updated, ...list.filter((p) => p.productId !== productId)]
+      await ref.update({
+        pinnedProduct: updated,
+        pinnedProducts: list,
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+      return NextResponse.json({ pinnedProduct: updated, pinnedProducts: list })
+    }
+
+    // add (default) — si ya está, actualiza precio (si vino) y lo pone al frente
+    const existing = list.find((p) => p.productId === productId)
+    if (existing && livePrice === null) {
+      const reordered = [existing, ...list.filter((p) => p.productId !== productId)]
+      await ref.update({
+        pinnedProduct: existing,
+        pinnedProducts: reordered,
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+      return NextResponse.json({ pinnedProduct: existing, pinnedProducts: reordered })
+    }
+
+    const loaded = await loadPinnedProduct(
+      productId,
+      auth.user.uid,
+      livePrice ?? (existing ? existing.price : null)
+    )
     if ("error" in loaded) {
       return NextResponse.json({ error: loaded.error }, { status: loaded.status })
+    }
+    // Conservar originalPrice si ya estaba fijado.
+    if (existing?.originalPrice) {
+      loaded.originalPrice = existing.originalPrice
+    }
+    if (livePrice !== null) {
+      loaded.price = livePrice
     }
 
     list = [loaded, ...list.filter((p) => p.productId !== productId)].slice(0, LIVE_PINNED_MAX)

@@ -40,6 +40,8 @@ export type CreatePreferencePayload = {
   shippingAddress?: ShippingAddress
   /** productId → código de link revendedor */
   productReferrals?: Record<string, string>
+  /** Si viene de un vivo activo, usa el precio pinneado (oferta live). */
+  liveId?: string
 }
 
 export type CheckoutSellerPayment = {
@@ -216,10 +218,41 @@ async function getSellerInfo(sellerId: string) {
   }
 }
 
-async function validateCheckoutProducts(products: CreatePreferenceProduct[]) {
+async function resolveLivePinnedUnitPrice(
+  liveId: string,
+  productId: string
+): Promise<number | null> {
+  const liveSnap = await adminDb.collection("lives").doc(liveId).get()
+  if (!liveSnap.exists) {
+    throw new Error("No encontramos ese vivo")
+  }
+  const data = liveSnap.data() || {}
+  if (data.status !== "live") {
+    throw new Error("El vivo ya terminó; el precio especial no aplica")
+  }
+  const list = Array.isArray(data.pinnedProducts)
+    ? data.pinnedProducts
+    : data.pinnedProduct
+      ? [data.pinnedProduct]
+      : []
+  const pinned = list.find(
+    (p: { productId?: string }) => p && String(p.productId || "") === productId
+  ) as { price?: number } | undefined
+  if (!pinned) {
+    throw new Error("Ese producto ya no está fijado en el vivo")
+  }
+  const livePrice = Math.round(Number(pinned.price) || 0)
+  return livePrice >= 1 ? livePrice : null
+}
+
+async function validateCheckoutProducts(
+  products: CreatePreferenceProduct[],
+  liveId?: string
+) {
   const validatedProducts: ValidatedCheckoutProduct[] = []
   const sellerConnectionCache = new Map<string, boolean>()
   const sellerModerationCache = new Map<string, boolean>()
+  const normalizedLiveId = liveId ? String(liveId).trim() : ""
 
   for (const [index, product] of products.entries()) {
     const { productId, quantity } = product
@@ -258,7 +291,11 @@ async function validateCheckoutProducts(products: CreatePreferenceProduct[]) {
     }
 
     const sellerInfo = await getSellerInfo(sellerId)
-    const unitPrice = Number(productData.price) || 0
+    const catalogPrice = Number(productData.price) || 0
+    const livePrice = normalizedLiveId
+      ? await resolveLivePinnedUnitPrice(normalizedLiveId, productId)
+      : null
+    const unitPrice = livePrice ?? catalogPrice
     const lineSubtotal = roundMoney(unitPrice * quantity)
     // Fase 3: comisión 8% vía marketplace_fee (comprador paga precio publicado)
     const commission = calculateCommission(lineSubtotal)
@@ -510,8 +547,16 @@ async function createSellerPreferencePayment(params: {
  * - N vendedores → sesión de checkout con un pago independiente por vendedor
  */
 export async function createMercadoPagoProductPreference(request: Request, body: CreatePreferencePayload) {
-  const { products, buyerId, buyerEmail, shippingCost, shippingBySeller, shippingAddress, productReferrals } =
-    body
+  const {
+    products,
+    buyerId,
+    buyerEmail,
+    shippingCost,
+    shippingBySeller,
+    shippingAddress,
+    productReferrals,
+    liveId,
+  } = body
 
   if (!buyerId || !buyerEmail) {
     throw new Error("Faltan buyerId o buyerEmail")
@@ -523,7 +568,7 @@ export async function createMercadoPagoProductPreference(request: Request, body:
 
   await requireAuthenticatedUser(request, buyerId)
 
-  const validatedProducts = await validateCheckoutProducts(products)
+  const validatedProducts = await validateCheckoutProducts(products, liveId)
   const referralLines = await resolveReferralsForCheckout({
     buyerId,
     validatedProductIds: validatedProducts.map((p) => ({

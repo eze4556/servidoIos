@@ -74,6 +74,8 @@ export class ApiService {
       additionalInfo?: string
     }
     productReferrals?: Record<string, string>
+    /** Precio pinneado del vivo (si aplica). */
+    liveId?: string
   }): Promise<ApiResponse<{
     mode?: "single_seller" | "multi_seller"
     id: string | null
@@ -280,6 +282,7 @@ export class ApiService {
       additionalInfo?: string
     }
     productReferrals?: Record<string, string>
+    liveId?: string
   }) {
     return this.createProductPreference({
       products: [{ productId: data.productId, quantity: data.quantity }],
@@ -288,6 +291,7 @@ export class ApiService {
       shippingCost: data.shippingCost, 
       shippingAddress: data.shippingAddress,
       productReferrals: data.productReferrals,
+      liveId: data.liveId,
     })
   }
 

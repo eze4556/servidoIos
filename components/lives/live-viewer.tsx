@@ -6,10 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { getLiveSession, getLiveTokenApi, subscribeLiveSession } from "@/lib/lives"
-import type { LiveSession } from "@/types/live"
+import type { LivePinnedProduct, LiveSession } from "@/types/live"
 import { LiveRoomShell } from "@/components/lives/live-room-shell"
 import { LiveChatPanel } from "@/components/lives/live-chat-panel"
 import { LivePinBar } from "@/components/lives/live-pin-bar"
+import { LiveBuySheet } from "@/components/lives/live-buy-sheet"
 import { LiveStatusScreen } from "@/components/lives/live-status-screen"
 import { FollowButton } from "@/components/follows/follow-button"
 import { LiveShareButton } from "@/components/lives/live-share-button"
@@ -28,6 +29,7 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
   const [ended, setEnded] = useState(false)
   const [roomKey, setRoomKey] = useState(0)
   const [bootKey, setBootKey] = useState(0)
+  const [buyProduct, setBuyProduct] = useState<LivePinnedProduct | null>(null)
 
   const retryRoom = useCallback(() => {
     setRoomKey((k) => k + 1)
@@ -66,6 +68,12 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
           setEnded(true)
           return
         }
+        // El host ya está en la sala con su uid: si abre el link compartido
+        // como viewer, LiveKit falla por identity duplicada. Mandarlo al estudio.
+        if (currentUser && session.sellerId === currentUser.firebaseUser.uid) {
+          router.replace("/dashboard/seller/live")
+          return
+        }
         if (!currentUser) {
           setError("Iniciá sesión para ver el vivo")
           return
@@ -88,7 +96,7 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
     return () => {
       cancelled = true
     }
-  }, [liveId, currentUser?.firebaseUser.uid, authLoading, bootKey])
+  }, [liveId, currentUser?.firebaseUser.uid, authLoading, bootKey, router])
 
   useEffect(() => {
     if (!liveId) return
@@ -132,9 +140,13 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
   if (!currentUser) {
     return (
       <LiveStatusScreen
-        kind="error"
-        title="Iniciá sesión"
-        body="Para ver el vivo necesitás una cuenta en Servido."
+        kind="waiting-host"
+        title="Iniciá sesión para mirar"
+        body={
+          live
+            ? `${live.sellerName} está en vivo. Entrá con tu cuenta para ver la transmisión.`
+            : "Entrá con tu cuenta para ver la transmisión."
+        }
         secondaryHref={`/login?redirect=${encodeURIComponent(`/lives/${liveId}`)}`}
         secondaryLabel="Iniciar sesión"
       />
@@ -223,12 +235,22 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
                 trackBuyClicks
                 products={live.pinnedProducts}
                 product={live.pinnedProduct}
+                onBuyInLive={setBuyProduct}
               />
             ) : null}
             <LiveChatPanel liveId={live.id} compact />
           </div>
         </div>
       </LiveRoomShell>
+
+      <LiveBuySheet
+        open={Boolean(buyProduct)}
+        onOpenChange={(open) => {
+          if (!open) setBuyProduct(null)
+        }}
+        product={buyProduct}
+        liveId={live.id}
+      />
     </div>
   )
 }

@@ -5,7 +5,10 @@ export type LiveStatus = "live" | "ended"
 export interface LivePinnedProduct {
   productId: string
   title: string
+  /** Precio vigente en el vivo (puede ser oferta especial). */
   price: number
+  /** Precio de catálogo al momento de fijar (para tachado). */
+  originalPrice?: number
   imageUrl?: string | null
   currency?: string
   category?: string | null

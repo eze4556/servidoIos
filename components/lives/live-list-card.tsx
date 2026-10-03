@@ -91,9 +91,16 @@ export function LiveListCard({ live, className }: { live: LiveSession; className
             </p>
             <p className="truncate text-sm font-medium text-servido-950">{pinned.title}</p>
           </div>
-          <p className="shrink-0 text-sm font-bold text-servido-900">
-            {formatPrice(pinned.price, pinned.currency)}
-          </p>
+          <div className="shrink-0 text-right">
+            <p className="text-sm font-bold text-servido-900">
+              {formatPrice(pinned.price, pinned.currency)}
+            </p>
+            {pinned.originalPrice && pinned.originalPrice > pinned.price ? (
+              <p className="text-[11px] text-slate-400 line-through">
+                {formatPrice(pinned.originalPrice, pinned.currency)}
+              </p>
+            ) : null}
+          </div>
         </div>
       ) : (
         <div className="px-3 py-2.5 text-xs text-slate-500">Entrá a mirar y chatear</div>

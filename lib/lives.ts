@@ -35,10 +35,13 @@ function mapPinned(raw: unknown): LivePinnedProduct | null {
   const p = raw as Record<string, unknown>
   const productId = String(p.productId || "")
   if (!productId) return null
+  const price = Number(p.price) || 0
+  const originalRaw = Number(p.originalPrice)
   return {
     productId,
     title: String(p.title || "Producto"),
-    price: Number(p.price) || 0,
+    price,
+    originalPrice: Number.isFinite(originalRaw) && originalRaw > 0 ? originalRaw : price,
     imageUrl: (p.imageUrl as string | null | undefined) ?? null,
     currency: String(p.currency || "ARS"),
     category: (p.category as string | null | undefined) ?? null,
@@ -247,7 +250,8 @@ export async function reportLiveBuyClickApi(
 export async function pinProductApi(
   liveId: string,
   productId: string | null,
-  action: "add" | "remove" | "focus" | "clear" = "add"
+  action: "add" | "remove" | "focus" | "clear" | "setPrice" = "add",
+  options?: { price?: number }
 ): Promise<{ pinnedProduct: LivePinnedProduct | null; pinnedProducts: LivePinnedProduct[] }> {
   const res = await fetch(`${API_BASE}/api/lives/${encodeURIComponent(liveId)}/pin`, {
     method: "POST",
@@ -255,6 +259,7 @@ export async function pinProductApi(
     body: JSON.stringify({
       productId,
       action: productId === null ? "clear" : action,
+      ...(typeof options?.price === "number" ? { price: options.price } : {}),
     }),
   })
   const data = await res.json().catch(() => ({}))

@@ -3,9 +3,10 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useRouteId } from "@/hooks/use-route-id"
 import { categoryHref, chatHref, sellerHref } from "@/lib/routes"
+import { getLiveSession } from "@/lib/lives"
 import Link from "next/link"
 import {
   doc,
@@ -142,11 +143,17 @@ export function ProductDetail() {
   const tApi = useTranslations("apiErrors")
   const phoneBlockedLabel = tr("phoneBlocked")
   const productId = useRouteId()
+  const searchParams = useSearchParams()
+  const liveIdParam = searchParams.get("liveId") || ""
   const router = useRouter()
   const { addItem, getItemQuantity } = useCart()
   const { currentUser, authLoading } = useAuth()
 
   const [product, setProduct] = useState<Product | null>(null)
+  const [liveOffer, setLiveOffer] = useState<{
+    price: number
+    originalPrice: number
+  } | null>(null)
   const [category, setCategory] = useState<Category | null>(null)
   const [brand, setBrand] = useState<Brand | null>(null)
   const [seller, setSeller] = useState<Seller | null>(null)
@@ -335,6 +342,39 @@ export function ProductDetail() {
     }
   }
 
+  useEffect(() => {
+    if (!liveIdParam || !productId) {
+      setLiveOffer(null)
+      return
+    }
+    let cancelled = false
+    void getLiveSession(liveIdParam)
+      .then((session) => {
+        if (cancelled) return
+        if (!session || session.status !== "live") {
+          setLiveOffer(null)
+          return
+        }
+        const pinned =
+          session.pinnedProducts?.find((p) => p.productId === productId) ||
+          (session.pinnedProduct?.productId === productId ? session.pinnedProduct : null)
+        if (!pinned) {
+          setLiveOffer(null)
+          return
+        }
+        setLiveOffer({
+          price: pinned.price,
+          originalPrice: pinned.originalPrice ?? product?.price ?? pinned.price,
+        })
+      })
+      .catch(() => {
+        if (!cancelled) setLiveOffer(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [liveIdParam, productId, product?.price])
+
   const handleAddToCart = () => {
     if (!product) return
 
@@ -345,7 +385,7 @@ export function ProductDetail() {
       id: product.id,
       name: product.name,
       description: product.description,
-      price: product.price,
+      price: finalPrice,
       discountedPrice: finalPrice,
       quantity: quantity,
       imageUrl: firstImage?.url || product.imageUrl,
@@ -712,6 +752,7 @@ export function ProductDetail() {
         buyerEmail: currentUser.firebaseUser.email || '',
         shippingCost: product.shippingCost,
         productReferrals: buildReferralPayloadForProducts([product.id]),
+        ...(liveIdParam ? { liveId: liveIdParam } : {}),
       })
 
       if (response.error) {
@@ -748,7 +789,10 @@ export function ProductDetail() {
     }
   }
 
-  const finalPrice = product?.price || 0
+  const finalPrice = liveOffer?.price ?? product?.price ?? 0
+  const catalogPrice = product?.price || 0
+  const showLiveDeal =
+    Boolean(liveOffer) && catalogPrice > 0 && liveOffer!.price !== catalogPrice
 
   if (loading || authLoading) {
     return (
@@ -904,7 +948,15 @@ export function ProductDetail() {
               <div className="border-t border-servido-950/[0.06] pt-4">
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span className="text-3xl font-bold tracking-tight text-servido-800 sm:text-4xl">{formatPrice(finalPrice)}</span>
+                  {showLiveDeal ? (
+                    <span className="text-lg text-slate-400 line-through">{formatPrice(catalogPrice)}</span>
+                  ) : null}
                 </div>
+                {liveOffer ? (
+                  <p className="mt-2 inline-flex rounded-full bg-red-600 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                    Precio del vivo
+                  </p>
+                ) : null}
                 {!product.freeShipping && product.shippingCost !== undefined && (
                   <p className="mt-2 flex items-center gap-2 text-sm text-gray-600">
                     <Truck className="h-4 w-4 text-purple-600" />

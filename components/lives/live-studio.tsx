@@ -18,7 +18,7 @@ import {
   startLiveApi,
   subscribeLiveSession,
 } from "@/lib/lives"
-import type { LiveSession } from "@/types/live"
+import type { LivePinnedProduct, LiveSession } from "@/types/live"
 import { LiveRoomShell, LiveHostControlsSlot } from "@/components/lives/live-room-shell"
 import { LiveChatPanel } from "@/components/lives/live-chat-panel"
 import { LivePinBar } from "@/components/lives/live-pin-bar"
@@ -60,6 +60,13 @@ export function LiveStudio() {
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null)
   const [facing, setFacing] = useState<LiveFacingMode>("user")
   const [previewOn, setPreviewOn] = useState(true)
+  const [priceDraft, setPriceDraft] = useState<{
+    productId: string
+    name: string
+    catalogPrice: number
+    mode: "add" | "setPrice"
+  } | null>(null)
+  const [priceInput, setPriceInput] = useState("")
 
   const uid = currentUser?.firebaseUser.uid
   const canGoLive =
@@ -177,13 +184,16 @@ export function LiveStudio() {
 
   async function handlePin(
     productId: string | null,
-    action: "add" | "remove" | "focus" | "clear" = "add"
+    action: "add" | "remove" | "focus" | "clear" | "setPrice" = "add",
+    price?: number
   ) {
     if (!live) return
     setPinning(true)
     setError(null)
     try {
-      const result = await pinProductApi(live.id, productId, action)
+      const result = await pinProductApi(live.id, productId, action, {
+        price,
+      })
       setLive((prev) =>
         prev
           ? {
@@ -193,11 +203,42 @@ export function LiveStudio() {
             }
           : prev
       )
+      setPriceDraft(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo fijar")
     } finally {
       setPinning(false)
     }
+  }
+
+  function openAddWithPrice(p: ProductOption) {
+    setPriceDraft({
+      productId: p.id,
+      name: p.name,
+      catalogPrice: p.price,
+      mode: "add",
+    })
+    setPriceInput(String(Math.round(p.price) || ""))
+  }
+
+  function openEditPrice(p: LivePinnedProduct) {
+    setPriceDraft({
+      productId: p.productId,
+      name: p.title,
+      catalogPrice: p.originalPrice ?? p.price,
+      mode: "setPrice",
+    })
+    setPriceInput(String(Math.round(p.price) || ""))
+  }
+
+  function confirmLivePrice() {
+    if (!priceDraft) return
+    const n = Math.round(Number(String(priceInput).replace(",", ".")))
+    if (!Number.isFinite(n) || n < 1) {
+      setError("Ingresá un precio válido mayor a 0")
+      return
+    }
+    void handlePin(priceDraft.productId, priceDraft.mode, n)
   }
 
   if (authLoading || !currentUser || !canGoLive) {
@@ -305,11 +346,13 @@ export function LiveStudio() {
             <div className="pointer-events-auto mr-[5.75rem] space-y-2.5">
               {(live.pinnedProducts?.length || live.pinnedProduct) ? (
                 <LivePinBar
+                  liveId={live.id}
                   products={live.pinnedProducts}
                   product={live.pinnedProduct}
                   canUnpin
                   onUnpin={(id) => void handlePin(id, "remove")}
                   onFocus={(id) => void handlePin(id, "focus")}
+                  onEditPrice={openEditPrice}
                 />
               ) : null}
 
@@ -336,7 +379,7 @@ export function LiveStudio() {
                           type="button"
                           disabled={pinning}
                           onClick={() =>
-                            void handlePin(p.id, pinned ? "remove" : "add")
+                            pinned ? void handlePin(p.id, "remove") : openAddWithPrice(p)
                           }
                           className={cn(
                             "flex w-[4.5rem] shrink-0 flex-col items-center gap-1 rounded-xl p-1.5 text-center transition",
@@ -382,6 +425,65 @@ export function LiveStudio() {
           <p className="absolute bottom-2 left-1/2 z-40 max-w-[90%] -translate-x-1/2 rounded-full bg-red-600/90 px-3 py-1 text-center text-xs text-white">
             {error}
           </p>
+        ) : null}
+
+        {priceDraft ? (
+          <div className="absolute inset-0 z-[90] flex items-end justify-center bg-black/55 p-4 sm:items-center">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-4 shadow-xl">
+              <p className="text-xs font-semibold uppercase tracking-wide text-red-600">
+                Precio del vivo
+              </p>
+              <p className="mt-1 text-base font-semibold text-servido-950">{priceDraft.name}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                Catálogo:{" "}
+                {new Intl.NumberFormat("es-AR", {
+                  style: "currency",
+                  currency: "ARS",
+                  maximumFractionDigits: 0,
+                }).format(priceDraft.catalogPrice || 0)}
+              </p>
+              <label className="mt-4 block text-sm font-medium text-servido-950">
+                Precio especial en el vivo
+              </label>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={priceInput}
+                onChange={(e) => setPriceInput(e.target.value)}
+                className="mt-1.5"
+                autoFocus
+              />
+              <p className="mt-1.5 text-[11px] text-slate-500">
+                Solo vale para este vivo. El precio del catálogo no se modifica.
+              </p>
+              <div className="mt-4 flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 rounded-full"
+                  disabled={pinning}
+                  onClick={() => setPriceDraft(null)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1 rounded-full bg-red-600 hover:bg-red-700"
+                  disabled={pinning}
+                  onClick={confirmLivePrice}
+                >
+                  {pinning ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : priceDraft.mode === "setPrice" ? (
+                    "Actualizar"
+                  ) : (
+                    "Fijar en vivo"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
         ) : null}
       </div>
     )
