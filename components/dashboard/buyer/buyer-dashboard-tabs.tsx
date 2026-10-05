@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useState, type ChangeEvent } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { AlertCircle, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Clock, CreditCard, Download, Heart, Loader2, MessageSquare, Package, PackageCheck, ShoppingBag, Sparkles, User, XCircle } from "lucide-react"
+import { AlertCircle, AlertTriangle, Bike, CheckCircle, ChevronLeft, ChevronRight, Clock, CreditCard, Download, Heart, Loader2, MessageSquare, Package, PackageCheck, PackagePlus, ShoppingBag, Sparkles, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -24,6 +24,7 @@ import { getDashboardProductImage } from "@/lib/image-utils"
 import { claimHref, productHref } from "@/lib/routes"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useTranslations, useLocale } from "next-intl"
+import { ProfilePhotoEditor } from "@/components/profile/profile-photo-editor"
 
 interface CompraProductoBuyer {
   compraId: string
@@ -74,15 +75,6 @@ interface BuyerDashboardTabsProps {
     email?: string | null
     photoURL?: string | null
   } | null
-  profileImagePreviewUrl: string | null
-  profileImageFile: File | null
-  uploadingProfileImage: boolean
-  profileUpdateError: string | null
-  profileUpdateSuccess: string | null
-  onProfileImageChange: (e: ChangeEvent<HTMLInputElement>) => void
-  onUploadProfileImage: () => void
-  onRemoveProfileImage: () => void
-  onCancelProfileImageSelection: () => void
   buyerId?: string | null
 }
 
@@ -112,15 +104,6 @@ export function BuyerDashboardTabs({
   onConfirmDeliveryCentralized,
   canConfirmDelivery,
   currentUser,
-  profileImagePreviewUrl,
-  profileImageFile,
-  uploadingProfileImage,
-  profileUpdateError,
-  profileUpdateSuccess,
-  onProfileImageChange,
-  onUploadProfileImage,
-  onRemoveProfileImage,
-  onCancelProfileImageSelection,
   buyerId,
 }: BuyerDashboardTabsProps) {
   const t = useTranslations("buyerDashboard")
@@ -200,6 +183,39 @@ export function BuyerDashboardTabs({
           <BuyerStatCard title={t("statsFavorites")} value={favorites.length} icon={Heart} accent="rose" />
           <BuyerStatCard title={t("statsPendingPayments")} value={pendingPayments} icon={Clock} accent="amber" />
         </div>
+
+        <BuyerPanel title={t("growTitle")} description={t("growSubtitle")}>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Link
+              href="/dashboard/buyer?tab=openStore"
+              onClick={() => onTabChange("openStore")}
+              className="rounded-2xl bg-servido-50/80 p-4 ring-1 ring-servido-100 transition hover:ring-servido-300"
+            >
+              <Store className="mb-2 h-5 w-5 text-servido-800" />
+              <p className="text-sm font-semibold text-gray-900">{t("growStore")}</p>
+            </Link>
+            <Link
+              href="/dashboard/buyer?tab=publishProduct"
+              onClick={() => onTabChange("publishProduct")}
+              className="rounded-2xl bg-violet-50/80 p-4 ring-1 ring-violet-100 transition hover:ring-violet-300"
+            >
+              <PackagePlus className="mb-2 h-5 w-5 text-violet-800" />
+              <p className="text-sm font-semibold text-gray-900">{t("growPublish")}</p>
+            </Link>
+            <Link
+              href="/dashboard/buyer?tab=becomeCadete"
+              onClick={() => onTabChange("becomeCadete")}
+              className="relative rounded-2xl bg-gradient-to-br from-sky-50 to-sky-100/80 p-4 ring-2 ring-sky-300/70 transition hover:ring-sky-500 sm:col-span-1"
+            >
+              <span className="absolute right-3 top-3 rounded-full bg-sky-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                {t("growCadeteBadge")}
+              </span>
+              <Bike className="mb-2 h-6 w-6 text-sky-700" />
+              <p className="text-sm font-semibold text-gray-900">{t("growCadete")}</p>
+              <p className="mt-1 text-xs text-sky-900/70">{t("growCadeteHint")}</p>
+            </Link>
+          </div>
+        </BuyerPanel>
 
         <BuyerPanel title={t("recentActivity")} description={t("recentActivityDesc")}>
           {loadingData ? (
@@ -547,77 +563,8 @@ export function BuyerDashboardTabs({
 
             <Separator />
 
-            <div className="space-y-4">
-              <h3 className="text-base font-semibold text-gray-900">{t("profilePhoto")}</h3>
-              <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
-                <div className="relative h-28 w-28 overflow-hidden rounded-full border-4 border-purple-100 bg-purple-50">
-                  {profileImagePreviewUrl ? (
-                    <Image src={profileImagePreviewUrl} alt={t("profilePhotoAlt")} fill className="object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <User className="h-12 w-12 text-purple-300" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="w-full max-w-md space-y-3">
-                  <Input
-                    id="profileImage"
-                    type="file"
-                    accept="image/*"
-                    onChange={onProfileImageChange}
-                    className="cursor-pointer rounded-xl border-purple-100 text-sm file:mr-4 file:rounded-full file:border-0 file:bg-purple-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-purple-900 hover:file:bg-purple-200"
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      onClick={onUploadProfileImage}
-                      disabled={!profileImageFile || uploadingProfileImage}
-                      className="rounded-full bg-purple-900 hover:bg-purple-800"
-                    >
-                      {uploadingProfileImage ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Subiendo…
-                        </>
-                      ) : (
-                        t("uploadPhoto")
-                      )}
-                    </Button>
-                    {profileImageFile && (
-                      <Button variant="outline" size="sm" className="rounded-full" onClick={onCancelProfileImageSelection}>
-                        <XCircle className="mr-1 h-4 w-4" />
-                        {t("cancel")}
-                      </Button>
-                    )}
-                    {currentUser?.photoURL && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="rounded-full"
-                        onClick={onRemoveProfileImage}
-                        disabled={uploadingProfileImage}
-                      >
-                        {t("removePhoto")}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {profileUpdateError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>{tr("errorTitle")}</AlertTitle>
-                  <AlertDescription>{profileUpdateError}</AlertDescription>
-                </Alert>
-              )}
-              {profileUpdateSuccess && (
-                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertTitle>{tr("successTitle")}</AlertTitle>
-                  <AlertDescription>{profileUpdateSuccess}</AlertDescription>
-                </Alert>
-              )}
+            <div className="rounded-2xl bg-white p-5 ring-1 ring-gray-100">
+              <ProfilePhotoEditor />
             </div>
           </TabsContent>
 

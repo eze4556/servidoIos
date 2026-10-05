@@ -12,7 +12,6 @@ import {
   where,
 } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,19 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  BellRing,
-  CreditCard,
-  Package,
-  Truck,
-  Clock,
-  CheckCircle,
-  XCircle,
-  UtensilsCrossed,
-  Calendar,
-  AlertCircle,
-  Radio,
-} from "lucide-react"
+import { BellRing, CheckCheck, MessageCircle } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import {
   isNotificationRead,
@@ -43,10 +30,16 @@ import {
 } from "@/lib/notifications"
 import { resolveAppNotificationDisplay } from "@/lib/i18n/resolve-app-notification"
 import { isServidoOfficialNotification } from "@/lib/servido-official"
-import { ServidoOfficialAvatar } from "@/components/chat/servido-official-avatar"
 import { syncAppointmentNotificationsForUser } from "@/lib/service-appointments"
 import type { AppNotification } from "@/types/notifications"
 import { resolveStoredHref } from "@/lib/routes"
+import {
+  NotificationListItem,
+  isChatNotification,
+} from "@/components/notifications/notification-list-item"
+import { cn } from "@/lib/utils"
+
+type FilterId = "all" | "unread" | "chat" | "activity"
 
 function normalizeNotificationLink(link: unknown): string | null {
   if (typeof link !== "string") return null
@@ -69,36 +62,18 @@ function formatNotificationTime(
   const date = ts.toDate ? ts.toDate() : new Date(timestamp as string | number)
   if (Number.isNaN(date.getTime())) return ""
   const now = new Date()
-  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-  if (diffInHours < 1) return t("timeLessThanHour")
+  const diffMs = now.getTime() - date.getTime()
+  const diffInMinutes = Math.floor(diffMs / (1000 * 60))
+  const diffInHours = Math.floor(diffMs / (1000 * 60 * 60))
+  if (diffInMinutes < 1) return t("timeJustNow")
+  if (diffInMinutes < 60) return t("timeMinutesAgo", { count: diffInMinutes })
   if (diffInHours < 24) return t("timeHoursAgo", { count: diffInHours })
   if (diffInHours < 48) return t("timeYesterday")
   return date.toLocaleDateString(locale === "pt-BR" ? "pt-BR" : "es-AR")
 }
 
-function iconFor(type: string, shippingStatus?: string) {
-  if (type === "shipping" || type === "centralized_shipping") {
-    switch (shippingStatus) {
-      case "pending":
-        return Clock
-      case "preparing":
-        return Package
-      case "shipped":
-        return Truck
-      case "delivered":
-        return CheckCircle
-      case "cancelled":
-        return XCircle
-      default:
-        return Package
-    }
-  }
-  if (type === "food_order") return UtensilsCrossed
-  if (type === "subscription" || type === "payment") return CreditCard
-  if (type === "service") return Calendar
-  if (type === "promo") return BellRing
-  if (type === "live_started") return Radio
-  return AlertCircle
+function createdAtMs(n: AppNotification): number {
+  return n.createdAt?.toMillis?.() ?? (n.createdAt?.seconds ? n.createdAt.seconds * 1000 : 0)
 }
 
 export default function NotificationsPage() {
@@ -111,6 +86,7 @@ export default function NotificationsPage() {
   const [items, setItems] = useState<AppNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [markingAll, setMarkingAll] = useState(false)
+  const [filter, setFilter] = useState<FilterId>("all")
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailItem, setDetailItem] = useState<AppNotification | null>(null)
   const uid = currentUser?.firebaseUser?.uid
@@ -125,18 +101,13 @@ export default function NotificationsPage() {
     setLoading(true)
     void syncAppointmentNotificationsForUser(uid).catch(() => undefined)
 
-    // Una sola suscripción; ordenamos en cliente (evita crash de listeners anidados)
     const q = query(collection(db, "notifications"), where("userId", "==", uid), limit(80))
 
     const unsub = onSnapshot(
       q,
       (snap) => {
         const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<AppNotification, "id">) }))
-        list.sort((a, b) => {
-          const at = a.createdAt?.toMillis?.() ?? (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0)
-          const bt = b.createdAt?.toMillis?.() ?? (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0)
-          return bt - at
-        })
+        list.sort((a, b) => createdAtMs(b) - createdAtMs(a))
         setItems(list)
         setLoading(false)
       },
@@ -151,6 +122,25 @@ export default function NotificationsPage() {
   }, [uid])
 
   const unreadCount = useMemo(() => items.filter((n) => !isNotificationRead(n)).length, [items])
+  const chatUnreadCount = useMemo(
+    () => items.filter((n) => isChatNotification(n) && !isNotificationRead(n)).length,
+    [items]
+  )
+  const activityUnreadCount = useMemo(
+    () => items.filter((n) => !isChatNotification(n) && !isNotificationRead(n)).length,
+    [items]
+  )
+
+  const filteredItems = useMemo(() => {
+    return items.filter((n) => {
+      const unread = !isNotificationRead(n)
+      const chat = isChatNotification(n)
+      if (filter === "unread") return unread
+      if (filter === "chat") return chat
+      if (filter === "activity") return !chat
+      return true
+    })
+  }, [items, filter])
 
   const handleOpen = async (n: AppNotification) => {
     if (!isNotificationRead(n)) {
@@ -190,11 +180,18 @@ export default function NotificationsPage() {
     }
   }
 
+  const filters: { id: FilterId; label: string; count?: number }[] = [
+    { id: "all", label: t("filterAll"), count: items.length },
+    { id: "unread", label: t("filterUnread"), count: unreadCount },
+    { id: "chat", label: t("filterChat"), count: chatUnreadCount },
+    { id: "activity", label: t("filterActivity"), count: activityUnreadCount },
+  ]
+
   if (!uid) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
+      <div className="min-h-screen bg-[#f4f2f7] pb-24">
         <div className="container mx-auto max-w-screen-xl px-4 py-16 md:px-6">
-          <div className="mx-auto max-w-md rounded-3xl bg-white px-6 py-12 text-center shadow-[0_24px_50px_-28px_rgba(46,16,101,0.32)] ring-1 ring-servido-950/5">
+          <div className="mx-auto max-w-md rounded-3xl bg-white px-6 py-12 text-center shadow-sm ring-1 ring-servido-950/8">
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-servido-50 text-servido-800">
               <BellRing className="h-8 w-8" />
             </span>
@@ -213,153 +210,173 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
-      <div className="container mx-auto max-w-screen-xl px-4 py-6 md:px-6 md:py-8">
-        <section className="mx-auto mb-8 max-w-2xl overflow-hidden rounded-2xl bg-servido-950 shadow-[0_24px_60px_-28px_rgba(46,16,101,0.4)] ring-1 ring-servido-950/10 lg:mb-10 lg:rounded-[1.75rem]">
-          <div className="relative px-5 py-8 sm:px-8 sm:py-10">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_120%_at_0%_0%,rgba(255,212,0,0.14),transparent_50%)]" />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_100%_at_100%_100%,rgba(146,4,248,0.22),transparent_45%)]" />
-            <div className="relative flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
-                  <BellRing className="h-3.5 w-3.5 text-servido-gold" />
-                  Servido
-                </p>
-                <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                  {t("title")}
-                </h1>
-                {unreadCount > 0 && (
-                  <p className="mt-3 text-sm text-white/70">
-                    {t("unreadCount", { count: unreadCount })}
-                  </p>
-                )}
-              </div>
-              {unreadCount > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={markingAll}
-                  onClick={() => void handleMarkAll()}
-                  className="rounded-full border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                >
-                  {t("markAllRead")}
-                </Button>
-              )}
+    <div className="min-h-screen bg-[#f4f2f7] pb-24">
+      <div className="border-b border-servido-950/5 bg-servido-950">
+        <div className="container mx-auto max-w-2xl px-4 py-6 md:px-6 md:py-7">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                <BellRing className="h-3.5 w-3.5 text-servido-gold" />
+                Servido
+              </p>
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                {t("title")}
+              </h1>
+              <p className="mt-2 text-sm text-white/70">
+                {unreadCount > 0 ? t("unreadCount", { count: unreadCount }) : t("allCaughtUp")}
+              </p>
             </div>
+            {unreadCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={markingAll}
+                onClick={() => void handleMarkAll()}
+                className="rounded-full border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              >
+                <CheckCheck className="mr-1.5 h-4 w-4" />
+                {t("markAllRead")}
+              </Button>
+            )}
           </div>
-        </section>
 
-      {loading ? (
-        <div className="mx-auto grid max-w-2xl gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-2xl bg-white p-4 shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5"
-            >
-              <div className="flex items-start gap-4">
-                <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-slate-200" />
-                <div className="min-w-0 flex-1 space-y-2">
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
-                  <div className="h-3 animate-pulse rounded bg-slate-100" />
-                  <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100" />
+          {(chatUnreadCount > 0 || activityUnreadCount > 0) && (
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setFilter("chat")}
+                className="rounded-2xl bg-sky-500/15 px-3 py-3 text-left ring-1 ring-sky-300/30 transition hover:bg-sky-500/25"
+              >
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-sky-200">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  {t("summaryChat")}
+                </p>
+                <p className="mt-1 text-lg font-semibold text-white">{chatUnreadCount}</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilter("unread")}
+                className="rounded-2xl bg-servido-gold/15 px-3 py-3 text-left ring-1 ring-servido-gold/25 transition hover:bg-servido-gold/25"
+              >
+                <p className="text-xs font-semibold text-servido-gold">{t("summaryPending")}</p>
+                <p className="mt-1 text-lg font-semibold text-white">{unreadCount}</p>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="sticky top-0 z-20 border-b border-servido-950/5 bg-[#f4f2f7]/95 backdrop-blur-md">
+        <div className="container mx-auto max-w-2xl px-4 py-3 md:px-6">
+          <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {filters.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setFilter(item.id)}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition",
+                  filter === item.id
+                    ? item.id === "chat"
+                      ? "bg-sky-600 text-white shadow-sm"
+                      : "bg-servido-950 text-white shadow-sm"
+                    : "bg-white text-slate-700 ring-1 ring-servido-950/8 hover:bg-servido-50"
+                )}
+              >
+                {item.label}
+                {typeof item.count === "number" && item.count > 0 && (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                      filter === item.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                    )}
+                  >
+                    {item.count > 99 ? "99+" : item.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto max-w-2xl px-4 py-5 md:px-6 md:py-6">
+        {loading ? (
+          <div className="grid gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-servido-950/5">
+                <div className="flex items-start gap-4">
+                  <div className="h-11 w-11 shrink-0 animate-pulse rounded-2xl bg-slate-200" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
+                    <div className="h-3 animate-pulse rounded bg-slate-100" />
+                    <div className="h-3 w-1/3 animate-pulse rounded bg-slate-100" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : items.length === 0 ? (
-        <div className="mx-auto max-w-2xl rounded-3xl bg-white px-6 py-16 text-center shadow-[0_16px_40px_-28px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5">
-          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-servido-50 text-servido-300">
-            <BellRing className="h-8 w-8" />
-          </span>
-          <p className="mt-5 text-lg text-slate-600">{t("empty")}</p>
-        </div>
-      ) : (
-        <div className="mx-auto grid max-w-2xl gap-3">
-          {items.map((n) => {
-            const unread = !isNotificationRead(n)
-            const display = resolveAppNotificationDisplay(n, tApp, locale)
-            const meta = (n.meta || {}) as Record<string, unknown>
-            const shippingStatus = String(
-              (n as any).shippingStatus || meta.shippingStatus || ""
-            )
-            const Icon = iconFor(String(n.type), shippingStatus)
-            const servidoOfficial = isServidoOfficialNotification(meta)
+            ))}
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="rounded-3xl bg-white px-6 py-16 text-center shadow-sm ring-1 ring-servido-950/5">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-servido-50 text-servido-300">
+              {filter === "chat" ? (
+                <MessageCircle className="h-8 w-8" />
+              ) : (
+                <BellRing className="h-8 w-8" />
+              )}
+            </span>
+            <p className="mt-5 text-lg text-slate-600">
+              {filter === "chat"
+                ? t("emptyChat")
+                : filter === "unread"
+                  ? t("emptyUnread")
+                  : t("empty")}
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {filteredItems.map((n) => {
+              const unread = !isNotificationRead(n)
+              const display = resolveAppNotificationDisplay(n, tApp, locale)
+              const meta = (n.meta || {}) as Record<string, unknown>
+              const shippingStatus = String(
+                (n as { shippingStatus?: string }).shippingStatus || meta.shippingStatus || ""
+              )
+              const servidoOfficial = isServidoOfficialNotification(meta)
+              const isLive = String(n.type) === "live_started"
+              const isChat = isChatNotification(n)
+              const sellerPhoto =
+                typeof meta.sellerPhotoURL === "string" ? meta.sellerPhotoURL : null
+              const senderName =
+                typeof meta.senderName === "string"
+                  ? meta.senderName
+                  : typeof meta.buyerName === "string"
+                    ? meta.buyerName
+                    : null
 
-            const isLive = String(n.type) === "live_started"
-            const sellerPhoto =
-              typeof meta.sellerPhotoURL === "string" ? meta.sellerPhotoURL : null
-
-            return (
-              <Card
-                key={n.id}
-                className={`overflow-hidden rounded-2xl border-0 bg-white shadow-[0_12px_32px_-24px_rgba(46,16,101,0.28)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-22px_rgba(46,16,101,0.32)] ${
-                  isLive
-                    ? unread
-                      ? "ring-2 ring-red-500/70"
-                      : "ring-1 ring-red-200"
-                    : unread
-                      ? "ring-1 ring-servido-300"
-                      : "ring-1 ring-servido-950/5"
-                }`}
-              >
-                <CardContent className="flex items-start gap-4 p-4">
-                  {servidoOfficial ? (
-                    <ServidoOfficialAvatar size={28} className="mt-0.5 shrink-0" />
-                  ) : isLive && sellerPhoto ? (
-                    <span className="relative mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-red-500">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={sellerPhoto} alt="" className="h-full w-full object-cover" />
-                    </span>
-                  ) : (
-                    <span
-                      className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                        isLive
-                          ? "bg-red-600 text-white"
-                          : unread
-                            ? "bg-servido-950 text-servido-gold"
-                            : "bg-servido-50 text-servido-800"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </span>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-base font-semibold leading-snug text-servido-950">
-                        {display.title}
-                      </h3>
-                      {unread && (
-                        <span
-                          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ring-2 ${
-                            isLive
-                              ? "bg-red-500 ring-red-500/25"
-                              : "bg-servido-gold ring-servido-gold/25"
-                          }`}
-                        />
-                      )}
-                    </div>
-                    {display.body && <p className="mt-1 text-sm text-slate-600">{display.body}</p>}
-                    <p className="mt-1.5 text-xs text-slate-400">
-                      {formatNotificationTime(n.createdAt, t, locale)}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="link"
-                      className={`mt-2 h-auto p-0 text-sm font-semibold ${
-                        isLive ? "text-red-600" : "text-servido-800"
-                      }`}
-                      onClick={() => handleViewDetail(n)}
-                    >
-                      {isLive ? "Mirar vivo" : t("viewDetail")}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      )}
+              return (
+                <NotificationListItem
+                  key={n.id}
+                  title={display.title}
+                  body={display.body}
+                  timeLabel={formatNotificationTime(n.createdAt, t, locale)}
+                  unread={unread}
+                  type={String(n.type)}
+                  shippingStatus={shippingStatus}
+                  servidoOfficial={servidoOfficial}
+                  isLive={isLive}
+                  sellerPhoto={sellerPhoto}
+                  senderName={senderName}
+                  onOpen={() => handleViewDetail(n)}
+                  ctaLabel={
+                    isLive ? t("watchLive") : isChat ? t("openChat") : t("viewDetail")
+                  }
+                />
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-w-md rounded-3xl">
@@ -370,7 +387,9 @@ export default function NotificationsPage() {
             <DialogDescription className="sr-only">{t("detailTitle")}</DialogDescription>
           </DialogHeader>
           {detailDisplay?.body ? (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{detailDisplay.body}</p>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+              {detailDisplay.body}
+            </p>
           ) : null}
           {detailItem && (
             <p className="text-xs text-muted-foreground">
@@ -395,14 +414,15 @@ export default function NotificationsPage() {
                 className="rounded-full bg-servido-gold font-semibold text-servido-950 hover:bg-[#ffe566]"
               >
                 <Link href={detailLink} onClick={() => setDetailOpen(false)}>
-                  {t("detailGoTo")}
+                  {detailItem && isChatNotification(detailItem)
+                    ? t("openChat")
+                    : t("detailGoTo")}
                 </Link>
               </Button>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
     </div>
   )
 }

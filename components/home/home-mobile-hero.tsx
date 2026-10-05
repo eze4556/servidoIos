@@ -6,6 +6,7 @@ import { MobileAppHeader } from "@/components/layout/mobile-app-header"
 import { HomeStoriesSection } from "@/components/stories/home-stories-section"
 import { LivesRail } from "@/components/lives/lives-rail"
 import { HomeVerticalSpotlights } from "@/components/home/home-vertical-spotlights"
+import { BecomeCadeteCta } from "@/components/cadete/become-cadete-cta"
 
 /** Orden fijo del home mobile: navbar → historias → en vivo → banner → categorías */
 export function HomeMobileHero() {
@@ -26,6 +27,10 @@ export function HomeMobileHero() {
       </div>
 
       <HomeServiceShortcuts />
+
+      <div className="px-4 pb-1 pt-3">
+        <BecomeCadeteCta variant="banner" />
+      </div>
 
       <div className="px-4 pb-4 pt-4">
         <HomeVerticalSpotlights />

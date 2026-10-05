@@ -25,7 +25,7 @@ export async function notifyChatMessage(input: ChatMessageNotificationInput): Pr
     {
       userId: recipientId,
       type: "chat",
-      title: `Nuevo mensaje de ${senderName}`,
+      title: senderName ? `Mensaje de ${senderName}` : "Nuevo mensaje",
       body: preview,
       link: `/chat/${encodeURIComponent(input.chatId)}`,
       dedupeKey: `chat_message_${input.chatId}_${input.messageId}`,
@@ -33,6 +33,7 @@ export async function notifyChatMessage(input: ChatMessageNotificationInput): Pr
         chatId: input.chatId,
         messageId: input.messageId,
         senderName,
+        preview,
       },
     },
   ])

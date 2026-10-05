@@ -2,6 +2,24 @@ export type DeliveryMode = "delivery_propio" | "retiro_en_local" | "ambos"
 
 export type RestaurantStatus = "pending" | "approved" | "active" | "inactive"
 
+/** Clasificación del comercio de comida al crear la tienda. */
+export type FoodBusinessKind =
+  | "restaurant"
+  | "casa_de_comidas"
+  | "kiosco"
+  | "supermercado"
+  | "otros"
+
+export const FOOD_BUSINESS_KINDS: FoodBusinessKind[] = [
+  "restaurant",
+  "casa_de_comidas",
+  "kiosco",
+  "supermercado",
+  "otros",
+]
+
+export type SellCategory = "food" | "products"
+
 export type FoodOrderStatus =
   | "recibido"
   | "confirmado"
@@ -39,6 +57,8 @@ export interface Restaurant {
   city?: string | null
   locationLabel?: string
   coordinates?: { latitude: number; longitude: number } | null
+  /** Tipo de comercio de comida (restaurante, kiosco, etc.). */
+  foodBusinessKind?: FoodBusinessKind | null
   deliveryMode: DeliveryMode
   status: RestaurantStatus
   /** @deprecated Prefer coverImageUrl / logoUrl */

@@ -107,7 +107,7 @@ export default function AcercaDeNosotrosPage() {
           primaryLabel={t("ctaProducts")}
           primaryHref="/products"
           secondaryLabel={t("ctaSell")}
-          secondaryHref="/signup?role=seller"
+          secondaryHref="/signup"
         />
       </div>
     </InfoPageShell>

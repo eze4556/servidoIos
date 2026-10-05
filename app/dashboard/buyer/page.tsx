@@ -9,14 +9,13 @@ import {
 } from "@/components/dashboard/buyer/buyer-dashboard-shell"
 import { ResellerDashboardPanel } from "@/components/reseller/reseller-dashboard-panel"
 import { OpenStorePanel } from "@/components/dashboard/buyer/open-store-panel"
+import { QuickPublishProductPanel } from "@/components/dashboard/buyer/quick-publish-product-panel"
 import { BuyerDashboardTabs } from "@/components/dashboard/buyer/buyer-dashboard-tabs"
 import { BuyerAdvancedStats } from "@/components/dashboard/advanced-stats/buyer-advanced-stats"
 
-import { useState, useEffect, type ChangeEvent } from "react"
-import { db, storage } from "@/lib/firebase"
+import { useState, useEffect } from "react"
+import { db } from "@/lib/firebase"
 import { doc, collection, query, where, getDocs, deleteDoc, updateDoc, getDoc, serverTimestamp } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage"
-import { updateProfile, getAuth } from "firebase/auth"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useToast } from "@/components/ui/use-toast"
@@ -102,10 +101,9 @@ export default function BuyerDashboardPage() {
   const { formatPriceNumber } = usePriceFormat()
   const td = useTranslations("buyerDashboard")
   const { toast } = useToast()
-  const { currentUser, authLoading, handleLogout, refreshUserProfile } = useAuth() // Use useAuth hook
+  const { currentUser, authLoading, handleLogout } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const auth = getAuth()
 
   const [activeTab, setActiveTab] = useState<BuyerDashboardTab>("dashboard")
 
@@ -119,6 +117,8 @@ export default function BuyerDashboardPage() {
       tab === "favorites" ||
       tab === "reseller" ||
       tab === "openStore" ||
+      tab === "publishProduct" ||
+      tab === "becomeCadete" ||
       tab === "stats" ||
       tab === "profile" ||
       tab === "dashboard"
@@ -141,13 +141,6 @@ export default function BuyerDashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  // Profile Image Upload State
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
-  const [profileImagePreviewUrl, setProfileImagePreviewUrl] = useState<string | null>(null)
-  const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
-  const [profileUpdateSuccess, setProfileUpdateSuccess] = useState<string | null>(null)
-  const [profileUpdateError, setProfileUpdateError] = useState<string | null>(null)
-
   // Mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -157,18 +150,22 @@ export default function BuyerDashboardPage() {
       return
     }
     if (currentUser?.role === "seller") {
-      router.push("/dashboard/seller")
+      const tab = searchParams.get("tab")
+      // Permitir publicación rápida / tienda desde la cuenta sin expulsar al panel vendedor.
+      if (tab !== "publishProduct" && tab !== "openStore") {
+        router.push("/dashboard/seller")
+        return
+      }
+    }
+    if (currentUser?.role === "cadete") {
+      router.push("/dashboard/cadete")
       return
     }
     if (currentUser) {
       console.log("Current user UID:", currentUser.firebaseUser.uid)
       fetchBuyerData(currentUser.firebaseUser.uid)
-      // Set initial profile image preview if available
-      if (currentUser.photoURL) {
-        setProfileImagePreviewUrl(currentUser.photoURL)
-      }
     }
-  }, [currentUser, authLoading, router])
+  }, [currentUser, authLoading, router, searchParams])
 
   const fetchBuyerData = async (userId: string) => {
     setLoadingData(true)
@@ -462,105 +459,6 @@ export default function BuyerDashboardPage() {
     }
   }
 
-  // --- Profile Image Functions ---
-  const handleProfileImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setProfileImageFile(file)
-      setProfileImagePreviewUrl(URL.createObjectURL(file))
-      setProfileUpdateError(null)
-      setProfileUpdateSuccess(null)
-    }
-  }
-
-  const handleUploadProfileImage = async () => {
-    if (!currentUser || !profileImageFile) {
-      setProfileUpdateError(td("profileNoImageSelected"))
-      return
-    }
-
-    setUploadingProfileImage(true)
-    setProfileUpdateError(null)
-    setProfileUpdateSuccess(null)
-
-    const filePath = `users/${currentUser.firebaseUser.uid}/profile/${Date.now()}-${profileImageFile.name}`
-    const storageRef = ref(storage, filePath)
-
-    try {
-      // Delete previous image if it exists
-      if (currentUser.photoPath) {
-        const prevImageRef = ref(storage, currentUser.photoPath)
-        await deleteObject(prevImageRef).catch((err) => console.warn("Error deleting old profile image:", err))
-      }
-
-      await uploadBytes(storageRef, profileImageFile)
-      const downloadURL = await getDownloadURL(storageRef)
-
-      // Update Firestore user document
-      const userDocRef = doc(db, "users", currentUser.firebaseUser.uid)
-      await updateDoc(userDocRef, {
-        photoURL: downloadURL,
-        photoPath: filePath,
-      })
-
-      // Update Firebase Auth profile (optional, but good for consistency)
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { photoURL: downloadURL })
-      }
-
-      await refreshUserProfile() // Refresh context state
-      setProfileUpdateSuccess(td("profileUploadSuccess"))
-      setProfileImageFile(null) // Clear file input
-    } catch (err) {
-      console.error("Error uploading profile image:", err)
-      setProfileUpdateError(td("profileUploadError"))
-    } finally {
-      setUploadingProfileImage(false)
-    }
-  }
-
-  const handleRemoveProfileImage = async () => {
-    if (!currentUser || !currentUser.photoPath) {
-      setProfileUpdateError(td("profileNoPhotoToRemove"))
-      return
-    }
-
-    if (!window.confirm(td("removePhotoConfirm"))) {
-      return
-    }
-
-    setUploadingProfileImage(true) // Use this for loading state during deletion too
-    setProfileUpdateError(null)
-    setProfileUpdateSuccess(null)
-
-    try {
-      const imageRef = ref(storage, currentUser.photoPath)
-      await deleteObject(imageRef)
-
-      // Update Firestore user document
-      const userDocRef = doc(db, "users", currentUser.firebaseUser.uid)
-      await updateDoc(userDocRef, {
-        photoURL: null,
-        photoPath: null,
-      })
-
-      // Update Firebase Auth profile
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { photoURL: null })
-      }
-
-      await refreshUserProfile() // Refresh context state
-      setProfileImagePreviewUrl(null) // Clear preview
-      setProfileUpdateSuccess(td("profileRemoveSuccess"))
-    } catch (err) {
-      console.error("Error removing profile image:", err)
-      setProfileUpdateError(td("profileRemoveError"))
-    } finally {
-      setUploadingProfileImage(false)
-    }
-  }
-  // --- End Profile Image Functions ---
-
   // Paginación
   const totalPages = Math.ceil(productosComprados.length / rowsPerPage)
   const paginatedPurchases = productosComprados.slice((page - 1) * rowsPerPage, page * rowsPerPage)
@@ -600,7 +498,7 @@ export default function BuyerDashboardPage() {
       activeTab={activeTab}
       onTabChange={setActiveTab}
       userName={currentUser?.firebaseUser?.displayName || currentUser?.firebaseUser?.email?.split("@")[0]}
-      userPhoto={profileImagePreviewUrl || currentUser?.photoURL}
+      userPhoto={currentUser?.photoURL}
       onLogout={handleLogout}
       isMobileMenuOpen={isMobileMenuOpen}
       onMobileMenuOpenChange={setIsMobileMenuOpen}
@@ -640,9 +538,25 @@ export default function BuyerDashboardPage() {
 
       {activeTab === "reseller" && <ResellerDashboardPanel />}
 
-      {activeTab === "openStore" && <OpenStorePanel />}
+      {activeTab === "publishProduct" && <QuickPublishProductPanel />}
 
-      {activeTab !== "reseller" && activeTab !== "openStore" && activeTab !== "stats" && (
+      {(activeTab === "openStore" || activeTab === "becomeCadete") && (
+        <OpenStorePanel
+          mode={activeTab === "becomeCadete" ? "cadete" : "store"}
+          onModeChange={(next) => {
+            const tab =
+              next === "publish" ? "publishProduct" : next === "cadete" ? "becomeCadete" : "openStore"
+            setActiveTab(tab)
+            router.replace(`/dashboard/buyer?tab=${tab}`)
+          }}
+        />
+      )}
+
+      {activeTab !== "reseller" &&
+        activeTab !== "openStore" &&
+        activeTab !== "publishProduct" &&
+        activeTab !== "becomeCadete" &&
+        activeTab !== "stats" && (
       <BuyerDashboardTabs
         activeTab={activeTab}
         loadingData={loadingData}
@@ -665,18 +579,6 @@ export default function BuyerDashboardPage() {
           displayName: currentUser?.firebaseUser?.displayName || currentUser?.firebaseUser?.email?.split("@")[0],
           email: currentUser?.firebaseUser?.email,
           photoURL: currentUser?.photoURL,
-        }}
-        profileImagePreviewUrl={profileImagePreviewUrl}
-        profileImageFile={profileImageFile}
-        uploadingProfileImage={uploadingProfileImage}
-        profileUpdateError={profileUpdateError}
-        profileUpdateSuccess={profileUpdateSuccess}
-        onProfileImageChange={handleProfileImageChange}
-        onUploadProfileImage={handleUploadProfileImage}
-        onRemoveProfileImage={handleRemoveProfileImage}
-        onCancelProfileImageSelection={() => {
-          setProfileImageFile(null)
-          setProfileImagePreviewUrl(currentUser?.photoURL || null)
         }}
       />
       )}

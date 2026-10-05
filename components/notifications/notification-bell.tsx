@@ -34,15 +34,22 @@ export function NotificationBell({ className, iconClassName, showLabel = false }
   return (
     <Link
       href="/notifications"
-      className={cn("inline-flex items-center justify-center gap-2 rounded-full transition", className)}
+      className={cn(
+        "inline-flex items-center justify-center gap-2 rounded-full transition",
+        unread > 0 && "relative",
+        className
+      )}
       aria-label={unread > 0 ? t("bellUnread", { count: unread }) : t("bellLabel")}
     >
       <span className="relative inline-flex">
         <Bell className={cn("h-5 w-5", iconClassName)} />
         {unread > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-            {unread > 9 ? "9+" : unread}
-          </span>
+          <>
+            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-ping rounded-full bg-red-400 opacity-75" />
+            <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-rose-600 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          </>
         )}
       </span>
       {showLabel && <span className="text-sm font-semibold">{t("bellShort")}</span>}

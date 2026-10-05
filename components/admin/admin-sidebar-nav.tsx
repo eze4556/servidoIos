@@ -7,6 +7,7 @@ export type AdminNavItem = {
   tab: string
   label: string
   icon: LucideIcon
+  badgeCount?: number
 }
 
 export type AdminNavGroup = {
@@ -48,7 +49,16 @@ export function AdminSidebarNav({
                   <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-teal-300 to-sky-400 shadow-[0_0_18px_rgba(45,212,191,0.55)]" />
                 )}
                 <item.icon className={`h-4 w-4 ${active ? "text-teal-700" : ""}`} />
-                {item.label}
+                <span className="flex-1 text-left">{item.label}</span>
+                {typeof item.badgeCount === "number" && item.badgeCount > 0 && (
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                      active ? "bg-amber-100 text-amber-800" : "bg-amber-400 text-amber-950"
+                    }`}
+                  >
+                    {item.badgeCount}
+                  </span>
+                )}
               </Button>
             )
           })}

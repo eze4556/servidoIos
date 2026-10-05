@@ -113,6 +113,7 @@ import { BuyerStatCard } from "@/components/dashboard/buyer/buyer-stat-card"
 import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
 import { SellerAgendaPanel } from "@/components/dashboard/seller/seller-agenda-panel"
 import { SellerResellerProgramPanel } from "@/components/seller/seller-reseller-program-panel"
+import { ProfilePhotoEditor } from "@/components/profile/profile-photo-editor"
 import type { ServiceSchedule } from "@/types/service-appointments"
 import { apiUrl } from "@/lib/api-base"
 
@@ -2456,7 +2457,7 @@ export default function SellerDashboardPage() {
       onNavigate={handleSellerNav}
       isEditing={isEditing}
       userName={currentUser?.firebaseUser?.displayName || currentUser?.firebaseUser?.email?.split("@")[0]}
-      userPhoto={profileImagePreviewUrl || currentUser?.photoURL}
+      userPhoto={currentUser?.photoURL || profileImagePreviewUrl}
       storeHref={sellerStoreHref}
       onLogout={handleLogout}
       isMobileMenuOpen={isMobileMenuOpen}
@@ -3311,45 +3312,8 @@ export default function SellerDashboardPage() {
                   </TabsList>
                   
                   <TabsContent value="profile" className="space-y-6 mt-6">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200">
-                    <Image
-                      src={profileImagePreviewUrl || currentUser?.firebaseUser.photoURL || "/placeholder-user.jpg"}
-                      alt={t("profile.photoAlt")}
-                      layout="fill"
-                      objectFit="cover"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleProfileImageChange}
-                      className="block w-full max-w-xs text-sm text-slate-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-servido-50 file:text-servido-800
-                        hover:file:bg-servido-100
-                        cursor-pointer"
-                    />
-                    <Button
-                      onClick={handleSaveProfileImage}
-                      disabled={!profileImageFile || uploadingProfileImage}
-                      className="rounded-full bg-servido-950 text-white hover:bg-servido-800"
-                    >
-                      {uploadingProfileImage ? t("profile.uploadingPhoto") : t("profile.savePhoto")}
-                    </Button>
-                    {currentUser?.firebaseUser.photoURL && (
-                      <Button
-                        onClick={handleRemoveCurrentProfileImage}
-                        variant="outline"
-                        disabled={uploadingProfileImage}
-                      >
-                        {t("profile.removePhoto")}
-                      </Button>
-                    )}
-                  </div>
+                <div className="rounded-2xl bg-slate-50/80 p-4 ring-1 ring-servido-950/5">
+                  <ProfilePhotoEditor size="md" />
                 </div>
                 <div>
                   <Label htmlFor="displayName" className="text-base">{t("profile.displayName")}</Label>

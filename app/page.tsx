@@ -19,6 +19,7 @@ import { HomeStoriesSection } from "@/components/stories/home-stories-section"
 import { LivesRail } from "@/components/lives/lives-rail"
 import { HomeProductGrid } from "@/components/home/home-product-grid"
 import { HomeVerticalSpotlights } from "@/components/home/home-vertical-spotlights"
+import { BecomeCadeteCta } from "@/components/cadete/become-cadete-cta"
 import { useTranslations } from "next-intl"
 
 interface Product {
@@ -271,6 +272,10 @@ export default function HomePage() {
           <HomeSectionShell variant="default" className="home-section-delay-1">
             <HomeVerticalSpotlights />
           </HomeSectionShell>
+
+          <div className="container mx-auto max-w-screen-xl px-6 pt-2 xl:px-8">
+            <BecomeCadeteCta variant="banner" />
+          </div>
 
           <HomeSectionShell variant="default" className="home-section-delay-2">
             <HomeSectionHeader

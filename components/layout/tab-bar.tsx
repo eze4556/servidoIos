@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 const TAB_ICON_BOX = "flex h-7 w-7 shrink-0 items-center justify-center"
 
 function getSellHref(user: { role?: string; businessType?: string } | null): string {
-  if (!user) return "/signup?role=seller"
+  if (!user) return "/signup"
   switch (user.role) {
     case "admin":
       return "/admin"
@@ -22,7 +22,7 @@ function getSellHref(user: { role?: string; businessType?: string } | null): str
       if (user.businessType === "restaurant") return "/dashboard/restaurant"
       return "/dashboard/seller?tab=addProduct"
     default:
-      return "/dashboard/buyer?tab=openStore"
+      return "/dashboard/buyer?tab=publishProduct"
   }
 }
 
@@ -58,7 +58,10 @@ export function TabBar() {
   const isSell =
     pathname === sellHref ||
     (pathname.startsWith("/dashboard/buyer") &&
-      (tabParam === "reseller" || tabParam === "openStore")) ||
+      (tabParam === "reseller" ||
+        tabParam === "openStore" ||
+        tabParam === "publishProduct" ||
+        tabParam === "becomeCadete")) ||
     (pathname.startsWith("/dashboard/seller") &&
       (tabParam === "addProduct" || tabParam === "addService")) ||
     pathname.startsWith("/historias/nueva")

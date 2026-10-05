@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { BecomeCadeteCta } from "@/components/cadete/become-cadete-cta"
 
 export function Footer() {
   const t = useTranslations("footer")
@@ -161,6 +162,14 @@ export function Footer() {
               </a>
             </div>
           </div>
+        </div>
+
+        <div className="mt-10">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/45">
+            {t("cadeteStripTitle")}
+          </p>
+          <p className="mb-3 text-xs text-white/55">{t("cadeteStripSubtitle")}</p>
+          <BecomeCadeteCta variant="compact" />
         </div>
 
         {/* Contacto mobile */}

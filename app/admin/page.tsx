@@ -104,7 +104,6 @@ import { useToast } from "@/components/ui/use-toast"
 import { getDashboardProductImage } from "@/lib/image-utils"
 import { formatPrice, formatPriceNumber } from "@/lib/utils"
 import { getDateFnsLocale } from "@/lib/i18n/date-locale"
-import { getCadeteStatusLabel } from "@/lib/i18n/cadete-labels"
 import { getPurchaseStatusLabel, getShippingStatusLabel } from "@/lib/i18n/shipping-status-label"
 import SubscriptionPricingManager from "@/components/admin/subscription-pricing-manager"
 import { ServidoBroadcastPanel } from "@/components/admin/servido-broadcast-panel"
@@ -116,8 +115,8 @@ import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav"
 import { AdminPager } from "@/components/admin/admin-pager"
 import { AdminPlatformStats } from "@/components/admin/admin-platform-stats"
 import { AdminClaimsQueue } from "@/components/admin/admin-claims-queue"
+import { AdminCadetesPanel } from "@/components/admin/admin-cadetes-panel"
 import { usePagedList } from "@/hooks/use-paged-list"
-import type { CadeteStatus } from "@/types/cadete"
 import { sendCadeteStatusEmail } from "@/lib/email-service"
 import "@/components/admin/admin-console.css"
 
@@ -265,60 +264,7 @@ export default function AdminDashboard() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const adminNavGroups = useMemo(
-    () => [
-      {
-        id: "home",
-        label: t("navGroups.home"),
-        items: [
-          { tab: "overview", label: t("nav.overview"), icon: Home },
-          { tab: "stats", label: t("nav.stats"), icon: BarChart3 },
-          { tab: "claims", label: t("nav.claims"), icon: Handshake },
-        ],
-      },
-      {
-        id: "people",
-        label: t("navGroups.people"),
-        items: [
-          { tab: "users", label: t("nav.users"), icon: Users },
-          { tab: "cadetes", label: t("nav.cadetes"), icon: Bike },
-        ],
-      },
-      {
-        id: "catalog",
-        label: t("navGroups.catalog"),
-        items: [
-          { tab: "categories", label: t("nav.categories"), icon: List },
-          { tab: "brands", label: t("nav.brands"), icon: Tag },
-          { tab: "allProducts", label: t("nav.allProducts"), icon: ShoppingCart },
-        ],
-      },
-      {
-        id: "finance",
-        label: t("navGroups.finance"),
-        items: [
-          { tab: "sales", label: t("nav.sales"), icon: DollarSign },
-          { tab: "resellerPayouts", label: t("nav.resellerPayouts"), icon: TrendingUp },
-          { tab: "deliverySettlements", label: t("nav.deliverySettlements"), icon: Banknote },
-          { tab: "subscriptionPricing", label: t("nav.subscriptionPricing"), icon: CreditCard },
-        ],
-      },
-      {
-        id: "content",
-        label: t("navGroups.content"),
-        items: [
-          { tab: "banners", label: t("nav.banners"), icon: ImageIcon },
-          { tab: "alerts", label: t("nav.alerts"), icon: AlertTriangle },
-          { tab: "servidoBroadcast", label: t("nav.servidoBroadcast"), icon: Megaphone },
-          { tab: "servidoStories", label: t("nav.servidoStories"), icon: Sparkles },
-        ],
-      },
-    ],
-    [t]
-  )
-
   const [activeTab, setActiveTab] = useState("overview")
-  const currentNav = adminNavGroups.flatMap((group) => group.items).find((item) => item.tab === activeTab)
   const [users, setUsers] = useState<UserData[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
@@ -1997,12 +1943,75 @@ export default function AdminDashboard() {
         return rank(a.status) - rank(b.status)
       })
   }, [users])
-  const pendingCadetesCount = cadetesList.filter(
-    (u) => u.status === "pending_approval" || (!u.status && !u.isActive)
-  ).length
+
+  const pendingCadetesCount = useMemo(
+    () =>
+      cadetesList.filter(
+        (u) => u.status === "pending_approval" || (!u.status && !u.isActive)
+      ).length,
+    [cadetesList]
+  )
+
+  const adminNavGroups = useMemo(
+    () => [
+      {
+        id: "home",
+        label: t("navGroups.home"),
+        items: [
+          { tab: "overview", label: t("nav.overview"), icon: Home },
+          { tab: "stats", label: t("nav.stats"), icon: BarChart3 },
+          { tab: "claims", label: t("nav.claims"), icon: Handshake },
+        ],
+      },
+      {
+        id: "people",
+        label: t("navGroups.people"),
+        items: [
+          { tab: "users", label: t("nav.users"), icon: Users },
+          {
+            tab: "cadetes",
+            label: t("nav.cadetes"),
+            icon: Bike,
+            badgeCount: pendingCadetesCount,
+          },
+        ],
+      },
+      {
+        id: "catalog",
+        label: t("navGroups.catalog"),
+        items: [
+          { tab: "categories", label: t("nav.categories"), icon: List },
+          { tab: "brands", label: t("nav.brands"), icon: Tag },
+          { tab: "allProducts", label: t("nav.allProducts"), icon: ShoppingCart },
+        ],
+      },
+      {
+        id: "finance",
+        label: t("navGroups.finance"),
+        items: [
+          { tab: "sales", label: t("nav.sales"), icon: DollarSign },
+          { tab: "resellerPayouts", label: t("nav.resellerPayouts"), icon: TrendingUp },
+          { tab: "deliverySettlements", label: t("nav.deliverySettlements"), icon: Banknote },
+          { tab: "subscriptionPricing", label: t("nav.subscriptionPricing"), icon: CreditCard },
+        ],
+      },
+      {
+        id: "content",
+        label: t("navGroups.content"),
+        items: [
+          { tab: "banners", label: t("nav.banners"), icon: ImageIcon },
+          { tab: "alerts", label: t("nav.alerts"), icon: AlertTriangle },
+          { tab: "servidoBroadcast", label: t("nav.servidoBroadcast"), icon: Megaphone },
+          { tab: "servidoStories", label: t("nav.servidoStories"), icon: Sparkles },
+        ],
+      },
+    ],
+    [pendingCadetesCount, t]
+  )
+
+  const currentNav = adminNavGroups.flatMap((group) => group.items).find((item) => item.tab === activeTab)
 
   const usersPaged = usePagedList(users, 12)
-  const cadetesPaged = usePagedList(cadetesList, 12)
   const categoriesPaged = usePagedList(categories, 12)
   const brandsPaged = usePagedList(brands, 12)
   const productsPaged = usePagedList(
@@ -2672,108 +2681,11 @@ export default function AdminDashboard() {
 
             {/* Cadetes Tab */}
             <TabsContent value="cadetes" className="admin-tab mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t("cadetes.title")}</CardTitle>
-                  <CardDescription>
-                    {t("cadetes.description")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {cadetesList.length === 0 ? (
-                    <p className="py-8 text-center text-gray-500">
-                      {t("cadetes.empty")}
-                    </p>
-                  ) : (
-                    <div className="space-y-6">
-                      {pendingCadetesCount > 0 && (
-                        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                          {t("cadetes.pendingBanner", { count: pendingCadetesCount })}
-                        </p>
-                      )}
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>{t("common.name")}</TableHead>
-                              <TableHead>{t("cadetes.contact")}</TableHead>
-                              <TableHead className="hidden md:table-cell">{t("cadetes.zone")}</TableHead>
-                              <TableHead className="hidden md:table-cell">{t("cadetes.vehicle")}</TableHead>
-                              <TableHead className="hidden lg:table-cell">{t("cadetes.document")}</TableHead>
-                              <TableHead>{t("common.status")}</TableHead>
-                              <TableHead>{t("common.actions")}</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {cadetesPaged.slice.map((cadete) => {
-                                  const status = (cadete.status || "pending_approval") as CadeteStatus
-                                  return (
-                                    <TableRow key={cadete.id}>
-                                      <TableCell className="font-medium">{cadete.name}</TableCell>
-                                      <TableCell>
-                                        <div className="text-sm">{cadete.email}</div>
-                                        {cadete.phone && (
-                                          <div className="text-xs text-muted-foreground">{cadete.phone}</div>
-                                        )}
-                                      </TableCell>
-                                      <TableCell className="hidden md:table-cell">{cadete.zone || "—"}</TableCell>
-                                      <TableCell className="hidden md:table-cell">{cadete.vehicle || "—"}</TableCell>
-                                      <TableCell className="hidden lg:table-cell">{cadete.documentId || "—"}</TableCell>
-                                      <TableCell>
-                                        <Badge
-                                          variant={
-                                            status === "approved"
-                                              ? "default"
-                                              : status === "rejected"
-                                                ? "destructive"
-                                                : "secondary"
-                                          }
-                                        >
-                                          {getCadeteStatusLabel(t, status)}
-                                        </Badge>
-                                      </TableCell>
-                                      <TableCell>
-                                        <div className="flex flex-wrap gap-2">
-                                          {status !== "approved" && (
-                                            <Button
-                                              size="sm"
-                                              className="bg-green-600 hover:bg-green-700"
-                                              onClick={() => void handleApproveCadete(cadete.id)}
-                                            >
-                                              <CheckCircle className="mr-1 h-3.5 w-3.5" />
-                                              {t("common.approve")}
-                                            </Button>
-                                          )}
-                                          {status !== "rejected" && (
-                                            <Button
-                                              size="sm"
-                                              variant="outline"
-                                              onClick={() => void handleRejectCadete(cadete.id)}
-                                            >
-                                              <XCircle className="mr-1 h-3.5 w-3.5" />
-                                              {t("common.reject")}
-                                            </Button>
-                                          )}
-                                        </div>
-                                      </TableCell>
-                                    </TableRow>
-                                  )
-                                })}
-                          </TableBody>
-                        </Table>
-                      </div>
-                      <AdminPager
-                        page={cadetesPaged.page}
-                        totalPages={cadetesPaged.totalPages}
-                        total={cadetesPaged.total}
-                        from={cadetesPaged.from}
-                        to={cadetesPaged.to}
-                        onPageChange={cadetesPaged.setPage}
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <AdminCadetesPanel
+                cadetes={cadetesList}
+                onApprove={handleApproveCadete}
+                onReject={handleRejectCadete}
+              />
             </TabsContent>
 
             {/* Categories Tab */}

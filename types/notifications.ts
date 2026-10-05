@@ -9,6 +9,8 @@ export type AppNotificationType =
   | "reseller"
   | "claim"
   | "live_started"
+  | "chat"
+  | "message"
   | "system"
 
 export interface AppNotification {

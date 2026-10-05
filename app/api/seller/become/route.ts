@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { FieldValue } from "firebase-admin/firestore"
 import { auth as adminAuth, db } from "@/lib/firebase-admin"
 import { hasValidCoordinates } from "@/lib/geo"
+import { FOOD_BUSINESS_KINDS, type FoodBusinessKind, type SellCategory } from "@/types/restaurant"
 
 export const runtime = "nodejs"
+
+const FOOD_KIND_SET = new Set<string>(FOOD_BUSINESS_KINDS)
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +27,8 @@ export async function POST(request: NextRequest) {
     const data = snap.data() || {}
     const role = String(data.role || "user")
     if (role === "seller") {
-      return NextResponse.json({ ok: true, alreadySeller: true })
+      const businessType = data.businessType === "restaurant" ? "restaurant" : "store"
+      return NextResponse.json({ ok: true, alreadySeller: true, businessType })
     }
     if (role === "admin" || role === "cadete") {
       return NextResponse.json(
@@ -39,10 +43,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}))
     const storeName = String(body?.storeName || "").trim()
     const acceptTerms = Boolean(body?.acceptTerms)
+    const sellCategoryRaw = String(body?.sellCategory || "products").trim() as SellCategory
+    const foodBusinessKind = String(body?.foodBusinessKind || "").trim() as FoodBusinessKind
     const location = body?.location as
       | { label?: string; city?: string | null; latitude?: number; longitude?: number }
       | undefined
 
+    if (sellCategoryRaw !== "food" && sellCategoryRaw !== "products") {
+      return NextResponse.json({ error: "Indicá si vendés comida o productos" }, { status: 400 })
+    }
+    if (sellCategoryRaw === "food" && !FOOD_KIND_SET.has(foodBusinessKind)) {
+      return NextResponse.json({ error: "Seleccioná el tipo de negocio de comida" }, { status: 400 })
+    }
     if (!storeName || storeName.length < 2) {
       return NextResponse.json({ error: "El nombre del negocio es obligatorio" }, { status: 400 })
     }
@@ -52,6 +64,7 @@ export async function POST(request: NextRequest) {
     const latitude = Number(location?.latitude)
     const longitude = Number(location?.longitude)
     const label = String(location?.label || "").trim()
+    const city = location?.city || null
     if (!label || !hasValidCoordinates(latitude, longitude)) {
       return NextResponse.json(
         { error: "Indicá la ubicación del negocio en el mapa" },
@@ -59,27 +72,79 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const businessLocation = {
+      label,
+      city,
+      latitude,
+      longitude,
+      updatedAt: Date.now(),
+    }
+
+    if (sellCategoryRaw === "food") {
+      const restaurantId = uid
+      const phone = String(data.phone || "").trim()
+
+      const batch = db.batch()
+      batch.update(userRef, {
+        role: "seller",
+        businessType: "restaurant",
+        restaurantId,
+        sellCategory: "food",
+        foodBusinessKind,
+        name: storeName,
+        subscription_status: "inactive",
+        isSubscribed: false,
+        productUploadLimit:
+          typeof data.productUploadLimit === "number" ? data.productUploadLimit : 0,
+        businessLocation,
+        sellerTermsAccepted: true,
+        sellerTermsAcceptedAt: FieldValue.serverTimestamp(),
+        becameSellerAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+      batch.set(db.collection("restaurants").doc(restaurantId), {
+        id: restaurantId,
+        ownerId: uid,
+        name: storeName,
+        address: label,
+        locationLabel: label,
+        zone: city || null,
+        city,
+        coordinates: { latitude, longitude },
+        foodBusinessKind,
+        deliveryMode: "ambos",
+        status: "pending",
+        phone: phone || null,
+        deliveryFee: 300,
+        subscriptionActive: false,
+        paymentMethods: ["cash", "transfer"],
+        transferInfo: {},
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+      await batch.commit()
+
+      return NextResponse.json({ ok: true, businessType: "restaurant" })
+    }
+
     await userRef.update({
       role: "seller",
       businessType: "store",
+      sellCategory: "products",
+      foodBusinessKind: FieldValue.delete(),
+      restaurantId: FieldValue.delete(),
       name: storeName,
       subscription_status: "inactive",
       isSubscribed: false,
       productUploadLimit: typeof data.productUploadLimit === "number" ? data.productUploadLimit : 0,
-      businessLocation: {
-        label,
-        city: location?.city || null,
-        latitude,
-        longitude,
-        updatedAt: Date.now(),
-      },
+      businessLocation,
       sellerTermsAccepted: true,
       sellerTermsAcceptedAt: FieldValue.serverTimestamp(),
       becameSellerAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     })
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, businessType: "store" })
   } catch (error) {
     console.error("POST /api/seller/become", error)
     return NextResponse.json({ error: "No se pudo abrir la tienda" }, { status: 500 })

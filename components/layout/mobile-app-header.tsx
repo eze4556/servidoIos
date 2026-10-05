@@ -15,6 +15,7 @@ import {
   Package,
   Search,
   Sparkles,
+  Bike,
   Store,
   User,
   Users,
@@ -35,6 +36,7 @@ import { usePriceFormat } from "@/hooks/use-price-format"
 import { UserGreeting } from "@/components/layout/user-greeting"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import { LocaleFlagToggle } from "@/components/layout/locale-flag-toggle"
+import { BecomeCadeteCta, useBecomeCadeteHref } from "@/components/cadete/become-cadete-cta"
 import { useTranslations } from "next-intl"
 
 interface SearchProduct {
@@ -60,6 +62,7 @@ function useRoleBadge(pathname: string, role?: string) {
 }
 
 export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
+  const becomeCadeteHref = useBecomeCadeteHref()
   const t = useTranslations("header")
   const tm = useTranslations("mobileMenu")
   const tc = useTranslations("common")
@@ -318,6 +321,12 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                         },
                       ]
                     : []),
+                  ...(!currentUser ||
+                  currentUser.role === "user" ||
+                  currentUser.role === "buyer" ||
+                  currentUser.role === "cadete"
+                    ? [{ href: becomeCadeteHref, label: tm("becomeCadete"), icon: Bike }]
+                    : []),
                   { href: "/acerca-de-nosotros", label: tm("whoWeAre"), icon: Users },
                 ].map(({ href, label, icon: Icon }) => (
                   <Link
@@ -326,11 +335,20 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                     onClick={closeMenu}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-servido-50 hover:text-servido-900"
                   >
-                    <Icon className="h-4 w-4 text-servido-700" />
+                    <Icon className={Icon === Bike ? "h-4 w-4 text-sky-600" : "h-4 w-4 text-servido-700"} />
                     {label}
                   </Link>
                 ))}
               </nav>
+
+              {(!currentUser ||
+                currentUser.role === "user" ||
+                currentUser.role === "buyer" ||
+                currentUser.role === "cadete") && (
+                <div className="pt-1" onClick={closeMenu}>
+                  <BecomeCadeteCta variant="compact" />
+                </div>
+              )}
 
               {currentUser ? (
                 <button

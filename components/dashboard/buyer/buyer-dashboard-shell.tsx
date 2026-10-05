@@ -23,6 +23,8 @@ export type BuyerDashboardTab =
   | "favorites"
   | "reseller"
   | "openStore"
+  | "publishProduct"
+  | "becomeCadete"
   | "profile"
 
 

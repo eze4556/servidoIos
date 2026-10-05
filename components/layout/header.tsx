@@ -20,6 +20,7 @@ import {
   LogOut,
   Store,
   User,
+  Bike,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -43,6 +44,7 @@ import { useChatUnread } from "@/components/chat/chat-unread-context"
 import { db } from "@/lib/firebase"
 import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { LocaleFlagToggle } from "@/components/layout/locale-flag-toggle"
+import { useBecomeCadeteHref } from "@/components/cadete/become-cadete-cta"
 import { cn } from "@/lib/utils"
 import { categoryHref, restaurantHref, sellerHref } from "@/lib/routes"
 
@@ -64,8 +66,14 @@ export function Header() {
   const { userLocation, shortLocation, loadingLocation, openLocationPicker } = useLocation()
   const { unreadCount } = useChatUnread()
   const pathname = usePathname()
+  const becomeCadeteHref = useBecomeCadeteHref()
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
+  const showBecomeCadete =
+    !currentUser ||
+    currentUser.role === "user" ||
+    currentUser.role === "buyer" ||
+    currentUser.role === "cadete"
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -109,9 +117,9 @@ export function Header() {
     <header className="sticky top-0 z-50 hidden lg:block">
       {/* Barra principal */}
       <div className="border-b border-servido-950/[0.06] bg-white/85 backdrop-blur-xl">
-        <div className="container mx-auto flex h-[4.25rem] max-w-screen-xl items-center gap-5 px-6 xl:px-8">
+        <div className="container mx-auto grid h-[4.25rem] max-w-screen-xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 xl:gap-4 xl:px-6 2xl:px-8">
           {/* Marca */}
-          <Link href="/" className="group flex shrink-0 items-center gap-2.5">
+          <Link href="/" className="group z-10 flex items-center gap-2">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white p-1 shadow-md ring-1 ring-servido-950/10">
               <Image
                 src="/images/logo-128.png"
@@ -126,17 +134,18 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Navegación central — llena el espacio */}
-          <nav className="flex min-w-0 flex-1 items-center justify-center gap-0.5 xl:gap-1">
+          {/* Nav central: íconos (texto en title/tooltip) para no solapar */}
+          <nav className="flex min-w-0 items-center justify-center gap-0.5">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-servido-950 transition-colors hover:bg-servido-50"
+                  title={t("categories")}
+                  aria-label={t("categories")}
+                  className="inline-flex h-9 items-center gap-0.5 rounded-full px-2 text-sm font-semibold text-servido-950 transition-colors hover:bg-servido-50"
                 >
-                  <LayoutGrid className="h-3.5 w-3.5 text-servido-800" />
-                  {t("categories")}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+                  <LayoutGrid className="h-4 w-4 shrink-0 text-servido-800" />
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -157,14 +166,16 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <span className="mx-1 hidden h-4 w-px bg-servido-950/10 xl:block" aria-hidden />
+            <span className="mx-0.5 h-4 w-px shrink-0 bg-servido-950/10" aria-hidden />
 
             {primaryLinks.map(({ href, icon: Icon, label }) => (
               <Link
                 key={href}
                 href={href}
+                title={label}
+                aria-label={label}
                 className={cn(
-                  "group relative inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors",
+                  "group relative inline-flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-colors",
                   isActive(href)
                     ? "bg-servido-50 text-servido-950"
                     : "text-servido-900/65 hover:bg-servido-50/80 hover:text-servido-950"
@@ -172,20 +183,16 @@ export function Header() {
               >
                 <Icon
                   className={cn(
-                    "h-3.5 w-3.5 transition-colors",
-                    isActive(href) ? "text-servido-800" : "text-servido-900/40 group-hover:text-servido-800"
+                    "h-4 w-4 transition-colors",
+                    isActive(href) ? "text-servido-800" : "text-servido-900/45 group-hover:text-servido-800"
                   )}
                 />
-                <span className="hidden xl:inline">{label}</span>
-                {isActive(href) && (
-                  <span className="absolute inset-x-3 -bottom-[0.85rem] hidden h-0.5 rounded-full bg-servido-gold xl:block" />
-                )}
               </Link>
             ))}
           </nav>
 
           {/* Acciones */}
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="z-10 flex items-center gap-0.5 xl:gap-1">
             <LocaleFlagToggle compact className="mr-0.5" />
 
             <NotificationBell
@@ -214,14 +221,14 @@ export function Header() {
 
             <CartDrawer />
 
-            <span className="mx-1.5 h-5 w-px bg-servido-950/10" aria-hidden />
+            <span className="mx-1 h-5 w-px bg-servido-950/10" aria-hidden />
 
             {currentUser ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-servido-50"
+                    className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-1.5 transition-colors hover:bg-servido-50"
                   >
                     <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
                       <AvatarImage
@@ -235,11 +242,7 @@ export function Header() {
                           "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden max-w-[7.5rem] truncate text-sm font-semibold text-servido-950 2xl:inline">
-                      {currentUser.firebaseUser.displayName?.split(/\s+/)[0] ||
-                        currentUser.firebaseUser.email?.split("@")[0]}
-                    </span>
-                    <ChevronDown className="hidden h-3.5 w-3.5 text-servido-900/40 2xl:block" />
+                    <ChevronDown className="h-3.5 w-3.5 text-servido-900/40" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -257,6 +260,14 @@ export function Header() {
                       <Link href={storeHref} className="flex items-center gap-2">
                         <Store className="h-4 w-4" />
                         {t("myStore")}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {showBecomeCadete && (
+                    <DropdownMenuItem asChild className="rounded-xl">
+                      <Link href={becomeCadeteHref} className="flex items-center gap-2">
+                        <Bike className="h-4 w-4 text-sky-600" />
+                        {t("becomeCadete")}
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -289,7 +300,7 @@ export function Header() {
 
             <Link
               href={getVenderLink()}
-              className="ml-1 hidden rounded-full bg-servido-gold px-4 py-2 text-sm font-semibold text-servido-950 shadow-[0_8px_20px_-10px_rgba(255,212,0,0.8)] transition-all hover:bg-[#ffe566] hover:shadow-[0_10px_24px_-10px_rgba(255,212,0,0.95)] xl:inline-flex"
+              className="ml-1 inline-flex rounded-full bg-servido-gold px-3.5 py-2 text-sm font-semibold text-servido-950 shadow-[0_8px_20px_-10px_rgba(255,212,0,0.8)] transition-all hover:bg-[#ffe566] hover:shadow-[0_10px_24px_-10px_rgba(255,212,0,0.95)]"
             >
               {tb("sell")}
             </Link>

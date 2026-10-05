@@ -3,12 +3,13 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useTranslations } from "next-intl"
-import { MapPin, UtensilsCrossed } from "lucide-react"
+import { Bike, MapPin, UtensilsCrossed } from "lucide-react"
 import type { Restaurant } from "@/types/restaurant"
 import { getRestaurantCoverUrl, getRestaurantLogoUrl } from "@/types/restaurant"
-import { getDeliveryModeLabel } from "@/lib/i18n/restaurant-labels"
+import { getDeliveryModeLabel, getFoodBusinessKindLabel } from "@/lib/i18n/restaurant-labels"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { restaurantHref } from "@/lib/routes"
+import { FOOD_BUSINESS_KINDS, type FoodBusinessKind } from "@/types/restaurant"
 
 interface RestaurantCardProps {
   restaurant: Restaurant
@@ -21,13 +22,18 @@ export function RestaurantCard({ restaurant, categories = [], minPrice }: Restau
   const { formatPrice } = usePriceFormat()
   const coverUrl = getRestaurantCoverUrl(restaurant)
   const logoUrl = getRestaurantLogoUrl(restaurant)
+  const kind =
+    restaurant.foodBusinessKind &&
+    FOOD_BUSINESS_KINDS.includes(restaurant.foodBusinessKind as FoodBusinessKind)
+      ? (restaurant.foodBusinessKind as FoodBusinessKind)
+      : null
 
   return (
     <Link
       href={restaurantHref(restaurant.id)}
-      className="group flex gap-3 overflow-hidden rounded-2xl bg-white p-3 shadow-[0_12px_32px_-20px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 transition-all hover:-translate-y-1 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.35)] sm:block sm:p-0 lg:rounded-3xl"
+      className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_10px_28px_-18px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/8 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_44px_-20px_rgba(46,16,101,0.34)]"
     >
-      <div className="relative h-28 w-32 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-servido-800 to-servido-950 sm:h-36 sm:w-full sm:rounded-none lg:h-40">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-servido-800 to-servido-950">
         {coverUrl ? (
           <Image
             src={coverUrl}
@@ -37,42 +43,50 @@ export function RestaurantCard({ restaurant, categories = [], minPrice }: Restau
             unoptimized
           />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-servido-950/45 to-transparent" />
-        <div className="absolute bottom-2 left-2 h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-servido-700 to-servido-950 ring-2 ring-white shadow sm:-bottom-6 sm:left-4 sm:h-14 sm:w-14 sm:ring-4">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+        {kind && (
+          <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-servido-950 shadow-sm backdrop-blur">
+            {getFoodBusinessKindLabel(t, kind)}
+          </span>
+        )}
+        <div className="absolute -bottom-5 left-3 h-12 w-12 overflow-hidden rounded-xl bg-gradient-to-br from-servido-700 to-servido-950 shadow-md ring-2 ring-white sm:h-14 sm:w-14">
           {logoUrl ? (
             <Image src={logoUrl} alt="" fill className="object-cover" unoptimized />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <UtensilsCrossed className="h-4 w-4 text-servido-gold sm:h-6 sm:w-6" />
+              <UtensilsCrossed className="h-5 w-5 text-servido-gold" />
             </div>
           )}
         </div>
       </div>
-      <div className="min-w-0 flex-1 space-y-1.5 py-1 sm:p-4 sm:pt-8">
-        <h3 className="truncate font-semibold text-servido-950 transition-colors group-hover:text-servido-800">
-          {restaurant.name}
-        </h3>
-        {restaurant.description && (
-          <p className="line-clamp-1 text-xs text-slate-500 sm:line-clamp-2 sm:text-sm">
-            {restaurant.description}
-          </p>
-        )}
-        {categories.length > 0 && (
-          <p className="line-clamp-1 text-xs text-slate-500">
-            {categories.slice(0, 3).join(" · ")}
-          </p>
-        )}
-        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 sm:text-xs">
+
+      <div className="flex flex-1 flex-col gap-2 px-3.5 pb-3.5 pt-7 sm:px-4 sm:pb-4">
+        <div className="min-w-0">
+          <h3 className="truncate text-base font-semibold tracking-tight text-servido-950 group-hover:text-servido-800">
+            {restaurant.name}
+          </h3>
+          {categories.length > 0 ? (
+            <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
+              {categories.slice(0, 3).join(" · ")}
+            </p>
+          ) : restaurant.description ? (
+            <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{restaurant.description}</p>
+          ) : null}
+        </div>
+
+        <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-500 sm:text-xs">
           <span className="inline-flex min-w-0 items-center gap-1">
-            <MapPin className="h-3 w-3 text-servido-800/60" />
+            <MapPin className="h-3.5 w-3.5 shrink-0 text-servido-800/70" />
             <span className="truncate">{restaurant.zone || restaurant.address}</span>
           </span>
-          <span className="rounded-full bg-servido-50 px-2 py-0.5 font-medium text-servido-800">
+          <span className="inline-flex items-center gap-1">
+            <Bike className="h-3.5 w-3.5 shrink-0 text-servido-800/70" />
             {getDeliveryModeLabel(t, restaurant.deliveryMode)}
           </span>
         </div>
+
         {typeof minPrice === "number" && (
-          <p className="text-xs font-semibold text-servido-800">
+          <p className="text-sm font-semibold text-servido-900">
             {t("fromPrice", { price: formatPrice(minPrice) })}
           </p>
         )}
