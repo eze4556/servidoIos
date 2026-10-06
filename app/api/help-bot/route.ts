@@ -2,6 +2,11 @@ import { openai } from "@ai-sdk/openai"
 import { convertToModelMessages, streamText, type UIMessage } from "ai"
 import { buildHelpBotSystemPrompt } from "@/lib/help-bot/system-prompt"
 import { createHelpBotTools, stepCountIs } from "@/lib/help-bot/tools"
+import {
+  getActiveToolsForAudience,
+  resolveBotAudience,
+  type BotAudience,
+} from "@/lib/help-bot/role-context"
 
 export const maxDuration = 45
 
@@ -12,7 +17,13 @@ export async function POST(req: Request) {
     return Response.json({ error: "missing_openai_key" }, { status: 503 })
   }
 
-  let body: { messages?: UIMessage[]; locale?: string }
+  let body: {
+    messages?: UIMessage[]
+    locale?: string
+    role?: string | null
+    businessType?: string | null
+    isLoggedIn?: boolean
+  }
   try {
     body = await req.json()
   } catch {
@@ -24,13 +35,22 @@ export async function POST(req: Request) {
     return Response.json({ error: "invalid_messages" }, { status: 400 })
   }
 
+  const audience: BotAudience = resolveBotAudience({
+    role: body.role,
+    businessType: body.businessType,
+    isLoggedIn: Boolean(body.isLoggedIn ?? body.role),
+  })
+  const activeTools = getActiveToolsForAudience(audience)
+
   try {
     const result = streamText({
       model: openai("gpt-4o-mini"),
-      system: buildHelpBotSystemPrompt(body.locale),
+      system: buildHelpBotSystemPrompt(body.locale, audience),
       messages: await convertToModelMessages(messages),
       temperature: 0.5,
-      tools: createHelpBotTools(body.locale),
+      tools: createHelpBotTools(body.locale, audience),
+      // Restrict tools by role so product sellers don't get restaurant menus, etc.
+      activeTools: activeTools as never,
       stopWhen: stepCountIs(6),
     })
 

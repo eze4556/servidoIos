@@ -192,11 +192,27 @@
     "fabLabel": "Precisa de ajuda?",
     "fabShort": "Bot",
     "title": "Servido Bot",
-    "subtitle": "Ideias, publicar, cardápios, chat, preços e stats",
+    "subtitle": "Ajuda conforme seu papel",
+    "subtitleByRole": {
+      "guest": "Explorar, comprar, vender ou ser entregador",
+      "buyer": "Comprar, pedir comida e começar a vender",
+      "seller_store": "Foto → publicar, preços, frete e chat",
+      "seller_restaurant": "Cardápio, pedidos, combos e promo",
+      "cadete": "Zona, horários, ganhos e segurança",
+      "admin": "Stats, operação e tendências"
+    },
     "close": "Fechar chat",
     "welcome": "Olá! Eu sou o Servido Bot.",
-    "welcomeHint": "Posso te dar ideias, rascunhos, preços, textos de chat, cardápios, tendências, FAQs e estatísticas.",
-    "placeholder": "Escreva aqui… ideias, rascunho, preços",
+    "welcomeHint": "Mostro funções conforme o seu papel.",
+    "welcomeHintByRole": {
+      "guest": "Posso explicar o app, como comprar, abrir loja ou se candidatar como entregador.",
+      "buyer": "Ajudo a comprar, pedir comida, favoritos ou começar a vender produtos.",
+      "seller_store": "Você vende produtos/serviços: anexe uma foto e eu publico. Também preços, frete, chat e lives. Sem cardápio de restaurante.",
+      "seller_restaurant": "Você tem um local de comida: ajudo com cardápio, combos, tempos e pedidos.",
+      "cadete": "Ajudo com zona, aprovação, horários, ganhos e segurança nas entregas.",
+      "admin": "Posso dar stats públicas, tendências e dicas de operação geral."
+    },
+    "placeholder": "Escreva aqui…",
     "send": "Enviar",
     "thinking": "Servido Bot está pensando…",
     "working": "Preparando algo útil…",
@@ -205,31 +221,59 @@
     "copy": "Copiar",
     "capIdeas": "Ideias para vender",
     "capPublish": "Publicar produto",
+    "capPublishPhoto": "Publicar com foto",
     "capStats": "Ver estatísticas",
     "capStore": "Criar loja",
     "capTrending": "Tendências",
     "capChat": "Resposta de chat",
     "capFood": "Montar cardápio",
     "capCadete": "Ser entregador",
+    "capPricing": "Preços",
+    "capTitle": "Melhorar título",
+    "capPromo": "Texto promo",
+    "capSafety": "Segurança",
+    "capShipping": "Frete",
+    "capPhotos": "Fotos que vendem",
+    "capOrders": "Pedidos",
+    "capEarnings": "Ganhos",
+    "capBuy": "Como comprar",
+    "capFoodOrder": "Pedir comida",
+    "capLives": "Fazer uma live",
     "chip": {
       "qPrice": "Preços",
       "qTitle": "Melhorar título",
       "qPromo": "Texto promo",
-      "qSafety": "Segurança"
+      "qSafety": "Segurança",
+      "qShipping": "Frete",
+      "qPhotos": "Fotos",
+      "qOrders": "Pedidos",
+      "qEarnings": "Ganhos",
+      "qBuy": "Comprar",
+      "qFoodOrder": "Comida",
+      "qLives": "Lives",
+      "qPublishPhoto": "Com foto"
     },
     "suggestions": {
-      "qIdeas": "Me dá ideias para vender no Servido",
+      "qIdeas": "Me dá ideias para vender produtos no Servido",
       "qPublish": "Monte um rascunho para publicar um produto de fones",
+      "qPublishPhoto": "Quero publicar com uma foto",
       "qStats": "Mostre estatísticas da plataforma",
-      "qStore": "Quero criar minha loja, como faço?",
-      "qTrending": "Quais ramos estão em tendência para vender?",
+      "qStore": "Quero criar minha loja de produtos, como faço?",
+      "qTrending": "Quais ramos de produtos estão em tendência para vender?",
       "qChat": "Escreva uma resposta de vendedor para quem pergunta o preço",
       "qFoodMenu": "Monte um cardápio inicial para uma pizzaria",
       "qCadete": "Quero ser entregador, quais passos sigo?",
       "qPrice": "Sugira uma estratégia de preço para um produto com custo de 10000",
       "qTitle": "Otimize este título: tênis pretos 42",
       "qPromo": "Escreva um texto de história para promover meu produto",
-      "qSafety": "Me dê dicas de segurança para comprar no Servido"
+      "qSafety": "Me dê dicas de segurança para comprar no Servido",
+      "qShipping": "Como monto frete e retirada para meus produtos?",
+      "qPhotos": "Me dê um checklist de fotos para o produto vender mais",
+      "qOrders": "Me dê dicas para gerenciar pedidos hoje",
+      "qEarnings": "Como ganho mais como entregador no Servido?",
+      "qBuy": "Como compro um produto no Servido?",
+      "qFoodOrder": "Quero pedir comida, como começo?",
+      "qLives": "Como faço uma live para vender meus produtos?"
     },
     "stats": {
       "title": "Estatísticas Servido",
@@ -284,6 +328,41 @@
     "plan": {
       "title": "Plano de crescimento",
       "cta": "Começar"
+    },
+    "photos": {
+      "title": "Checklist de fotos"
+    },
+    "shipping": {
+      "title": "Guia de frete"
+    },
+    "ops": {
+      "title": "Dicas do local"
+    },
+    "cadeteTips": {
+      "title": "Dicas de entregador"
+    },
+    "publishPhoto": {
+      "attach": "Anexar foto para publicar",
+      "remove": "Remover foto",
+      "ready": "Foto pronta para publicar",
+      "hint": "Escreva preço ou detalhe e envie. Eu publico o anúncio por você.",
+      "askPrice": "Me diga o preço (ex: 15000) e eu publico.",
+      "needsPriceTitle": "Quase pronto: falta o preço",
+      "captionPlaceholder": "Ex: fones novos 15000",
+      "pricePlaceholder": "Preço, ex: 15000",
+      "defaultCaption": "Publicar a partir da foto",
+      "working": "Analisando a foto e publicando…",
+      "success": "Publicado no Servido!",
+      "view": "Ver anúncio",
+      "service": "Serviço",
+      "invalidImage": "A foto precisa ser uma imagem.",
+      "tooLarge": "A foto não pode passar de 8 MB.",
+      "notLoggedIn": "Você precisa entrar para publicar.",
+      "needsStore": "Primeiro abra sua loja de produtos para poder publicar.",
+      "openStore": "Abrir minha loja",
+      "limit": "Você chegou ao limite de publicações da conta.",
+      "failed": "Não consegui publicar agora. Tente de novo.",
+      "priceRequired": "Preciso de um preço válido para publicar."
     }
   },
   "appTutorial": {

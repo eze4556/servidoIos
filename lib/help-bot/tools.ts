@@ -2,6 +2,7 @@ import { tool, stepCountIs } from "ai"
 import { z } from "zod"
 import type { Query } from "firebase-admin/firestore"
 import { db as adminDb } from "@/lib/firebase-admin"
+import type { BotAudience } from "@/lib/help-bot/role-context"
 
 export { stepCountIs }
 
@@ -19,9 +20,12 @@ async function safeCount(collectionName: string, field?: string, value?: string 
   }
 }
 
-export function createHelpBotTools(locale?: string) {
+export function createHelpBotTools(locale?: string, audience: BotAudience = "guest") {
   const isPt = locale === "pt-BR"
   const t = (es: string, pt: string) => (isPt ? pt : es)
+  const isStoreSeller = audience === "seller_store"
+  const isRestaurant = audience === "seller_restaurant"
+  const isCadete = audience === "cadete"
 
   return {
     get_platform_stats: tool({
@@ -554,15 +558,24 @@ export function createHelpBotTools(locale?: string) {
       inputSchema: z.object({
         focus: z.enum(["vender", "comprar", "comida"]).optional(),
       }),
-      execute: async ({ focus = "vender" }) => {
+      execute: async ({ focus }) => {
+        const defaultFocus =
+          focus || (isRestaurant ? "comida" : isStoreSeller || audience === "buyer" ? "vender" : "comprar")
+        const storeVender = [
+          { name: t("Accesorios de celular", "Acessórios de celular"), href: "/dashboard/buyer?tab=publishProduct" },
+          { name: t("Servicios a domicilio", "Serviços a domicílio"), href: "/dashboard/buyer?tab=publishProduct" },
+          { name: t("Indumentaria y calzado", "Roupa e calçados"), href: "/dashboard/buyer?tab=publishProduct" },
+          { name: t("Hogar y deco", "Casa e decoração"), href: "/dashboard/buyer?tab=publishProduct" },
+          { name: t("Vehículos y motos", "Veículos e motos"), href: "/autos" },
+        ]
         const sets = {
-          vender: [
-            { name: t("Accesorios de celular", "Acessórios de celular"), href: "/dashboard/buyer?tab=publishProduct" },
-            { name: t("Servicios a domicilio", "Serviços a domicílio"), href: "/dashboard/buyer?tab=publishProduct" },
-            { name: t("Comida para delivery", "Comida para delivery"), href: "/dashboard/buyer?tab=openStore" },
-            { name: t("Indumentaria usada premium", "Roupa usada premium"), href: "/dashboard/buyer?tab=publishProduct" },
-            { name: t("Vehículos y motos", "Veículos e motos"), href: "/autos" },
-          ],
+          vender: isStoreSeller
+            ? storeVender
+            : [
+                ...storeVender.slice(0, 2),
+                { name: t("Comida para delivery", "Comida para delivery"), href: "/dashboard/buyer?tab=openStore" },
+                ...storeVender.slice(2),
+              ],
           comprar: [
             { name: t("Ofertas en productos", "Ofertas em produtos"), href: "/products" },
             { name: t("Servicios locales", "Serviços locais"), href: "/services" },
@@ -579,11 +592,15 @@ export function createHelpBotTools(locale?: string) {
         }
         return {
           ok: true,
-          focus,
-          niches: sets[focus],
+          focus: defaultFocus,
+          niches: sets[defaultFocus],
           tip: t(
-            "Elegí un rubro y pedime un borrador o plan de crecimiento.",
-            "Escolha um ramo e peça um rascunho ou plano de crescimento."
+            isStoreSeller
+              ? "Elegí un rubro de productos y pedime un borrador o tips de fotos/envío."
+              : "Elegí un rubro y pedime un borrador o plan de crecimiento.",
+            isStoreSeller
+              ? "Escolha um ramo de produtos e peça um rascunho ou dicas de fotos/frete."
+              : "Escolha um ramo e peça um rascunho ou plano de crescimento."
           ),
         }
       },
@@ -673,41 +690,174 @@ export function createHelpBotTools(locale?: string) {
     create_growth_plan: tool({
       description: "Plan de crecimiento corto para seller, cadete, restaurant o buyer.",
       inputSchema: z.object({
-        role: z.enum(["seller", "cadete", "restaurant", "buyer"]),
+        role: z.enum(["seller", "cadete", "restaurant", "buyer"]).optional(),
         goal: z.string().optional(),
       }),
       execute: async ({ role, goal }) => {
+        const resolvedRole =
+          role ||
+          (isRestaurant
+            ? "restaurant"
+            : isCadete
+              ? "cadete"
+              : isStoreSeller
+                ? "seller"
+                : "buyer")
         const plans = {
           seller: {
             week: t(
-              "Día 1: publicá 3 productos con buenas fotos|Día 2: respondé chats en <1 hora|Día 3: subí una historia|Día 4: revisá precios y envío|Día 5: pedí reseñas",
-              "Dia 1: publique 3 produtos com boas fotos|Dia 2: responda chats em <1 hora|Dia 3: suba uma história|Dia 4: revise preços e frete|Dia 5: peça avaliações"
+              "Día 1: publicá 3 productos con buenas fotos|Día 2: respondé chats en <1 hora|Día 3: subí una historia o live|Día 4: revisá precios y opciones de envío|Día 5: pedí reseñas a compradores",
+              "Dia 1: publique 3 produtos com boas fotos|Dia 2: responda chats em <1 hora|Dia 3: suba uma história ou live|Dia 4: revise preços e frete|Dia 5: peça avaliações"
             ).split("|"),
             href: "/dashboard/buyer?tab=publishProduct",
           },
           restaurant: {
             week: t(
-              "Actualizá menú y fotos|Creá combo del día|Definí tiempos reales|Activá horarios pico",
-              "Atualize cardápio e fotos|Crie combo do dia|Defina tempos reais|Ative horários de pico"
+              "Actualizá menú y fotos|Creá combo del día|Definí tiempos reales de entrega|Activá horarios pico|Respondé chats de pedidos al toque",
+              "Atualize cardápio e fotos|Crie combo do dia|Defina tempos reais|Ative horários de pico|Responda chats de pedidos rápido"
             ).split("|"),
-            href: "/dashboard/buyer?tab=openStore",
+            href: "/dashboard/restaurant",
           },
           cadete: {
             week: t(
-              "Completá registro y zona|Esperá aprobación|Está online en almuerzo/cena|Priorizá pedidos cercanos",
-              "Complete cadastro e zona|Aguarde aprovação|Fique online no almoço/jantar|Priorize pedidos próximos"
+              "Completá registro y zona|Esperá aprobación del admin|Está online en almuerzo/cena|Priorizá pedidos cercanos|Cuidá tu reputación y seguridad",
+              "Complete cadastro e zona|Aguarde aprovação do admin|Fique online no almoço/jantar|Priorize pedidos próximos|Cuide da reputação e segurança"
             ).split("|"),
-            href: "/signup/cadete",
+            href: "/dashboard/cadete",
           },
           buyer: {
             week: t(
-              "Explorá categorías|Compará 2–3 vendedores|Usá el chat|Confirmá entregas",
-              "Explore categorias|Compare 2–3 vendedores|Use o chat|Confirme entregas"
+              "Explorá categorías|Compará 2–3 vendedores|Usá el chat|Confirmá entregas|Guardá favoritos",
+              "Explore categorias|Compare 2–3 vendedores|Use o chat|Confirme entregas|Salve favoritos"
             ).split("|"),
             href: "/products",
           },
         }
-        return { ok: true, role, goal: goal || null, plan: plans[role] }
+        return { ok: true, role: resolvedRole, goal: goal || null, plan: plans[resolvedRole] }
+      },
+    }),
+
+    seller_photo_checklist: tool({
+      description:
+        "Checklist de fotos para publicaciones de productos (vendedor de tienda). No usar para menús de restaurante.",
+      inputSchema: z.object({
+        category: z.string().optional(),
+      }),
+      execute: async ({ category }) => {
+        return {
+          ok: true,
+          category: category || null,
+          checklist: t(
+            "Fondo limpio y luz natural|Mostrá el producto completo|Detalle de etiqueta/estado|Foto con escala (mano o regla)|Evitar filtros extremos|Primera foto = la más clara",
+            "Fundo limpo e luz natural|Mostre o produto inteiro|Detalhe de etiqueta/estado|Foto com escala (mão ou régua)|Evite filtros extremos|Primeira foto = a mais clara"
+          ).split("|"),
+          tip: t(
+            "Con buenas fotos vendés más. Después pedime un título o precio.",
+            "Com boas fotos você vende mais. Depois peça um título ou preço."
+          ),
+          href: "/dashboard/buyer?tab=publishProduct",
+        }
+      },
+    }),
+
+    seller_shipping_guide: tool({
+      description:
+        "Guía de envíos y entrega para vendedores de productos: zona, costo, tiempos y mensajes al comprador.",
+      inputSchema: z.object({
+        mode: z.enum(["retiro", "envio", "ambos"]).optional(),
+      }),
+      execute: async ({ mode = "ambos" }) => {
+        const tips =
+          mode === "retiro"
+            ? t(
+                "Definí punto de encuentro seguro|Horarios claros de retiro|Pedí confirmación por chat|No compartas domicilio exacto si no querés",
+                "Defina ponto seguro|Horários claros de retirada|Peça confirmação no chat|Não compartilhe endereço exato se não quiser"
+              ).split("|")
+            : mode === "envio"
+              ? t(
+                  "Indicá zona y costo antes de cerrar|Estimá demora realista|Pedí dirección completa|Avisá cuando salga el envío|Guardá comprobante",
+                  "Indique região e custo antes de fechar|Estime prazo realista|Peça endereço completo|Avise quando sair|Guarde comprovante"
+                ).split("|")
+              : t(
+                  "Ofrecé retiro y envío si podés|Publicá costos en la ficha o chat|Sé claro con demoras|Usá el chat para coordinar|No inventes tracking",
+                  "Ofereça retirada e frete se puder|Publique custos na ficha ou chat|Seja claro com prazos|Use o chat|Não invente rastreio"
+                ).split("|")
+        return {
+          ok: true,
+          mode,
+          tips,
+          sampleReply: t(
+            "¡Hola! Hago envío en tu zona por $X (1–2 días) o retiro coordinado. ¿Cuál preferís?",
+            "Olá! Faço entrega na sua região por R$X (1–2 dias) ou retirada combinada. Qual prefere?"
+          ),
+          href: "/mensajes",
+        }
+      },
+    }),
+
+    restaurant_ops_tips: tool({
+      description: "Tips operativos para locales de comida: menú, tiempos, combos y pedidos.",
+      inputSchema: z.object({
+        topic: z.enum(["menu", "tiempos", "combos", "pedidos"]).optional(),
+      }),
+      execute: async ({ topic = "menu" }) => {
+        const map = {
+          menu: t(
+            "Menú corto y claro|Fotos reales de platos|Precios visibles|Marcá agotados|Actualizá al abrir/cerrar",
+            "Cardápio curto e claro|Fotos reais|Preços visíveis|Marque esgotados|Atualize ao abrir/fechar"
+          ),
+          tiempos: t(
+            "Prometé tiempos realistas|Avisá demoras por chat|Priorizá pedidos cercanos|Prepará en lotes en hora pico",
+            "Prometa tempos reais|Avise atrasos no chat|Priorize pedidos próximos|Prepare em lotes no pico"
+          ),
+          combos: t(
+            "Combo del día con margen|Nombre atractivo|Precio redondo|Foto del combo|Límite de stock del día",
+            "Combo do dia com margem|Nome atrativo|Preço redondo|Foto do combo|Limite de estoque do dia"
+          ),
+          pedidos: t(
+            "Confirmá pago/estado|Respondé chats rápido|Empacá bien|Avisá al cadete|Pedí feedback al cliente",
+            "Confirme pagamento/status|Responda chats rápido|Embale bem|Avise o entregador|Peça feedback"
+          ),
+        }
+        return {
+          ok: true,
+          topic,
+          tips: map[topic].split("|"),
+          href: "/dashboard/restaurant",
+        }
+      },
+    }),
+
+    cadete_ops_tips: tool({
+      description: "Tips para cadetes/repartidores: zona, horarios, ganancias y seguridad.",
+      inputSchema: z.object({
+        topic: z.enum(["zona", "horarios", "ganancias", "seguridad"]).optional(),
+      }),
+      execute: async ({ topic = "ganancias" }) => {
+        const map = {
+          zona: t(
+            "Elegí zona que conozcas|Actualizá si te mudás|Quedate cerca de locales activos|Avisá si no podés cubrir",
+            "Escolha zona que conhece|Atualize se mudar|Fique perto de locais ativos|Avise se não puder cobrir"
+          ),
+          horarios: t(
+            "Almuerzo y cena rinden más|Está online cuando podés cumplir|Avisá offline si descansás|No aceptes si no llegás a tiempo",
+            "Almoço e jantar rendem mais|Fique online quando puder cumprir|Avise offline se descansar|Não aceite se não chegar a tempo"
+          ),
+          ganancias: t(
+            "Pedidos cercanos = más viajes|Menos cancelaciones|Buen trato = más propinas|Llevá vuelto/cambio si aplica|Registrá tus viajes",
+            "Pedidos próximos = mais viagens|Menos cancelamentos|Bom trato = mais gorjetas|Leve troco se precisar|Registre suas viagens"
+          ),
+          seguridad: t(
+            "No compartas datos personales|Confirmá punto de entrega|Si algo se siente mal, cancelá|Usá casco/luces|No muestres efectivo",
+            "Não compartilhe dados pessoais|Confirme o ponto|Se algo estranho, cancele|Use capacete/luzes|Não mostre dinheiro"
+          ),
+        }
+        return {
+          ok: true,
+          topic,
+          tips: map[topic].split("|"),
+          href: isCadete ? "/dashboard/cadete" : "/signup/cadete",
+        }
       },
     }),
   }

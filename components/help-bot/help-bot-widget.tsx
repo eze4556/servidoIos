@@ -10,33 +10,83 @@ import {
   ArrowUpRight,
   BarChart3,
   Bike,
+  Camera,
   ClipboardCopy,
+  ClipboardList,
+  ImagePlus,
   Lightbulb,
   Loader2,
   MessageSquareText,
   PackagePlus,
+  Radio,
   SendHorizontal,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Store,
+  Tag,
   TrendingUp,
+  Truck,
+  Type,
   UtensilsCrossed,
+  Wallet,
+  Megaphone,
   X,
+  type LucideIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ServidoBotAvatar } from "@/components/help-bot/servido-bot-avatar"
+import { useAuth } from "@/contexts/auth-context"
+import { auth } from "@/lib/firebase"
+import { apiUrl } from "@/lib/api-base"
+import {
+  getCapabilitiesForAudience,
+  getChipCapabilities,
+  resolveBotAudience,
+  type BotCapabilityId,
+} from "@/lib/help-bot/role-context"
 import { cn } from "@/lib/utils"
 
-const CAPABILITY_KEYS = [
-  { key: "capIdeas", icon: Lightbulb, promptKey: "qIdeas" as const },
-  { key: "capPublish", icon: PackagePlus, promptKey: "qPublish" as const },
-  { key: "capStats", icon: BarChart3, promptKey: "qStats" as const },
-  { key: "capStore", icon: Store, promptKey: "qStore" as const },
-  { key: "capTrending", icon: TrendingUp, promptKey: "qTrending" as const },
-  { key: "capChat", icon: MessageSquareText, promptKey: "qChat" as const },
-  { key: "capFood", icon: UtensilsCrossed, promptKey: "qFoodMenu" as const },
-  { key: "capCadete", icon: Bike, promptKey: "qCadete" as const },
-] as const
+type PublishResult = {
+  published: boolean
+  needsPrice?: boolean
+  needsStore?: boolean
+  productId?: string
+  href?: string
+  draft?: {
+    name?: string
+    description?: string
+    price?: number | null
+    categoryName?: string
+    isService?: boolean
+    imageUrl?: string
+  }
+  error?: string
+  previewUrl?: string
+}
+
+const CAP_ICONS: Record<BotCapabilityId, LucideIcon> = {
+  ideas: Lightbulb,
+  publish: PackagePlus,
+  publishFromPhoto: ImagePlus,
+  stats: BarChart3,
+  store: Store,
+  trending: TrendingUp,
+  chat: MessageSquareText,
+  foodMenu: UtensilsCrossed,
+  cadete: Bike,
+  pricing: Tag,
+  title: Type,
+  promo: Megaphone,
+  safety: ShieldCheck,
+  shipping: Truck,
+  photos: Camera,
+  orders: ClipboardList,
+  earnings: Wallet,
+  buy: ShoppingBag,
+  foodOrder: UtensilsCrossed,
+  lives: Radio,
+}
 
 type ChatPart = {
   type: string
@@ -63,31 +113,80 @@ export function HelpBotWidget() {
   const t = useTranslations("helpBot")
   const locale = useLocale()
   const pathname = usePathname()
+  const { currentUser } = useAuth()
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState("")
+  const [pendingImage, setPendingImage] = useState<File | null>(null)
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null)
+  const [publishBusy, setPublishBusy] = useState(false)
+  const [publishResult, setPublishResult] = useState<PublishResult | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const audience = useMemo(
+    () =>
+      resolveBotAudience({
+        role: currentUser?.role,
+        businessType: currentUser?.businessType,
+        isLoggedIn: Boolean(currentUser),
+      }),
+    [currentUser]
+  )
+
+  const canPublishFromPhoto = audience === "seller_store"
+  const capabilities = useMemo(() => getCapabilitiesForAudience(audience), [audience])
+  const chipCaps = useMemo(() => getChipCapabilities(audience), [audience])
+
+  const requestContextRef = useRef({
+    locale,
+    role: currentUser?.role ?? null,
+    businessType: currentUser?.businessType ?? null,
+    isLoggedIn: Boolean(currentUser),
+  })
+  requestContextRef.current = {
+    locale,
+    role: currentUser?.role ?? null,
+    businessType: currentUser?.businessType ?? null,
+    isLoggedIn: Boolean(currentUser),
+  }
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/help-bot",
-        body: { locale },
+        body: () => requestContextRef.current,
       }),
-    [locale]
+    []
   )
 
   const { messages, sendMessage, status, error, stop, setMessages } = useChat({
     transport,
   })
 
-  const busy = status === "submitted" || status === "streaming"
+  const busy = status === "submitted" || status === "streaming" || publishBusy
+  const prevAudience = useRef(audience)
+
+  // Reset chat when role/audience changes so suggestions match the new menu
+  useEffect(() => {
+    if (prevAudience.current === audience) return
+    prevAudience.current = audience
+    setMessages([])
+    setPublishResult(null)
+    clearPendingImage()
+  }, [audience, setMessages])
+
+  useEffect(() => {
+    return () => {
+      if (pendingPreview) URL.revokeObjectURL(pendingPreview)
+    }
+  }, [pendingPreview])
 
   useEffect(() => {
     if (!open) return
     const el = listRef.current
     if (!el) return
     el.scrollTop = el.scrollHeight
-  }, [messages, open, status])
+  }, [messages, open, status, publishResult, pendingPreview])
 
   if (
     pathname?.startsWith("/login") ||
@@ -100,8 +199,135 @@ export function HelpBotWidget() {
     return null
   }
 
+  function clearPendingImage() {
+    setPendingImage(null)
+    setPendingPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  function pickImage() {
+    if (!canPublishFromPhoto || busy) return
+    fileInputRef.current?.click()
+  }
+
+  function onImageSelected(file: File | undefined) {
+    if (!file) return
+    if (!file.type.startsWith("image/")) {
+      setPublishResult({ published: false, error: t("publishPhoto.invalidImage") })
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setPublishResult({ published: false, error: t("publishPhoto.tooLarge") })
+      return
+    }
+    setPublishResult(null)
+    setPendingPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
+    setPendingImage(file)
+  }
+
+  async function publishWithImage(caption: string, price?: number) {
+    if (!pendingImage || !canPublishFromPhoto) return
+    const user = auth.currentUser
+    if (!user) {
+      setPublishResult({ published: false, error: t("publishPhoto.notLoggedIn") })
+      return
+    }
+
+    setPublishBusy(true)
+    setPublishResult(null)
+    try {
+      const token = await user.getIdToken()
+      const form = new FormData()
+      form.append("image", pendingImage)
+      form.append("caption", caption)
+      form.append("locale", locale)
+      form.append("publish", "true")
+      if (typeof price === "number" && price > 0) {
+        form.append("price", String(price))
+      }
+
+      const res = await fetch(apiUrl("/api/seller/products/from-image"), {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      })
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        const errKey =
+          data.error === "not_seller"
+            ? "publishPhoto.needsStore"
+            : data.error === "upload_limit"
+              ? "publishPhoto.limit"
+              : "publishPhoto.failed"
+        setPublishResult({
+          published: false,
+          error: t(errKey),
+          previewUrl: pendingPreview || undefined,
+          needsStore: data.error === "not_seller",
+        })
+        return
+      }
+
+      if (data.needsPrice || !data.published) {
+        setPublishResult({
+          published: false,
+          needsPrice: true,
+          draft: data.draft,
+          previewUrl: pendingPreview || undefined,
+        })
+        return
+      }
+
+      setPublishResult({
+        published: true,
+        productId: data.productId,
+        href: data.href,
+        draft: data.draft,
+        previewUrl: data.draft?.imageUrl || pendingPreview || undefined,
+      })
+      clearPendingImage()
+      setInput("")
+    } catch {
+      setPublishResult({ published: false, error: t("publishPhoto.failed") })
+    } finally {
+      setPublishBusy(false)
+    }
+  }
+
   const ask = (text: string) => {
     const value = text.trim()
+
+    // Capability "publicar con foto" opens the picker
+    if (text === "__pick_photo__") {
+      pickImage()
+      return
+    }
+
+    if (pendingImage && canPublishFromPhoto) {
+      if (publishResult?.needsPrice) {
+        const price = Number(value.replace(/[^\d.]/g, ""))
+        if (!Number.isFinite(price) || price <= 0) {
+          setPublishResult((prev) =>
+            prev
+              ? { ...prev, error: t("publishPhoto.priceRequired") }
+              : { published: false, needsPrice: true, error: t("publishPhoto.priceRequired") }
+          )
+          return
+        }
+        void publishWithImage(input.trim() || value, price)
+        return
+      }
+      void publishWithImage(value || t("publishPhoto.defaultCaption"))
+      return
+    }
+
     if (!value || busy) return
     setInput("")
     void sendMessage({ text: value })
@@ -150,7 +376,7 @@ export function HelpBotWidget() {
                   {t("brand")}
                 </p>
                 <p className="truncate text-lg font-semibold leading-tight sm:text-base">{t("title")}</p>
-                <p className="truncate text-sm text-white/75 sm:text-xs">{t("subtitle")}</p>
+                <p className="truncate text-sm text-white/75 sm:text-xs">{t(`subtitleByRole.${audience}`)}</p>
               </div>
               <button
                 type="button"
@@ -177,37 +403,53 @@ export function HelpBotWidget() {
                     <ServidoBotAvatar size={40} />
                     <div>
                       <p className="text-sm font-semibold text-servido-950">{t("welcome")}</p>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-500">{t("welcomeHint")}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                        {t(`welcomeHintByRole.${audience}`)}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  {CAPABILITY_KEYS.map(({ key, icon: Icon, promptKey }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => ask(t(`suggestions.${promptKey}`))}
-                      className="rounded-2xl bg-white p-3 text-left ring-1 ring-slate-200 transition hover:ring-servido-300"
-                    >
-                      <Icon className="mb-2 h-4 w-4 text-servido-800" />
-                      <p className="text-xs font-semibold text-servido-950">{t(key)}</p>
-                    </button>
-                  ))}
+                  {capabilities.map((cap) => {
+                    const Icon = CAP_ICONS[cap.id]
+                    return (
+                      <button
+                        key={cap.id}
+                        type="button"
+                        onClick={() => {
+                          if (cap.id === "publishFromPhoto") pickImage()
+                          else ask(t(`suggestions.${cap.promptKey}`))
+                        }}
+                        className="rounded-2xl bg-white p-3 text-left ring-1 ring-slate-200 transition hover:ring-servido-300"
+                      >
+                        <Icon className="mb-2 h-4 w-4 text-servido-800" />
+                        <p className="text-xs font-semibold text-servido-950">{t(cap.key)}</p>
+                      </button>
+                    )
+                  })}
                 </div>
 
-                <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {(["qPrice", "qTitle", "qPromo", "qSafety"] as const).map((key) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => ask(t(`suggestions.${key}`))}
-                      className="shrink-0 rounded-full bg-servido-50 px-3 py-1.5 text-[11px] font-semibold text-servido-900 ring-1 ring-servido-100"
-                    >
-                      {t(`chip.${key}`)}
-                    </button>
-                  ))}
-                </div>
+                {chipCaps.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {chipCaps.map((cap) => {
+                      const chipKey = cap.chipKey || cap.promptKey
+                      return (
+                        <button
+                          key={`chip-${cap.id}`}
+                          type="button"
+                          onClick={() => {
+                            if (cap.id === "publishFromPhoto") pickImage()
+                            else ask(t(`suggestions.${cap.promptKey}`))
+                          }}
+                          className="shrink-0 rounded-full bg-servido-50 px-3 py-1.5 text-[11px] font-semibold text-servido-900 ring-1 ring-servido-100"
+                        >
+                          {t(`chip.${chipKey}`)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -263,10 +505,12 @@ export function HelpBotWidget() {
               )
             })}
 
+            {publishResult && <PublishPhotoCard result={publishResult} t={t} />}
+
             {busy && (
               <div className="ml-1 flex items-center gap-2 text-xs text-slate-500">
                 <ServidoBotAvatar size={24} pulse />
-                {t("thinking")}
+                {publishBusy ? t("publishPhoto.working") : t("thinking")}
               </div>
             )}
 
@@ -284,12 +528,64 @@ export function HelpBotWidget() {
               ask(input)
             }}
           >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => onImageSelected(e.target.files?.[0])}
+            />
+
+            {canPublishFromPhoto && pendingPreview && (
+              <div className="mb-2 flex items-center gap-2 rounded-2xl bg-violet-50 p-2 ring-1 ring-violet-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={pendingPreview}
+                  alt=""
+                  className="h-14 w-14 rounded-xl object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-violet-950">{t("publishPhoto.ready")}</p>
+                  <p className="text-[11px] text-violet-800/80">
+                    {publishResult?.needsPrice
+                      ? t("publishPhoto.askPrice")
+                      : t("publishPhoto.hint")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearPendingImage}
+                  className="rounded-full p-1.5 text-violet-700 hover:bg-violet-100"
+                  aria-label={t("publishPhoto.remove")}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
             <div className="flex items-end gap-2.5">
+              {canPublishFromPhoto && (
+                <button
+                  type="button"
+                  onClick={pickImage}
+                  disabled={busy}
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-servido-50 text-servido-900 ring-1 ring-servido-100 transition hover:bg-servido-100 disabled:opacity-50"
+                  aria-label={t("publishPhoto.attach")}
+                >
+                  <ImagePlus className="h-5 w-5" />
+                </button>
+              )}
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 rows={2}
-                placeholder={t("placeholder")}
+                placeholder={
+                  pendingImage
+                    ? publishResult?.needsPrice
+                      ? t("publishPhoto.pricePlaceholder")
+                      : t("publishPhoto.captionPlaceholder")
+                    : t("placeholder")
+                }
                 enterKeyHint="send"
                 className={cn(
                   "w-full flex-1 resize-none rounded-2xl border border-slate-200 bg-white",
@@ -309,18 +605,22 @@ export function HelpBotWidget() {
               <Button
                 type="submit"
                 size="icon"
-                disabled={busy || !input.trim()}
+                disabled={busy || (!input.trim() && !pendingImage)}
                 className="h-12 w-12 shrink-0 rounded-full bg-servido-950 hover:bg-servido-800"
                 aria-label={t("send")}
               >
                 {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <SendHorizontal className="h-5 w-5" />}
               </Button>
             </div>
-            {messages.length > 0 && (
+            {(messages.length > 0 || publishResult) && (
               <button
                 type="button"
                 className="mt-2.5 text-xs font-medium text-slate-500 hover:text-slate-700"
-                onClick={() => setMessages([])}
+                onClick={() => {
+                  setMessages([])
+                  setPublishResult(null)
+                  clearPendingImage()
+                }}
               >
                 {t("clear")}
               </button>
@@ -330,6 +630,71 @@ export function HelpBotWidget() {
       )}
     </>
   )
+}
+
+function PublishPhotoCard({
+  result,
+  t,
+}: {
+  result: PublishResult
+  t: ReturnType<typeof useTranslations>
+}) {
+  if (result.error && !result.needsPrice) {
+    return (
+      <div className="rounded-2xl bg-rose-50 p-3 text-xs text-rose-700 ring-1 ring-rose-100">
+        {result.error}
+        {result.needsStore ? (
+          <div className="mt-2">
+            <ActionLink href="/dashboard/buyer?tab=openStore" label={t("publishPhoto.openStore")} />
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (result.needsPrice) {
+    return (
+      <div className="ml-9 rounded-2xl bg-amber-50 p-3 ring-1 ring-amber-200">
+        <p className="text-xs font-semibold text-amber-950">{t("publishPhoto.needsPriceTitle")}</p>
+        {result.draft?.name && (
+          <p className="mt-1 text-sm font-medium text-servido-950">{result.draft.name}</p>
+        )}
+        {result.draft?.description && (
+          <p className="mt-1 line-clamp-3 text-xs text-slate-600">{result.draft.description}</p>
+        )}
+        <p className="mt-2 text-xs text-amber-900">{t("publishPhoto.askPrice")}</p>
+        {result.error && <p className="mt-1 text-xs text-rose-600">{result.error}</p>}
+      </div>
+    )
+  }
+
+  if (result.published) {
+    return (
+      <div className="ml-9 rounded-2xl bg-emerald-50 p-3 ring-1 ring-emerald-200">
+        <p className="text-xs font-semibold text-emerald-900">{t("publishPhoto.success")}</p>
+        {result.previewUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={result.previewUrl}
+            alt=""
+            className="mt-2 h-28 w-full rounded-xl object-cover"
+          />
+        )}
+        {result.draft?.name && (
+          <p className="mt-2 text-sm font-semibold text-servido-950">{result.draft.name}</p>
+        )}
+        {typeof result.draft?.price === "number" && (
+          <p className="text-sm font-medium text-emerald-900">
+            ${result.draft.price.toLocaleString()}
+            {result.draft.isService ? ` · ${t("publishPhoto.service")}` : ""}
+          </p>
+        )}
+        {result.href && <ActionLink href={result.href} label={t("publishPhoto.view")} />}
+      </div>
+    )
+  }
+
+  return null
 }
 
 function MessageBody({ text }: { text: string }) {
@@ -600,6 +965,47 @@ function ToolCard({
           ))}
         </ul>
         <ActionLink href={href} label={t("plan.cta")} />
+      </div>
+    )
+  }
+
+  if (
+    type === "tool-seller_photo_checklist" ||
+    type === "tool-seller_shipping_guide" ||
+    type === "tool-restaurant_ops_tips" ||
+    type === "tool-cadete_ops_tips"
+  ) {
+    const tips = Array.isArray(output.checklist)
+      ? output.checklist.map(String)
+      : Array.isArray(output.tips)
+        ? output.tips.map(String)
+        : []
+    const titleKey =
+      type === "tool-seller_photo_checklist"
+        ? "photos.title"
+        : type === "tool-seller_shipping_guide"
+          ? "shipping.title"
+          : type === "tool-restaurant_ops_tips"
+            ? "ops.title"
+            : "cadeteTips.title"
+    const href = typeof output.href === "string" ? output.href : undefined
+    const sample = typeof output.sampleReply === "string" ? output.sampleReply : null
+    return (
+      <div className="ml-9 rounded-2xl bg-teal-50 p-3 ring-1 ring-teal-200">
+        <p className="text-xs font-semibold text-teal-900">{t(titleKey)}</p>
+        <ul className="mt-2 space-y-1.5 text-xs text-teal-950/90">
+          {tips.map((tip) => (
+            <li key={tip}>• {tip}</li>
+          ))}
+        </ul>
+        {sample && <p className="mt-2 whitespace-pre-wrap text-xs text-slate-600">{sample}</p>}
+        {typeof output.tip === "string" && (
+          <p className="mt-2 text-[11px] text-teal-800/80">{output.tip}</p>
+        )}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {sample && <CopyButton text={sample} label={t("copy")} />}
+          {href && <ActionLink href={href} label={t("actions.cta")} />}
+        </div>
       </div>
     )
   }
