@@ -186,6 +186,106 @@
     "backHomeAria": "Volver al inicio",
     "myPanelLabel": "Mi panel"
   },
+  "helpBot": {
+    "brand": "Servido Bot",
+    "fabAria": "Abrir Servido Bot",
+    "fabLabel": "¿Necesitás ayuda?",
+    "fabShort": "Bot",
+    "title": "Servido Bot",
+    "subtitle": "Ideas, publicar, menús, chat, precios y stats",
+    "close": "Cerrar chat",
+    "welcome": "¡Hola! Soy Servido Bot.",
+    "welcomeHint": "Puedo darte ideas, borradores, precios, textos de chat, menús, tendencias, FAQs y estadísticas.",
+    "placeholder": "Escribí acá… ideas, borrador, precios",
+    "send": "Enviar",
+    "thinking": "Servido Bot está pensando…",
+    "working": "Preparando algo útil…",
+    "error": "No pude responder ahora. Probá de nuevo en un momento.",
+    "clear": "Limpiar conversación",
+    "copy": "Copiar",
+    "capIdeas": "Ideas para vender",
+    "capPublish": "Publicar producto",
+    "capStats": "Ver estadísticas",
+    "capStore": "Crear tienda",
+    "capTrending": "Tendencias",
+    "capChat": "Respuesta de chat",
+    "capFood": "Armar menú",
+    "capCadete": "Ser cadete",
+    "chip": {
+      "qPrice": "Precios",
+      "qTitle": "Mejorar título",
+      "qPromo": "Texto promo",
+      "qSafety": "Seguridad"
+    },
+    "suggestions": {
+      "qIdeas": "Dame ideas para vender en Servido",
+      "qPublish": "Armame un borrador para publicar un producto de auriculares",
+      "qStats": "Mostrame estadísticas de la plataforma",
+      "qStore": "Quiero crear mi tienda, ¿cómo hago?",
+      "qTrending": "¿Qué rubros están en tendencia para vender?",
+      "qChat": "Escribime una respuesta de vendedor para alguien que pregunta el precio",
+      "qFoodMenu": "Armame un menú inicial para una pizzería",
+      "qCadete": "Quiero ser cadete, ¿qué pasos sigo?",
+      "qPrice": "Sugerme una estrategia de precio para un producto de $10000 de costo",
+      "qTitle": "Optimizá este título: zapatillas negras 42",
+      "qPromo": "Escribime un texto de historia para promocionar mi producto",
+      "qSafety": "Dame tips de seguridad para comprar en Servido"
+    },
+    "stats": {
+      "title": "Estadísticas Servido",
+      "products": "Productos",
+      "services": "Servicios",
+      "users": "Usuarios",
+      "sellers": "Vendedores",
+      "cadetes": "Cadetes",
+      "restaurants": "Restaurantes",
+      "categories": "Categorías"
+    },
+    "draft": {
+      "title": "Borrador listo para publicar",
+      "cta": "Ir a publicar"
+    },
+    "titles": {
+      "title": "Títulos sugeridos"
+    },
+    "pricing": {
+      "title": "Estrategia de precio"
+    },
+    "menu": {
+      "title": "Menú sugerido",
+      "cta": "Registrar local"
+    },
+    "chatReply": {
+      "title": "Respuesta lista para pegar",
+      "cta": "Ir a mensajes"
+    },
+    "promo": {
+      "title": "Texto promocional",
+      "cta": "Ver historias"
+    },
+    "trending": {
+      "title": "Tendencias ahora"
+    },
+    "faq": {
+      "title": "Respuesta rápida",
+      "cta": "Abrir en Servido"
+    },
+    "safety": {
+      "title": "Tips de seguridad"
+    },
+    "ideas": {
+      "title": "Ideas para vos",
+      "cta": "Publicar ahora"
+    },
+    "actions": {
+      "title": "Pasos sugeridos",
+      "cta": "Abrir en Servido"
+    },
+    "plan": {
+      "title": "Plan de crecimiento",
+      "cta": "Empezar"
+    }
+  },
   "appTutorial": {
     "badge": "Tutorial",
     "title": "Cómo usar Servido",
