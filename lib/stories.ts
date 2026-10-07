@@ -18,11 +18,16 @@ import { distanceKm, hasValidCoordinates, STORY_NEARBY_RADIUS_KM } from "@/lib/g
 import {
   STORY_DAILY_LIMIT,
   STORY_DURATION_MS,
+  STORY_VIEW_MS,
   type Story,
   type StoryAuthorGroup,
   type StoryAuthorType,
+  type StoryFilterId,
+  type StoryMediaType,
+  type StoryOverlay,
 } from "@/types/story"
 import type { BusinessLocation } from "@/lib/geo"
+import { sanitizeOverlays } from "@/lib/story-overlays"
 
 export class StoryDailyLimitError extends Error {
   constructor() {
@@ -42,6 +47,16 @@ function toDate(value: unknown): Date {
 }
 
 function mapStory(id: string, data: Record<string, unknown>): Story {
+  const mediaType: StoryMediaType = data.mediaType === "video" ? "video" : "image"
+  const trimStartMs = typeof data.trimStartMs === "number" ? data.trimStartMs : 0
+  const trimEndMs = typeof data.trimEndMs === "number" ? data.trimEndMs : undefined
+  const durationMs =
+    typeof data.durationMs === "number" && data.durationMs > 0
+      ? data.durationMs
+      : mediaType === "video" && trimEndMs != null
+        ? Math.max(500, trimEndMs - trimStartMs)
+        : STORY_VIEW_MS
+
   return {
     id,
     authorId: String(data.authorId || ""),
@@ -50,6 +65,15 @@ function mapStory(id: string, data: Record<string, unknown>): Story {
     authorType: (data.authorType as StoryAuthorType) || "store",
     imageUrl: String(data.imageUrl || ""),
     imagePath: String(data.imagePath || ""),
+    mediaType,
+    videoUrl: data.videoUrl ? String(data.videoUrl) : null,
+    videoPath: data.videoPath ? String(data.videoPath) : null,
+    durationMs,
+    trimStartMs,
+    trimEndMs,
+    filterId: (data.filterId as StoryFilterId) || "none",
+    overlays: sanitizeOverlays(data.overlays as StoryOverlay[] | undefined),
+    productId: data.productId ? String(data.productId) : null,
     caption: data.caption ? String(data.caption) : undefined,
     linkUrl: data.linkUrl ? String(data.linkUrl) : undefined,
     createdAt: toDate(data.createdAt),
@@ -262,9 +286,19 @@ export interface CreateStoryInput {
   authorName: string
   authorPhotoURL?: string | null
   authorType: StoryAuthorType
+  /** Image file, or video file when mediaType is video */
   file: File
+  mediaType?: StoryMediaType
+  /** Required for video: poster/thumbnail image */
+  thumbnailFile?: File | null
   caption?: string
   linkUrl?: string
+  productId?: string | null
+  filterId?: StoryFilterId | null
+  overlays?: StoryOverlay[] | null
+  trimStartMs?: number
+  trimEndMs?: number
+  durationMs?: number
   businessLocation?: BusinessLocation | null
 }
 
@@ -274,13 +308,35 @@ export async function createStory(input: CreateStoryInput): Promise<string> {
     throw new StoryDailyLimitError()
   }
 
-  const storyRef = doc(collection(db, "stories"))
-  const fileExt = input.file.name.split(".").pop() || "jpg"
-  const imagePath = `stories/${input.authorId}/${storyRef.id}.${fileExt}`
-  const storageRef = ref(storage, imagePath)
+  const mediaType: StoryMediaType =
+    input.mediaType || (input.file.type.startsWith("video/") ? "video" : "image")
 
-  await uploadBytes(storageRef, input.file)
-  const imageUrl = await getDownloadURL(storageRef)
+  const storyRef = doc(collection(db, "stories"))
+  let imageUrl = ""
+  let imagePath = ""
+  let videoUrl: string | null = null
+  let videoPath: string | null = null
+
+  if (mediaType === "video") {
+    const videoExt = input.file.name.split(".").pop() || "mp4"
+    videoPath = `stories/${input.authorId}/${storyRef.id}.${videoExt}`
+    const videoRef = ref(storage, videoPath)
+    await uploadBytes(videoRef, input.file)
+    videoUrl = await getDownloadURL(videoRef)
+
+    const thumb = input.thumbnailFile
+    if (!thumb) throw new Error("thumbnail_required")
+    imagePath = `stories/${input.authorId}/${storyRef.id}-thumb.jpg`
+    const thumbRef = ref(storage, imagePath)
+    await uploadBytes(thumbRef, thumb)
+    imageUrl = await getDownloadURL(thumbRef)
+  } else {
+    const fileExt = input.file.name.split(".").pop() || "jpg"
+    imagePath = `stories/${input.authorId}/${storyRef.id}.${fileExt}`
+    const storageRef = ref(storage, imagePath)
+    await uploadBytes(storageRef, input.file)
+    imageUrl = await getDownloadURL(storageRef)
+  }
 
   const authorPhotoURL =
     input.authorPhotoURL || (await resolveAuthorPhotoURL(input.authorId)) || null
@@ -293,14 +349,33 @@ export async function createStory(input: CreateStoryInput): Promise<string> {
 
   const now = Date.now()
   const expiresAt = new Date(now + STORY_DURATION_MS)
+  const overlays = sanitizeOverlays(input.overlays)
+  const durationMs =
+    typeof input.durationMs === "number" && input.durationMs > 0
+      ? input.durationMs
+      : mediaType === "video"
+        ? Math.max(
+            500,
+            (input.trimEndMs ?? STORY_VIEW_MS) - (input.trimStartMs ?? 0)
+          )
+        : STORY_VIEW_MS
 
   await setDoc(storyRef, {
     authorId: input.authorId,
     authorName: input.authorName,
     authorPhotoURL,
     authorType: input.authorType,
+    mediaType,
     imageUrl,
     imagePath,
+    videoUrl,
+    videoPath,
+    durationMs,
+    trimStartMs: mediaType === "video" ? input.trimStartMs ?? 0 : null,
+    trimEndMs: mediaType === "video" ? input.trimEndMs ?? null : null,
+    filterId: input.filterId || "none",
+    overlays,
+    productId: input.productId?.trim() || null,
     caption: input.caption?.trim() || null,
     linkUrl: input.linkUrl?.trim() || null,
     createdAt: serverTimestamp(),

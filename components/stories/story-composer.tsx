@@ -19,9 +19,25 @@ import {
   createStory,
   StoryDailyLimitError,
 } from "@/lib/stories"
+import {
+  captureVideoThumbnail,
+  clampVideoTrim,
+  exportImageCover9x16,
+  getVideoDurationMs,
+} from "@/lib/story-editor"
 import { productStoryLink, restaurantStoryLink } from "@/lib/story-link"
-import { STORY_DAILY_LIMIT } from "@/types/story"
+import {
+  STORY_DAILY_LIMIT,
+  STORY_MAX_IMAGE_BYTES,
+  STORY_MAX_VIDEO_BYTES,
+  STORY_MAX_VIDEO_MS,
+  STORY_VIEW_MS,
+  type StoryFilterId,
+  type StoryMediaType,
+  type StoryOverlay,
+} from "@/types/story"
 import { BusinessLocationPicker } from "@/components/location/business-location-picker"
+import { StoryMediaEditor } from "@/components/stories/story-media-editor"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -67,8 +83,15 @@ export function StoryComposer({
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [mediaType, setMediaType] = useState<StoryMediaType>("image")
+  const [filterId, setFilterId] = useState<StoryFilterId>("none")
+  const [overlays, setOverlays] = useState<StoryOverlay[]>([])
+  const [videoDurationMs, setVideoDurationMs] = useState(0)
+  const [trimStartMs, setTrimStartMs] = useState(0)
+  const [trimEndMs, setTrimEndMs] = useState(STORY_MAX_VIDEO_MS)
   const [caption, setCaption] = useState("")
   const [linkUrl, setLinkUrl] = useState("")
+  const [productId, setProductId] = useState<string | null>(null)
   const [products, setProducts] = useState<SellerProductOption[]>([])
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -256,28 +279,78 @@ export function StoryComposer({
     if (!initialProductId) return
     if (initialRefCode) {
       setLinkUrl(`/product/${initialProductId}?ref=${encodeURIComponent(initialRefCode)}`)
+      setProductId(initialProductId)
       return
     }
     if (products.length === 0) return
     if (products.some((p) => p.id === initialProductId)) {
       setLinkUrl(productStoryLink(initialProductId))
+      setProductId(initialProductId)
     }
   }, [initialProductId, initialRefCode, products])
+
+  const resetMediaEditState = () => {
+    setFilterId("none")
+    setOverlays([])
+    setTrimStartMs(0)
+    setTrimEndMs(STORY_MAX_VIDEO_MS)
+    setVideoDurationMs(0)
+  }
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.files?.[0]
     if (!next) return
-    if (!next.type.startsWith("image/")) {
-      setError(t("errors.imagesOnly"))
-      return
-    }
-    if (next.size > 8 * 1024 * 1024) {
-      setError(t("errors.imageSize"))
-      return
-    }
-    setError(null)
-    setFile(next)
-    setPreview(URL.createObjectURL(next))
+    void (async () => {
+      try {
+        if (next.type.startsWith("video/")) {
+          if (next.size > STORY_MAX_VIDEO_BYTES) {
+            setError(t("errors.videoSize"))
+            return
+          }
+          const duration = await getVideoDurationMs(next)
+          if (!duration || duration < 500) {
+            setError(t("errors.videoInvalid"))
+            return
+          }
+          if (duration > STORY_MAX_VIDEO_MS * 4) {
+            setError(t("errors.videoTooLong", { max: Math.round(STORY_MAX_VIDEO_MS / 1000) }))
+            return
+          }
+          const trimmed = clampVideoTrim(duration, 0, Math.min(duration, STORY_MAX_VIDEO_MS))
+          setError(null)
+          resetMediaEditState()
+          setMediaType("video")
+          setVideoDurationMs(duration)
+          setTrimStartMs(trimmed.trimStartMs)
+          setTrimEndMs(trimmed.trimEndMs)
+          setFile(next)
+          setPreview((prev) => {
+            if (prev) URL.revokeObjectURL(prev)
+            return URL.createObjectURL(next)
+          })
+          return
+        }
+
+        if (!next.type.startsWith("image/")) {
+          setError(t("errors.mediaOnly"))
+          return
+        }
+        if (next.size > STORY_MAX_IMAGE_BYTES) {
+          setError(t("errors.imageSize"))
+          return
+        }
+        setError(null)
+        resetMediaEditState()
+        setMediaType("image")
+        setFile(next)
+        setPreview((prev) => {
+          if (prev) URL.revokeObjectURL(prev)
+          return URL.createObjectURL(next)
+        })
+      } catch {
+        setError(t("errors.mediaLoadFailed"))
+      }
+    })()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -321,6 +394,27 @@ export function StoryComposer({
           restaurantId: isRestaurant ? restaurantId : null,
         })
       }
+
+      let publishFile = file
+      let thumbnailFile: File | null = null
+      let durationMs = STORY_VIEW_MS
+      let trimStart = 0
+      let trimEnd: number | undefined
+
+      if (mediaType === "video") {
+        const clamped = clampVideoTrim(videoDurationMs || STORY_MAX_VIDEO_MS, trimStartMs, trimEndMs)
+        trimStart = clamped.trimStartMs
+        trimEnd = clamped.trimEndMs
+        durationMs = clamped.durationMs
+        thumbnailFile = await captureVideoThumbnail(file, Math.max(0.05, trimStart / 1000))
+      } else {
+        publishFile = await exportImageCover9x16(file)
+        durationMs = STORY_VIEW_MS
+      }
+
+      const resolvedProductId =
+        productId || linkUrl.match(/\/product\/([^/?]+)/)?.[1] || null
+
       await createStory({
         authorId: currentUser.firebaseUser.uid,
         authorName:
@@ -329,9 +423,17 @@ export function StoryComposer({
           t("defaultSeller"),
         authorPhotoURL: profilePhotoURL,
         authorType: isResellerRecommendMode ? "reseller" : isRestaurant ? "restaurant" : "store",
-        file,
+        file: publishFile,
+        mediaType,
+        thumbnailFile,
         caption,
         linkUrl: linkUrl || undefined,
+        productId: resolvedProductId,
+        filterId,
+        overlays,
+        trimStartMs: mediaType === "video" ? trimStart : undefined,
+        trimEndMs: mediaType === "video" ? trimEnd : undefined,
+        durationMs,
         businessLocation: isResellerRecommendMode ? resellerLocation : businessLocation,
       })
       router.push("/historias")
@@ -349,7 +451,7 @@ export function StoryComposer({
     }
   }
 
-  const selectedProductId = linkUrl.match(/\/product\/([^/?]+)/)?.[1] ?? null
+  const selectedProductId = productId || linkUrl.match(/\/product\/([^/?]+)/)?.[1] || null
   const restaurantSelected = Boolean(restaurantLink && linkUrl === restaurantLink)
 
   const canPublish = isResellerRecommendMode
@@ -413,34 +515,55 @@ export function StoryComposer({
 
       <div>
         <Label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
-          {t("imageLabel")}
+          {t("mediaLabel")}
         </Label>
-        <label className="flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-servido-200 bg-gradient-to-b from-servido-50/80 to-white transition-colors hover:border-servido-400 hover:from-servido-50">
-          {preview ? (
-            <div className="relative aspect-[9/16] w-full max-h-[420px] bg-black">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt={t("previewAlt")} className="h-full w-full object-contain" />
-              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
-                9:16
-              </span>
-            </div>
-          ) : (
+        {!preview ? (
+          <label className="flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-servido-200 bg-gradient-to-b from-servido-50/80 to-white transition-colors hover:border-servido-400 hover:from-servido-50">
             <div className="flex flex-col items-center gap-2 px-6 py-16 text-center">
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-servido-800 shadow-sm ring-1 ring-servido-100">
                 <ImagePlus className="h-7 w-7" />
               </span>
-              <p className="text-sm font-medium text-gray-800">{t("pickPhoto")}</p>
-              <p className="text-xs text-gray-500">{t("pickPhotoHint")}</p>
+              <p className="text-sm font-medium text-gray-800">{t("pickMedia")}</p>
+              <p className="text-xs text-gray-500">{t("pickMediaHint")}</p>
             </div>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={atLimit}
-            onChange={onFileChange}
-          />
-        </label>
+            <input
+              type="file"
+              accept="image/*,video/*"
+              className="hidden"
+              disabled={atLimit}
+              onChange={onFileChange}
+            />
+          </label>
+        ) : (
+          <div className="space-y-3">
+            <StoryMediaEditor
+              mediaType={mediaType}
+              previewUrl={preview}
+              filterId={filterId}
+              overlays={overlays}
+              trimStartMs={trimStartMs}
+              trimEndMs={trimEndMs}
+              videoDurationMs={videoDurationMs}
+              onFilterChange={setFilterId}
+              onOverlaysChange={setOverlays}
+              onTrimChange={(start, end) => {
+                const clamped = clampVideoTrim(videoDurationMs || STORY_MAX_VIDEO_MS, start, end)
+                setTrimStartMs(clamped.trimStartMs)
+                setTrimEndMs(clamped.trimEndMs)
+              }}
+            />
+            <label className="inline-flex cursor-pointer text-xs font-semibold text-servido-800 underline">
+              {t("changeMedia")}
+              <input
+                type="file"
+                accept="image/*,video/*"
+                className="hidden"
+                disabled={atLimit || loading}
+                onChange={onFileChange}
+              />
+            </label>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -474,7 +597,10 @@ export function StoryComposer({
           {linkUrl && (
             <button
               type="button"
-              onClick={() => setLinkUrl("")}
+              onClick={() => {
+                setLinkUrl("")
+                setProductId(null)
+              }}
               className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-servido-800"
             >
               <X className="h-3.5 w-3.5" />
@@ -487,7 +613,10 @@ export function StoryComposer({
         {isRestaurant && restaurantLink && (
           <button
             type="button"
-            onClick={() => setLinkUrl(restaurantLink)}
+            onClick={() => {
+              setLinkUrl(restaurantLink)
+              setProductId(null)
+            }}
             disabled={atLimit}
             className={cn(
               "flex w-full items-center gap-3 rounded-2xl border-2 bg-white px-3 py-2.5 text-left transition",
@@ -525,7 +654,10 @@ export function StoryComposer({
                   key={product.id}
                   type="button"
                   disabled={atLimit}
-                  onClick={() => setLinkUrl(productStoryLink(product.id))}
+                  onClick={() => {
+                    setLinkUrl(productStoryLink(product.id))
+                    setProductId(product.id)
+                  }}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl border-2 bg-white px-2.5 py-2 text-left transition",
                     selected

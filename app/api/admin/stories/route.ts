@@ -7,7 +7,7 @@ import {
   SERVIDO_OFFICIAL_LOGO_PATH,
   SERVIDO_OFFICIAL_USER_ID,
 } from "@/lib/servido-official"
-import { STORY_DURATION_MS } from "@/types/story"
+import { STORY_DURATION_MS, STORY_VIEW_MS } from "@/types/story"
 
 export const runtime = "nodejs"
 
@@ -66,8 +66,15 @@ export async function POST(request: NextRequest) {
       authorName: "Servido",
       authorPhotoURL: SERVIDO_OFFICIAL_LOGO_PATH,
       authorType: "platform",
+      mediaType: "image",
       imageUrl,
       imagePath,
+      videoUrl: null,
+      videoPath: null,
+      durationMs: STORY_VIEW_MS,
+      filterId: "none",
+      overlays: [],
+      productId: null,
       caption: caption || null,
       linkUrl,
       createdAt: FieldValue.serverTimestamp(),

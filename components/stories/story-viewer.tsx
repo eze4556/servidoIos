@@ -11,8 +11,10 @@ import { useAuth } from "@/contexts/auth-context"
 import { recordStoryView, softDeleteStory } from "@/lib/stories"
 import { replyToStory, STORY_REPLY_ERROR, CHAT_CONTENT_BLOCKED } from "@/lib/story-chat"
 import { formatStoryRelativeTime } from "@/lib/story-time"
-import { chatHref, resolveStoredHref } from "@/lib/routes"
+import { chatHref, productHref, resolveStoredHref } from "@/lib/routes"
 import { FollowButton } from "@/components/follows/follow-button"
+import { StoryOverlaysLayer } from "@/components/stories/story-overlays-layer"
+import { storyFilterCss } from "@/lib/story-editor"
 import { STORY_VIEW_MS, type StoryAuthorGroup } from "@/types/story"
 
 interface StoryViewerProps {
@@ -52,6 +54,7 @@ export function StoryViewer({
   const [replyError, setReplyError] = useState<string | null>(null)
   const [replySentChatId, setReplySentChatId] = useState<string | null>(null)
   const replyInputRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startedAtRef = useRef(0)
   const remainingRef = useRef(STORY_VIEW_MS)
@@ -61,6 +64,7 @@ export function StoryViewer({
 
   const group = groups[authorIndex]
   const story = group?.stories[storyIndex]
+  const storyDuration = Math.max(500, story?.durationMs || STORY_VIEW_MS)
   const isAuthor = Boolean(
     currentUser && story && currentUser.firebaseUser.uid === story.authorId
   )
@@ -89,6 +93,12 @@ export function StoryViewer({
     }
   }, [open, initialAuthorIndex])
 
+  // Reset remaining duration when story changes
+  useEffect(() => {
+    if (!story) return
+    remainingRef.current = Math.max(500, story.durationMs || STORY_VIEW_MS)
+  }, [story?.id, story?.durationMs])
+
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
@@ -104,7 +114,6 @@ export function StoryViewer({
     }
     if (storyIndex < currentGroup.stories.length - 1) {
       setStoryIndex((i) => i + 1)
-      remainingRef.current = STORY_VIEW_MS
       setLocalViewCount(null)
       setProgressKey((k) => k + 1)
       return
@@ -112,7 +121,6 @@ export function StoryViewer({
     if (authorIndex < groups.length - 1) {
       setAuthorIndex((i) => i + 1)
       setStoryIndex(0)
-      remainingRef.current = STORY_VIEW_MS
       setLocalViewCount(null)
       setProgressKey((k) => k + 1)
       return
@@ -123,7 +131,6 @@ export function StoryViewer({
   const goPrev = useCallback(() => {
     if (storyIndex > 0) {
       setStoryIndex((i) => i - 1)
-      remainingRef.current = STORY_VIEW_MS
       setLocalViewCount(null)
       setProgressKey((k) => k + 1)
       return
@@ -133,19 +140,81 @@ export function StoryViewer({
       const prevStories = groups[prevAuthor]?.stories || []
       setAuthorIndex(prevAuthor)
       setStoryIndex(Math.max(0, prevStories.length - 1))
-      remainingRef.current = STORY_VIEW_MS
       setLocalViewCount(null)
       setProgressKey((k) => k + 1)
     }
   }, [authorIndex, storyIndex, groups])
 
+  // Video: seek to trim start and play/pause with viewer state
+  useEffect(() => {
+    const video = videoRef.current
+    if (!open || !story || story.mediaType !== "video" || !video) return
+    const startSec = (story.trimStartMs || 0) / 1000
+    const endSec =
+      (story.trimEndMs != null ? story.trimEndMs : (story.trimStartMs || 0) + storyDuration) / 1000
+
+    const onLoaded = () => {
+      try {
+        video.currentTime = startSec
+      } catch {
+        /* ignore */
+      }
+      if (!paused && !navigatingOffer && !deleting && !deleteOpen && !replyActive) {
+        void video.play().catch(() => undefined)
+      }
+    }
+
+    let ended = false
+    const onTimeUpdate = () => {
+      if (ended) return
+      if (video.currentTime >= endSec - 0.05) {
+        ended = true
+        video.pause()
+        goNext()
+      }
+    }
+
+    video.addEventListener("loadeddata", onLoaded)
+    video.addEventListener("timeupdate", onTimeUpdate)
+    if (video.readyState >= 2) onLoaded()
+
+    return () => {
+      video.removeEventListener("loadeddata", onLoaded)
+      video.removeEventListener("timeupdate", onTimeUpdate)
+    }
+  }, [
+    open,
+    story?.id,
+    story?.mediaType,
+    story?.trimStartMs,
+    story?.trimEndMs,
+    storyDuration,
+    paused,
+    navigatingOffer,
+    deleting,
+    deleteOpen,
+    replyActive,
+    goNext,
+  ])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || story?.mediaType !== "video") return
+    if (paused || navigatingOffer || deleting || deleteOpen || replyActive) {
+      video.pause()
+    } else {
+      void video.play().catch(() => undefined)
+    }
+  }, [paused, navigatingOffer, deleting, deleteOpen, replyActive, story?.mediaType, story?.id])
+
   useEffect(() => {
     clearTimer()
     if (!open || !story || paused || navigatingOffer || deleting || deleteOpen || replyActive) return
+    // Video advances via timeupdate; still keep a safety timer
+    if (story.mediaType === "video") return
 
     startedAtRef.current = Date.now()
     timerRef.current = setTimeout(() => {
-      remainingRef.current = STORY_VIEW_MS
       goNext()
     }, remainingRef.current)
 
@@ -153,6 +222,7 @@ export function StoryViewer({
   }, [
     open,
     story?.id,
+    story?.mediaType,
     storyIndex,
     authorIndex,
     paused,
@@ -276,10 +346,16 @@ export function StoryViewer({
   }
 
   const openOffer = () => {
-    if (!story?.linkUrl || navigatingOffer) return
+    if (navigatingOffer) return
+    const href = story?.productId
+      ? productHref(story.productId)
+      : story?.linkUrl
+        ? resolveStoredHref(story.linkUrl)
+        : null
+    if (!href) return
     setNavigatingOffer(true)
     setPaused(true)
-    router.push(resolveStoredHref(story.linkUrl))
+    router.push(href)
   }
 
   const openDeleteConfirm = () => {
@@ -425,7 +501,9 @@ export function StoryViewer({
                       ? { transform: "scaleX(0)" }
                       : {
                           transform: "scaleX(0)",
-                          animation: `story-progress-fill ${STORY_VIEW_MS}ms linear forwards`,
+                          animation: `story-progress-fill ${
+                            i === storyIndex ? storyDuration : STORY_VIEW_MS
+                          }ms linear forwards`,
                           animationPlayState:
                             paused || navigatingOffer || deleting || deleteOpen || replyActive
                               ? "paused"
@@ -506,9 +584,9 @@ export function StoryViewer({
           </button>
         </div>
 
-        {/* Image */}
+        {/* Media */}
         <div
-          className="relative flex-1"
+          className="relative flex-1 overflow-hidden bg-black"
           onPointerDown={handlePause}
           onPointerUp={handleResume}
           onPointerCancel={handleResume}
@@ -519,7 +597,33 @@ export function StoryViewer({
             style={{ backgroundImage: `url("${story.imageUrl}")` }}
             aria-hidden="true"
           />
-          <Image src={story.imageUrl} alt={story.caption || t("storyAlt")} fill className="object-contain" priority />
+          <div
+            className="absolute inset-0"
+            style={{ filter: storyFilterCss(story.filterId) }}
+          >
+            {story.mediaType === "video" && story.videoUrl ? (
+              <video
+                ref={videoRef}
+                key={story.id}
+                src={story.videoUrl}
+                poster={story.imageUrl}
+                className="h-full w-full object-cover"
+                playsInline
+                muted
+                preload="auto"
+              />
+            ) : (
+              <Image
+                src={story.imageUrl}
+                alt={story.caption || t("storyAlt")}
+                fill
+                className="object-cover"
+                priority
+              />
+            )}
+          </div>
+
+          <StoryOverlaysLayer overlays={story.overlays || []} />
 
           <button
             type="button"
@@ -535,7 +639,7 @@ export function StoryViewer({
           />
         </div>
 
-        {(story.caption || story.linkUrl || canReply) && (
+        {(story.caption || story.linkUrl || story.productId || canReply) && (
           <div
             className={`absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pt-16 ${
               canReply ? "pb-3" : "pb-8"
@@ -546,7 +650,7 @@ export function StoryViewer({
                 {story.caption}
               </p>
             )}
-            {story.linkUrl && (
+            {(story.linkUrl || story.productId) && (
               <button
                 type="button"
                 disabled={navigatingOffer}
@@ -562,7 +666,7 @@ export function StoryViewer({
                   </>
                 ) : (
                   <>
-                    {t("viewOffer")}
+                    {story.productId ? t("buy") : t("viewOffer")}
                     <ExternalLink className="h-4 w-4" />
                   </>
                 )}
