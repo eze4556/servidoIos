@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Type, Sticker, Sparkles, Scissors, Trash2 } from "lucide-react"
+import { Type, Sticker, Sparkles, Scissors, Trash2, Volume2, VolumeX } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { StoryOverlaysLayer } from "@/components/stories/story-overlays-layer"
 import { newOverlayId, storyFilterCss } from "@/lib/story-editor"
@@ -47,6 +47,7 @@ export function StoryMediaEditor({
   const [textDraft, setTextDraft] = useState("")
   const [fontId, setFontId] = useState<(typeof STORY_FONTS)[number]["id"]>("sans")
   const [textColor, setTextColor] = useState("#ffffff")
+  const [soundOn, setSoundOn] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const selected = useMemo(
@@ -66,6 +67,15 @@ export function StoryMediaEditor({
       /* ignore */
     }
   }, [trimStartMs, mediaType, previewUrl])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || mediaType !== "video") return
+    video.muted = !soundOn
+    if (soundOn) {
+      void video.play().catch(() => undefined)
+    }
+  }, [soundOn, mediaType, previewUrl])
 
   const addText = () => {
     const content = textDraft.trim()
@@ -116,7 +126,7 @@ export function StoryMediaEditor({
               ref={videoRef}
               src={previewUrl}
               className="h-full w-full object-cover"
-              muted
+              muted={!soundOn}
               playsInline
               loop
               autoPlay
@@ -135,6 +145,16 @@ export function StoryMediaEditor({
             onOverlaysChange(overlays.map((o) => (o.id === id ? { ...o, x, y } : o)))
           }
         />
+        {mediaType === "video" && (
+          <button
+            type="button"
+            className="absolute bottom-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white ring-1 ring-white/25"
+            aria-label={soundOn ? t("mute") : t("unmute")}
+            onClick={() => setSoundOn((prev) => !prev)}
+          >
+            {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </button>
+        )}
       </div>
 
       <div className="flex flex-wrap justify-center gap-2">

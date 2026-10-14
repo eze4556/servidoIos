@@ -4,7 +4,19 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Check, ChevronLeft, ChevronRight, ExternalLink, Eye, Loader2, Send, Trash2, X } from "lucide-react"
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Eye,
+  Loader2,
+  Send,
+  Trash2,
+  Volume2,
+  VolumeX,
+  X,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import { describeApiError } from "@/lib/i18n/translate-client-error"
 import { useAuth } from "@/contexts/auth-context"
@@ -53,6 +65,8 @@ export function StoryViewer({
   const [replySending, setReplySending] = useState(false)
   const [replyError, setReplyError] = useState<string | null>(null)
   const [replySentChatId, setReplySentChatId] = useState<string | null>(null)
+  /** Autoplay exige mute; el usuario puede activar sonido con un tap. */
+  const [soundOn, setSoundOn] = useState(false)
   const replyInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -88,10 +102,20 @@ export function StoryViewer({
       setReplySending(false)
       setReplyError(null)
       setReplySentChatId(null)
+      setSoundOn(false)
       remainingRef.current = STORY_VIEW_MS
       setProgressKey((k) => k + 1)
     }
   }, [open, initialAuthorIndex])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || story?.mediaType !== "video") return
+    video.muted = !soundOn
+    if (soundOn) {
+      void video.play().catch(() => undefined)
+    }
+  }, [soundOn, story?.id, story?.mediaType])
 
   // Reset remaining duration when story changes
   useEffect(() => {
@@ -609,7 +633,7 @@ export function StoryViewer({
                 poster={story.imageUrl}
                 className="h-full w-full object-cover"
                 playsInline
-                muted
+                muted={!soundOn}
                 preload="auto"
               />
             ) : (
@@ -624,6 +648,21 @@ export function StoryViewer({
           </div>
 
           <StoryOverlaysLayer overlays={story.overlays || []} />
+
+          {story.mediaType === "video" && story.videoUrl && (
+            <button
+              type="button"
+              className="absolute bottom-28 right-4 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white shadow-md ring-1 ring-white/25 backdrop-blur-sm"
+              aria-label={soundOn ? t("mute") : t("unmute")}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                setSoundOn((prev) => !prev)
+              }}
+            >
+              {soundOn ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            </button>
+          )}
 
           <button
             type="button"
