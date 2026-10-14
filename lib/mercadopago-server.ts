@@ -79,6 +79,9 @@ type ValidatedCheckoutProduct = {
   productoNombre: string
   productoImagen?: string
   productoIsService: boolean
+  freeShipping: boolean
+  /** Costo de envío del producto en catálogo (0 si gratis / servicio). */
+  productShippingCost: number
   vendedorId: string
   vendedorNombre: string
   vendedorEmail: string
@@ -300,6 +303,14 @@ async function validateCheckoutProducts(
     // Fase 3: comisión 8% vía marketplace_fee (comprador paga precio publicado)
     const commission = calculateCommission(lineSubtotal)
     const sellerAmount = roundMoney(lineSubtotal - commission)
+    const isService = Boolean(productData.isService)
+    const freeShipping =
+      isService ||
+      productData.freeShipping === true ||
+      Number(productData.shippingCost) === 0
+    const productShippingCost = freeShipping
+      ? 0
+      : Math.max(0, Number(productData.shippingCost) || 0)
 
     validatedProducts.push({
       productoId: productId,
@@ -311,7 +322,9 @@ async function validateCheckoutProducts(
       estadoPagoVendedor: "pendiente",
       productoNombre: productData.name || productData.title || "Producto",
       productoImagen: getProductImage(productData),
-      productoIsService: Boolean(productData.isService),
+      productoIsService: isService,
+      freeShipping,
+      productShippingCost,
       vendedorId: sellerId,
       vendedorNombre: sellerInfo.name,
       vendedorEmail: sellerInfo.email,
@@ -319,6 +332,17 @@ async function validateCheckoutProducts(
   }
 
   return validatedProducts
+}
+
+/** Si el cliente no manda shippingCost, usar envío del catálogo (0 si gratis). */
+function resolveDefaultShippingFromProducts(products: ValidatedCheckoutProduct[]): number {
+  if (products.length === 0) return 0
+  if (products.every((p) => p.freeShipping || p.productoIsService)) return 0
+  const costs = products
+    .filter((p) => !p.freeShipping && !p.productoIsService)
+    .map((p) => (Number.isFinite(p.productShippingCost) ? p.productShippingCost : 0))
+  if (costs.length === 0) return 0
+  return Math.max(...costs)
 }
 
 function resolveSellerShippingCost(
@@ -592,10 +616,12 @@ export async function createMercadoPagoProductPreference(request: Request, body:
   // Un solo vendedor: un pago
   if (productsBySeller.size === 1) {
     const [sellerId, sellerProducts] = [...productsBySeller.entries()][0]
+    // Antes: si faltaba shippingCost se cobraba $500 fijo (bug con envío gratis / lives).
+    // Ahora: se usa el envío del producto (0 si freeShipping).
     const sellerShipping = resolveSellerShippingCost(sellerId, {
       shippingCost,
       shippingBySeller,
-      defaultIfMissing: 500,
+      defaultIfMissing: resolveDefaultShippingFromProducts(sellerProducts),
     })
 
     const payment = await createSellerPreferencePayment({

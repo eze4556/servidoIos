@@ -74,6 +74,8 @@ export function LiveBuySheet({
         quantity,
         buyerId: currentUser.firebaseUser.uid,
         buyerEmail: currentUser.firebaseUser.email || "",
+        // Sin shippingCost: el servidor usa freeShipping / shippingCost del producto
+        // (antes caía en un default fijo de $500).
         shippingAddress: address,
         liveId,
       })
