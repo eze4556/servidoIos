@@ -1,0 +1,67 @@
+workflows:
+  ios-testflight:
+    name: Servido iOS - TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    integrations:
+      # Same API key name in Codemagic > Team integrations > Developer Portal.
+      app_store_connect: servido-apple
+    environment:
+      node: 22.22.0
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: ar.com.servido.app
+      groups:
+        - servido_production
+        - servido_ios
+      vars:
+        XCODE_WORKSPACE: ios/App/App.xcworkspace
+        XCODE_SCHEME: App
+        IOS_BUILD_OFFSET: "0"
+    scripts:
+      - name: Install locked dependencies
+        script: npm ci --legacy-peer-deps --no-audit --no-fund
+      - name: Load Firebase iOS configuration
+        script: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs';
+          const value = process.env.GOOGLE_SERVICE_INFO_PLIST_BASE64;
+          if (!value) throw new Error('Falta GOOGLE_SERVICE_INFO_PLIST_BASE64 en servido_ios');
+          writeFileSync('ios/App/App/GoogleService-Info.plist', Buffer.from(value, 'base64'));
+          NODE
+          npm run ios:check -- --ci
+      - name: Build web bundle and sync iOS
+        script: |
+          set -euo pipefail
+          npm run build:capacitor
+          npm run ios:assets
+          npx cap sync ios
+      - name: Validate Apple property lists
+        script: |
+          set -euo pipefail
+          plutil -lint ios/App/App/Info.plist ios/App/App/App.entitlements ios/App/App/GoogleService-Info.plist
+      - name: Set build number
+        script: |
+          set -euo pipefail
+          : "${BUILD_NUMBER:?Falta BUILD_NUMBER de Codemagic}"
+          PROJECT_BUILD_NUMBER=$((BUILD_NUMBER + IOS_BUILD_OFFSET))
+          cd ios/App
+          agvtool new-version -all "$PROJECT_BUILD_NUMBER"
+      - name: Apply distribution signing profiles
+        script: xcode-project use-profiles
+      - name: Archive and export signed IPA
+        script: |
+          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      app_store_connect:
+        auth: integration
+        # Upload for internal TestFlight testing; external beta review is manual.
+        submit_to_testflight: false
+        submit_to_app_store: false

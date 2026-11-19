@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Fusionar estas keys en ios/App/App/Info.plist después de:
-    npx cap add ios
--->
+<!-- Referencia; archivo efectivo: ios/App/App/Info.plist. -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-  <key>NSLocationWhenInUseUsageDescription</key>
-  <string>Servido usa tu ubicación durante la entrega para que el cliente vea dónde va el cadete.</string>
-  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-  <string>Servido usa tu ubicación durante entregas activas, también con la app en segundo plano.</string>
-  <key>NSLocationAlwaysUsageDescription</key>
-  <string>Servido usa tu ubicación durante entregas activas, también con la app en segundo plano.</string>
-  <key>UIBackgroundModes</key>
-  <array>
-    <string>location</string>
-  </array>
-</dict>
+  <dict>
+    <key>NSCameraUsageDescription</key>
+    <string>Servido usa la cámara para fotografiar productos, actualizar tu perfil y transmitir en vivo.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Servido usa el micrófono para incluir tu voz en las transmisiones en vivo.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Servido accede a tus fotos cuando elegís imágenes para productos, historias o tu perfil.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>Servido puede guardar en tus fotos las imágenes que decidas conservar.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Servido usa tu ubicación para elegir direcciones de entrega y compartir la posición del cadete durante una entrega con la app abierta.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Servido usa tu ubicación para elegir direcciones de entrega y compartir la posición del cadete durante una entrega con la app abierta.</string>
+  </dict>
 </plist>

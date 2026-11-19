@@ -1,3 +1,5 @@
+> **iOS con Codemagic:** la guía vigente está en [docs/ios-codemagic.md](docs/ios-codemagic.md). El proyecto iOS ya existe; no repetir `cap init` ni `cap add ios`. Las instrucciones siguientes son notas históricas y pueden referirse a configuraciones anteriores.
+
 # 📱 Guía de Configuración Capacitor - Servido Marketplace (iOS)
 
 - ✅ **Next.js 15** ya está configurado

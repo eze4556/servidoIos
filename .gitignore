@@ -45,3 +45,11 @@ android/app/src/main/assets/capacitor.config.json
 *.jks
 *.keystore
 android/keystore.properties
+
+# Apple signing and Firebase iOS configuration (injected by Codemagic).
+*.p8
+*.p12
+*.mobileprovision
+ios/App/App/GoogleService-Info.plist
+
+/GoogleService-Info.plist
