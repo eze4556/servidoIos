@@ -101,7 +101,7 @@ npm run cap:sync:ios
 
 En Windows, `cap sync ios` copia assets y actualiza plugins, pero puede advertir que no hay CocoaPods/Xcode; la instalación de pods y compilación se completan en Codemagic. No volver a ejecutar `cap add ios`: el proyecto ya existe.
 
-## Preparación de la siguiente compilación (cambios locales)
+## Preparación de la siguiente compilación
 
 Se integró la pantalla Mi cuenta con confirmación de contraseña y eliminación de cuenta. El servidor cancela preapprovals de Mercado Pago verificando su titularidad antes de limpiar datos; elimina perfil, contenido propio, archivos y subcolecciones; conserva los registros necesarios de operaciones y un marcador mínimo de cuenta eliminada. Si falla un paso no devuelve éxito: la operación puede reintentarse. Los webhooks de suscripción no deben reactivar el perfil eliminado.
 
@@ -120,10 +120,10 @@ Validaciones realizadas con datos ficticios:
 Antes de generar y distribuir el próximo IPA:
 
 1. Decisión del titular para esta presentación: mantener la contratación de planes de vendedor por Mercado Pago y explicar ese flujo a Apple. No se integraron compras de Apple ni se ocultarán funciones para la revisión. La aprobación de ese modelo queda a criterio de App Review.
-2. Revisar los cambios locales y desplegar las reglas de Firestore/Storage y el backend. Las APIs `/api/account/delete`, `/api/safety/*` y `/api/admin/content-reports` corren en el servidor, no dentro del IPA. El build de Capacitor no las despliega.
+2. Reglas de Firestore/Storage desplegadas el 22/11/2026 en `servidodb-a1eda` con `servido.interno@gmail.com`. Backend desplegado en el proyecto Vercel `servido`, scope `ezequiels-projects-80a1c30f`, y verificado en `https://www.servido.com.ar` mediante comprobaciones sin sesión ni modificaciones de datos. Las APIs `/api/account/delete`, `/api/safety/*` y `/api/admin/content-reports` corren en el servidor, no dentro del IPA. El build de Capacitor no las despliega.
 3. Actualizar las declaraciones de privacidad y la política de retención con el titular del servicio según los datos efectivamente conservados. Los historiales de pedidos/pagos/reclamos no se eliminan indiscriminadamente.
 4. En iPhone, probar contraseña errónea/correcta al eliminar, retry de una eliminación interrumpida, bloqueo en ambos sentidos, desbloqueo, reportes y su atención en el panel admin, notificaciones y todos los recorridos de pedidos. Los tests locales no sustituyen esas pruebas.
-5. Recién entonces subir la nueva revisión y ejecutar Codemagic; mantener versión 1.0.0 y usar un número de compilación superior al 1. No se inició otra compilación en Codemagic ni se desplegaron estos cambios en producción durante esta preparación.
+5. Generar el IPA candidato en Codemagic manteniendo versión 1.0.0 y un número de compilación superior al 1. La revisión `e07ae59` se subió a GitHub y el build `6b02e60d8f52ca27512a1cb2` terminó correctamente el 22/11/2026 en 7m 37s. El registro de publicación confirmó `UPLOAD SUCCEEDED`, versión 1.0.0 (2), bundle `ar.com.servido.app`, delivery UUID `2033034d-7014-4acb-beb3-d92811beaf54`. Apple emitió solamente una advertencia de SDK para futuras cargas desde abril de 2027. Falta comprobar el procesamiento en TestFlight y realizar las pruebas físicas. No se envió esta candidata a App Review. Las pruebas físicas del punto anterior deben completarse con el nuevo IPA antes de distribuirlo o enviarlo a revisión.
 
 
 ## Notas para App Review de la candidata
