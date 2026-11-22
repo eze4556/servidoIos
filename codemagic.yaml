@@ -33,6 +33,11 @@ workflows:
           writeFileSync('ios/App/App/GoogleService-Info.plist', Buffer.from(value, 'base64'));
           NODE
           npm run ios:check -- --ci
+      - name: Verify release regressions and deployed backend
+        script: |
+          set -euo pipefail
+          npm run test:release
+          node scripts/check-release-backend.mjs
       - name: Build web bundle and sync iOS
         script: |
           set -euo pipefail

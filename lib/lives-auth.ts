@@ -18,7 +18,11 @@ export async function requireBearerUid(request: NextRequest): Promise<
     return { error: NextResponse.json({ error: "No autorizado" }, { status: 401 }) }
   }
   try {
-    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim(), true)
+    const profile = await db.collection("users").doc(decoded.uid).get()
+    if (!profile.exists || profile.data()?.deleted || profile.data()?.deletionStatus || profile.data()?.isActive === false) {
+      return { error: NextResponse.json({ error: "Cuenta no disponible" }, { status: 403 }) }
+    }
     return { uid: decoded.uid }
   } catch {
     return { error: NextResponse.json({ error: "Token inválido" }, { status: 401 }) }

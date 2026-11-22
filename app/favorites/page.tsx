@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
@@ -85,6 +86,7 @@ function mapFavoriteFromDoc(
 }
 
 export default function FavoritesPage() {
+  const { isBlockedContent } = useSafety()
   const { formatPrice } = usePriceFormat()
   const tf = useTranslations("favorites")
   const tc = useTranslations("cart")
@@ -340,7 +342,7 @@ export default function FavoritesPage() {
 
         {favorites.length > 0 ? (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
-            {favorites.map((product) => (
+            {favorites.filter(item => !isBlockedContent(item)).map((product) => (
               <Card
                 key={product.favoriteId}
                 className="group h-full overflow-hidden rounded-2xl border-0 bg-white shadow-[0_12px_32px_-20px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_44px_-18px_rgba(46,16,101,0.35)] lg:rounded-3xl"

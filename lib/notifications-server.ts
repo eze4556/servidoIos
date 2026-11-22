@@ -1,3 +1,4 @@
+import { hasBlockedInteraction } from "@/lib/safety-server"
 import { FieldValue } from "firebase-admin/firestore"
 import { db } from "@/lib/firebase-admin"
 import { sendPushToUser } from "@/lib/push/send-push"
@@ -19,6 +20,11 @@ export async function createNotificationAdmin(input: ServerNotificationInput): P
   if (!userId || !title || !body) {
     throw new Error("Notificación incompleta")
   }
+
+  const recipient = await db.collection("users").doc(userId).get()
+  if (recipient.data()?.deleted || recipient.data()?.deletionStatus || recipient.data()?.safetyStatus === "suspended") return ""
+  const senderId = typeof input.meta?.senderId === "string" ? input.meta.senderId : null
+  if (senderId && await hasBlockedInteraction(senderId, userId)) return ""
 
   const dedupeKey = input.dedupeKey ? String(input.dedupeKey).trim() : ""
   if (dedupeKey) {

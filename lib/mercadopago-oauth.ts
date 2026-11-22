@@ -102,7 +102,7 @@ async function requireAuthenticatedUserId(request: Request) {
     throw new Error("No autorizado")
   }
 
-  const decodedToken = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim())
+  const decodedToken = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim(), true)
   return decodedToken.uid
 }
 

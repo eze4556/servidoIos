@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { useDebounce } from "@/hooks/use-debounce"
@@ -52,6 +53,7 @@ const productCache = new Map<string, { data: Product[]; timestamp: number; lastD
 const CACHE_DURATION = 5 * 60 * 1000
 
 export default function ProductsPage() {
+  const { isBlockedContent } = useSafety()
   const tp = useTranslations("products")
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
@@ -430,7 +432,7 @@ export default function ProductsPage() {
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
-                  {currentProducts.map((product) => (
+                  {currentProducts.filter(item => !isBlockedContent(item)).map((product) => (
                     <HomeProductCard
                       key={product.id}
                       id={product.id}
@@ -441,7 +443,7 @@ export default function ProductsPage() {
                       condition={product.condition}
                       freeShipping={product.freeShipping}
                       shippingCost={product.shippingCost}
-                      allowResellerShare={product.allowResellerShare}
+                      allowResellerShare={product.allowResellerShare} sellerId={product.sellerId}
                     />
                   ))}
                 </div>

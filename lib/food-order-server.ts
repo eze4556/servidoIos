@@ -74,7 +74,7 @@ function getBearerToken(request: Request) {
 async function requireAuthenticatedUser(request: Request, expectedUserId?: string) {
   const token = getBearerToken(request)
   if (!token) throw new Error("No autorizado")
-  const decodedToken = await adminAuth.verifyIdToken(token)
+  const decodedToken = await adminAuth.verifyIdToken(token, true)
   if (expectedUserId && decodedToken.uid !== expectedUserId) {
     throw new Error("El usuario autenticado no coincide con buyerId")
   }

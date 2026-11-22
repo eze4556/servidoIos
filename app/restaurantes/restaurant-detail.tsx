@@ -1,4 +1,5 @@
 "use client"
+import { ContentSafety, SafetyGate } from "@/components/safety/content-safety"
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
@@ -201,7 +202,7 @@ export function RestaurantDetail() {
       ? (restaurant.foodBusinessKind as FoodBusinessKind)
       : null
 
-  return (
+  return (<SafetyGate authorId={restaurant.ownerId}><div className="flex justify-end px-3 py-2"><ContentSafety kind="restaurant" targetId={restaurant.id} authorId={restaurant.ownerId} /></div>{(
     <div className="min-h-screen bg-[#f6f4f8] pb-28">
       <div className="relative">
         <div className="relative h-44 w-full overflow-hidden bg-gradient-to-br from-servido-800 to-servido-950 sm:h-56 lg:h-64">
@@ -498,5 +499,5 @@ export function RestaurantDetail() {
         />
       )}
     </div>
-  )
+  )}</SafetyGate>)
 }

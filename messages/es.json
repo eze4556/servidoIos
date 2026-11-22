@@ -35,6 +35,7 @@
     "categories": "Categorías",
     "searchPlaceholder": "¿Qué necesitas hoy?",
     "myPanel": "Mi Panel",
+    "myAccount": "Mi cuenta",
     "myStore": "Mi Tienda",
     "logout": "Salir",
     "login": "Ingresar",
@@ -127,6 +128,7 @@
     "signupFree": "Registrate gratis",
     "wrongCredentials": "Correo electrónico o contraseña incorrectos.",
     "loginError": "Error al iniciar sesión. Por favor, inténtalo de nuevo.",
+    "accountDeleted": "Tu cuenta fue eliminada correctamente.",
     "signupTitle": "Crear cuenta",
     "signupSubtitle": "Unite a Servido en minutos",
     "signupButton": "Registrarme",
@@ -509,6 +511,9 @@
   "apiErrors": {
     "unauthorized": "No autorizado",
     "noSession": "Tenés que iniciar sesión",
+    "accountDeleteInvalidBody": "Solicitud inválida",
+    "accountDeleteConfirmRequired": "Escribí ELIMINAR para confirmar",
+    "accountDeleteFailed": "No se pudo eliminar la cuenta. Intentá de nuevo.",
     "paymentStartMissing": "No se recibió el enlace de pago. Intentá de nuevo.",
     "paymentProcessFailed": "Error al procesar el pago",
     "sellerMpRequired": "El vendedor debe conectar Mercado Pago para cobrar",
@@ -1127,6 +1132,28 @@
     "login": "Ingresar",
     "register": "Registrarse"
   },
+  "deleteAccount": {
+    "pageTitle": "Mi cuenta",
+    "pageSubtitle": "Gestioná tu cuenta de Servido",
+    "backToPanel": "Volver al panel",
+    "email": "Correo",
+    "name": "Nombre",
+    "loginRequired": "Tenés que iniciar sesión para gestionar tu cuenta.",
+    "goLogin": "Iniciar sesión",
+    "title": "Eliminar mi cuenta",
+    "description": "Se borrará tu acceso y datos personales. Esta acción no se puede deshacer.",
+    "button": "Eliminar mi cuenta",
+    "dialogTitle": "¿Eliminar tu cuenta?",
+    "dialogDescription": "Se eliminarán tu acceso, perfil, publicaciones y archivos propios. Se quitarán tus mensajes de los chats. Esta acción no se puede deshacer.",
+    "dialogWarning": "Primero cancelamos la renovación de tu plan. Los registros necesarios de pedidos, pagos y reclamos se conservan para resolver operaciones y cumplir obligaciones legales.",
+    "confirmLabel": "Escribí {word} para confirmar",
+    "cancel": "Cancelar",
+    "confirm": "Sí, eliminar cuenta",
+    "deleting": "Eliminando…",
+    "errorFallback": "No se pudo eliminar la cuenta. Intentá de nuevo.",
+    "password": "Confirmá tu contraseña",
+    "passwordRequired": "Ingresá tu contraseña para confirmar la eliminación."
+  },
   "home": {
     "featured": "Destacados",
     "newArrivals": "Novedades",
@@ -1182,11 +1209,19 @@
     "shortcutPropiedades": "Servido Inmuebles",
     "vehiclesSpotlightKicker": "Vehículos",
     "vehiclesSpotlightTitle": "Garage de Servido",
-    "vehiclesSpotlightChips": ["Marca y modelo", "ARS o USD", "0 km o usados"],
+    "vehiclesSpotlightChips": [
+      "Marca y modelo",
+      "ARS o USD",
+      "0 km o usados"
+    ],
     "vehiclesSpotlightCta": "Explorar",
     "propertiesSpotlightKicker": "Inmuebles",
     "propertiesSpotlightTitle": "Servido Inmuebles",
-    "propertiesSpotlightChips": ["Venta y alquiler", "Por zona", "Fotos y videos"],
+    "propertiesSpotlightChips": [
+      "Venta y alquiler",
+      "Por zona",
+      "Fotos y videos"
+    ],
     "propertiesSpotlightCta": "Explorar",
     "seeAllCategories": "Ver todas las categorías",
     "noBrands": "No hay marcas para mostrar.",
@@ -1672,7 +1707,15 @@
     "pickSlot": "Elegí un horario.",
     "success": "Turno pedido. Te avisamos cuando el prestador confirme.",
     "bookError": "No se pudo pedir el turno.",
-    "weekdays": ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"]
+    "weekdays": [
+      "Lu",
+      "Ma",
+      "Mi",
+      "Ju",
+      "Vi",
+      "Sa",
+      "Do"
+    ]
   },
   "purchase": {
     "successTitle": "¡Felicitaciones!",
@@ -1857,32 +1900,104 @@
     "footerCatalog": "Explorar catálogo",
     "footerTutorial": "Cómo usar Servido",
     "nav": {
-      "dashboard": { "label": "Resumen", "description": "Actividad general" },
-      "stats": { "label": "Estadísticas", "description": "Gráficos y tendencias" },
-      "orders": { "label": "Mis compras", "description": "Pedidos y envíos" },
-      "claims": { "label": "Reclamos", "description": "Problemas con compras" },
-      "purchases": { "label": "Historial de pagos", "description": "Transacciones" },
-      "appointments": { "label": "Mis turnos", "description": "Reservas de servicios" },
-      "favorites": { "label": "Favoritos", "description": "Guardados para después" },
-      "reseller": { "label": "Revendedor", "description": "Recomendaciones y cobros" },
-      "openStore": { "label": "Crear mi tienda", "description": "Empezá a vender productos" },
-      "publishProduct": { "label": "➕ Publicar un producto", "description": "Cargá foto, precio y publicá rápido" },
-      "becomeCadete": { "label": "Ser cadete", "description": "Repartí pedidos en tu zona" },
-      "profile": { "label": "Mi perfil", "description": "Cuenta y datos" }
+      "dashboard": {
+        "label": "Resumen",
+        "description": "Actividad general"
+      },
+      "stats": {
+        "label": "Estadísticas",
+        "description": "Gráficos y tendencias"
+      },
+      "orders": {
+        "label": "Mis compras",
+        "description": "Pedidos y envíos"
+      },
+      "claims": {
+        "label": "Reclamos",
+        "description": "Problemas con compras"
+      },
+      "purchases": {
+        "label": "Historial de pagos",
+        "description": "Transacciones"
+      },
+      "appointments": {
+        "label": "Mis turnos",
+        "description": "Reservas de servicios"
+      },
+      "favorites": {
+        "label": "Favoritos",
+        "description": "Guardados para después"
+      },
+      "reseller": {
+        "label": "Revendedor",
+        "description": "Recomendaciones y cobros"
+      },
+      "openStore": {
+        "label": "Crear mi tienda",
+        "description": "Empezá a vender productos"
+      },
+      "publishProduct": {
+        "label": "➕ Publicar un producto",
+        "description": "Cargá foto, precio y publicá rápido"
+      },
+      "becomeCadete": {
+        "label": "Ser cadete",
+        "description": "Repartí pedidos en tu zona"
+      },
+      "profile": {
+        "label": "Mi perfil",
+        "description": "Cuenta y datos"
+      }
     },
     "pages": {
-      "dashboard": { "title": "Resumen", "subtitle": "Tu actividad de compras de un vistazo" },
-      "stats": { "title": "Estadísticas avanzadas", "subtitle": "Tus compras y gasto en gráficos" },
-      "orders": { "title": "Mis compras", "subtitle": "Seguí el estado de tus pedidos y envíos" },
-      "claims": { "title": "Reclamos", "subtitle": "Casos abiertos y el historial de cada uno" },
-      "purchases": { "title": "Historial de pagos", "subtitle": "Detalle de todas tus transacciones" },
-      "appointments": { "title": "Mis turnos", "subtitle": "Reservas de servicios que pediste" },
-      "favorites": { "title": "Favoritos", "subtitle": "Productos que guardaste para más tarde" },
-      "reseller": { "title": "Revendedor", "subtitle": "Tus recomendaciones, ventas y cobros" },
-      "openStore": { "title": "Crear mi tienda", "subtitle": "Convertí tu cuenta en vendedor y publicá productos" },
-      "publishProduct": { "title": "➕ Publicar un producto", "subtitle": "Flujo simple: foto, datos y listo" },
-      "becomeCadete": { "title": "Ser cadete / repartidor", "subtitle": "Postulate con la misma cuenta para hacer entregas" },
-      "profile": { "title": "Mi perfil", "subtitle": "Gestioná tu cuenta y preferencias" }
+      "dashboard": {
+        "title": "Resumen",
+        "subtitle": "Tu actividad de compras de un vistazo"
+      },
+      "stats": {
+        "title": "Estadísticas avanzadas",
+        "subtitle": "Tus compras y gasto en gráficos"
+      },
+      "orders": {
+        "title": "Mis compras",
+        "subtitle": "Seguí el estado de tus pedidos y envíos"
+      },
+      "claims": {
+        "title": "Reclamos",
+        "subtitle": "Casos abiertos y el historial de cada uno"
+      },
+      "purchases": {
+        "title": "Historial de pagos",
+        "subtitle": "Detalle de todas tus transacciones"
+      },
+      "appointments": {
+        "title": "Mis turnos",
+        "subtitle": "Reservas de servicios que pediste"
+      },
+      "favorites": {
+        "title": "Favoritos",
+        "subtitle": "Productos que guardaste para más tarde"
+      },
+      "reseller": {
+        "title": "Revendedor",
+        "subtitle": "Tus recomendaciones, ventas y cobros"
+      },
+      "openStore": {
+        "title": "Crear mi tienda",
+        "subtitle": "Convertí tu cuenta en vendedor y publicá productos"
+      },
+      "publishProduct": {
+        "title": "➕ Publicar un producto",
+        "subtitle": "Flujo simple: foto, datos y listo"
+      },
+      "becomeCadete": {
+        "title": "Ser cadete / repartidor",
+        "subtitle": "Postulate con la misma cuenta para hacer entregas"
+      },
+      "profile": {
+        "title": "Mi perfil",
+        "subtitle": "Gestioná tu cuenta y preferencias"
+      }
     },
     "openStore": {
       "storeCardTitle": "Crear mi tienda",
@@ -2116,17 +2231,50 @@
     "foodOrder": {
       "placeSuffix": " en {restaurantName}",
       "genericBody": "{title}{place}.",
-      "recibido": { "title": "Pedido recibido", "body": "" },
-      "confirmado": { "title": "Pedido confirmado", "body": "" },
-      "en_preparacion": { "title": "Tu pedido se está preparando", "body": "" },
-      "listo": { "title": "Tu pedido está listo", "body": "" },
-      "despachado": { "title": "Tu pedido fue despachado", "body": "" },
-      "en_camino": { "title": "Tu pedido va en camino", "body": "" },
-      "llegando": { "title": "El repartidor está llegando", "body": "" },
-      "afuera": { "title": "El repartidor está afuera", "body": "" },
-      "entregado": { "title": "Pedido entregado", "body": "Tu comida{place} ya fue entregada. ¡Buen provecho!" },
-      "cancelado": { "title": "Pedido cancelado", "body": "" },
-      "fallback": { "title": "Actualización de tu pedido", "body": "" },
+      "recibido": {
+        "title": "Pedido recibido",
+        "body": ""
+      },
+      "confirmado": {
+        "title": "Pedido confirmado",
+        "body": ""
+      },
+      "en_preparacion": {
+        "title": "Tu pedido se está preparando",
+        "body": ""
+      },
+      "listo": {
+        "title": "Tu pedido está listo",
+        "body": ""
+      },
+      "despachado": {
+        "title": "Tu pedido fue despachado",
+        "body": ""
+      },
+      "en_camino": {
+        "title": "Tu pedido va en camino",
+        "body": ""
+      },
+      "llegando": {
+        "title": "El repartidor está llegando",
+        "body": ""
+      },
+      "afuera": {
+        "title": "El repartidor está afuera",
+        "body": ""
+      },
+      "entregado": {
+        "title": "Pedido entregado",
+        "body": "Tu comida{place} ya fue entregada. ¡Buen provecho!"
+      },
+      "cancelado": {
+        "title": "Pedido cancelado",
+        "body": ""
+      },
+      "fallback": {
+        "title": "Actualización de tu pedido",
+        "body": ""
+      },
       "fallbackTitle": "Actualización de tu pedido"
     },
     "subscription": {
@@ -2470,9 +2618,18 @@
     "title": "Conectamos personas, productos y servicios",
     "subtitle": "Servido es el marketplace argentino donde compradores y vendedores se encuentran en un espacio seguro, moderno y fácil de usar.",
     "highlights": {
-      "marketplace": { "label": "Marketplace", "value": "Productos y servicios" },
-      "community": { "label": "Comunidad", "value": "Compradores y vendedores" },
-      "security": { "label": "Seguridad", "value": "Compra protegida" }
+      "marketplace": {
+        "label": "Marketplace",
+        "value": "Productos y servicios"
+      },
+      "community": {
+        "label": "Comunidad",
+        "value": "Compradores y vendedores"
+      },
+      "security": {
+        "label": "Seguridad",
+        "value": "Compra protegida"
+      }
     },
     "missionTitle": "Nuestra misión",
     "missionBody": "Conectar a personas que buscan productos y servicios con quienes los ofrecen, creando una comunidad vibrante y un mercado eficiente. Facilitamos transacciones justas y seguras, empoderando a individuos y pequeñas empresas para crecer en la economía digital.",
@@ -2480,11 +2637,26 @@
     "visionBody": "Ser la plataforma de referencia para comprar y vender productos y servicios, reconocida por la facilidad de uso, la seguridad y la confianza que generamos. Innovamos para ofrecer la mejor experiencia a nuestra comunidad.",
     "valuesTitle": "Nuestros valores",
     "values": [
-      { "title": "Confianza", "description": "Relaciones sólidas basadas en transparencia, seguridad y honestidad en cada transacción." },
-      { "title": "Innovación", "description": "Mejoramos la plataforma constantemente para ofrecer una experiencia cada vez más simple." },
-      { "title": "Comunidad", "description": "Conectamos compradores y vendedores en un entorno de apoyo y colaboración." },
-      { "title": "Integridad", "description": "Operamos con ética y responsabilidad en todo lo que hacemos." },
-      { "title": "Excelencia", "description": "Nos esforzamos por brindar un servicio de calidad en cada detalle." }
+      {
+        "title": "Confianza",
+        "description": "Relaciones sólidas basadas en transparencia, seguridad y honestidad en cada transacción."
+      },
+      {
+        "title": "Innovación",
+        "description": "Mejoramos la plataforma constantemente para ofrecer una experiencia cada vez más simple."
+      },
+      {
+        "title": "Comunidad",
+        "description": "Conectamos compradores y vendedores en un entorno de apoyo y colaboración."
+      },
+      {
+        "title": "Integridad",
+        "description": "Operamos con ética y responsabilidad en todo lo que hacemos."
+      },
+      {
+        "title": "Excelencia",
+        "description": "Nos esforzamos por brindar un servicio de calidad en cada detalle."
+      }
     ],
     "teamTitle": "Nuestro equipo",
     "teamBody": "Somos un equipo apasionado y dedicado, comprometido con una plataforma que realmente satisfaga las necesidades de nuestros usuarios. Valoramos la diversidad, la creatividad y el trabajo en equipo para alcanzar nuestros objetivos.",
@@ -2618,33 +2790,108 @@
     "footerTutorial": "Cómo usar Servido",
     "viewCatalog": "Ver catálogo",
     "nav": {
-      "dashboard": { "label": "Resumen", "description": "Métricas de tu tienda" },
-      "stats": { "label": "Estadísticas", "description": "Gráficos y tendencias" },
-      "products": { "label": "Mis productos", "description": "Publicaciones activas" },
-      "addProduct": { "label": "Añadir producto", "description": "Nueva publicación" },
-      "addProductEditing": { "label": "Editar producto", "description": "Nueva publicación" },
-      "addService": { "label": "Añadir servicio", "description": "Ofrecer un servicio" },
-      "agenda": { "label": "Agenda", "description": "Turnos y horarios" },
-      "create-coupons": { "label": "Crear cupones", "description": "Promociones" },
-      "shipping": { "label": "Envíos", "description": "Estado de entregas" },
-      "claims": { "label": "Reclamos", "description": "Casos de compradores" },
-      "earnings": { "label": "Mis ventas", "description": "Ingresos y pagos" },
-      "profile": { "label": "Configuración", "description": "Perfil y suscripción" },
-      "resellerProgram": { "label": "Revendedores", "description": "Programa de difusión Servido" }
+      "dashboard": {
+        "label": "Resumen",
+        "description": "Métricas de tu tienda"
+      },
+      "stats": {
+        "label": "Estadísticas",
+        "description": "Gráficos y tendencias"
+      },
+      "products": {
+        "label": "Mis productos",
+        "description": "Publicaciones activas"
+      },
+      "addProduct": {
+        "label": "Añadir producto",
+        "description": "Nueva publicación"
+      },
+      "addProductEditing": {
+        "label": "Editar producto",
+        "description": "Nueva publicación"
+      },
+      "addService": {
+        "label": "Añadir servicio",
+        "description": "Ofrecer un servicio"
+      },
+      "agenda": {
+        "label": "Agenda",
+        "description": "Turnos y horarios"
+      },
+      "create-coupons": {
+        "label": "Crear cupones",
+        "description": "Promociones"
+      },
+      "shipping": {
+        "label": "Envíos",
+        "description": "Estado de entregas"
+      },
+      "claims": {
+        "label": "Reclamos",
+        "description": "Casos de compradores"
+      },
+      "earnings": {
+        "label": "Mis ventas",
+        "description": "Ingresos y pagos"
+      },
+      "profile": {
+        "label": "Configuración",
+        "description": "Perfil y suscripción"
+      },
+      "resellerProgram": {
+        "label": "Revendedores",
+        "description": "Programa de difusión Servido"
+      }
     },
     "pages": {
-      "dashboard": { "title": "Resumen", "subtitle": "Tu tienda y actividad de un vistazo" },
-      "stats": { "title": "Estadísticas avanzadas", "subtitle": "Ventas, catálogo y envíos en gráficos" },
-      "products": { "title": "Mis productos", "subtitle": "Gestioná lo que tenés publicado" },
-      "addProduct": { "title": "Publicar producto", "subtitle": "Cargá un nuevo producto a tu tienda" },
-      "addProductEditing": { "title": "Editar producto", "subtitle": "Modificá los datos de tu publicación" },
-      "addService": { "title": "Publicar servicio", "subtitle": "Ofrecé un nuevo servicio" },
-      "agenda": { "title": "Agenda de servicios", "subtitle": "Horarios y turnos de tus clientes" },
-      "shipping": { "title": "Envíos", "subtitle": "Gestioná el estado de tus envíos" },
-      "claims": { "title": "Reclamos", "subtitle": "Respondé casos y consultá el historial" },
-      "earnings": { "title": "Mis ventas", "subtitle": "Ingresos y transacciones" },
-      "create-coupons": { "title": "Cupones", "subtitle": "Creá promociones para tus clientes" },
-      "profile": { "title": "Configuración", "subtitle": "Perfil, suscripción y Mercado Pago" },
+      "dashboard": {
+        "title": "Resumen",
+        "subtitle": "Tu tienda y actividad de un vistazo"
+      },
+      "stats": {
+        "title": "Estadísticas avanzadas",
+        "subtitle": "Ventas, catálogo y envíos en gráficos"
+      },
+      "products": {
+        "title": "Mis productos",
+        "subtitle": "Gestioná lo que tenés publicado"
+      },
+      "addProduct": {
+        "title": "Publicar producto",
+        "subtitle": "Cargá un nuevo producto a tu tienda"
+      },
+      "addProductEditing": {
+        "title": "Editar producto",
+        "subtitle": "Modificá los datos de tu publicación"
+      },
+      "addService": {
+        "title": "Publicar servicio",
+        "subtitle": "Ofrecé un nuevo servicio"
+      },
+      "agenda": {
+        "title": "Agenda de servicios",
+        "subtitle": "Horarios y turnos de tus clientes"
+      },
+      "shipping": {
+        "title": "Envíos",
+        "subtitle": "Gestioná el estado de tus envíos"
+      },
+      "claims": {
+        "title": "Reclamos",
+        "subtitle": "Respondé casos y consultá el historial"
+      },
+      "earnings": {
+        "title": "Mis ventas",
+        "subtitle": "Ingresos y transacciones"
+      },
+      "create-coupons": {
+        "title": "Cupones",
+        "subtitle": "Creá promociones para tus clientes"
+      },
+      "profile": {
+        "title": "Configuración",
+        "subtitle": "Perfil, suscripción y Mercado Pago"
+      },
       "resellerProgram": {
         "title": "Programa revendedores",
         "subtitle": "Clics y ventas por recomendación en tus productos"
@@ -3753,5 +4000,40 @@
       "too_large": "Cada archivo puede pesar hasta 8 MB.",
       "too_many": "Podés adjuntar hasta 8 archivos."
     }
+  },
+  "safety": {
+    "actions": "Reportar o bloquear",
+    "description": "Reportá contenido que incumpla las normas. Bloquear oculta al usuario para vos e impide nuevos mensajes entre ambas cuentas.",
+    "reason": "Motivo",
+    "details": "Detalles (opcional)",
+    "report": "Enviar reporte",
+    "reported": "Reporte enviado. El equipo de Servido lo revisará.",
+    "block": "Bloquear usuario",
+    "unblock": "Desbloquear usuario",
+    "blockChanged": "El bloqueo se actualizó.",
+    "failed": "No se pudo completar la acción. Intentá de nuevo.",
+    "hidden": "Ocultaste el contenido de este usuario.",
+    "blockedUsers": "Usuarios bloqueados",
+    "noBlocks": "No bloqueaste a ningún usuario.",
+    "blockedNumber": "Usuario bloqueado {number}",
+    "queue": "Reportes de contenido",
+    "queueHint": "Revisá los reportes a diario y atendé con prioridad amenazas, acoso y contenido sexual. Se muestran hasta 100 reportes pendientes.",
+    "refresh": "Actualizar",
+    "noReports": "No hay reportes pendientes.",
+    "dismiss": "Descartar reporte",
+    "remove": "Retirar contenido",
+    "suspend": "Suspender usuario y retirar publicaciones",
+    "moderationConfirm": "Esta acción retira contenido público. ¿Querés continuar?",
+    "chatBlocked": "El chat está bloqueado. No se pueden enviar mensajes.",
+    "reasons": {
+      "harassment": "Acoso o discriminación",
+      "sexual": "Contenido sexual",
+      "violence": "Violencia o amenazas",
+      "fraud": "Fraude o venta prohibida",
+      "spam": "Spam",
+      "other": "Otro motivo"
+    },
+    "unsafeText": "El mensaje contiene contenido no permitido.",
+    "contact": "Contactar al equipo de Servido"
   }
 }

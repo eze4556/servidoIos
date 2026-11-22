@@ -8,6 +8,8 @@ const isCapacitor = process.env.CAPACITOR === "1"
 
 /** @type {import('next').NextConfig} */
 const baseConfig = {
+  // Isolate release verification from an existing next dev build.
+  distDir: process.env.SERVIDO_WEB_BUILD_DIR || ".next",
   // Evita chunks server rotos (vendor-chunks/@firebase.js) en dev tras builds parciales
   serverExternalPackages: [
     "firebase",

@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import type { StoryAuthorGroup } from "@/types/story"
 
 export default function HistoriasPage() {
+  const { isBlockedContent } = useSafety()
   const t = useTranslations("storiesPage")
   const { currentUser } = useAuth()
   const { coordinates, hasValidLocation, loadingLocation, openLocationPicker, shortLocation } =
@@ -186,7 +188,7 @@ export default function HistoriasPage() {
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-6 lg:gap-1">
-            {displayGroups.map((group, index) => (
+            {displayGroups.map((group, index) => (isBlockedContent(group) ? null : (
               <button
                 key={group.authorId}
                 type="button"
@@ -217,7 +219,7 @@ export default function HistoriasPage() {
                   </div>
                 </div>
               </button>
-            ))}
+            )))}
           </div>
         )}
         </div>

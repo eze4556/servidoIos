@@ -36,6 +36,7 @@ import { getFoodOrderStatusLabel } from "@/lib/i18n/restaurant-labels"
 import type { FoodOrder } from "@/types/restaurant"
 import { useCadeteLiveTracking } from "@/hooks/use-cadete-live-tracking"
 import { CadeteLocationConsent } from "@/components/delivery/cadete-location-consent"
+import { DeleteAccountSection } from "@/components/profile/delete-account-section"
 import { grantLocationConsent, hasLocationConsent, revokeLocationConsent } from "@/lib/location-consent"
 import { usePriceFormat } from "@/hooks/use-price-format"
 
@@ -573,6 +574,12 @@ export default function CadeteDashboardPage() {
               )}
             </div>
           </section>
+        )}
+
+        {!active && (
+          <div className="mt-6 pb-4">
+            <DeleteAccountSection className="border-red-500/30 bg-red-950/40" />
+          </div>
         )}
       </div>
     </div>

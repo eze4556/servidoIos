@@ -1,4 +1,6 @@
 "use client"
+import { ContentSafety } from "@/components/safety/content-safety"
+import { useSafety } from "@/contexts/safety-context"
 
 import React, { useState } from "react"
 import { Star, AlertCircle, Loader2 } from "lucide-react"
@@ -89,6 +91,7 @@ const ProductServiceReviewsAndQuestions: React.FC<Props> = ({
   handleSubmitAnswer,
   submittingAnswer,
 }) => {
+  const { isBlocked } = useSafety()
   const t = useTranslations("reviews")
   const locale = useLocale()
   const { toast } = useToast()
@@ -220,7 +223,7 @@ const ProductServiceReviewsAndQuestions: React.FC<Props> = ({
           <p className="text-gray-600">{t("firstReviewProduct")}</p>
         ) : (
           <div className="space-y-6">
-            {reviews.map((review) => (
+            {reviews.filter(review => !isBlocked(review.userId)).map((review) => (
               <div key={review.id} className="border-b pb-4 last:border-b-0 last:pb-0">
                 <div className="mb-2 flex items-center gap-2">
                   {[...Array(5)].map((_, i) => (
@@ -230,6 +233,7 @@ const ProductServiceReviewsAndQuestions: React.FC<Props> = ({
                     />
                   ))}
                   <span className="ml-2 text-sm font-medium">{review.userName}</span>
+                  <ContentSafety kind="review" targetId={review.id} authorId={review.userId} />
                   <span className="text-xs text-gray-500">{formatTimestamp(review.createdAt)}</span>
                 </div>
                 <p className="leading-relaxed text-gray-700">{censorPhoneNumbers(review.comment)}</p>
@@ -294,12 +298,13 @@ const ProductServiceReviewsAndQuestions: React.FC<Props> = ({
           <p className="text-gray-600">{t("firstQuestionProduct")}</p>
         ) : (
           <div className="space-y-6">
-            {questions.map((question) => (
+            {questions.filter(question => !isBlocked(question.userId)).map((question) => (
               <div key={question.id} className="border-b pb-4 last:border-b-0 last:pb-0">
                 <div className="mb-2">
                   <div className="mb-1 flex items-center gap-2">
                     <span className="text-sm font-medium text-blue-600">{t("questionLabel")}</span>
                     <span className="text-sm text-gray-500">{question.userName}</span>
+                    <ContentSafety kind="question" targetId={question.id} authorId={question.userId} />
                     <span className="text-xs text-gray-400">{formatTimestamp(question.createdAt)}</span>
                   </div>
                   <p className="leading-relaxed text-gray-700">{censorPhoneNumbers(question.question)}</p>

@@ -100,3 +100,42 @@ npm run cap:sync:ios
 ```
 
 En Windows, `cap sync ios` copia assets y actualiza plugins, pero puede advertir que no hay CocoaPods/Xcode; la instalación de pods y compilación se completan en Codemagic. No volver a ejecutar `cap add ios`: el proyecto ya existe.
+
+## Preparación de la siguiente compilación (cambios locales)
+
+Se integró la pantalla Mi cuenta con confirmación de contraseña y eliminación de cuenta. El servidor cancela preapprovals de Mercado Pago verificando su titularidad antes de limpiar datos; elimina perfil, contenido propio, archivos y subcolecciones; conserva los registros necesarios de operaciones y un marcador mínimo de cuenta eliminada. Si falla un paso no devuelve éxito: la operación puede reintentarse. Los webhooks de suscripción no deben reactivar el perfil eliminado.
+
+Se agregaron reportes y bloqueo en publicaciones, perfiles, historias, vivos y chat; gestión de bloqueos en Mi cuenta y una bandeja de Reportes de contenido para administradores. Las reglas impiden mensajes entre cuentas bloqueadas, protegen las listas privadas y aplican un filtro básico de texto. El filtro no analiza imágenes ni video: el equipo debe atender reportes y moderar el contenido de forma continua. Las APIs verifican también tokens revocados para impedir el uso de cuentas eliminadas o suspendidas.
+
+Se retiró de las utilidades compartidas un módulo de cifrado Node sin consumidores. Ya no se incluyen los indicadores `createCipheriv` ni `aes-256-gcm` de ese módulo en el bundle estático verificado. Las declaraciones de cifrado de la nueva compilación deben revisarse sobre el binario y sus SDK; no reutilizar una respuesta sin verificar.
+
+Validaciones realizadas con datos ficticios:
+
+- `npm run test:release`: 12 pruebas de eliminación, renovaciones, titularidad, permisos y reportes.
+- `npm run test:release:rules`: emuladores de Auth, Firestore y Storage en `demo-servido-release`; nunca usa datos de producción. Requiere Firebase CLI y Java 21.
+- `node scripts/check-release-types.cjs`: comparación con HEAD, sin errores nuevos. El repositorio tiene 101 errores de TypeScript previos; Next actualmente omite la comprobación de tipos y lint al compilar.
+- Build web completo usando `SERVIDO_WEB_BUILD_DIR=.release-web` para aislarlo de `.next`.
+- Export estático de Capacitor y sincronización de iOS. La compilación nativa y las pruebas físicas del candidato aún no se realizaron.
+
+Antes de generar y distribuir el próximo IPA:
+
+1. Decisión del titular para esta presentación: mantener la contratación de planes de vendedor por Mercado Pago y explicar ese flujo a Apple. No se integraron compras de Apple ni se ocultarán funciones para la revisión. La aprobación de ese modelo queda a criterio de App Review.
+2. Revisar los cambios locales y desplegar las reglas de Firestore/Storage y el backend. Las APIs `/api/account/delete`, `/api/safety/*` y `/api/admin/content-reports` corren en el servidor, no dentro del IPA. El build de Capacitor no las despliega.
+3. Actualizar las declaraciones de privacidad y la política de retención con el titular del servicio según los datos efectivamente conservados. Los historiales de pedidos/pagos/reclamos no se eliminan indiscriminadamente.
+4. En iPhone, probar contraseña errónea/correcta al eliminar, retry de una eliminación interrumpida, bloqueo en ambos sentidos, desbloqueo, reportes y su atención en el panel admin, notificaciones y todos los recorridos de pedidos. Los tests locales no sustituyen esas pruebas.
+5. Recién entonces subir la nueva revisión y ejecutar Codemagic; mantener versión 1.0.0 y usar un número de compilación superior al 1. No se inició otra compilación en Codemagic ni se desplegaron estos cambios en producción durante esta preparación.
+
+
+## Notas para App Review de la candidata
+
+Pegar en las notas de revisión de App Store Connect, completando las cuentas de demostración en los campos privados correspondientes:
+
+> Servido is a marketplace connecting buyers with merchants offering physical products, food and services. Purchases of physical products and food are processed through Mercado Pago.
+>
+> Seller subscription: merchants can purchase a recurring plan through Mercado Pago to enable publishing product/service listings and using seller tools. The iOS app currently includes this subscription flow; it does not use StoreKit for seller plans. This is separate from the checkout for physical goods.
+>
+> Please use the provided buyer and active seller demo accounts to review both experiences. The seller subscription is available from the seller profile subscription tab. Purchases and subscriptions use the live payment provider and may create real charges; the active seller demo account allows reviewing the unlocked features without making a payment.
+>
+> Account deletion is available from Mi cuenta and requires confirming the password and typing ELIMINAR. Reports and user blocking are available from content/profile/chat safety controls.
+
+No enviar estas notas hasta comprobar en iPhone los recorridos y que la cuenta de vendedor de demostración tenga un plan activo. No incluir contraseñas en Git. La candidata agrega una comprobación en Codemagic que exige el backend v2 de Servido antes de generar el IPA.

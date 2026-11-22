@@ -1,3 +1,4 @@
+import { hasBlockedInteraction } from "@/lib/safety-server"
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/firebase-admin"
 import { requireBearerUid } from "@/lib/lives-auth"
@@ -36,6 +37,10 @@ export async function POST(request: NextRequest, context: Ctx) {
     const data = snap.data() || {}
     if (data.status !== "live") {
       return NextResponse.json({ error: "Este vivo ya terminó" }, { status: 410 })
+    }
+
+    if (await hasBlockedInteraction(auth.uid, String(data.sellerId || ""))) {
+      return NextResponse.json({ error: "Interacción bloqueada" }, { status: 403 })
     }
 
     const roomName = String(data.roomName || liveId)

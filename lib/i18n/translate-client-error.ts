@@ -2,6 +2,9 @@
 const MESSAGE_TO_KEY: Record<string, string> = {
   "No autorizado": "unauthorized",
   "Sin sesión": "noSession",
+  "Solicitud inválida": "accountDeleteInvalidBody",
+  "Escribí ELIMINAR para confirmar": "accountDeleteConfirmRequired",
+  "No se pudo eliminar la cuenta. Intentá de nuevo.": "accountDeleteFailed",
   "No se recibió el punto de inicio del pago": "paymentStartMissing",
   "Error al procesar el pago": "paymentProcessFailed",
   "El vendedor debe conectar su cuenta de Mercado Pago para cobrar": "sellerMpRequired",

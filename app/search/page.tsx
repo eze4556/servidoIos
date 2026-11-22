@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { productHref } from "@/lib/routes"
 
 type SearchProduct = {
+  sellerId?: string
   id: string
   name: string
   price: number
@@ -30,6 +32,7 @@ type SearchProduct = {
 }
 
 export default function SearchPage() {
+  const { isBlockedContent } = useSafety()
   const { formatPrice } = usePriceFormat()
   const ts = useTranslations("search")
   const th = useTranslations("header")
@@ -182,7 +185,7 @@ export default function SearchPage() {
         ) : products.length > 0 ? (
           viewMode === "grid" ? (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
-              {products.map((product) => (
+              {products.filter(item => !isBlockedContent(item)).map((product) => (
                 <HomeProductCard
                   key={product.id}
                   id={product.id}
@@ -192,13 +195,13 @@ export default function SearchPage() {
                   media={product.media}
                   condition={product.condition}
                   freeShipping={product.freeShipping}
-                  shippingCost={product.shippingCost}
+                  shippingCost={product.shippingCost} sellerId={product.sellerId}
                 />
               ))}
             </div>
           ) : (
             <div className="space-y-3">
-              {products.map((product) => (
+              {products.filter(item => !isBlockedContent(item)).map((product) => (
                 <Link
                   key={product.id}
                   href={productHref(product.id)}

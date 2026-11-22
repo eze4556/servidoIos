@@ -8,6 +8,7 @@ import "./globals.css"
 import { CartProvider } from "@/contexts/cart-context"
 import { FoodCartProvider } from "@/contexts/food-cart-context"
 import { AuthProvider } from "@/contexts/auth-context"
+import { SafetyProvider } from "@/contexts/safety-context"
 import { PushRegistrar } from "@/components/providers/push-registrar"
 import { LocationProvider } from "@/contexts/location-context"
 import { CacheProvider } from "@/contexts/cache-context"
@@ -79,6 +80,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <CacheProvider>
               <AuthProvider>
                 <PushRegistrar />
+                <SafetyProvider>
                 <LocationProvider>
                   <CartProvider>
                     <FoodCartProvider>
@@ -89,6 +91,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     </FoodCartProvider>
                   </CartProvider>
                 </LocationProvider>
+                </SafetyProvider>
               </AuthProvider>
             </CacheProvider>
           </NProgressProvider>

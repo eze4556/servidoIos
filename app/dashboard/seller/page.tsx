@@ -114,6 +114,7 @@ import { BuyerPanel } from "@/components/dashboard/buyer/buyer-panel"
 import { SellerAgendaPanel } from "@/components/dashboard/seller/seller-agenda-panel"
 import { SellerResellerProgramPanel } from "@/components/seller/seller-reseller-program-panel"
 import { ProfilePhotoEditor } from "@/components/profile/profile-photo-editor"
+import { DeleteAccountSection } from "@/components/profile/delete-account-section"
 import type { ServiceSchedule } from "@/types/service-appointments"
 import { apiUrl } from "@/lib/api-base"
 
@@ -3496,9 +3497,7 @@ export default function SellerDashboardPage() {
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-sm text-gray-600">
-                            {t("profile.settingsComingSoon")}
-                          </p>
+                          <DeleteAccountSection />
                         </CardContent>
                       </Card>
                     </div>

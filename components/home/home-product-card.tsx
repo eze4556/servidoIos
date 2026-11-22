@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
@@ -9,6 +10,7 @@ import { ArrowUpRight, Sparkles, Star } from "lucide-react"
 import { productHref } from "@/lib/routes"
 
 interface HomeProductCardProps {
+  sellerId?: string
   id: string
   name: string
   price: number
@@ -34,7 +36,9 @@ export function HomeProductCard({
   shippingCost,
   allowResellerShare,
   badge,
+  sellerId,
 }: HomeProductCardProps) {
+  const { isBlocked } = useSafety()
   const { formatPrice } = usePriceFormat()
   const tReseller = useTranslations("resellerProgram")
   const src =
@@ -42,6 +46,7 @@ export function HomeProductCard({
     imageUrl ||
     `/placeholder.svg?height=200&width=200&query=${imageQuery || name}`
 
+  if (isBlocked(sellerId)) return null
   return (
     <Link href={productHref(id)} className="group block h-full">
       <Card className="home-product-card product-card-fixed overflow-hidden rounded-2xl border-0 bg-white shadow-[0_10px_30px_-18px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/5 lg:rounded-3xl">

@@ -1,4 +1,5 @@
 "use client"
+import { ContentSafety, SafetyGate } from "@/components/safety/content-safety"
 
 import type React from "react"
 
@@ -829,7 +830,7 @@ export function ProductDetail() {
 
   // Render condicional para servicios
   if (product.isService) {
-    return (
+    return (<SafetyGate authorId={product.sellerId}><div className="flex justify-end px-3 py-2"><ContentSafety kind="product" targetId={product.id} authorId={product.sellerId} /></div>{(
       <ServiceDetail
         service={{
           ...product,
@@ -874,10 +875,10 @@ export function ProductDetail() {
         submittingAnswer={submittingAnswer}
         hasUserReviewed={hasUserReviewed}
       />
-    )
+    )}</SafetyGate>)
   }
 
-  return (
+  return (<SafetyGate authorId={product?.sellerId}><div className="flex justify-end px-3 py-2">{product?.id && <ContentSafety kind="product" targetId={product?.id} authorId={product?.sellerId} />}</div>{(
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
       <div className="container mx-auto px-4 py-6 md:px-6 md:py-8">
         <div className="mb-2 flex items-center gap-3">
@@ -1400,7 +1401,7 @@ export function ProductDetail() {
                     condition={relatedProduct.condition ?? undefined}
                     freeShipping={relatedProduct.freeShipping}
                     shippingCost={relatedProduct.shippingCost}
-                    allowResellerShare={relatedProduct.allowResellerShare}
+                    allowResellerShare={relatedProduct.allowResellerShare} sellerId={relatedProduct.sellerId}
                   />
                 ))}
               </div>
@@ -1418,5 +1419,5 @@ export function ProductDetail() {
         />
       )}
     </div>
-  )
+  )}</SafetyGate>)
 }

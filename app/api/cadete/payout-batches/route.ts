@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
-    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim(), true)
     const userSnap = await adminDb.collection("users").doc(decoded.uid).get()
     if (userSnap.data()?.role !== "cadete") {
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 })

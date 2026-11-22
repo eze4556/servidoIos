@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
 import { HomeProductCard } from "@/components/home/home-product-card"
@@ -30,6 +31,7 @@ export function HomeProductCarousel({
   badge,
   emptyMessage = "No hay productos para mostrar.",
 }: HomeProductCarouselProps) {
+  const { isBlockedContent } = useSafety()
   if (loading && products.length === 0) {
     return <HomeProductsSkeleton />
   }
@@ -42,7 +44,7 @@ export function HomeProductCarousel({
     <div className="home-carousel-fade relative">
       <Carousel opts={{ align: "start", dragFree: true }} className="w-full px-1 lg:px-2">
         <CarouselContent className="-ml-4">
-          {products.map((product) => (
+          {products.filter(item => !isBlockedContent(item)).map((product) => (
             <CarouselItem
               key={product.id}
               className="basis-[72%] pl-4 xs:basis-[55%] sm:basis-[45%] md:basis-1/3 lg:basis-1/4 xl:basis-1/5"

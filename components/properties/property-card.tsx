@@ -1,4 +1,5 @@
 "use client"
+import { SafetyGate } from "@/components/safety/content-safety"
 
 import Link from "next/link"
 import { SimpleImage } from "@/components/ui/simple-image"
@@ -26,7 +27,7 @@ export function PropertyCard({ listing, selected = false, onHover }: PropertyCar
   const hasVideo = listing.media.some((m) => m.type === "video")
   const location = [listing.neighborhood, listing.city, listing.province].filter(Boolean).join(", ")
 
-  return (
+  return (<SafetyGate authorId={listing.sellerId}>{(
     <article
       className={cn(
         "group overflow-hidden rounded-2xl bg-white shadow-[0_12px_32px_-20px_rgba(46,16,101,0.25)] ring-1 transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-18px_rgba(46,16,101,0.32)]",
@@ -98,5 +99,5 @@ export function PropertyCard({ listing, selected = false, onHover }: PropertyCar
         </div>
       </Link>
     </article>
-  )
+  )}</SafetyGate>)
 }

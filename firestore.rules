@@ -10,7 +10,11 @@ service cloud.firestore {
 
     // ─── Helpers ───────────────────────────────────────────────
     function signedIn() {
-      return request.auth != null;
+      return request.auth != null
+        && (!exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          || (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('deleted', false) == false
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('deletionStatus', '') == ''
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('safetyStatus', '') != 'suspended'));
     }
 
     function uid() {
@@ -73,19 +77,37 @@ service cloud.firestore {
       return isChatParticipantData(request.resource.data);
     }
 
+    // Text filter at the write boundary, including clients bypassing the UI.
+    function safeText(value) {
+      return value == null || (value is string && value.size() <= 20000
+        && !value.lower().matches('(?s).*(pornograf|pornogr[aá]f|pornografia infantil|sexo con menores|sexo com menores|te voy a matar|vou te matar|vou matar voc[eê]).*'));
+    }
+    function safeWrite() {
+      return request.method == 'delete' || (
+        safeText(request.resource.data.get('text', ''))
+        && safeText(request.resource.data.get('name', ''))
+        && safeText(request.resource.data.get('title', ''))
+        && safeText(request.resource.data.get('description', ''))
+        && safeText(request.resource.data.get('caption', ''))
+        && safeText(request.resource.data.get('comment', ''))
+        && safeText(request.resource.data.get('question', ''))
+        && safeText(request.resource.data.get('answer', '')));
+    }
+
     // ─── users ─────────────────────────────────────────────────
     // Lectura autenticada: catálogo/seller profiles + paneles actuales
     // (buyer/seller hacen listados). No exponer sin auth.
     match /users/{userId} {
-      allow read: if signedIn();
+      // Keep self-profile readable so interrupted deletion can be resumed.
+      allow read: if signedIn() || (request.auth != null && request.auth.uid == userId);
 
-      allow create: if signedIn()
+      allow create: if safeWrite() && signedIn()
         && uid() == userId
         && request.resource.data.role in ['user', 'seller', 'cadete']
         && request.resource.data.uid == userId;
 
       // Dueño edita perfil; no puede tocar role / isActive / productUploadLimit
-      allow update: if isAdmin()
+      allow update: if safeWrite() && (isAdmin()
         || (
           signedIn()
           && uid() == userId
@@ -96,10 +118,14 @@ service cloud.firestore {
                 'productUploadLimit',
                 'sellerSalesBlocked',
                 'claimManualReview',
-                'claimWarningCount'
+                'claimWarningCount', 'deleted', 'deletionStatus', 'safetyStatus'
               ])
-        );
+        ));
 
+      match /blockedUsers/{targetUid} {
+        allow read: if signedIn() && uid() == userId;
+        allow write: if false; // Authenticated safety API only.
+      }
       match /claimSanctions/{sanctionId} {
         allow read, write: if isAdmin();
       }
@@ -135,29 +161,29 @@ service cloud.firestore {
 
     match /products/{productId} {
       allow read: if true;
-      allow create: if signedIn()
+      allow create: if safeWrite() && (signedIn()
         && isSeller()
-        && request.resource.data.sellerId == uid();
-      allow update, delete: if isAdmin()
-        || (signedIn() && resource.data.sellerId == uid());
+        && request.resource.data.sellerId == uid());
+      allow update, delete: if safeWrite() && (isAdmin()
+        || (signedIn() && resource.data.sellerId == uid()));
     }
 
     match /reviews/{id} {
       allow read: if true;
-      allow create: if signedIn()
-        && request.resource.data.userId == uid();
-      allow update, delete: if isAdmin()
-        || (signedIn() && resource.data.userId == uid());
+      allow create: if safeWrite() && (safeWrite() && (signedIn()
+        && request.resource.data.userId == uid()));
+      allow update, delete: if safeWrite() && (safeWrite() && (isAdmin()
+        || (signedIn() && resource.data.userId == uid())));
     }
 
     match /questions/{id} {
       allow read: if true;
-      allow create: if signedIn()
-        && request.resource.data.userId == uid();
+      allow create: if safeWrite() && (safeWrite() && (safeWrite() && (signedIn()
+        && request.resource.data.userId == uid())));
       // Comprador crea; vendedor responde; admin todo
-      allow update: if isAdmin()
+      allow update: if safeWrite() && (safeWrite() && (safeWrite() && (isAdmin()
         || (signedIn() && resource.data.userId == uid())
-        || (signedIn() && isSeller());
+        || (signedIn() && isSeller()))));
       allow delete: if isAdmin()
         || (signedIn() && resource.data.userId == uid());
     }
@@ -182,10 +208,10 @@ service cloud.firestore {
       allow read: if resource.data.isActive == true
         || (signedIn() && resource.data.authorId == uid())
         || isAdmin();
-      allow create: if signedIn()
-        && request.resource.data.authorId == uid();
-      allow update, delete: if isAdmin()
-        || (signedIn() && resource.data.authorId == uid());
+      allow create: if safeWrite() && (signedIn()
+        && request.resource.data.authorId == uid());
+      allow update, delete: if safeWrite() && (isAdmin()
+        || (signedIn() && resource.data.authorId == uid()));
     }
 
     // ─── Lives (MVP) ───────────────────────────────────────────
@@ -209,22 +235,22 @@ service cloud.firestore {
       allow read: if resource.data.status == 'active'
         || (signedIn() && resource.data.sellerId == uid())
         || isAdmin();
-      allow create: if signedIn()
+      allow create: if safeWrite() && (signedIn()
         && request.resource.data.sellerId == uid()
-        && request.resource.data.status in ['active', 'paused'];
-      allow update, delete: if isAdmin()
-        || (signedIn() && resource.data.sellerId == uid());
+        && request.resource.data.status in ['active', 'paused']);
+      allow update, delete: if safeWrite() && (isAdmin()
+        || (signedIn() && resource.data.sellerId == uid()));
     }
 
     match /propertyListings/{listingId} {
       allow read: if resource.data.status == 'active'
         || (signedIn() && resource.data.sellerId == uid())
         || isAdmin();
-      allow create: if signedIn()
+      allow create: if safeWrite() && (safeWrite() && (signedIn()
         && request.resource.data.sellerId == uid()
-        && request.resource.data.status in ['active', 'paused'];
-      allow update, delete: if isAdmin()
-        || (signedIn() && resource.data.sellerId == uid());
+        && request.resource.data.status in ['active', 'paused']));
+      allow update, delete: if safeWrite() && (safeWrite() && (isAdmin()
+        || (signedIn() && resource.data.sellerId == uid())));
     }
 
     // ─── Cupones ───────────────────────────────────────────────
@@ -292,6 +318,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /contentReports/{reportId} {
+      allow read, write: if false; // Evidence is only exposed through the admin API.
+    }
+    function noBlockedInteraction(a, b) {
+      return !exists(/databases/$(database)/documents/users/$(a)/blockedUsers/$(b))
+        && !exists(/databases/$(database)/documents/users/$(b)/blockedUsers/$(a));
+    }
+
     // ─── Chats ─────────────────────────────────────────────────
     match /chats/{chatId} {
       // Un chat que todavía no existe tiene que poder consultarse: los flujos
@@ -299,9 +333,14 @@ service cloud.firestore {
       allow get: if signedIn() && (isAdmin() || resource == null || isChatParticipant());
       allow list: if isAdmin() || isChatParticipant();
 
-      allow create: if isChatParticipantCreate();
+      allow create: if isChatParticipantCreate()
+        && request.resource.data.buyerId != request.resource.data.sellerId
+        && noBlockedInteraction(request.resource.data.buyerId, request.resource.data.sellerId);
 
-      allow update: if isAdmin() || isChatParticipant();
+      allow update: if isAdmin() || (isChatParticipant()
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['buyerId', 'sellerId', 'type'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['participantIds'])
+          || request.resource.data.participantIds == [resource.data.buyerId, resource.data.sellerId]));
 
       allow delete: if isAdmin();
 
@@ -318,7 +357,9 @@ service cloud.firestore {
 
         allow read: if canAccessParent();
         allow create: if canAccessParent()
-          && request.resource.data.senderId == uid();
+          && safeWrite()
+          && request.resource.data.senderId == uid()
+          && noBlockedInteraction(get(chatPath()).data.buyerId, get(chatPath()).data.sellerId);
         allow update, delete: if isAdmin();
       }
     }
@@ -340,39 +381,39 @@ service cloud.firestore {
     // ─── Restaurantes / menú ───────────────────────────────────
     match /restaurants/{restaurantId} {
       allow read: if true;
-      allow create: if signedIn()
+      allow create: if safeWrite() && (signedIn()
         && (
           request.resource.data.ownerId == uid()
           || restaurantId == uid()
-        );
-      allow update: if isAdmin()
+        ));
+      allow update: if safeWrite() && (isAdmin()
         || (signedIn() && resource.data.ownerId == uid())
-        || (signedIn() && restaurantId == myRestaurantId());
+        || (signedIn() && restaurantId == myRestaurantId()));
       allow delete: if isAdmin();
     }
 
     match /menuCategories/{id} {
       allow read: if true;
-      allow create: if isRestaurantOwner()
-        && request.resource.data.restaurantId == myRestaurantId();
-      allow update, delete: if isAdmin()
-        || (isRestaurantOwner() && resource.data.restaurantId == myRestaurantId());
+      allow create: if safeWrite() && (safeWrite() && (isRestaurantOwner()
+        && request.resource.data.restaurantId == myRestaurantId()));
+      allow update, delete: if safeWrite() && (safeWrite() && (isAdmin()
+        || (isRestaurantOwner() && resource.data.restaurantId == myRestaurantId())));
     }
 
     match /menuItems/{id} {
       allow read: if true;
-      allow create: if isRestaurantOwner()
-        && request.resource.data.restaurantId == myRestaurantId();
-      allow update, delete: if isAdmin()
-        || (isRestaurantOwner() && resource.data.restaurantId == myRestaurantId());
+      allow create: if safeWrite() && (safeWrite() && (safeWrite() && (isRestaurantOwner()
+        && request.resource.data.restaurantId == myRestaurantId())));
+      allow update, delete: if safeWrite() && (safeWrite() && (safeWrite() && (isAdmin()
+        || (isRestaurantOwner() && resource.data.restaurantId == myRestaurantId()))));
     }
 
     match /menuPromotions/{id} {
       allow read: if true;
-      allow create: if isRestaurantOwner()
-        && request.resource.data.restaurantId == myRestaurantId();
-      allow update, delete: if isAdmin()
-        || (isRestaurantOwner() && resource.data.restaurantId == myRestaurantId());
+      allow create: if safeWrite() && (safeWrite() && (safeWrite() && (isRestaurantOwner()
+        && request.resource.data.restaurantId == myRestaurantId())));
+      allow update, delete: if safeWrite() && (safeWrite() && (safeWrite() && (isAdmin()
+        || (isRestaurantOwner() && resource.data.restaurantId == myRestaurantId()))));
     }
 
     // ─── Pedidos comida ────────────────────────────────────────

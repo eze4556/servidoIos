@@ -1,4 +1,5 @@
 "use client"
+import { ContentSafety, SafetyGate } from "@/components/safety/content-safety"
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
@@ -165,7 +166,7 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
     )
   }
 
-  return (
+  return (<SafetyGate authorId={live?.sellerId}>{(
     <div className="fixed inset-0 z-[80] bg-black">
       <LiveRoomShell
         token={token}
@@ -217,6 +218,7 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
                 variant="story"
                 className="shrink-0"
               />
+              <ContentSafety kind="live" targetId={live.id} authorId={live.sellerId} />
               <LiveShareButton
                 liveId={live.id}
                 sellerName={live.sellerName}
@@ -252,5 +254,5 @@ export function LiveViewer({ liveId: liveIdProp }: { liveId?: string }) {
         liveId={live.id}
       />
     </div>
-  )
+  )}</SafetyGate>)
 }

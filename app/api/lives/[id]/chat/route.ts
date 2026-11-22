@@ -1,3 +1,5 @@
+import { isAllowedContentText } from "@/lib/content-policy"
+import { hasBlockedInteraction } from "@/lib/safety-server"
 import { NextRequest, NextResponse } from "next/server"
 import { FieldValue } from "firebase-admin/firestore"
 import { db } from "@/lib/firebase-admin"
@@ -21,6 +23,7 @@ export async function POST(request: NextRequest, context: Ctx) {
       .trim()
       .slice(0, LIVE_CHAT_MAX_LEN)
 
+    if (!isAllowedContentText(text)) return NextResponse.json({ error: "Contenido no permitido" }, { status: 400 })
     if (!text) {
       return NextResponse.json({ error: "Escribí un mensaje" }, { status: 400 })
     }
@@ -39,6 +42,10 @@ export async function POST(request: NextRequest, context: Ctx) {
     }
     if (liveSnap.data()?.status !== "live") {
       return NextResponse.json({ error: "El vivo ya terminó" }, { status: 410 })
+    }
+
+    if (await hasBlockedInteraction(auth.uid, String(liveSnap.data()?.sellerId || ""))) {
+      return NextResponse.json({ error: "Interacción bloqueada" }, { status: 403 })
     }
 
     const userSnap = await db.collection("users").doc(auth.uid).get()

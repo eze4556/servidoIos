@@ -11,7 +11,7 @@ async function requireAdmin(request: NextRequest) {
   if (!authHeader?.startsWith("Bearer ")) {
     return { error: NextResponse.json({ error: "No autorizado" }, { status: 401 }) }
   }
-  const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim())
+  const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim(), true)
   if (!(await isFirestoreAdmin(decoded.uid))) {
     return { error: NextResponse.json({ error: "Acceso denegado" }, { status: 403 }) }
   }

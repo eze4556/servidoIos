@@ -1,3 +1,5 @@
+"use client"
+import { useSafety } from "@/contexts/safety-context"
 import { HomeProductCard } from "@/components/home/home-product-card"
 
 interface Product {
@@ -27,6 +29,7 @@ export function HomeProductGrid({
   title = "Productos",
   emptyMessage = "No hay productos para mostrar.",
 }: HomeProductGridProps) {
+  const { isBlockedContent } = useSafety()
   return (
     <section>
       {title && <h2 className="mb-4 text-lg font-bold text-gray-900">{title}</h2>}
@@ -46,7 +49,7 @@ export function HomeProductGrid({
         <p className="py-8 text-center text-sm text-gray-500">{emptyMessage}</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          {products.map((product) => (
+          {products.filter(item => !isBlockedContent(item)).map((product) => (
             <HomeProductCard key={product.id} {...product} badge="featured" />
           ))}
         </div>

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim(), true)
     const isAdmin = await isFirestoreAdmin(decoded.uid)
     if (!isAdmin) {
       return NextResponse.json({ error: "Se requiere rol admin" }, { status: 403 })

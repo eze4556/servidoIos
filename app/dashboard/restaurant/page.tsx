@@ -42,6 +42,7 @@ import type {
   Restaurant,
   RestaurantPaymentMethod,
 } from "@/types/restaurant"
+import { DeleteAccountSection } from "@/components/profile/delete-account-section"
 import { RestaurantBrandingForm } from "@/components/restaurants/menu-admin/restaurant-branding-form"
 import { MenuAdminPanel } from "@/components/restaurants/menu-admin/menu-admin-panel"
 import {
@@ -887,6 +888,8 @@ export default function RestaurantDashboardPage() {
                 {t("savePayments")}
               </Button>
             </div>
+
+            <DeleteAccountSection />
           </div>
         )}
       </main>

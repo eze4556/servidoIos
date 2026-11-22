@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const accountDeleted = searchParams.get("accountDeleted") === "1"
   const { currentUser, authLoading, getDashboardLink } = useAuth()
 
   useEffect(() => {
@@ -77,6 +79,11 @@ export default function LoginPage() {
       }
     >
       <form onSubmit={handleLogin} className="space-y-5">
+        {accountDeleted ? (
+          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            {t("accountDeleted")}
+          </p>
+        ) : null}
         <div className="space-y-2">
           <Label htmlFor="email" className={authLabelClass}>
             {t("email")}

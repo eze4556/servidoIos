@@ -1,4 +1,6 @@
 "use client"
+import { ContentSafety } from "@/components/safety/content-safety"
+import { useSafety } from "@/contexts/safety-context"
 
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
@@ -85,6 +87,8 @@ interface Message {
 
 export function ChatThread() {
   const t = useTranslations("chat")
+  const tSafety = useTranslations("safety")
+  const { isBlocked } = useSafety()
   const locale = useLocale()
   const router = useRouter()
   const { currentUser, authLoading } = useAuth()
@@ -307,12 +311,16 @@ export function ChatThread() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim() || !currentUser || !chat) return
+    const other = currentUser.firebaseUser.uid === chat.buyerId ? chat.sellerId : chat.buyerId
+    if (isBlocked(other)) { setError(tSafety("chatBlocked")); return }
 
     const text = newMessage.trim()
     const guard = validateChatMessageText(text)
     if (!guard.allowed) {
       setError(
-        guard.reason === "email"
+        guard.reason === "unsafe"
+          ? tSafety("unsafeText")
+          : guard.reason === "email"
           ? t("blockedEmail")
           : guard.reason === "phone"
             ? t("blockedPhone")
@@ -363,6 +371,9 @@ export function ChatThread() {
   }
 
   const sendListingMessage = async (productId: string) => {
+    if (chat && currentUser && isBlocked(currentUser.firebaseUser.uid === chat.buyerId ? chat.sellerId : chat.buyerId)) {
+      setError(tSafety("chatBlocked")); return
+    }
     if (!currentUser) return
     setSharingProductId(productId)
     setSharingListing(true)
@@ -535,6 +546,7 @@ export function ChatThread() {
             <Trash2 className="h-4 w-4 text-white/90" />
           )}
         </button>
+        {!isServido && <ContentSafety kind="chat" targetId={chat.id} authorId={otherId} />}
       </header>
 
       <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
@@ -693,7 +705,7 @@ export function ChatThread() {
         />
         <button
           type="submit"
-          disabled={sending || !newMessage.trim()}
+          disabled={sending || isBlocked(otherId) || !newMessage.trim()}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-servido-gold text-servido-950 shadow-md disabled:opacity-40"
           aria-label={t("sendAria")}
         >

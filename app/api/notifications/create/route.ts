@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim(), true)
     const actorIsAdmin = await isFirestoreAdmin(decoded.uid)
     const body = await request.json().catch(() => null)
     const list = Array.isArray(body?.notifications)
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
         body: item.body,
         link: item.link,
         dedupeKey: item.dedupeKey,
-        meta: item.meta || null,
+        meta: { ...item.meta, senderId: decoded.uid },
       })
       ids.push(id)
     }

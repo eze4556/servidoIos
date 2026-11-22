@@ -53,3 +53,15 @@ android/keystore.properties
 ios/App/App/GoogleService-Info.plist
 
 /GoogleService-Info.plist
+
+# Local iOS signing material (manual certificate setup).
+/.ios-signing/
+
+# Firebase emulator diagnostics.
+/firestore-debug.log
+/firebase-debug.log
+/storage-debug.log
+
+/.release-web/
+
+/.release-check/

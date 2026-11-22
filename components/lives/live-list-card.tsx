@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import Link from "next/link"
 import { Eye, ShoppingBag } from "lucide-react"
@@ -16,9 +17,11 @@ function formatPrice(price: number, currency?: string) {
 
 /** Card rica para la lista /lives. */
 export function LiveListCard({ live, className }: { live: LiveSession; className?: string }) {
+  const { isBlocked } = useSafety()
   const pinned = live.pinnedProduct || live.pinnedProducts?.[0] || null
   const cover = pinned?.imageUrl || live.sellerPhotoURL || null
 
+  if (isBlocked(live.sellerId)) return null
   return (
     <Link
       href={liveHref(live.id)}

@@ -15,7 +15,7 @@ async function requireAdmin(request: NextRequest) {
   }
   let decoded
   try {
-    decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim())
+    decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim(), true)
   } catch {
     throw new ClaimRefundError("No autorizado", "unauthorized", 401)
   }

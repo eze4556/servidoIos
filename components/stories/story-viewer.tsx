@@ -1,4 +1,6 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
+import { ContentSafety } from "@/components/safety/content-safety"
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
@@ -52,6 +54,8 @@ export function StoryViewer({
   const [authorIndex, setAuthorIndex] = useState(initialAuthorIndex)
   const [storyIndex, setStoryIndex] = useState(0)
   const [paused, setPaused] = useState(false)
+  const { isBlocked } = useSafety()
+  const tSafety = useTranslations("safety")
   const [progressKey, setProgressKey] = useState(0)
   const [navigatingOffer, setNavigatingOffer] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -494,6 +498,10 @@ export function StoryViewer({
 
   if (!open || !group || !story) return null
 
+  if (isBlocked(story.authorId)) return <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-black text-white">
+    <p>{tSafety("hidden")}</p><ContentSafety kind="user" targetId={story.authorId} authorId={story.authorId} />
+    <button onClick={onClose} className="rounded-full border px-4 py-2">{t("close")}</button>
+  </div>
   const viewCount = localViewCount ?? story.viewCount
 
   return (
@@ -572,13 +580,16 @@ export function StoryViewer({
             </p>
           </div>
           {!isAuthor && group.authorType !== "platform" && (
-            <FollowButton
+            <>
+            <ContentSafety kind="story" targetId={story.id} authorId={story.authorId} onOpenChange={setPaused} />
+          <FollowButton
               variant="story"
               targetUserId={group.authorId}
               targetType={group.authorType}
               targetName={group.authorName}
               targetPhotoURL={group.authorPhotoURL}
             />
+            </>
           )}
           {isAuthor && (
             <>

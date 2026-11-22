@@ -328,6 +328,9 @@ export function MobileAppHeader({ showMenu = true }: MobileAppHeaderProps) {
                     ? [{ href: becomeCadeteHref, label: tm("becomeCadete"), icon: Bike }]
                     : []),
                   { href: "/acerca-de-nosotros", label: tm("whoWeAre"), icon: Users },
+                  ...(currentUser
+                    ? [{ href: "/cuenta", label: tm("myAccount"), icon: User }]
+                    : []),
                 ].map(({ href, label, icon: Icon }) => (
                   <Link
                     key={href + label}

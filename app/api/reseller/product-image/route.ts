@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
-    await adminAuth.verifyIdToken(authHeader.slice(7).trim())
+    await adminAuth.verifyIdToken(authHeader.slice(7).trim(), true)
 
     const productId = request.nextUrl.searchParams.get("productId")?.trim()
     if (!productId) {

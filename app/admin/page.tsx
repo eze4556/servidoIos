@@ -114,6 +114,7 @@ import { AdminDatetimeWeather } from "@/components/admin/admin-datetime-weather"
 import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav"
 import { AdminPager } from "@/components/admin/admin-pager"
 import { AdminPlatformStats } from "@/components/admin/admin-platform-stats"
+import { ContentReportsPanel } from "@/components/admin/content-reports-panel"
 import { AdminClaimsQueue } from "@/components/admin/admin-claims-queue"
 import { AdminCadetesPanel } from "@/components/admin/admin-cadetes-panel"
 import { usePagedList } from "@/hooks/use-paged-list"
@@ -255,6 +256,8 @@ interface VentaProductoAdmin {
 
 export default function AdminDashboard() {
   const t = useTranslations("adminDashboard")
+  const tSafety = useTranslations("safety")
+  const tAccount = useTranslations("deleteAccount")
   const locale = useLocale()
   const dateLocale = locale === "pt-BR" ? "pt-BR" : "es-AR"
   const fmtNum = (n: number) => formatPriceNumber(n, locale)
@@ -1960,6 +1963,7 @@ export default function AdminDashboard() {
         items: [
           { tab: "overview", label: t("nav.overview"), icon: Home },
           { tab: "stats", label: t("nav.stats"), icon: BarChart3 },
+          { tab: "contentReports", label: tSafety("queue"), icon: AlertTriangle },
           { tab: "claims", label: t("nav.claims"), icon: Handshake },
         ],
       },
@@ -2006,7 +2010,7 @@ export default function AdminDashboard() {
         ],
       },
     ],
-    [pendingCadetesCount, t]
+    [pendingCadetesCount, t, tSafety]
   )
 
   const currentNav = adminNavGroups.flatMap((group) => group.items).find((item) => item.tab === activeTab)
@@ -2200,6 +2204,15 @@ export default function AdminDashboard() {
           <div className="flex-1 overflow-auto pb-6">
             <AdminSidebarNav groups={adminNavGroups} activeTab={activeTab} onSelect={setActiveTab} />
           </div>
+          <div className="border-t border-white/10 p-4">
+            <Link
+              href="/cuenta"
+              className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
+              prefetch={false}
+            >
+              {tAccount("pageTitle")}
+            </Link>
+          </div>
         </div>
       </aside>
 
@@ -2264,7 +2277,7 @@ export default function AdminDashboard() {
             </Alert>
           )}
 
-          {activeTab !== "overview" && (
+          {activeTab !== "overview" && activeTab !== "contentReports" && (
             <div className="admin-tab">
               <p className="text-sm text-slate-500">
                 {t(`sectionHints.${activeTab}` as "sectionHints.users")}
@@ -2273,6 +2286,7 @@ export default function AdminDashboard() {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsContent value="contentReports"><ContentReportsPanel /></TabsContent>
             <TabsList className="hidden">
               <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
               <TabsTrigger value="stats">{t("tabs.stats")}</TabsTrigger>

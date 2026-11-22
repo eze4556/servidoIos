@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -13,6 +14,7 @@ import { HomeProductCard } from "@/components/home/home-product-card"
 import { useRouteId } from "@/hooks/use-route-id"
 
 interface Product {
+  sellerId?: string
   id: string
   name: string
   price: number
@@ -33,6 +35,7 @@ interface Category {
 }
 
 export function CategoryDetail() {
+  const { isBlockedContent } = useSafety()
   const tc = useTranslations("categoryPage")
   const tr = useTranslations("reviews")
   const categoryId = useRouteId()
@@ -163,7 +166,7 @@ export function CategoryDetail() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
-            {products.map((product) => (
+            {products.filter(item => !isBlockedContent(item)).map((product) => (
               <HomeProductCard
                 key={product.id}
                 id={product.id}
@@ -174,7 +177,7 @@ export function CategoryDetail() {
                 media={product.media}
                 condition={product.condition}
                 freeShipping={product.freeShipping}
-                shippingCost={product.shippingCost}
+                shippingCost={product.shippingCost} sellerId={product.sellerId}
               />
             ))}
           </div>

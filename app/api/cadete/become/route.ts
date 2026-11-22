@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
 
-    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim(), true)
     const uid = decoded.uid
     const userRef = db.collection("users").doc(uid)
     const snap = await userRef.get()

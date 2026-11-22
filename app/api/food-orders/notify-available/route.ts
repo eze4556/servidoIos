@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const actor = await adminAuth.verifyIdToken(authorization.slice(7).trim())
+    const actor = await adminAuth.verifyIdToken(authorization.slice(7).trim(), true)
     const body = await request.json().catch(() => null)
     const orderId = String(body?.orderId || "").trim()
     if (!orderId) return NextResponse.json({ error: "Pedido faltante" }, { status: 400 })

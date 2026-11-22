@@ -1,4 +1,6 @@
 "use client"
+import { ContentSafety } from "@/components/safety/content-safety"
+import { useSafety } from "@/contexts/safety-context"
 
 import { useEffect, useRef, useState } from "react"
 import { Send } from "lucide-react"
@@ -17,6 +19,7 @@ export function LiveChatPanel({
   className?: string
   compact?: boolean
 }) {
+  const { isBlocked } = useSafety()
   const [messages, setMessages] = useState<LiveChatMessage[]>([])
   const [text, setText] = useState("")
   const [sending, setSending] = useState(false)
@@ -60,13 +63,14 @@ export function LiveChatPanel({
         {messages.length === 0 ? (
           <p className="px-1 text-xs text-white/55">Decí hola 👋</p>
         ) : (
-          messages.slice(-40).map((m) => (
+          messages.filter(m => !isBlocked(m.userId)).slice(-40).map((m) => (
             <div
               key={m.id}
               className="max-w-[85%] rounded-2xl bg-black/40 px-2.5 py-1.5 text-white shadow-sm backdrop-blur-md"
             >
               <span className="text-[11px] font-bold text-amber-300">{m.userName}</span>
               <p className="text-[13px] leading-snug">{m.text}</p>
+              <ContentSafety kind="user" targetId={m.userId} authorId={m.userId} />
             </div>
           ))
         )}

@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import Link from "next/link"
 import { Plus } from "lucide-react"
@@ -77,6 +78,7 @@ export function StoriesRail({
   alwaysShowCreate = true,
 }: StoriesRailProps) {
   const t = useTranslations("storiesRail")
+  const { isBlocked } = useSafety()
   const { currentUser } = useAuth()
   const railLabels = {
     yourStory: t("yourStory"),
@@ -137,6 +139,7 @@ export function StoriesRail({
       )}
 
       {otherGroups.map((group, index) => {
+        if (isBlocked(group.authorId)) return null
         const isPlatform = group.authorType === "platform"
         const avatar = resolveStoryAvatar(group.authorId, group.authorPhotoURL, group.authorType)
         return (

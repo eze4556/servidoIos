@@ -1,4 +1,5 @@
 "use client"
+import { useSafety } from "@/contexts/safety-context"
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
@@ -162,6 +163,7 @@ function LiveRailCard({
 }
 
 export function LivesRail({ className }: { className?: string }) {
+  const { isBlockedContent } = useSafety()
   const { currentUser } = useAuth()
   const [lives, setLives] = useState<LiveSession[]>([])
   const [following, setFollowing] = useState<Set<string>>(new Set())
@@ -232,7 +234,7 @@ export function LivesRail({ className }: { className?: string }) {
             </span>
           </Link>
         ) : null}
-        {sortedLives.map((live) => (
+        {sortedLives.filter(item => !isBlockedContent(item)).map((live) => (
           <LiveRailCard
             key={live.id}
             live={live}

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 })
     }
 
-    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authorizationHeader.slice(7).trim(), true)
     const uid = decoded.uid
     const userSnap = await db.collection("users").doc(uid).get()
     if (!userSnap.exists) {

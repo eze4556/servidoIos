@@ -1,4 +1,5 @@
 "use client"
+import { ContentSafety, SafetyGate } from "@/components/safety/content-safety"
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
@@ -125,7 +126,7 @@ export function PropertyDetail() {
     )
   }
 
-  return (
+  return (<SafetyGate authorId={listing.sellerId}><div className="flex justify-end px-3 py-2"><ContentSafety kind="property" targetId={listing.id} authorId={listing.sellerId} /></div>{(
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
       <div className="container mx-auto max-w-screen-xl px-4 py-6 md:px-6 md:py-8">
         <Button
@@ -240,5 +241,5 @@ export function PropertyDetail() {
         </AlertDialog>
       </div>
     </div>
-  )
+  )}</SafetyGate>)
 }

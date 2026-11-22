@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
     const token = authHeader.slice(7).trim()
-    const decoded = await adminAuth.verifyIdToken(token)
+    const decoded = await adminAuth.verifyIdToken(token, true)
     const uid = decoded.uid
 
     const body = await request.json()

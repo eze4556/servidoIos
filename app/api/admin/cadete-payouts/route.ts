@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
-    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim(), true)
     if (!(await isFirestoreAdmin(decoded.uid))) {
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 })
     }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
-    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim(), true)
     if (!(await isFirestoreAdmin(decoded.uid))) {
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 })
     }
@@ -71,7 +71,7 @@ export async function PATCH(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
-    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim(), true)
     if (!(await isFirestoreAdmin(decoded.uid))) {
       return NextResponse.json({ error: "Acceso denegado" }, { status: 403 })
     }

@@ -1,3 +1,4 @@
+import { isAllowedContentText } from "@/lib/content-policy"
 export const CHAT_CONTENT_BLOCKED = "CHAT_CONTENT_BLOCKED"
 
 const EMAIL_RE =
@@ -17,11 +18,13 @@ const OBFUSCATED_AT_RE = /\b[\w.+-]+\s*(?:\(arroba\)|\[at\]|@\s*|\bat\b\s*)[\w.-
 
 export type ChatContentGuardResult =
   | { allowed: true }
-  | { allowed: false; reason: "contact" | "link" | "phone" | "email" }
+  | { allowed: false; reason: "contact" | "link" | "phone" | "email" | "unsafe" }
 
 export function validateChatMessageText(raw: string): ChatContentGuardResult {
   const text = raw.trim()
   if (!text) return { allowed: false, reason: "contact" }
+
+  if (!isAllowedContentText(text)) return { allowed: false, reason: "unsafe" }
 
   const normalized = text.replace(/\s+/g, " ")
 

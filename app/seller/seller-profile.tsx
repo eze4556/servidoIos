@@ -1,4 +1,5 @@
 "use client"
+import { ContentSafety, SafetyGate } from "@/components/safety/content-safety"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -408,7 +409,7 @@ export function SellerProfile() {
     ? Math.floor((Date.now() - seller.createdAt.toDate().getTime()) / (1000 * 60 * 60 * 24))
     : 0
 
-  return (
+  return (<SafetyGate authorId={sellerId}><div className="flex justify-end px-3 py-2">{sellerId && <ContentSafety kind="user" targetId={sellerId} authorId={sellerId} />}</div>{(
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-purple-50/30 pb-24">
       {/* Header del vendedor */}
       <div className="relative overflow-hidden bg-servido-950">
@@ -788,5 +789,5 @@ export function SellerProfile() {
         </Tabs>
       </div>
     </div>
-  )
+  )}</SafetyGate>)
 } 

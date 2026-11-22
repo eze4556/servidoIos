@@ -35,6 +35,7 @@
     "categories": "Categorias",
     "searchPlaceholder": "O que você precisa hoje?",
     "myPanel": "Meu painel",
+    "myAccount": "Minha conta",
     "myStore": "Minha loja",
     "logout": "Sair",
     "login": "Entrar",
@@ -127,6 +128,7 @@
     "signupFree": "Cadastre-se grátis",
     "wrongCredentials": "E-mail ou senha incorretos.",
     "loginError": "Erro ao entrar. Tente novamente.",
+    "accountDeleted": "Sua conta foi excluída com sucesso.",
     "signupTitle": "Criar conta",
     "signupSubtitle": "Junte-se ao Servido em minutos",
     "signupButton": "Cadastrar",
@@ -509,6 +511,9 @@
   "apiErrors": {
     "unauthorized": "Não autorizado",
     "noSession": "Você precisa entrar na conta",
+    "accountDeleteInvalidBody": "Solicitação inválida",
+    "accountDeleteConfirmRequired": "Digite ELIMINAR para confirmar",
+    "accountDeleteFailed": "Não foi possível excluir a conta. Tente de novo.",
     "paymentStartMissing": "Não recebemos o link de pagamento. Tente de novo.",
     "paymentProcessFailed": "Erro ao processar o pagamento",
     "sellerMpRequired": "O vendedor precisa conectar o Mercado Pago para cobrar",
@@ -1127,6 +1132,28 @@
     "login": "Entrar",
     "register": "Cadastrar"
   },
+  "deleteAccount": {
+    "pageTitle": "Minha conta",
+    "pageSubtitle": "Gerencie sua conta do Servido",
+    "backToPanel": "Voltar ao painel",
+    "email": "E-mail",
+    "name": "Nome",
+    "loginRequired": "Você precisa entrar para gerenciar sua conta.",
+    "goLogin": "Entrar",
+    "title": "Excluir minha conta",
+    "description": "Seu acesso e dados pessoais serão removidos. Esta ação não pode ser desfeita.",
+    "button": "Excluir minha conta",
+    "dialogTitle": "Excluir sua conta?",
+    "dialogDescription": "Seu acesso, perfil, publicações e arquivos próprios serão excluídos. Suas mensagens serão removidas dos chats. Esta ação não pode ser desfeita.",
+    "dialogWarning": "Primeiro cancelamos a renovação do plano. Os registros necessários de pedidos, pagamentos e reclamações são mantidos para resolver operações e cumprir obrigações legais.",
+    "confirmLabel": "Digite {word} para confirmar",
+    "cancel": "Cancelar",
+    "confirm": "Sim, excluir conta",
+    "deleting": "Excluindo…",
+    "errorFallback": "Não foi possível excluir a conta. Tente de novo.",
+    "password": "Confirme sua senha",
+    "passwordRequired": "Digite sua senha para confirmar a exclusão."
+  },
   "home": {
     "featured": "Destaques",
     "newArrivals": "Novidades",
@@ -1182,11 +1209,19 @@
     "shortcutPropiedades": "Servido Imóveis",
     "vehiclesSpotlightKicker": "Veículos",
     "vehiclesSpotlightTitle": "Garagem da Servido",
-    "vehiclesSpotlightChips": ["Marca e modelo", "ARS ou USD", "0 km ou usados"],
+    "vehiclesSpotlightChips": [
+      "Marca e modelo",
+      "ARS ou USD",
+      "0 km ou usados"
+    ],
     "vehiclesSpotlightCta": "Explorar",
     "propertiesSpotlightKicker": "Imóveis",
     "propertiesSpotlightTitle": "Servido Imóveis",
-    "propertiesSpotlightChips": ["Venda e aluguel", "Por região", "Fotos e vídeos"],
+    "propertiesSpotlightChips": [
+      "Venda e aluguel",
+      "Por região",
+      "Fotos e vídeos"
+    ],
     "propertiesSpotlightCta": "Explorar",
     "seeAllCategories": "Ver todas as categorias",
     "noBrands": "Não há marcas para exibir.",
@@ -3965,5 +4000,40 @@
       "too_large": "Cada arquivo pode ter até 8 MB.",
       "too_many": "Você pode anexar até 8 arquivos."
     }
+  },
+  "safety": {
+    "actions": "Denunciar ou bloquear",
+    "description": "Denuncie conteúdo que viole as regras. Bloquear oculta o usuário para você e impede novas mensagens entre as duas contas.",
+    "reason": "Motivo",
+    "details": "Detalhes (opcional)",
+    "report": "Enviar denúncia",
+    "reported": "Denúncia enviada. A equipe Servido irá analisar.",
+    "block": "Bloquear usuário",
+    "unblock": "Desbloquear usuário",
+    "blockChanged": "Bloqueio atualizado.",
+    "failed": "Não foi possível concluir. Tente novamente.",
+    "hidden": "Você ocultou o conteúdo deste usuário.",
+    "blockedUsers": "Usuários bloqueados",
+    "noBlocks": "Você não bloqueou nenhum usuário.",
+    "blockedNumber": "Usuário bloqueado {number}",
+    "queue": "Denúncias de conteúdo",
+    "queueHint": "Analise as denúncias diariamente e priorize ameaças, assédio e conteúdo sexual. São exibidas até 100 denúncias pendentes.",
+    "refresh": "Atualizar",
+    "noReports": "Nenhuma denúncia pendente.",
+    "dismiss": "Descartar denúncia",
+    "remove": "Remover conteúdo",
+    "suspend": "Suspender usuário e remover publicações",
+    "moderationConfirm": "Esta ação remove conteúdo público. Deseja continuar?",
+    "chatBlocked": "O chat está bloqueado. Não é possível enviar mensagens.",
+    "reasons": {
+      "harassment": "Assédio ou discriminação",
+      "sexual": "Conteúdo sexual",
+      "violence": "Violência ou ameaças",
+      "fraud": "Fraude ou venda proibida",
+      "spam": "Spam",
+      "other": "Outro motivo"
+    },
+    "unsafeText": "A mensagem contém conteúdo não permitido.",
+    "contact": "Entrar em contato com a equipe Servido"
   }
 }

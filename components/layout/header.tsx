@@ -271,6 +271,12 @@ export function Header() {
                       </Link>
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem asChild className="rounded-xl">
+                    <Link href="/cuenta" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      {t("myAccount")}
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="rounded-xl text-red-600 focus:bg-red-50 focus:text-red-700"

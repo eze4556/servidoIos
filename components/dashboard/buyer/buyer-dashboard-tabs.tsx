@@ -25,6 +25,7 @@ import { claimHref, productHref } from "@/lib/routes"
 import { usePriceFormat } from "@/hooks/use-price-format"
 import { useTranslations, useLocale } from "next-intl"
 import { ProfilePhotoEditor } from "@/components/profile/profile-photo-editor"
+import { DeleteAccountSection } from "@/components/profile/delete-account-section"
 
 interface CompraProductoBuyer {
   compraId: string
@@ -566,6 +567,8 @@ export function BuyerDashboardTabs({
             <div className="rounded-2xl bg-white p-5 ring-1 ring-gray-100">
               <ProfilePhotoEditor />
             </div>
+
+            <DeleteAccountSection />
           </TabsContent>
 
           <TabsContent value="addresses" className="mt-6">

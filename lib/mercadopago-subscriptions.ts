@@ -39,7 +39,7 @@ export async function requireAuthenticatedUserId(request: Request, expectedUserI
     throw new Error("No autorizado")
   }
 
-  const decoded = await adminAuth.verifyIdToken(token)
+  const decoded = await adminAuth.verifyIdToken(token, true)
   if (expectedUserId && decoded.uid !== expectedUserId) {
     throw new Error("El usuario autenticado no coincide con userId")
   }
@@ -93,7 +93,8 @@ export async function syncRestaurantSubscriptionFlag(userId: string, active: boo
   try {
     const userSnap = await adminDb.collection("users").doc(userId).get()
     if (!userSnap.exists) return
-    const userData = userSnap.data() as { restaurantId?: string; businessType?: string }
+    const userData = userSnap.data() as { restaurantId?: string; businessType?: string; deleted?: boolean; deletionStatus?: string }
+    if (userData.deleted || userData.deletionStatus) return
     const restaurantId = userData.restaurantId
     if (!restaurantId || userData.businessType !== "restaurant") return
 
@@ -170,7 +171,12 @@ export async function activateUserSubscription(params: {
   const endDate = resolvePeriodEnd({ nextPaymentDate, paymentDate: now })
   const paymentDocumentId = paymentId != null ? String(paymentId) : `preapproval_${preapprovalId || userId}_${Date.now()}`
 
+  let activated = false
   await adminDb.runTransaction(async (transaction) => {
+    activated = false
+    const current = await transaction.get(adminDb.collection("users").doc(userId))
+    if (!current.exists || current.data()?.deleted || current.data()?.deletionStatus) return
+    activated = true
     transaction.set(
       adminDb.collection("users").doc(userId),
       {
@@ -242,7 +248,7 @@ export async function activateUserSubscription(params: {
     }
   })
 
-  await syncRestaurantSubscriptionFlag(userId, true)
+  if (activated) await syncRestaurantSubscriptionFlag(userId, true)
 }
 
 export async function deactivateUserSubscription(params: {
@@ -254,6 +260,7 @@ export async function deactivateUserSubscription(params: {
   const { userId, reason = "cancelled", preapprovalId = null, preapprovalStatus = "cancelled" } = params
   const existingUserSnap = await adminDb.collection("users").doc(userId).get()
   const existingUser = existingUserSnap.exists ? (existingUserSnap.data() as any) : {}
+  if (existingUser.deleted || existingUser.deletionStatus) return
 
   await adminDb.collection("users").doc(userId).set(
     {
@@ -275,6 +282,28 @@ export async function deactivateUserSubscription(params: {
   )
 
   await syncRestaurantSubscriptionFlag(userId, false)
+}
+
+/** Account deletion must stop charges, including stale/pending preapprovals. */
+export async function cancelSubscriptionsForDeletion(userId: string, userData: Record<string, any>) {
+  const rows = await adminDb.collection("subscriptionPreapprovals").where("userId", "==", userId).get()
+  const ownedIds = new Set<string>(rows.docs.map(row => row.id))
+  const ids = new Set<string>(ownedIds)
+  if (userData.subscription?.preapprovalId) ids.add(String(userData.subscription.preapprovalId))
+  if (ids.size === 0) return
+  const client = createPreApprovalClient()
+  for (const id of ids) {
+    const current = await client.get({ id })
+    const owner = parseSubscriptionExternalReference(String(current.external_reference || ""))
+    if (!ownedIds.has(id) && owner?.userId !== userId) throw new Error("Suscripción no asociada a la cuenta")
+    if (current.status !== "cancelled") {
+      const cancelled = await client.update({ id, body: { status: "cancelled" } })
+      if (cancelled.status !== "cancelled") throw new Error("No se confirmó la cancelación de la suscripción")
+    }
+    await adminDb.collection("subscriptionPreapprovals").doc(id).set({
+      status: "cancelled", cancelAtPeriodEnd: true, cancelledAt: new Date(), updatedAt: new Date(),
+    }, { merge: true })
+  }
 }
 
 /**
@@ -309,16 +338,20 @@ export async function cancelRecurringSubscription(request: Request) {
 
   if (preapprovalId) {
     const client = createPreApprovalClient()
+    const remote = await client.get({ id: String(preapprovalId) })
+    const owner = parseSubscriptionExternalReference(String(remote.external_reference || ""))
+    const stored = await adminDb.collection("subscriptionPreapprovals").doc(String(preapprovalId)).get()
+    if (owner?.userId !== userId && stored.data()?.userId !== userId) throw new Error("Suscripción no asociada a la cuenta")
     try {
       await client.update({
         id: String(preapprovalId),
         body: { status: "cancelled" },
       })
     } catch (err) {
-      const message = err instanceof Error ? err.message : "No se pudo cancelar en Mercado Pago"
-      // Si ya estaba cancelada en MP, seguimos igual en Servido
-      if (!message.toLowerCase().includes("cancelled") && !message.toLowerCase().includes("cancel")) {
-        console.error("cancel preapproval failed:", err)
+      // An error containing the word "cancel" is not proof of cancellation.
+      const current = await client.get({ id: String(preapprovalId) }).catch(() => null)
+      if (current?.status !== "cancelled") {
+        console.error("cancel preapproval failed")
         throw new Error("No se pudo cancelar la suscripción en Mercado Pago. Intentá de nuevo.")
       }
     }
@@ -409,6 +442,7 @@ export async function createRecurringSubscription(request: Request, body: Create
 
   const userSnap = await adminDb.collection("users").doc(userId).get()
   const userData = userSnap.exists ? (userSnap.data() as any) : {}
+  if (userData.deleted || userData.deletionStatus) throw new Error("Cuenta no disponible")
   const email =
     (typeof payerEmail === "string" && payerEmail.trim()) ||
     (typeof decoded.email === "string" && decoded.email.trim()) ||
@@ -567,6 +601,7 @@ export async function syncSubscriptionFromPreapproval(preapproval: {
   if (status === "paused" || status === "cancelled") {
     const userSnap = await adminDb.collection("users").doc(userId).get()
     const userData = userSnap.exists ? (userSnap.data() as any) : {}
+  if (userData.deleted || userData.deletionStatus) return { userId, status: "deleted", action: "ignored" as const }
     const endsAt = normalizeSubscriptionDate(userData?.subscription?.endDate)
     const now = new Date()
     const hasRemainingAccess = Boolean(endsAt && endsAt.getTime() > now.getTime())

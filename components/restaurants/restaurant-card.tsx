@@ -1,4 +1,5 @@
 "use client"
+import { SafetyGate } from "@/components/safety/content-safety"
 
 import Link from "next/link"
 import Image from "next/image"
@@ -28,7 +29,7 @@ export function RestaurantCard({ restaurant, categories = [], minPrice }: Restau
       ? (restaurant.foodBusinessKind as FoodBusinessKind)
       : null
 
-  return (
+  return (<SafetyGate authorId={restaurant.ownerId}>{(
     <Link
       href={restaurantHref(restaurant.id)}
       className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_10px_28px_-18px_rgba(46,16,101,0.28)] ring-1 ring-servido-950/8 transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_44px_-20px_rgba(46,16,101,0.34)]"
@@ -92,5 +93,5 @@ export function RestaurantCard({ restaurant, categories = [], minPrice }: Restau
         )}
       </div>
     </Link>
-  )
+  )}</SafetyGate>)
 }

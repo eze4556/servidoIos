@@ -17,7 +17,9 @@ async function requireUid(request: NextRequest): Promise<string | null> {
   const header = request.headers.get("authorization") || request.headers.get("Authorization")
   if (!header?.startsWith("Bearer ")) return null
   try {
-    const decoded = await adminAuth.verifyIdToken(header.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(header.slice(7).trim(), true)
+    const profile = await db.collection("users").doc(decoded.uid).get()
+    if (!profile.exists || profile.data()?.deleted || profile.data()?.deletionStatus || profile.data()?.safetyStatus === "suspended") return null
     return decoded.uid
   } catch {
     return null

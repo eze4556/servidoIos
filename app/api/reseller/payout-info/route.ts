@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
-    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim(), true)
     const snap = await adminDb.collection("users").doc(decoded.uid).get()
     return NextResponse.json({ payoutInfo: snap.data()?.resellerPayoutInfo || null })
   } catch (error) {
@@ -23,7 +23,7 @@ export async function PUT(request: NextRequest) {
     if (!authHeader?.startsWith("Bearer ")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 })
     }
-    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim())
+    const decoded = await adminAuth.verifyIdToken(authHeader.slice(7).trim(), true)
     const body = await request.json()
 
     const titular = String(body?.titular || "").trim()
