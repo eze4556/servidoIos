@@ -1,122 +1,195 @@
 {
   "infoPrivacy": {
     "badge": "Legal",
-    "title": "Política de Privacidade – ServiDo",
-    "subtitle": "No ServiDo, comprometemo-nos a proteger a privacidade dos nossos usuários e a tratar os dados pessoais com transparência e segurança. Esta política descreve quais informações coletamos, como as utilizamos e quais medidas adotamos para protegê-las.",
-    "lastUpdated": "4 de agosto de 2025",
+    "title": "Política de privacidade do Servido",
+    "subtitle": "Como tratamos os dados usados para criar uma conta, comprar, vender e utilizar o Servido.",
+    "lastUpdated": "22 de novembro de 2026",
     "sectionOrder": [
+      "responsable",
       "informacion",
-      "cuenta",
+      "finalidades",
       "ubicacion",
-      "publicidad",
+      "contenido",
       "terceros",
+      "pagos",
+      "asistente",
+      "publicidad",
+      "conservacion",
+      "eliminacion",
+      "opciones",
       "seguridad",
       "contacto",
       "cambios"
     ],
     "sections": {
-      "informacion": {
-        "title": "Informações que coletamos",
+      "responsable": {
+        "title": "Escopo e contato do serviço",
         "blocks": [
           {
             "type": "p",
-            "text": "Ao se cadastrar e utilizar o ServiDo, podemos coletar as seguintes informações pessoais:"
-          },
-          {
-            "type": "ul",
-            "items": [
-              "Nome e sobrenome",
-              "Endereço de e-mail",
-              "Número de telefone",
-              "Localização geográfica (para coordenar entregas e mostrar serviços próximos)"
-            ]
+            "text": "Esta política abrange o aplicativo e o site do Servido. Para dúvidas sobre dados e opções de privacidade, escreva para servidoarg@gmail.com. A ficha na App Store também informa os dados de contato do desenvolvedor."
           }
         ]
       },
-      "cuenta": {
-        "title": "Criação de conta",
+      "informacion": {
+        "title": "Dados que coletamos",
         "blocks": [
           {
             "type": "p",
-            "text": "Para utilizar o ServiDo, o usuário deve criar uma conta acessando a opção \"Cadastrar-se\" na plataforma e preenchendo os dados solicitados."
+            "text": "Os dados dependem do perfil e das funções utilizadas. Podem incluir nome, email, telefone, identificador de usuário, foto, endereços, localização precisa ou aproximada, publicações, fotos, vídeos, histórias, comentários, avaliações, favoritos, contas seguidas, mensagens e denúncias. A autenticação é gerenciada pelo Firebase Authentication."
+          },
+          {
+            "type": "p",
+            "text": "Também tratamos pedidos, valores, estados de pagamentos, entregas, reclamações, reembolsos e assinaturas. Para vendedores, estabelecimentos ou entregadores, podem ser necessários dados do negócio, região, veículo, documento e dados de recebimento como CBU/CVU ou alias. Identificadores de instalação, tokens de notificação, preferências, atividade e registros técnicos de solicitações, erros e segurança auxiliam o funcionamento do serviço."
+          }
+        ]
+      },
+      "finalidades": {
+        "title": "Finalidades",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Usamos os dados para criar e autenticar contas, administrar permissões, mostrar publicações e estabelecimentos, manter favoritos e contas seguidas, permitir chat e transmissões, atender pedidos e entregas e gerenciar pagamentos, assinaturas e repasses. Também usamos dados para avisos sobre operações e segurança, suporte, denúncias, bloqueios, prevenção de abuso e funcionamento da plataforma."
           }
         ]
       },
       "ubicacion": {
-        "title": "Uso da localização",
+        "title": "Localização e permissões",
         "blocks": [
-          { "type": "p", "text": "O ServiDo utiliza a localização do usuário para:" },
           {
-            "type": "ul",
-            "items": [
-              "Coordenar entregas ou envios de produtos e serviços.",
-              "Mostrar resultados relevantes próximos à localização do usuário."
-            ]
+            "type": "p",
+            "text": "A localização é usada para endereços, resultados próximos e entregas. Nesta versão, o acompanhamento do entregador depende do aplicativo aberto e não garante atualizações contínuas com o iPhone bloqueado."
           },
           {
             "type": "p",
-            "text": "O usuário pode gerenciar as permissões de localização nas configurações do dispositivo."
+            "text": "Câmera, fotos e microfone são utilizados quando você escolhe publicar imagens ou vídeos, tirar fotos ou participar de uma transmissão. Gerencie as permissões nos ajustes do dispositivo. Recusar uma permissão pode limitar a função correspondente."
           }
         ]
       },
-      "publicidad": {
-        "title": "Publicidade",
+      "contenido": {
+        "title": "Conteúdo público e comunicações",
         "blocks": [
           {
             "type": "p",
-            "text": "O ServiDo exibe anúncios dentro do aplicativo. Esses anúncios podem ser próprios ou de terceiros, mas não implicam o compartilhamento de dados pessoais do usuário com anunciantes."
+            "text": "Publicações, perfil público, histórias, transmissões, avaliações e perguntas podem ser vistos por outras pessoas conforme a função. Mensagens são compartilhadas com os participantes do chat; os dados necessários de um pedido são disponibilizados às partes e a quem participa da entrega."
+          },
+          {
+            "type": "p",
+            "text": "Denúncias e solicitações de suporte podem ser analisadas pela equipe autorizada. Não publique dados de terceiros sem autorização nem informações sensíveis desnecessárias."
           }
         ]
       },
       "terceros": {
-        "title": "Compartilhamento de informações com terceiros",
+        "title": "Fornecedores e destinatários",
         "blocks": [
           {
             "type": "p",
-            "text": "O ServiDo não compartilha dados pessoais nem informações dos usuários com terceiros, salvo por obrigação legal."
+            "text": "O Servido utiliza Google Firebase para autenticação, banco de dados, arquivos e notificações; Apple Push Notification service para entrega de notificações no iOS; Vercel para hospedagem e APIs; Mercado Pago para pagamentos, contas conectadas e assinaturas; LiveKit para áudio e vídeo ao vivo; Resend para emails transacionais habilitados; e OpenAI para o assistente de ajuda. Cada fornecedor recebe os dados necessários à função prestada."
+          },
+          {
+            "type": "p",
+            "text": "Esses fornecedores podem processar dados em infraestrutura fora da Argentina, segundo suas próprias políticas. Dados também podem ser comunicados quando necessário para uma operação, reclamação ou exigência legal aplicável. Não prometemos que nenhum dado saia do Servido."
+          }
+        ]
+      },
+      "pagos": {
+        "title": "Pagamentos e recebimentos",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Os pagamentos e assinaturas disponíveis são processados pelo Mercado Pago. O Servido mantém informações para conciliar operações, administrar planos, atender reclamações e gerenciar repasses. Dados de cartão inseridos diretamente no provedor seguem o fluxo e a política dele e não devem ser enviados pelo chat."
+          },
+          {
+            "type": "p",
+            "text": "Quando uma função de repasse exige, guardamos os dados bancários de recebimento fornecidos pelo usuário, como CBU/CVU ou alias. Isso é diferente de um cartão inserido exclusivamente na página do Mercado Pago."
+          }
+        ]
+      },
+      "asistente": {
+        "title": "Assistente de ajuda",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Ao usar o assistente, suas mensagens e o contexto necessário são enviados ao provedor de inteligência artificial. Esse contexto pode incluir idioma, tipo de usuário e resultados de consultas sobre funções ou publicações. Não inclua senhas, documentos, dados completos de cartão nem informações sensíveis. Respostas automáticas podem conter erros e não substituem suporte ou verificação de operações."
+          }
+        ]
+      },
+      "publicidad": {
+        "title": "Anúncios e rastreamento",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "O aplicativo pode exibir publicações ou promoções de estabelecimentos e do Servido. A integração atual não foi projetada para vender dados a brokers nem combinar sua atividade com dados de aplicativos ou sites de outras empresas para rastreamento publicitário. Mostrar uma publicação comercial não implica, por si só, rastreamento entre aplicativos. Novos usos devem ser informados e sujeitos às permissões correspondentes."
+          }
+        ]
+      },
+      "conservacion": {
+        "title": "Retenção",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Os dados são mantidos enquanto necessários para a função e para as operações da conta. Não há um prazo único para todos os dados. Históricos de pedidos, pagamentos, repasses, reclamações, reembolsos e registros de segurança podem ser conservados após o encerramento quando necessários para obrigações aplicáveis, conciliação, prevenção de fraude ou resolução de controvérsias, com acesso limitado a essas finalidades. Fornecedores podem aplicar seus próprios prazos técnicos ou de retenção."
+          }
+        ]
+      },
+      "eliminacion": {
+        "title": "Exclusão da conta",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Inicie a exclusão em Minha conta. O fluxo pede nova autenticação com senha e a confirmação ELIMINAR. Antes da limpeza, o servidor verifica e cancela as assinaturas recorrentes do Mercado Pago correspondentes à conta."
+          },
+          {
+            "type": "p",
+            "text": "O processo exclui o acesso de autenticação, o perfil ativo, conteúdo e arquivos próprios e dados associados contemplados pela função, e remove ou desativa o estabelecimento correspondente. Em chats compartilhados, suas mensagens são removidas e as referências de perfil são substituídas; mensagens dos outros participantes permanecem."
+          },
+          {
+            "type": "p",
+            "text": "A exclusão não elimina indiscriminadamente operações ou reclamações. Um marcador mínimo de conta excluída impede reativações involuntárias e preserva a integridade de registros relacionados. Se uma etapa falhar, o processo não é apresentado como concluído e pode exigir nova tentativa ou suporte."
+          }
+        ]
+      },
+      "opciones": {
+        "title": "Suas opções",
+        "blocks": [
+          {
+            "type": "p",
+            "text": "Você pode atualizar os dados editáveis, gerenciar permissões e notificações no dispositivo, bloquear ou desbloquear contas, denunciar conteúdo e solicitar a exclusão. Para acesso, correção ou exclusão de dados não gerenciáveis no aplicativo, contate a equipe. Podemos solicitar informações razoáveis para verificar sua identidade. Não envie senhas ou dados de pagamento por email. Solicitações são analisadas conforme os dados e as obrigações aplicáveis."
           }
         ]
       },
       "seguridad": {
-        "title": "Segurança dos dados",
+        "title": "Segurança",
         "blocks": [
           {
             "type": "p",
-            "text": "No ServiDo, implementamos medidas técnicas e organizacionais para proteger as informações dos nossos usuários:"
-          },
-          {
-            "type": "ul",
-            "items": [
-              "Criptografia: utilizamos criptografia para proteger os dados em trânsito e em repouso.",
-              "Servidores seguros: as operações são executadas em servidores robustos, protegidos com firewalls e sistemas de detecção de intrusão, em ambientes controlados com acesso restrito."
-            ]
+            "text": "O Servido aplica autenticação, controles de acesso e permissões. Conexões dos serviços utilizam proteção de transporte e a infraestrutura dos fornecedores incorpora controles próprios. Nenhum sistema garante segurança absoluta. Proteja sua senha, encerre sessões em dispositivos compartilhados e comunique acessos desconhecidos."
           }
         ]
       },
       "contacto": {
-        "title": "Contato",
+        "title": "Contato de privacidade e suporte",
         "blocks": [
           {
             "type": "p",
-            "text": "Para dúvidas ou solicitações relacionadas à privacidade, entre em contato conosco em:"
-          },
-          { "type": "p", "text": "servidoarg@gmail.com" }
+            "text": "Para privacidade, exclusão de conta ou suporte: servidoarg@gmail.com. Informe o email da conta, uma descrição do pedido e a versão do aplicativo. Não envie sua senha."
+          }
         ]
       },
       "cambios": {
-        "title": "Alterações nesta política",
+        "title": "Atualizações",
         "blocks": [
           {
             "type": "p",
-            "text": "Podemos atualizar esta política de privacidade ocasionalmente. Qualquer alteração será publicada nesta mesma seção com a data da última atualização."
+            "text": "As atualizações serão publicadas nesta página com a data. Mudanças em funções, fornecedores ou usos de dados também devem ser refletidas nas informações de privacidade das lojas de aplicativos."
           }
         ]
       }
     },
     "cta": {
-      "title": "Dúvidas sobre privacidade?",
-      "description": "Escreva para nós por e-mail ou consulte os termos e condições de uso da plataforma.",
-      "primaryLabel": "Contato por e-mail",
+      "title": "Precisa de ajuda com seus dados?",
+      "description": "Entre em contato com a equipe do Servido ou consulte as condições de uso.",
+      "primaryLabel": "Entrar em contato por email",
       "primaryHref": "mailto:servidoarg@gmail.com",
       "secondaryLabel": "Ver termos e condições",
       "secondaryHref": "/terminos-y-condiciones"

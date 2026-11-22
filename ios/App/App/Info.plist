@@ -76,6 +76,8 @@
     <string>Servido usa tu ubicación para elegir direcciones de entrega y compartir la posición del cadete durante una entrega con la app abierta.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>Servido usa tu ubicación para elegir direcciones de entrega y compartir la posición del cadete durante una entrega con la app abierta.</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>FirebaseAppDelegateProxyEnabled</key>
     <false/>
   </dict>

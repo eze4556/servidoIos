@@ -139,3 +139,16 @@ Pegar en las notas de revisión de App Store Connect, completando las cuentas de
 > Account deletion is available from Mi cuenta and requires confirming the password and typing ELIMINAR. Reports and user blocking are available from content/profile/chat safety controls.
 
 No enviar estas notas hasta comprobar en iPhone los recorridos y que la cuenta de vendedor de demostración tenga un plan activo. No incluir contraseñas en Git. La candidata agrega una comprobación en Codemagic que exige el backend v2 de Servido antes de generar el IPA.
+
+
+## Actualización de ficha y privacidad - 22/11/2026
+
+- App verificada mediante API oficial: Servido, `6836551431`, `ar.com.servido.app`, issuer esperado.
+- Contacto de revisión guardado con los datos proporcionados por el titular; no incluye credenciales de prueba en Git.
+- Disponibilidad verificada: únicamente Argentina (`ARG`), sin preventa ni incorporación automática de territorios. Descarga gratuita, territorio base ARG.
+- Privacidad ES/PT actualizada con Firebase/APNs, Vercel, Mercado Pago, LiveKit, Resend y OpenAI; datos de cobro y cadetes, contenido compartido, retención de operaciones y eliminación de cuenta.
+- Condiciones actualizadas con la prohibición confirmada de alcohol, tabaco, drogas, armas y contenido adulto.
+- Sitio desplegado en `servido` / `ezequiels-projects-80a1c30f`, despliegue `dpl_SDD616MJm3KWYBSk7WvWmxxdSS5U`.
+- Se añadió `ITSAppUsesNonExemptEncryption=false` para reflejar el uso de cifrado exento de transporte/plataforma del cliente auditado. Revisar esta declaración si cambian dependencias o funciones criptográficas.
+- La guía para el cliente está en `output/pdf/Servido_Guia_TestFlight_y_Capturas.pdf` (archivo local excluido del despliegue y de Git).
+- Pendientes antes de App Review: capturas originales, cuenta demo válida, completar/finalizar declaraciones de privacidad en la UI, titular de copyright y pruebas físicas. La nueva compilación debe incorporar las políticas actualizadas.

@@ -65,3 +65,6 @@ ios/App/App/GoogleService-Info.plist
 /.release-web/
 
 /.release-check/
+
+/output/
+/tmp/pdfs/
