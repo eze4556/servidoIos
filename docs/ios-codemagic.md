@@ -151,10 +151,10 @@ No enviar estas notas hasta comprobar en iPhone los recorridos y que la cuenta d
 - Sitio desplegado en `servido` / `ezequiels-projects-80a1c30f`, despliegue `dpl_SDD616MJm3KWYBSk7WvWmxxdSS5U`.
 - Se añadió `ITSAppUsesNonExemptEncryption=false` para reflejar el uso de cifrado exento de transporte/plataforma del cliente auditado. Revisar esta declaración si cambian dependencias o funciones criptográficas.
 - La guía para el cliente está en `output/pdf/Servido_Guia_TestFlight_y_Capturas.pdf` (archivo local excluido del despliegue y de Git).
-- Pendientes antes de App Review: capturas originales, cuenta demo válida, completar/finalizar declaraciones de privacidad en la UI, titular de copyright y pruebas físicas. La nueva compilación debe incorporar las políticas actualizadas.
+- Estado al 22/11: faltaban capturas, demo, privacidad, copyright y pruebas físicas. El cierre del 23/11 se registra a continuación.
 
 
-## Cierre de privacidad y compilación 3 - 23/11/2026
+## Cierre de privacidad y compilación - 23/11/2026
 
 - Copyright confirmado por el titular y verificado en App Store Connect: `2026 Daniel Zacarias Galinger`.
 - Declaración de privacidad finalizada para 16 tipos de datos: finalidad funcionalidad de la app, vinculados a la identidad y sin seguimiento entre apps. Publicada en App Store Connect tras confirmación explícita del titular del aviso de exactitud y cumplimiento de Apple.
@@ -166,3 +166,15 @@ No enviar estas notas hasta comprobar en iPhone los recorridos y que la cuenta d
 ### Reintento por asignación de máquina
 
 El build 3 permaneció en waiting durante más de 15 minutos sin asignación de Mac, con 13/500 minutos consumidos y sin otras ejecuciones activas. Se fija Xcode 26.5, imagen oficialmente soportada para M2; Codemagic ha recomendado esta alternativa para saturación del pool de Xcode latest en https://github.com/orgs/codemagic-ci-cd/discussions/3570. No implica garantía de disponibilidad inmediata. Se detendrá la ejecución pendiente antes de iniciar un único reintento.
+
+
+El build 3 se canceló sin ejecutar pasos. Reintento iniciado: build 4 `6b045fd07fd2f1388ef3bcbe`, revisión `68b1dc4`, Xcode 26.5. Recibió máquina y pasó a preparing de inmediato. Se verificará la recepción final del IPA y el estado VALID en Apple antes de dar por completada la subida.
+
+
+### Resultado verificado
+
+- Compilación 4 terminada correctamente en Codemagic en 6 minutos y 14 segundos, incluida la publicación. Ejecución `6b045fd07fd2f1388ef3bcbe`, commit `68b1dc4`.
+- Apple recibió el build `d650f20a-78bd-4aeb-a620-0cd91acbd2d6`, número `4`, y confirmó `processingState: VALID`, `usesNonExemptEncryption: false`.
+- Build 4 seleccionado y verificado en la ficha de la versión 1.0. La ficha continúa en `PREPARE_FOR_SUBMISSION`; no se envió a App Review.
+- La guía PDF local se actualizó para solicitar capturas de la compilación 4 como mínimo y se revisaron visualmente sus dos páginas.
+- Pendientes para la publicación pública: capturas originales, pruebas físicas y demo de vendedor con plan activo. La aprobación de procesamiento del build no equivale a aprobación de App Review ni confirma su distribución al grupo externo de TestFlight.
