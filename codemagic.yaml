@@ -8,7 +8,8 @@ workflows:
       app_store_connect: servido-apple
     environment:
       node: 22.22.0
-      xcode: latest
+      # Pin a supported M2 image instead of the moving shared latest pool.
+      xcode: "26.5"
       cocoapods: default
       ios_signing:
         distribution_type: app_store

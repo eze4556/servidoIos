@@ -152,3 +152,17 @@ No enviar estas notas hasta comprobar en iPhone los recorridos y que la cuenta d
 - Se añadió `ITSAppUsesNonExemptEncryption=false` para reflejar el uso de cifrado exento de transporte/plataforma del cliente auditado. Revisar esta declaración si cambian dependencias o funciones criptográficas.
 - La guía para el cliente está en `output/pdf/Servido_Guia_TestFlight_y_Capturas.pdf` (archivo local excluido del despliegue y de Git).
 - Pendientes antes de App Review: capturas originales, cuenta demo válida, completar/finalizar declaraciones de privacidad en la UI, titular de copyright y pruebas físicas. La nueva compilación debe incorporar las políticas actualizadas.
+
+
+## Cierre de privacidad y compilación 3 - 23/11/2026
+
+- Copyright confirmado por el titular y verificado en App Store Connect: `2026 Daniel Zacarias Galinger`.
+- Declaración de privacidad finalizada para 16 tipos de datos: finalidad funcionalidad de la app, vinculados a la identidad y sin seguimiento entre apps. Publicada en App Store Connect tras confirmación explícita del titular del aviso de exactitud y cumplimiento de Apple.
+- Cuenta demo facilitada por el titular validada y guardada únicamente en los campos privados de App Review, tras autorización expresa. Su perfil actual es vendedor sin plan activo; falta una demo con plan activo para herramientas restringidas. No almacenar la contraseña en Git.
+- Codemagic: build 3 `6b045c567fd2f1388ef3bb41`, rama `main`, revisión `d6abf56`, workflow `Servido iOS - TestFlight`, cuenta `servido.interno@gmail.com`. Estado observado: waiting, aún sin máquina asignada. No se creó otra ejecución duplicada.
+- No se envió la app a App Review. Siguen pendientes capturas originales y pruebas físicas.
+
+
+### Reintento por asignación de máquina
+
+El build 3 permaneció en waiting durante más de 15 minutos sin asignación de Mac, con 13/500 minutos consumidos y sin otras ejecuciones activas. Se fija Xcode 26.5, imagen oficialmente soportada para M2; Codemagic ha recomendado esta alternativa para saturación del pool de Xcode latest en https://github.com/orgs/codemagic-ci-cd/discussions/3570. No implica garantía de disponibilidad inmediata. Se detendrá la ejecución pendiente antes de iniciar un único reintento.
