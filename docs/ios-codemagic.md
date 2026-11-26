@@ -87,7 +87,7 @@ Documentación oficial: https://docs.codemagic.io/yaml-quick-start/building-an-i
 
 **Ubicación del cadete en segundo plano:** el seguimiento actual usa `navigator.geolocation` y temporizadores del WebView. No garantiza actualizaciones con el iPhone bloqueado. Por eso no se declara `UIBackgroundModes=location` ni se promete seguimiento continuo. Para ofrecerlo hace falta implementar y probar un servicio nativo de ubicación, su ciclo de vida y el flujo de permisos. La descripción Always está presente porque la requiere el plugin de Geolocation, pero no se solicita acceso permanente desde este cambio.
 
-**Suscripciones de vendedores:** revisar el flujo de suscripción cobrada por Mercado Pago antes de la revisión pública, porque habilita funciones de publicación dentro de la plataforma. Evaluar su tratamiento según las reglas vigentes de compras integradas. No se cambió el sistema de cobro. Las compras de bienes físicos son un flujo diferente.
+**Modelo comercial actual:** publicar y abrir una tienda no exige abono mensual. El marketplace cobra comisión por venta/pedido. Quedan registros y controles de suscripciones anteriores para gestionar cuentas existentes; no deben confundirse con un requisito actual para publicar.
 
 **Ficha de App Store:** completar privacidad según los datos realmente tratados por la app y los SDK, política de privacidad, soporte, capturas, clasificación y cuentas de demostración. Verificar los manifiestos de privacidad incluidos por los SDK en el archivo generado. La existencia de permisos no reemplaza esas declaraciones.
 
@@ -126,20 +126,17 @@ Antes de generar y distribuir el próximo IPA:
 5. Generar el IPA candidato en Codemagic manteniendo versión 1.0.0 y un número de compilación superior al 1. La revisión `e07ae59` se subió a GitHub y el build `6b02e60d8f52ca27512a1cb2` terminó correctamente el 22/11/2026 en 7m 37s. El registro de publicación confirmó `UPLOAD SUCCEEDED`, versión 1.0.0 (2), bundle `ar.com.servido.app`, delivery UUID `2033034d-7014-4acb-beb3-d92811beaf54`. Apple emitió solamente una advertencia de SDK para futuras cargas desde abril de 2027. Falta comprobar el procesamiento en TestFlight y realizar las pruebas físicas. No se envió esta candidata a App Review. Las pruebas físicas del punto anterior deben completarse con el nuevo IPA antes de distribuirlo o enviarlo a revisión.
 
 
-## Notas para App Review de la candidata
+## Notas actuales para App Review
 
-Pegar en las notas de revisión de App Store Connect, completando las cuentas de demostración en los campos privados correspondientes:
+Notas guardadas en App Store Connect tras verificar el modelo comercial y el acceso de la cuenta demo. Las credenciales se mantienen únicamente en los campos privados de revisión.
 
-> Servido is a marketplace connecting buyers with merchants offering physical products, food and services. Purchases of physical products and food are processed through Mercado Pago.
->
-> Seller subscription: merchants can purchase a recurring plan through Mercado Pago to enable publishing product/service listings and using seller tools. The iOS app currently includes this subscription flow; it does not use StoreKit for seller plans. This is separate from the checkout for physical goods.
->
-> Please use the provided buyer and active seller demo accounts to review both experiences. The seller subscription is available from the seller profile subscription tab. Purchases and subscriptions use the live payment provider and may create real charges; the active seller demo account allows reviewing the unlocked features without making a payment.
->
-> Account deletion is available from Mi cuenta and requires confirming the password and typing ELIMINAR. Reports and user blocking are available from content/profile/chat safety controls.
+> Servido is a marketplace connecting buyers with merchants offering products, food and services. Its current business model charges a commission per sale/order. A monthly subscription is not required to open a store, publish listings or use seller tools. Mercado Pago processes marketplace payments. Legacy subscription-management records and controls may remain for earlier customers; these are not a requirement for publishing.
+> 
+> The supplied demo account is valid and already has the seller/store role. Use Inicio to browse products and restaurants, add items to the cart and inspect checkout. Use Perfil / Mi cuenta to access the seller dashboard and Vender to enter the product publishing flow. Buyer accounts can also open a store through Abrir mi tienda; no paid plan is required. Opening a store asks for its name, location and acceptance of seller terms. Live checkout may create real charges; please do not complete paid transactions during review.
+> 
+> Account deletion is available from Mi cuenta and requires confirming the password and typing ELIMINAR. Reports and user blocking are available from content, profile and chat safety controls. Location is used for addresses and delivery features while the app is in use. This version does not provide continuous background delivery tracking.
 
-No enviar estas notas hasta comprobar en iPhone los recorridos y que la cuenta de vendedor de demostración tenga un plan activo. No incluir contraseñas en Git. La candidata agrega una comprobación en Codemagic que exige el backend v2 de Servido antes de generar el IPA.
-
+La compilación candidata verifica el backend v2 de Servido antes de generar el IPA. La cuenta demo ya tiene rol vendedor de tienda y puede usarse para revisar las herramientas de vendedor y el flujo de compra del marketplace. No requiere plan activo.
 
 ## Actualización de ficha y privacidad - 22/11/2026
 
@@ -158,7 +155,7 @@ No enviar estas notas hasta comprobar en iPhone los recorridos y que la cuenta d
 
 - Copyright confirmado por el titular y verificado en App Store Connect: `2026 Daniel Zacarias Galinger`.
 - Declaración de privacidad finalizada para 16 tipos de datos: finalidad funcionalidad de la app, vinculados a la identidad y sin seguimiento entre apps. Publicada en App Store Connect tras confirmación explícita del titular del aviso de exactitud y cumplimiento de Apple.
-- Cuenta demo facilitada por el titular validada y guardada únicamente en los campos privados de App Review, tras autorización expresa. Su perfil actual es vendedor sin plan activo; falta una demo con plan activo para herramientas restringidas. No almacenar la contraseña en Git.
+- Cuenta demo facilitada por el titular validada y guardada únicamente en los campos privados de App Review, tras autorización expresa. Su perfil era vendedor sin plan activo. La exigencia de plan activo se corrigió posteriormente: el modelo actual no lo requiere. No almacenar la contraseña en Git.
 - Codemagic: build 3 `6b045c567fd2f1388ef3bb41`, rama `main`, revisión `d6abf56`, workflow `Servido iOS - TestFlight`, cuenta `servido.interno@gmail.com`. Estado observado: waiting, aún sin máquina asignada. No se creó otra ejecución duplicada.
 - No se envió la app a App Review. Siguen pendientes capturas originales y pruebas físicas.
 
@@ -177,7 +174,7 @@ El build 3 se canceló sin ejecutar pasos. Reintento iniciado: build 4 `6b045fd0
 - Apple recibió el build `d650f20a-78bd-4aeb-a620-0cd91acbd2d6`, número `4`, y confirmó `processingState: VALID`, `usesNonExemptEncryption: false`.
 - Build 4 seleccionado y verificado en la ficha de la versión 1.0. La ficha continúa en `PREPARE_FOR_SUBMISSION`; no se envió a App Review.
 - La guía PDF local se actualizó para solicitar capturas de la compilación 4 como mínimo y se revisaron visualmente sus dos páginas.
-- Pendientes para la publicación pública: capturas originales, pruebas físicas y demo de vendedor con plan activo. La aprobación de procesamiento del build no equivale a aprobación de App Review ni confirma su distribución al grupo externo de TestFlight.
+- Estado histórico al validar el build 4: faltaban capturas y comprobaciones de los recorridos. La exigencia de una demo con plan activo era incorrecta para el modelo actual y quedó descartada. La aprobación de procesamiento del build no equivale a aprobación de App Review ni confirma su distribución al grupo externo de TestFlight.
 
 
 ## Capturas y arranque nativo de iOS
@@ -190,4 +187,9 @@ El build 3 se canceló sin ejecutar pasos. Reintento iniciado: build 4 `6b045fd0
 - Archivo local de entrega: `output/Servido_App_Store_Capturas.zip`.
 - Las doce pruebas de regresión de publicación pasaron tras los cambios de Firebase. El recorrido de compra, pagos y funciones restringidas de vendedor requiere su propia comprobación; las capturas verifican navegación pública.
 - Nueva compilación firmada 6: ejecución `6b07a5715875c49912d63188`, commit `6fc78ae`, finalizada correctamente en 5 minutos y 5 segundos. Apple recibió el build `95259f76-2eef-416f-a30e-de877e98a423`, confirmó `VALID` y `usesNonExemptEncryption: false`; se seleccionó y verificó en la ficha de la versión 1.0.
-- Antes del envío público sigue pendiente la demo de vendedor con plan activo. No se envió la app a App Review.
+- La cuenta demo actual fue validada y ya tiene rol vendedor de tienda. No necesita un plan activo. No se envió la app a App Review.
+
+
+### Corrección del requisito de cuenta demo
+
+Se comprobó el acceso de la cuenta indicada por el titular mediante Firebase del proyecto esperado y se leyó únicamente su rol: vendedor, tipo tienda. El flujo comprador puede abrir una tienda con nombre, ubicación y aceptación de términos; no incluye compra obligatoria de plan. Las credenciales verificadas quedaron guardadas en los campos privados de App Review, junto con las notas actualizadas al modelo de comisión. No se creó una tienda, no se modificó el rol de la cuenta y no se inició ninguna operación de cobro.
