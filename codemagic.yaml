@@ -101,6 +101,7 @@ workflows:
           npm run build:capacitor
           npm run ios:assets
           npx cap sync ios
+          python3 scripts/prepare-ios-screenshot-driver.py
           mkdir -p build
           xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/screenshots CODE_SIGNING_ALLOWED=NO build > build/simulator-build.log 2>&1 || { tail -n 100 build/simulator-build.log; exit 1; }
       - name: Capture public app screens on iPhone and iPad

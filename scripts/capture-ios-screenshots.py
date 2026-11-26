@@ -48,15 +48,24 @@ def main():
             # Simulator-only permission and synthetic location: never a real user location.
             run("xcrun", "simctl", "privacy", udid, "grant", "location", BUNDLE)
             run("xcrun", "simctl", "location", udid, "set", "-32.94682,-60.63932")
-            installed = Path(run("xcrun", "simctl", "get_app_container", udid, BUNDLE, "app", capture=True).stdout.strip())
+            container = Path(run("xcrun", "simctl", "get_app_container", udid, BUNDLE, "data", capture=True).stdout.strip())
             for label, route in ROUTES:
                 run("xcrun", "simctl", "terminate", udid, BUNDLE, check=False)
-                config = json.loads(original)
-                config.setdefault("server", {})["appStartPath"] = route
-                (installed / "capacitor.config.json").write_text(json.dumps(config))
-                run("xcrun", "simctl", "launch", udid, BUNDLE)
-                # Allow Firebase queries, images and native splash to settle.
-                time.sleep(35)
+                state_file = container / "Documents/capture-state.json"
+                state_file.unlink(missing_ok=True)
+                env = dict(os.environ, SIMCTL_CHILD_SERVIDO_SCREENSHOT_ROUTE="/" + route)
+                subprocess.run(["xcrun", "simctl", "launch", udid, BUNDLE], env=env, check=True)
+                deadline = time.monotonic() + 180
+                state = {}
+                while time.monotonic() < deadline:
+                    time.sleep(5)
+                    if state_file.exists():
+                        state = json.loads(state_file.read_text())
+                        if state.get("ready"):
+                            break
+                else:
+                    raise RuntimeError(f"Screen did not settle: {family}/{route}: {state}")
+                print(f"Verified actual app screen: {state}", flush=True)
                 filename = f"{family}-{label}.png"
                 run("xcrun", "simctl", "io", udid, "screenshot", str(OUT / filename))
                 manifest["captures"].append({"file": filename, "device": device["name"], "route": "/" + route})
