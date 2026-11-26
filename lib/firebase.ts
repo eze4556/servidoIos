@@ -1,7 +1,8 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app"
 import { getAuth } from "firebase/auth"
-import { getFirestore } from "firebase/firestore"
+import { getFirestore, initializeFirestore } from "firebase/firestore"
+import { Capacitor } from "@capacitor/core"
 import { getStorage } from "firebase/storage" 
 
 const firebaseConfig = {
@@ -22,7 +23,11 @@ if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.proj
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
 const auth = getAuth(app)
-const db = getFirestore(app)
+// WebKit can buffer Firestore streams for 30 seconds per request on iOS.
+// Use the supported polling transport in the native iOS app.
+const db = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios"
+  ? initializeFirestore(app, { experimentalForceLongPolling: true })
+  : getFirestore(app)
 const storage = getStorage(app) 
 
 export { app, auth, db, storage } 
