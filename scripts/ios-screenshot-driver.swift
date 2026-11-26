@@ -13,7 +13,11 @@ final class ScreenshotBridgeViewController: CAPBridgeViewController {
         captureTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in self?.inspectCapture() }
     }
     private func inspectCapture() {
-        let route = ProcessInfo.processInfo.environment["SERVIDO_SCREENSHOT_ROUTE"] ?? "/"
+        var route = ProcessInfo.processInfo.environment["SERVIDO_SCREENSHOT_ROUTE"] ?? "/"
+        if let folder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+           let raw = try? Data(contentsOf: folder.appendingPathComponent("capture-request.json")),
+           let request = try? JSONSerialization.jsonObject(with: raw) as? [String: String],
+           let requestedRoute = request["route"] { route = requestedRoute }
         let data = try! JSONSerialization.data(withJSONObject: [route])
         let routeJSON = String(data: data, encoding: .utf8)!
         let js = #"""
@@ -22,7 +26,8 @@ final class ScreenshotBridgeViewController: CAPBridgeViewController {
           const clean = p => p.replace(/\/+$/, '') || '/';
           const actual = clean(location.pathname);
           const wanted = clean(target);
-          const state = window.__servidoCapture || (window.__servidoCapture = {started: Date.now(), clicked: false, arrived: 0});
+          if(window.__servidoCapture?.target !== wanted) window.__servidoCapture = {target:wanted, started:Date.now(), clicked:false, arrived:0};
+          const state = window.__servidoCapture;
           const dialog = document.querySelector('[role="dialog"][data-state="open"]');
           if(dialog) {
             const close = Array.from(dialog.querySelectorAll('button')).find(b=>b.textContent.trim()==='Entendido');
@@ -35,8 +40,11 @@ final class ScreenshotBridgeViewController: CAPBridgeViewController {
           if(actual === wanted && !state.arrived) state.arrived=Date.now();
           const text = document.body?.innerText || '';
           const expected = {'/products':'Productos','/services':'Servicios','/restaurantes':'Restaurantes','/':'Servido'}[wanted];
-          const ready = actual===wanted && text.includes(expected) && text.length>250 && Date.now()-state.arrived>45000 && !dialog;
-          return JSON.stringify({ready, route:actual, wanted, bodyLength:text.length, clicked:state.clicked, links:document.querySelectorAll('a[href]').length});
+          const visible = el => {const r=el.getBoundingClientRect();return r.width>0 && r.height>0 && r.top<innerHeight && r.bottom>0;};
+          const busy = Array.from(document.querySelectorAll('.animate-spin,.animate-pulse')).filter(visible).length;
+          const pendingImages = Array.from(document.images).filter(img=>visible(img) && !img.complete).length;
+          const ready = actual===wanted && text.includes(expected) && text.length>250 && Date.now()-state.arrived>15000 && !dialog && busy===0 && pendingImages===0;
+          return JSON.stringify({ready, route:actual, wanted, bodyLength:text.length, clicked:state.clicked, busy, pendingImages, links:document.querySelectorAll('a[href]').length});
         })()
         """#
         webView?.evaluateJavaScript(js) { value, error in

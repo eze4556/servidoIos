@@ -1,5 +1,5 @@
 """Capture the actual unsigned simulator app; no mocked UI or production writes.
-Only the copied simulator bundle's Capacitor start route changes between captures.
+Navigates actual app links and waits for visible spinners/skeletons to disappear.
 Run on the isolated Codemagic Mac after building for iphonesimulator.
 """
 import json
@@ -49,26 +49,29 @@ def main():
             run("xcrun", "simctl", "privacy", udid, "grant", "location", BUNDLE)
             run("xcrun", "simctl", "location", udid, "set", "-32.94682,-60.63932")
             container = Path(run("xcrun", "simctl", "get_app_container", udid, BUNDLE, "data", capture=True).stdout.strip())
-            for label, route in ROUTES:
-                run("xcrun", "simctl", "terminate", udid, BUNDLE, check=False)
+            for index, (label, route) in enumerate(ROUTES):
                 state_file = container / "Documents/capture-state.json"
                 state_file.unlink(missing_ok=True)
-                env = dict(os.environ, SIMCTL_CHILD_SERVIDO_SCREENSHOT_ROUTE="/" + route)
-                subprocess.run(["xcrun", "simctl", "launch", udid, BUNDLE], env=env, check=True)
-                deadline = time.monotonic() + 180
+                (container / "Documents").mkdir(exist_ok=True)
+                (container / "Documents/capture-request.json").write_text(json.dumps({"route":"/" + route}))
+                if index == 0:
+                    env = dict(os.environ, SIMCTL_CHILD_SERVIDO_SCREENSHOT_ROUTE="/" + route)
+                    subprocess.run(["xcrun", "simctl", "launch", udid, BUNDLE], env=env, check=True)
+                deadline = time.monotonic() + (420 if index == 0 else 240)
                 state = {}
                 while time.monotonic() < deadline:
                     time.sleep(5)
                     if state_file.exists():
                         state = json.loads(state_file.read_text())
-                        if state.get("ready"):
+                        if state.get("ready") and state.get("wanted") == (("/" + route).rstrip("/") or "/"):
                             break
                 else:
+                    run("xcrun", "simctl", "io", udid, "screenshot", str(OUT / f"{family}-{label}-not-ready.png"))
                     raise RuntimeError(f"Screen did not settle: {family}/{route}: {state}")
                 print(f"Verified actual app screen: {state}", flush=True)
                 filename = f"{family}-{label}.png"
                 run("xcrun", "simctl", "io", udid, "screenshot", str(OUT / filename))
-                manifest["captures"].append({"file": filename, "device": device["name"], "route": "/" + route})
+                manifest["captures"].append({"file": filename, "device": device["name"], "route": "/" + route, "verified": state})
                 print(f"Captured {filename} on {device['name']}", flush=True)
             run("xcrun", "simctl", "shutdown", udid)
     finally:
