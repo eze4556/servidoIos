@@ -71,3 +71,42 @@ workflows:
         # Upload for internal TestFlight testing; external beta review is manual.
         submit_to_testflight: false
         submit_to_app_store: false
+
+  ios-screenshots:
+    name: Servido iOS - Capturas reales
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      node: 22.22.0
+      xcode: "26.5"
+      cocoapods: default
+      groups:
+        - servido_production
+        - servido_ios
+    scripts:
+      - name: Install locked dependencies
+        script: npm ci --legacy-peer-deps --no-audit --no-fund
+      - name: Load Firebase iOS configuration
+        script: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs';
+          const value = process.env.GOOGLE_SERVICE_INFO_PLIST_BASE64;
+          if (!value) throw new Error('Missing Firebase iOS configuration');
+          writeFileSync('ios/App/App/GoogleService-Info.plist', Buffer.from(value, 'base64'));
+          NODE
+      - name: Build actual native app for simulator
+        script: |
+          set -euo pipefail
+          npm run build:capacitor
+          npm run ios:assets
+          npx cap sync ios
+          mkdir -p build
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/screenshots CODE_SIGNING_ALLOWED=NO build > build/simulator-build.log 2>&1 || { tail -n 100 build/simulator-build.log; exit 1; }
+      - name: Capture public app screens on iPhone and iPad
+        script: python3 scripts/capture-ios-screenshots.py
+    artifacts:
+      - build/Servido_App_Store_Capturas.zip
+      - build/app-store-screenshots/*.png
+      - build/app-store-screenshots/manifest.json
+      - build/simulator-build.log
