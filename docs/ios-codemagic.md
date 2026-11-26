@@ -131,9 +131,9 @@ Antes de generar y distribuir el próximo IPA:
 Notas guardadas en App Store Connect tras verificar el modelo comercial y el acceso de la cuenta demo. Las credenciales se mantienen únicamente en los campos privados de revisión.
 
 > Servido is a marketplace connecting buyers with merchants offering products, food and services. Its current business model charges a commission per sale/order. A monthly subscription is not required to open a store, publish listings or use seller tools. Mercado Pago processes marketplace payments. Legacy subscription-management records and controls may remain for earlier customers; these are not a requirement for publishing.
-> 
+>
 > The supplied demo account is valid and already has the seller/store role. Use Inicio to browse products and restaurants, add items to the cart and inspect checkout. Use Perfil / Mi cuenta to access the seller dashboard and Vender to enter the product publishing flow. Buyer accounts can also open a store through Abrir mi tienda; no paid plan is required. Opening a store asks for its name, location and acceptance of seller terms. Live checkout may create real charges; please do not complete paid transactions during review.
-> 
+>
 > Account deletion is available from Mi cuenta and requires confirming the password and typing ELIMINAR. Reports and user blocking are available from content, profile and chat safety controls. Location is used for addresses and delivery features while the app is in use. This version does not provide continuous background delivery tracking.
 
 La compilación candidata verifica el backend v2 de Servido antes de generar el IPA. La cuenta demo ya tiene rol vendedor de tienda y puede usarse para revisar las herramientas de vendedor y el flujo de compra del marketplace. No requiere plan activo.
