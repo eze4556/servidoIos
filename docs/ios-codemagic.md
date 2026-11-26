@@ -178,3 +178,16 @@ El build 3 se canceló sin ejecutar pasos. Reintento iniciado: build 4 `6b045fd0
 - Build 4 seleccionado y verificado en la ficha de la versión 1.0. La ficha continúa en `PREPARE_FOR_SUBMISSION`; no se envió a App Review.
 - La guía PDF local se actualizó para solicitar capturas de la compilación 4 como mínimo y se revisaron visualmente sus dos páginas.
 - Pendientes para la publicación pública: capturas originales, pruebas físicas y demo de vendedor con plan activo. La aprobación de procesamiento del build no equivale a aprobación de App Review ni confirma su distribución al grupo externo de TestFlight.
+
+
+## Capturas y arranque nativo de iOS
+
+- El cliente iOS inicializa Firebase Auth con persistencia IndexedDB/local y sin precarga del iframe de redirección del navegador. Firestore usa el transporte de long polling en iOS. Referencias: https://firebase.google.com/docs/auth/web/custom-dependencies y https://github.com/firebase/firebase-js-sdk/issues/9789.
+- Se verificó la navegación real en simuladores iPhone 17 Pro Max e iPad Pro 13-inch (M5), esperando a que desaparecieran los indicadores de carga y se completaran las imágenes. Se usó una posición sintética de Rosario, sin iniciar sesión ni escribir datos en producción.
+- Workflow de capturas `ios-screenshots`, ejecución `6b07a4ec5875c49912d6316c`, commit `6fc78ae`. El driver de navegación se agrega únicamente a esa compilación de simulador; el workflow firmado no lo incorpora.
+- Se seleccionaron y revisaron seis capturas: productos, servicios y restaurantes, tres de iPhone (1320 x 2868) y tres de iPad (2064 x 2752). Se quitó el canal alfa totalmente opaco conservando exactamente los píxeles RGB y las dimensiones originales.
+- Apple procesó las seis imágenes correctamente y se verificaron sus placements y orden en la localización es-ES: `IPHONE_DYNAMIC_ISLAND_LARGE_PROFILE` e `IPAD_13_PROFILE`. La ficha continúa en preparación para el envío.
+- Archivo local de entrega: `output/Servido_App_Store_Capturas.zip`.
+- Las doce pruebas de regresión de publicación pasaron tras los cambios de Firebase. El recorrido de compra, pagos y funciones restringidas de vendedor requiere su propia comprobación; las capturas verifican navegación pública.
+- Nueva compilación firmada 6: ejecución `6b07a5715875c49912d63188`, commit `6fc78ae`, finalizada correctamente en 5 minutos y 5 segundos. Apple recibió el build `95259f76-2eef-416f-a30e-de877e98a423`, confirmó `VALID` y `usesNonExemptEncryption: false`; se seleccionó y verificó en la ficha de la versión 1.0.
+- Antes del envío público sigue pendiente la demo de vendedor con plan activo. No se envió la app a App Review.
