@@ -1,6 +1,6 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app"
-import { getAuth } from "firebase/auth"
+import { getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence } from "firebase/auth"
 import { getFirestore, initializeFirestore } from "firebase/firestore"
 import { Capacitor } from "@capacitor/core"
 import { getStorage } from "firebase/storage" 
@@ -22,10 +22,14 @@ if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.proj
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
-const auth = getAuth(app)
+const isNativeIOS = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios"
+// Native iOS does not use browser popup/redirect sign-in. Avoid preloading its iframe.
+const auth = isNativeIOS
+  ? initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] })
+  : getAuth(app)
 // WebKit can buffer Firestore streams for 30 seconds per request on iOS.
 // Use the supported polling transport in the native iOS app.
-const db = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios"
+const db = isNativeIOS
   ? initializeFirestore(app, { experimentalForceLongPolling: true })
   : getFirestore(app)
 const storage = getStorage(app) 
