@@ -44,12 +44,16 @@ def main():
             run("xcrun", "simctl", "boot", udid, check=False)
             run("xcrun", "simctl", "bootstatus", udid, "-b")
             run("xcrun", "simctl", "status_bar", udid, "override", "--time", "9:41", "--dataNetwork", "wifi", "--wifiMode", "active", "--wifiBars", "3", "--batteryState", "charged", "--batteryLevel", "100")
+            run("xcrun", "simctl", "install", udid, str(APP))
+            # Simulator-only permission and synthetic location: never a real user location.
+            run("xcrun", "simctl", "privacy", udid, "grant", "location", BUNDLE)
+            run("xcrun", "simctl", "location", udid, "set", "-32.94682,-60.63932")
+            installed = Path(run("xcrun", "simctl", "get_app_container", udid, BUNDLE, "app", capture=True).stdout.strip())
             for label, route in ROUTES:
+                run("xcrun", "simctl", "terminate", udid, BUNDLE, check=False)
                 config = json.loads(original)
                 config.setdefault("server", {})["appStartPath"] = route
-                config_path.write_text(json.dumps(config))
-                run("xcrun", "simctl", "terminate", udid, BUNDLE, check=False)
-                run("xcrun", "simctl", "install", udid, str(APP))
+                (installed / "capacitor.config.json").write_text(json.dumps(config))
                 run("xcrun", "simctl", "launch", udid, BUNDLE)
                 # Allow Firebase queries, images and native splash to settle.
                 time.sleep(35)
